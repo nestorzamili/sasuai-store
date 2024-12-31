@@ -1,14 +1,11 @@
 'use client'
 
-// import { useNavigate, useRouter } from '@tanstack/react-router'
 import { Button } from '@/components/ui/button'
 import { useRouter } from 'next/navigation'
 
 export default function NotFoundError() {
   const router = useRouter()
 
-  // const navigate = useNavigate()
-  // const { history } = useRouter()
   return (
     <div className='h-svh'>
       <div className='m-auto flex h-full w-full flex-col items-center justify-center gap-2'>

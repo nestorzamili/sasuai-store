@@ -1,6 +1,5 @@
 'use client'
 
-// import { useNavigate, useRouter } from '@tanstack/react-router'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { useRouter } from 'next/navigation'
@@ -15,8 +14,6 @@ export default function GeneralError({
 }: GeneralErrorProps) {
   const router = useRouter()
 
-  // const navigate = useNavigate()
-  // const { history } = useRouter()
   return (
     <div className={cn('h-svh w-full', className)}>
       <div className='m-auto flex h-full w-full flex-col items-center justify-center gap-2'>

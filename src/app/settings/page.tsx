@@ -15,6 +15,7 @@ import { ProfileDropdown } from '@/components/profile-dropdown'
 import { Search } from '@/components/search'
 import { ThemeSwitch } from '@/components/theme-switch'
 import SidebarNav from './components/sidebar-nav'
+import SettingsProfile from './profile/page'
 
 export default function Settings() {
   return (
@@ -43,6 +44,7 @@ export default function Settings() {
             <SidebarNav items={sidebarNavItems} />
           </aside>
           <div className='flex w-full p-1 pr-4 overflow-y-hidden'>
+            <SettingsProfile />
             {/* <Outlet /> */}
           </div>
         </div>

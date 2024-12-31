@@ -1,8 +1,6 @@
 'use client'
 
 import { useState, type JSX } from 'react'
-// import { useLocation, useNavigate } from '@tanstack/react-router'
-// import { Link } from '@tanstack/react-router'
 import { cn } from '@/lib/utils'
 import { buttonVariants } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -14,6 +12,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import Link from 'next/link'
+import { usePathname, useRouter } from 'next/navigation'
 
 interface SidebarNavProps extends React.HTMLAttributes<HTMLElement> {
   items: {
@@ -28,14 +27,14 @@ export default function SidebarNav({
   items,
   ...props
 }: SidebarNavProps) {
-  // const { pathname } = useLocation()
-  // const navigate = useNavigate()
-  // const [val, setVal] = useState(pathname ?? '/settings')
-  const [val, setVal] = useState('/settings')
+  const router = useRouter()
+  const pathname = usePathname()
+
+  const [val, setVal] = useState(pathname ?? '/settings')
 
   const handleSelect = (e: string) => {
     setVal(e)
-    // navigate({ to: e })
+    router.push(e)
   }
 
   return (
@@ -76,9 +75,9 @@ export default function SidebarNav({
               href={item.href}
               className={cn(
                 buttonVariants({ variant: 'ghost' }),
-                // pathname === item.href
-                //   ? 'bg-muted hover:bg-muted'
-                //   : 'hover:bg-transparent hover:underline',
+                pathname === item.href
+                  ? 'bg-muted hover:bg-muted'
+                  : 'hover:bg-transparent hover:underline',
                 'justify-start'
               )}
             >
