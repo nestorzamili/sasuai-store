@@ -1,5 +1,6 @@
-import ViteLogo from '@/assets/vite.svg'
-import { UserAuthForm } from './components/user-auth-form'
+'use client'
+
+import { UserAuthForm } from '../sign-in/components/user-auth-form'
 
 export default function SignIn2() {
   return (
@@ -23,11 +24,11 @@ export default function SignIn2() {
         </div>
 
         <img
-          src={ViteLogo}
+          src='/icons/logo.png'
           className='relative m-auto'
-          width={301}
-          height={60}
-          alt='Vite'
+          width={512}
+          height={512}
+          alt='shadcn'
         />
 
         <div className='relative z-20 mt-auto'>
