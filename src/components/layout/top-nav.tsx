@@ -1,4 +1,4 @@
-import { Link } from '@tanstack/react-router'
+// import { Link } from '@tanstack/react-router'
 import { IconMenu } from '@tabler/icons-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -8,6 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import Link from 'next/link'
 
 interface TopNavProps extends React.HTMLAttributes<HTMLElement> {
   links: {
@@ -32,9 +33,9 @@ export function TopNav({ className, links, ...props }: TopNavProps) {
             {links.map(({ title, href, isActive, disabled }) => (
               <DropdownMenuItem key={`${title}-${href}`} asChild>
                 <Link
-                  to={href}
+                  href={href}
                   className={!isActive ? 'text-muted-foreground' : ''}
-                  disabled={disabled}
+                  // disabled={disabled}
                 >
                   {title}
                 </Link>
@@ -54,8 +55,8 @@ export function TopNav({ className, links, ...props }: TopNavProps) {
         {links.map(({ title, href, isActive, disabled }) => (
           <Link
             key={`${title}-${href}`}
-            to={href}
-            disabled={disabled}
+            href={href}
+            // disabled={disabled}
             className={`text-sm font-medium transition-colors hover:text-primary ${isActive ? '' : 'text-muted-foreground'}`}
           >
             {title}

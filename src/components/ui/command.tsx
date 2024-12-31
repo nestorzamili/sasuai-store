@@ -24,7 +24,7 @@ const Command = React.forwardRef<
     {...props}
   />
 ))
-Command.displayName = CommandPrimitive.displayName
+Command.displayName = 'TODO' // TODO: CommandPrimitive.displayName
 
 const CommandDialog = ({ children, ...props }: DialogProps) => {
   return (
@@ -61,7 +61,7 @@ const CommandInput = React.forwardRef<
   </div>
 ))
 
-CommandInput.displayName = CommandPrimitive.Input.displayName
+CommandInput.displayName = 'TODO' // TODO: CommandPrimitive.Input.displayName
 
 const CommandList = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive.List>,
@@ -74,7 +74,7 @@ const CommandList = React.forwardRef<
   />
 ))
 
-CommandList.displayName = CommandPrimitive.List.displayName
+CommandList.displayName = 'TODO' // TODO: CommandPrimitive.List.displayName
 
 const CommandEmpty = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive.Empty>,
@@ -87,7 +87,7 @@ const CommandEmpty = React.forwardRef<
   />
 ))
 
-CommandEmpty.displayName = CommandPrimitive.Empty.displayName
+CommandEmpty.displayName = 'TODO' // TODO: CommandPrimitive.Empty.displayName
 
 const CommandGroup = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive.Group>,
@@ -103,7 +103,7 @@ const CommandGroup = React.forwardRef<
   />
 ))
 
-CommandGroup.displayName = CommandPrimitive.Group.displayName
+CommandGroup.displayName = 'TODO' // TODO: CommandPrimitive.Group.displayName
 
 const CommandSeparator = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive.Separator>,
@@ -115,7 +115,7 @@ const CommandSeparator = React.forwardRef<
     {...props}
   />
 ))
-CommandSeparator.displayName = CommandPrimitive.Separator.displayName
+CommandSeparator.displayName = 'TODO' // TODO: CommandPrimitive.Separator.displayName
 
 const CommandItem = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive.Item>,
@@ -131,7 +131,7 @@ const CommandItem = React.forwardRef<
   />
 ))
 
-CommandItem.displayName = CommandPrimitive.Item.displayName
+CommandItem.displayName = 'TODO' // TODO: CommandPrimitive.Item.displayName
 
 const CommandShortcut = ({
   className,

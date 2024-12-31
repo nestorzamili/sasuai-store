@@ -1,5 +1,7 @@
+'use client'
+
 import { ReactNode } from 'react'
-import { Link, useLocation } from '@tanstack/react-router'
+// import { Link, useLocation } from '@tanstack/react-router'
 import { ChevronRight } from 'lucide-react'
 import {
   Collapsible,
@@ -27,10 +29,11 @@ import {
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu'
 import { NavCollapsible, NavItem, NavLink, type NavGroup } from './types'
+import Link from 'next/link'
 
 export function NavGroup({ title, items }: NavGroup) {
   const { state } = useSidebar()
-  const href = useLocation({ select: (location) => location.href })
+  // const href = useLocation({ select: (location) => location.href })
   return (
     <SidebarGroup>
       <SidebarGroupLabel>{title}</SidebarGroupLabel>
@@ -39,14 +42,14 @@ export function NavGroup({ title, items }: NavGroup) {
           const key = `${item.title}-${item.url}`
 
           if (!item.items)
-            return <SidebarMenuLink key={key} item={item} href={href} />
+            return <SidebarMenuLink key={key} item={item} href={''} />
 
           if (state === 'collapsed')
             return (
-              <SidebarMenuCollapsedDropdown key={key} item={item} href={href} />
+              <SidebarMenuCollapsedDropdown key={key} item={item} href={''} />
             )
 
-          return <SidebarMenuCollapsible key={key} item={item} href={href} />
+          return <SidebarMenuCollapsible key={key} item={item} href={''} />
         })}
       </SidebarMenu>
     </SidebarGroup>
@@ -66,7 +69,7 @@ const SidebarMenuLink = ({ item, href }: { item: NavLink; href: string }) => {
         isActive={checkIsActive(href, item)}
         tooltip={item.title}
       >
-        <Link to={item.url} onClick={() => setOpenMobile(false)}>
+        <Link href={item.url} onClick={() => setOpenMobile(false)}>
           {item.icon && <item.icon />}
           <span>{item.title}</span>
           {item.badge && <NavBadge>{item.badge}</NavBadge>}
@@ -107,7 +110,7 @@ const SidebarMenuCollapsible = ({
                   asChild
                   isActive={checkIsActive(href, subItem)}
                 >
-                  <Link to={subItem.url} onClick={() => setOpenMobile(false)}>
+                  <Link href={subItem.url} onClick={() => setOpenMobile(false)}>
                     {subItem.icon && <subItem.icon />}
                     <span>{subItem.title}</span>
                     {subItem.badge && <NavBadge>{subItem.badge}</NavBadge>}
@@ -151,7 +154,7 @@ const SidebarMenuCollapsedDropdown = ({
           {item.items.map((sub) => (
             <DropdownMenuItem key={`${sub.title}-${sub.url}`} asChild>
               <Link
-                to={sub.url}
+                href={sub.url}
                 className={`${checkIsActive(href, sub) ? 'bg-secondary' : ''}`}
               >
                 {sub.icon && <sub.icon />}
