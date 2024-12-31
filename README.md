@@ -26,13 +26,9 @@ Crafted with 🤍 by [@satnaing](https://github.com/satnaing)
 
 **UI:** [ShadcnUI](https://ui.shadcn.com) (TailwindCSS + RadixUI)
 
-**Build Tool:** [Vite](https://vitejs.dev/)
-
-**Routing:** [TanStack Router](https://tanstack.com/router/latest)
+**Framework:** [Next.js](https://nextjs.org)
 
 **Type Checking:** [TypeScript](https://www.typescriptlang.org/)
-
-**Linting/Formatting:** [Eslint](https://eslint.org/) & [Prettier](https://prettier.io/)
 
 **Icons:** [Tabler Icons](https://tabler.io/icons)
 
