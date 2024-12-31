@@ -1,3 +1,5 @@
+'use client'
+
 import ContentSection from '../components/content-section'
 import { DisplayForm } from './display-form'
 

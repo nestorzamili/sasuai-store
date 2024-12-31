@@ -88,23 +88,23 @@ export const sidebarData: SidebarData = {
           items: [
             {
               title: 'Sign In',
-              url: '/sign-in',
+              url: '/auth/sign-in',
             },
             {
               title: 'Sign In (2 Col)',
-              url: '/sign-in-2',
+              url: '/auth/sign-in-2',
             },
             {
               title: 'Sign Up',
-              url: '/sign-up',
+              url: '/auth/sign-up',
             },
             {
               title: 'Forgot Password',
-              url: '/forgot-password',
+              url: '/auth/forgot-password',
             },
             {
               title: 'OTP',
-              url: '/otp',
+              url: '/auth/otp',
             },
           ],
         },
@@ -114,27 +114,27 @@ export const sidebarData: SidebarData = {
           items: [
             {
               title: 'Unauthorized',
-              url: '/401',
+              url: '/errors/401',
               icon: IconLock,
             },
             {
               title: 'Forbidden',
-              url: '/403',
+              url: '/errors/403',
               icon: IconUserOff,
             },
             {
               title: 'Not Found',
-              url: '/404',
+              url: '/errors/404',
               icon: IconError404,
             },
             {
               title: 'Internal Server Error',
-              url: '/500',
+              url: '/errors/500',
               icon: IconServerOff,
             },
             {
               title: 'Maintenance Error',
-              url: '/503',
+              url: '/errors/503',
               icon: IconBarrierBlock,
             },
           ],

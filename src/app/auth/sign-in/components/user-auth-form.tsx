@@ -2,7 +2,7 @@ import { HTMLAttributes, useState } from 'react'
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Link } from '@tanstack/react-router'
+// import { Link } from '@tanstack/react-router'
 import { IconBrandFacebook, IconBrandGithub } from '@tabler/icons-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { PasswordInput } from '@/components/password-input'
+import Link from 'next/link'
 
 type UserAuthFormProps = HTMLAttributes<HTMLDivElement>
 
@@ -81,7 +82,7 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
                   <div className='flex items-center justify-between'>
                     <FormLabel>Password</FormLabel>
                     <Link
-                      to='/forgot-password'
+                      href='/forgot-password'
                       className='text-sm font-medium text-muted-foreground hover:opacity-75'
                     >
                       Forgot password?
