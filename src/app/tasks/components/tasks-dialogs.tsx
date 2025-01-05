@@ -1,8 +1,11 @@
+import dynamic from 'next/dynamic';
 import { toast } from '@/hooks/use-toast'
 import { ConfirmDialog } from '@/components/confirm-dialog'
 import { useTasks } from '../context/tasks-context'
-import { TasksImportDialog } from './tasks-import-dialog'
+// import { TasksImportDialog } from './tasks-import-dialog'
 import { TasksMutateDrawer } from './tasks-mutate-drawer'
+
+const TasksImportDialog = dynamic(() => import('./tasks-import-dialog'), { ssr: false });
 
 export function TasksDialogs() {
   const { open, setOpen, currentRow, setCurrentRow } = useTasks()
