@@ -4,14 +4,13 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { useRouter } from 'next/navigation'
 
-export interface GeneralErrorProps extends React.HTMLAttributes<HTMLDivElement> {
-  minimal?: boolean
-}
-
 export default function GeneralError({
   className,
   minimal = false,
-}: GeneralErrorProps) {
+}: {
+  className: string
+  minimal?: boolean
+}) {
   const router = useRouter()
 
   return (
