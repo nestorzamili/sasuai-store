@@ -1,6 +1,5 @@
 'use client'
 
-// import { Outlet } from '@tanstack/react-router'
 import {
   IconBrowserCheck,
   IconNotification,
@@ -17,7 +16,7 @@ import { ThemeSwitch } from '@/components/theme-switch'
 import SidebarNav from './components/sidebar-nav'
 import SettingsProfile from './profile/page'
 
-export default function Settings() {
+export default function SettingsLayout({ children }: Readonly<{ children: React.ReactNode; }>) {
   return (
     <>
       {/* ===== Top Heading ===== */}
@@ -44,8 +43,7 @@ export default function Settings() {
             <SidebarNav items={sidebarNavItems} />
           </aside>
           <div className='flex w-full p-1 pr-4 overflow-y-hidden'>
-            <SettingsProfile />
-            {/* <Outlet /> */}
+            {children}
           </div>
         </div>
       </Main>
@@ -57,7 +55,7 @@ const sidebarNavItems = [
   {
     title: 'Profile',
     icon: <IconUser size={18} />,
-    href: '/settings',
+    href: '/settings/profile',
   },
   {
     title: 'Account',
