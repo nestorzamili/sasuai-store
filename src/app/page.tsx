@@ -193,25 +193,25 @@ export default function Dashboard() {
 const topNav = [
   {
     title: 'Overview',
-    href: 'dashboard/overview',
+    href: '/dashboard',
     isActive: true,
     disabled: false,
   },
   {
     title: 'Customers',
-    href: 'dashboard/customers',
+    href: '/dashboard',
     isActive: false,
     disabled: true,
   },
   {
     title: 'Products',
-    href: 'dashboard/products',
+    href: '/dashboard',
     isActive: false,
     disabled: true,
   },
   {
     title: 'Settings',
-    href: 'dashboard/settings',
+    href: '/dashboard',
     isActive: false,
     disabled: true,
   },
