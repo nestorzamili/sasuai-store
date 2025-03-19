@@ -1,5 +1,6 @@
 // src/app/layout.tsx
 import type { Metadata } from 'next';
+import { ThemeProvider } from '@/context/theme-context';
 import '@/index.css';
 
 export const metadata: Metadata = {
@@ -14,7 +15,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <ThemeProvider defaultTheme="light" storageKey="ui-theme">
+        <body>{children}</body>
+      </ThemeProvider>
     </html>
   );
 }
