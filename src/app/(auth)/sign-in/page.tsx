@@ -10,7 +10,7 @@ export default function SignIn() {
       <Card className="p-6">
         <div className="flex flex-col space-y-2 text-left">
           <h1 className="text-2xl font-semibold tracking-tight">Login</h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground pb-3">
             Enter your email and password below <br />
             to log into your account
           </p>

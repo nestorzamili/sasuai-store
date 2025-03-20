@@ -1,4 +1,3 @@
-// src/app/(app)/layout.tsx
 import Cookies from 'js-cookie';
 import { SearchProvider } from '@/context/search-context';
 import { SidebarProvider } from '@/components/ui/sidebar';
@@ -7,6 +6,9 @@ import { AppSidebar } from '@/components/layout/app-sidebar';
 import { cn } from '@/lib/utils';
 import { StrictMode } from 'react';
 import { ThemeProvider } from '@/context/theme-context';
+import { auth } from '@/lib/auth';
+import { redirect } from 'next/navigation';
+import { headers } from 'next/headers';
 
 export const metadata = {
   title: {
@@ -15,8 +17,20 @@ export const metadata = {
   },
 };
 
-export default function AppLayout({ children }: { children: React.ReactNode }) {
+export default async function AppLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const defaultOpen = Cookies.get('sidebar:state') !== 'false';
+
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session) {
+    return redirect('/sign-in');
+  }
 
   return (
     <div className="group/body">
