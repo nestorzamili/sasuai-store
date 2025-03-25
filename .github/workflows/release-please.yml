@@ -17,7 +17,7 @@ jobs:
       - uses: google-github-actions/release-please-action@v3
         with:
           release-type: node
-          package-name: blastify
+          package-name: samunu-project
           changelog-types: |
             [
               {"type":"feat","section":"Features"},
