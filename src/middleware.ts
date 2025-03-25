@@ -1,12 +1,35 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { headers } from 'next/headers';
+import { auth } from './lib/auth';
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // Define authentication paths and public paths
+  const authPaths = ['/sign-in', '/sign-up', '/forgot-password'];
+  const publicPaths = [...authPaths, '/errors/503'];
+  const isAuthPath = authPaths.includes(pathname);
+  const isPublicPath = publicPaths.includes(pathname);
+
+  // Get the user session
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  // Redirect logged-in users away from auth pages to dashboard/home
+  if (session && isAuthPath) {
+    return NextResponse.redirect(new URL('/', request.url));
+  }
+
+  // Redirect non-logged in users to sign-in for protected routes
+  if (!session && !isPublicPath) {
+    return NextResponse.redirect(new URL('/sign-in', request.url));
+  }
+
+  // Maintenance mode logic remains the same
   const isMaintenanceMode = process.env.MAINTENANCE_MODE === 'true';
 
   if (isMaintenanceMode) {
-    const { pathname } = request.nextUrl;
-
     if (pathname === '/errors/503') {
       return NextResponse.next();
     }
@@ -36,5 +59,6 @@ export function middleware(request: NextRequest) {
 
 // Tentukan pada rute mana middleware ini berjalan
 export const config = {
+  runtime: 'nodejs',
   matcher: '/((?!_next/static|_next/image|favicon.ico).*)',
 };

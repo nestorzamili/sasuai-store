@@ -29,7 +29,6 @@ export function ProfileDropdown() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        // Menggunakan getSession untuk mendapatkan informasi pengguna
         const { data: session } = await authClient.getSession();
 
         if (session) {
@@ -47,8 +46,14 @@ export function ProfileDropdown() {
 
   const handleLogout = async () => {
     try {
-      await authClient.signOut();
-      router.push('/sign-in');
+      await authClient.signOut({
+        fetchOptions: {
+          onSuccess: () => {
+            router.push('/sign-in');
+          },
+        },
+      });
+      router.refresh();
     } catch (error) {
       console.error('Error signing out:', error);
     }
