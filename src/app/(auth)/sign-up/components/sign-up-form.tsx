@@ -1,3 +1,5 @@
+'use client';
+
 import { HTMLAttributes, useState } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -16,9 +18,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/password-input';
 import { authClient } from '@/lib/auth-client';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, CheckCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useRouter } from 'next/navigation';
 
 type SignUpFormProps = HTMLAttributes<HTMLDivElement>;
 
@@ -46,7 +47,8 @@ const formSchema = z
 
 export function SignUpForm({ className, ...props }: SignUpFormProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const [authError, setAuthError] = useState<string | null>(null);
+  const [authMessage, setAuthMessage] = useState<string | null>(null);
+  const [isSuccess, setIsSuccess] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -59,44 +61,19 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    setAuthError(null); // Reset error message
+    setIsLoading(true);
+    setAuthMessage(null);
+    setIsSuccess(false);
+
     const { name, email, password } = values;
 
     try {
-      const { data, error } = await authClient.signUp.email(
-        {
-          name,
-          email,
-          password,
-          callbackURL: '/sign-in',
-        },
-        {
-          onRequest: () => {
-            setIsLoading(true);
-          },
-          onSuccess: () => {
-            form.reset();
-            setIsLoading(false);
-            // Show successful registration message or redirect
-            setAuthError(
-              'Registration successful! Please check your email to verify your account.',
-            );
-          },
-          onError: (err) => {
-            setIsLoading(false);
-            // Type-safe error handling
-            if (
-              err.error &&
-              typeof err.error === 'object' &&
-              'message' in err.error
-            ) {
-              setAuthError(err.error.message as string);
-            } else {
-              setAuthError('Failed to sign up. Please try again.');
-            }
-          },
-        },
-      );
+      const { data, error } = await authClient.signUp.email({
+        name,
+        email,
+        password,
+        callbackURL: '/sign-in',
+      });
 
       if (error) {
         // Handle different error codes
@@ -119,12 +96,21 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
             }
         }
 
-        setAuthError(errorMessage);
-        setIsLoading(false);
+        setAuthMessage(errorMessage);
+        setIsSuccess(false);
+      } else {
+        // Registration successful
+        form.reset();
+        setIsSuccess(true);
+        setAuthMessage(
+          'Registration successful! Please check your email to verify your account.',
+        );
       }
     } catch (err) {
       console.error('Registration error:', err);
-      setAuthError('An unexpected error occurred. Please try again.');
+      setAuthMessage('An unexpected error occurred. Please try again.');
+      setIsSuccess(false);
+    } finally {
       setIsLoading(false);
     }
   }
@@ -134,20 +120,22 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="grid gap-4">
-            {authError && (
+            {authMessage && (
               <Alert
-                variant={
-                  authError.includes('successful') ? 'default' : 'destructive'
-                }
+                variant={isSuccess ? 'default' : 'destructive'}
                 className={
-                  authError.includes('successful')
+                  isSuccess
                     ? 'border-green-500 text-green-700 bg-green-50 dark:bg-green-950 dark:text-green-400'
                     : ''
                 }
               >
                 <div className="flex items-center gap-2">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>{authError}</AlertDescription>
+                  {isSuccess ? (
+                    <CheckCircle className="h-4 w-4" />
+                  ) : (
+                    <AlertCircle className="h-4 w-4" />
+                  )}
+                  <AlertDescription>{authMessage}</AlertDescription>
                 </div>
               </Alert>
             )}
