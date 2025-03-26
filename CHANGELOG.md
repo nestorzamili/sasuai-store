@@ -10,6 +10,18 @@
 
 - optimize states in users/tasks context (#71)
 
+## [1.4.0](https://github.com/nestorzamili/sasuai-store/compare/v1.3.0...v1.4.0) (2025-03-26)
+
+
+### Features
+
+* **profile:** add email change functionality and update profile page ([a4f34f1](https://github.com/nestorzamili/sasuai-store/commit/a4f34f109bedde0c373739b48cf54ccf97ab1873))
+
+
+### Code Refactoring
+
+* **settings:** remove unused settings pages and components ([73e711a](https://github.com/nestorzamili/sasuai-store/commit/73e711a81f3799f9e9c921ea4c158e535029c9c9))
+
 ## [1.3.0](https://github.com/nestorzamili/sasuai-store/compare/v1.2.0...v1.3.0) (2025-03-26)
 
 
