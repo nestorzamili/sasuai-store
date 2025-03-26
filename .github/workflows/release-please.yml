@@ -17,7 +17,7 @@ jobs:
       - uses: google-github-actions/release-please-action@v3
         with:
           release-type: node
-          package-name: samunu-project
+          package-name: sasuai-store
           changelog-types: |
             [
               {"type":"feat","section":"Features"},
