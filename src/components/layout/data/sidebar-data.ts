@@ -1,23 +1,16 @@
 'use client';
 
 import {
-  IconBrowserCheck,
   IconChecklist,
   IconHelp,
   IconLayoutDashboard,
   IconMessages,
-  IconNotification,
   IconPackages,
-  IconPalette,
-  IconSettings,
-  IconTool,
-  IconUserCog,
   IconUsers,
   IconShoppingCart,
   IconBoxSeam,
   IconFileInvoice,
   IconCreditCard,
-  IconArrowBackUp,
   IconTruckDelivery,
   IconDiscount,
 } from '@tabler/icons-react';
@@ -107,37 +100,6 @@ export const sidebarData: SidebarData = {
     {
       title: 'Other',
       items: [
-        {
-          title: 'Settings',
-          icon: IconSettings,
-          items: [
-            {
-              title: 'Profile',
-              url: '/settings/profile',
-              icon: IconUserCog,
-            },
-            {
-              title: 'Account',
-              url: '/settings/account',
-              icon: IconTool,
-            },
-            {
-              title: 'Appearance',
-              url: '/settings/appearance',
-              icon: IconPalette,
-            },
-            {
-              title: 'Notifications',
-              url: '/settings/notifications',
-              icon: IconNotification,
-            },
-            {
-              title: 'Display',
-              url: '/settings/display',
-              icon: IconBrowserCheck,
-            },
-          ],
-        },
         {
           title: 'Help Center',
           url: '/help-center',

@@ -6,6 +6,7 @@ import { sendEmail } from '@/utils/nodemailer';
 import {
   getVerificationEmailTemplate,
   getPasswordResetEmailTemplate,
+  getEmailChangeTemplate,
 } from '@/utils/templates';
 
 export const auth = betterAuth({
@@ -44,6 +45,27 @@ export const auth = betterAuth({
         console.error('Error sending verification email:', error);
         throw error;
       }
+    },
+  },
+
+  user: {
+    changeEmail: {
+      enabled: true,
+      sendChangeEmailVerification: async (
+        { user, newEmail, url, token },
+        request,
+      ) => {
+        try {
+          await sendEmail({
+            to: user.email,
+            subject: 'Approve email change',
+            html: getEmailChangeTemplate(url, user.name, newEmail),
+          });
+        } catch (error) {
+          console.error('Error sending email change verification:', error);
+          throw error;
+        }
+      },
     },
   },
 });
