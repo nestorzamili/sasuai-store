@@ -1,5 +1,5 @@
 ## Project Management
-A modern full-stack application project management built with Next.js, Tailwind CSS, and BetterAuth for seamless authentication.
+A modern full-stack application store management
 
 ## License
 
