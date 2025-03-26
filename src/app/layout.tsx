@@ -4,8 +4,8 @@ import { ThemeProvider } from '@/context/theme-context';
 import '@/index.css';
 
 export const metadata: Metadata = {
-  title: 'Samunu',
-  description: 'Project Management',
+  title: 'Sasuai Store',
+  description: 'Store Management System',
 };
 
 export default function RootLayout({

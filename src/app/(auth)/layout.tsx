@@ -3,8 +3,8 @@ import { ThemeProvider } from '@/context/theme-context';
 
 export const metadata = {
   title: {
-    template: '%s | Samunu Auth',
-    default: 'Authentication - Samunu',
+    template: '%s | Sasuai Auth',
+    default: 'Authentication - Sasuai Store',
   },
 };
 

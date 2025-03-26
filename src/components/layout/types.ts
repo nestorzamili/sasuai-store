@@ -4,7 +4,7 @@ interface User {
   avatar: string;
 }
 
-interface Team {
+interface Store {
   name: string;
   logo: React.ElementType;
   plan: string;
@@ -35,7 +35,7 @@ interface NavGroup {
 
 interface SidebarData {
   user: User;
-  teams: Team[];
+  stores: Store[];
   navGroups: NavGroup[];
 }
 
