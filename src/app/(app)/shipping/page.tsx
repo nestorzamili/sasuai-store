@@ -7,7 +7,7 @@ import { Search } from '@/components/search';
 import { ThemeSwitch } from '@/components/theme-switch';
 import ComingSoon from '@/components/coming-soon';
 
-export default function HelpCenter() {
+export default function ShippingPage() {
   return (
     <>
       <Header fixed>

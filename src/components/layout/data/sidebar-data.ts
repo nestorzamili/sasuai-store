@@ -13,6 +13,13 @@ import {
   IconTool,
   IconUserCog,
   IconUsers,
+  IconShoppingCart,
+  IconBoxSeam,
+  IconFileInvoice,
+  IconCreditCard,
+  IconArrowBackUp,
+  IconTruckDelivery,
+  IconDiscount,
 } from '@tabler/icons-react';
 import { Command, KanbanIcon } from 'lucide-react';
 import { type SidebarData } from '../types';
@@ -64,6 +71,36 @@ export const sidebarData: SidebarData = {
           title: 'Users',
           url: '/users',
           icon: IconUsers,
+        },
+        {
+          title: 'Products',
+          url: '/products',
+          icon: IconBoxSeam,
+        },
+        {
+          title: 'Orders',
+          url: '/orders',
+          icon: IconShoppingCart,
+        },
+        {
+          title: 'Invoices',
+          url: '/invoices',
+          icon: IconFileInvoice,
+        },
+        {
+          title: 'Payments',
+          url: '/payments',
+          icon: IconCreditCard,
+        },
+        {
+          title: 'Shipping',
+          url: '/shipping',
+          icon: IconTruckDelivery,
+        },
+        {
+          title: 'Discounts',
+          url: '/discounts',
+          icon: IconDiscount,
         },
       ],
     },
