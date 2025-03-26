@@ -12,28 +12,43 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { authClient } from '@/lib/auth-client';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle, CheckCircle2 } from 'lucide-react';
+import { PasswordInput } from '@/components/password-input';
+import { useRouter } from 'next/navigation';
+import { authClient } from '@/lib/auth-client';
 
-type ForgotFormProps = HTMLAttributes<HTMLDivElement>;
+type ResetFormProps = HTMLAttributes<HTMLDivElement> & {
+  token: string;
+};
 
-const formSchema = z.object({
-  email: z
-    .string()
-    .min(1, { message: 'Please enter your email' })
-    .email({ message: 'Invalid email address' }),
-});
+const formSchema = z
+  .object({
+    password: z
+      .string()
+      .min(1, { message: 'Please enter a new password' })
+      .min(8, { message: 'Password must be at least 8 characters long' }),
+    confirmPassword: z
+      .string()
+      .min(1, { message: 'Please confirm your password' }),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ['confirmPassword'],
+  });
 
-export function ForgotForm({ className, ...props }: ForgotFormProps) {
+export function ResetForm({ className, token, ...props }: ResetFormProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+  const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: { email: '' },
+    defaultValues: {
+      password: '',
+      confirmPassword: '',
+    },
   });
 
   async function onSubmit(data: z.infer<typeof formSchema>) {
@@ -41,21 +56,26 @@ export function ForgotForm({ className, ...props }: ForgotFormProps) {
     setError(null);
 
     try {
-      const { error: authError } = await authClient.forgetPassword({
-        email: data.email,
-        redirectTo: '/reset-password',
+      const { error: resetError } = await authClient.resetPassword({
+        newPassword: data.password,
+        token,
       });
 
-      if (authError) {
+      if (resetError) {
         setError(
-          authError.message || 'Failed to send reset email. Please try again.',
+          resetError.message || 'Failed to reset password. Please try again.',
         );
         return;
       }
 
       setSuccess(true);
+
+      // Redirect to login after some time
+      setTimeout(() => {
+        router.push('/sign-in?success=password_reset');
+      }, 2000);
     } catch (err) {
-      console.error('Error sending password reset email:', err);
+      console.error('Error resetting password:', err);
       setError('An unexpected error occurred. Please try again.');
     } finally {
       setIsLoading(false);
@@ -77,19 +97,34 @@ export function ForgotForm({ className, ...props }: ForgotFormProps) {
 
               <FormField
                 control={form.control}
-                name="email"
+                name="password"
                 render={({ field }) => (
                   <FormItem className="space-y-1">
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel>New Password</FormLabel>
                     <FormControl>
-                      <Input placeholder="name@example.com" {...field} />
+                      <PasswordInput placeholder="********" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+
+              <FormField
+                control={form.control}
+                name="confirmPassword"
+                render={({ field }) => (
+                  <FormItem className="space-y-1">
+                    <FormLabel>Confirm Password</FormLabel>
+                    <FormControl>
+                      <PasswordInput placeholder="********" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               <Button className="mt-2" disabled={isLoading}>
-                {isLoading ? 'Sending...' : 'Send Reset Link'}
+                {isLoading ? 'Resetting...' : 'Reset Password'}
               </Button>
             </div>
           </form>
@@ -101,8 +136,7 @@ export function ForgotForm({ className, ...props }: ForgotFormProps) {
         >
           <CheckCircle2 className="h-4 w-4" />
           <AlertDescription>
-            We've sent a password reset link to your email. Please check your
-            inbox and follow the instructions.
+            Your password has been reset successfully! Redirecting to login...
           </AlertDescription>
         </Alert>
       )}

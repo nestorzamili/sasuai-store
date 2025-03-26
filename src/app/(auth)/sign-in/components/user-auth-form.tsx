@@ -19,7 +19,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/password-input';
 import Link from 'next/link';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { signInWithEmail } from '@/app/(auth)/sign-in/components/actions';
 
@@ -45,6 +45,14 @@ const ERROR_MESSAGES = {
   default: 'An error occurred. Please try again.',
 };
 
+const SUCCESS_MESSAGES = {
+  verification_sent:
+    "We've sent you an email with a verification link. Please check your inbox.",
+  password_reset:
+    'Your password has been reset successfully. You can now log in with your new password.',
+  default: 'Success! Please sign in.',
+};
+
 export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
@@ -61,7 +69,6 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
   });
 
   useEffect(() => {
-    // Handle error codes from URL
     const errorCode = searchParams?.get('error');
     if (errorCode) {
       setAuthError(
@@ -70,15 +77,14 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
       );
     }
 
-    // Handle success messages
     const success = searchParams?.get('success');
-    if (success === 'verification_sent') {
+    if (success) {
       setSuccessMessage(
-        "We've sent you an email with a verification link. Please check your inbox.",
+        SUCCESS_MESSAGES[success as keyof typeof SUCCESS_MESSAGES] ||
+          SUCCESS_MESSAGES.default,
       );
     }
 
-    // Pre-fill email if provided
     const email = searchParams?.get('email');
     if (email) {
       form.setValue('email', email);
@@ -99,7 +105,6 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
         return;
       }
 
-      // Handle different error status codes
       const statusCodeMessages: Record<number, string> = {
         401: 'Invalid email or password. Please try again.',
         403: 'Please verify your email address before signing in.',
@@ -138,7 +143,7 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
                 variant="default"
                 className="bg-green-50 text-green-800 border-green-200"
               >
-                <AlertCircle className="h-4 w-4" />
+                <CheckCircle2 className="h-4 w-4" />
                 <AlertDescription>{successMessage}</AlertDescription>
               </Alert>
             )}
