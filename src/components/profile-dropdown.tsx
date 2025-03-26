@@ -77,7 +77,6 @@ export function ProfileDropdown() {
         .toUpperCase()
     : user.email.substring(0, 2).toUpperCase();
 
-  // Ensure image is either string or undefined, not null
   const userImage = user.image || undefined;
 
   return (
@@ -104,21 +103,9 @@ export function ProfileDropdown() {
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem asChild>
-            <Link href="/settings/profile">
+            <Link href="/profile">
               Profile
               <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
-            </Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <Link href="/settings/billing">
-              Billing
-              <DropdownMenuShortcut>⌘B</DropdownMenuShortcut>
-            </Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <Link href="/settings">
-              Settings
-              <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
             </Link>
           </DropdownMenuItem>
         </DropdownMenuGroup>
