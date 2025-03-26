@@ -10,6 +10,13 @@
 
 - optimize states in users/tasks context (#71)
 
+## [1.2.0](https://github.com/nestorzamili/sasuai-store/compare/v1.1.0...v1.2.0) (2025-03-26)
+
+
+### Features
+
+* add example environment configuration file ([0063fdb](https://github.com/nestorzamili/sasuai-store/commit/0063fdb8e7536ea751bfc08aa8fc07a7a5a34398))
+
 ## [1.1.0](https://github.com/nestorzamili/sasuai-store/compare/v1.0.0...v1.1.0) (2025-03-26)
 
 
