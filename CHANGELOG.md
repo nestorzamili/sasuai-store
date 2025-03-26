@@ -10,6 +10,14 @@
 
 - optimize states in users/tasks context (#71)
 
+## [1.3.0](https://github.com/nestorzamili/sasuai-store/compare/v1.2.0...v1.3.0) (2025-03-26)
+
+
+### Features
+
+* **auth:** add reset password functionality and improve UI ([3c1c792](https://github.com/nestorzamili/sasuai-store/commit/3c1c792f5daefeb46e1a01f577af7d304a873094))
+* implement help center and add new pages for products, orders, invoices, payments, shipping, and discounts ([5960498](https://github.com/nestorzamili/sasuai-store/commit/59604986aa0f44106207dbc1d13e948018e5647f))
+
 ## [1.2.0](https://github.com/nestorzamili/sasuai-store/compare/v1.1.0...v1.2.0) (2025-03-26)
 
 
