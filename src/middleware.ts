@@ -1,32 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { headers } from 'next/headers';
-import { auth } from './lib/auth';
+import { getSessionCookie } from 'better-auth/cookies';
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Define authentication paths and public paths
+  if (pathname.startsWith('/api/')) {
+    return NextResponse.next();
+  }
+
   const authPaths = ['/sign-in', '/sign-up', '/forgot-password'];
   const publicPaths = [...authPaths, '/errors/503'];
   const isAuthPath = authPaths.includes(pathname);
   const isPublicPath = publicPaths.includes(pathname);
 
-  // Get the user session
-  const session = await auth.api.getSession({
-    headers: await headers(),
+  const sessionCookie = getSessionCookie(request, {
+    cookieName: 'session_token',
+    cookiePrefix: 'better-auth',
+    useSecureCookies: process.env.NODE_ENV === 'production',
   });
 
-  // Redirect logged-in users away from auth pages to dashboard/home
-  if (session && isAuthPath) {
+  if (sessionCookie && isAuthPath) {
     return NextResponse.redirect(new URL('/', request.url));
   }
 
-  // Redirect non-logged in users to sign-in for protected routes
-  if (!session && !isPublicPath) {
+  if (!sessionCookie && !isPublicPath) {
     return NextResponse.redirect(new URL('/sign-in', request.url));
   }
 
-  // Maintenance mode logic remains the same
   const isMaintenanceMode = process.env.MAINTENANCE_MODE === 'true';
 
   if (isMaintenanceMode) {
@@ -34,7 +34,6 @@ export async function middleware(request: NextRequest) {
       return NextResponse.next();
     }
 
-    // Pengecualian untuk asset yang mungkin dibutuhkan halaman maintenance
     if (
       pathname.startsWith('/_next/') ||
       pathname.includes('/favicon.ico') ||
@@ -43,22 +42,18 @@ export async function middleware(request: NextRequest) {
       return NextResponse.next();
     }
 
-    // Redirect ke halaman 503
     const url = request.nextUrl.clone();
     url.pathname = '/errors/503';
 
-    // Tambahkan header yang tepat
     const response = NextResponse.rewrite(url);
     response.headers.set('Cache-Control', 'no-store');
-    response.headers.set('Retry-After', '3600'); // Coba lagi setelah 1 jam
+    response.headers.set('Retry-After', '3600');
     return response;
   }
 
   return NextResponse.next();
 }
 
-// Tentukan pada rute mana middleware ini berjalan
 export const config = {
-  runtime: 'nodejs',
-  matcher: '/((?!_next/static|_next/image|favicon.ico).*)',
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
 };
