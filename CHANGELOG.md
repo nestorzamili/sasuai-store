@@ -10,6 +10,19 @@
 
 - optimize states in users/tasks context (#71)
 
+## [1.1.0](https://github.com/nestorzamili/sasuai-store/compare/v1.0.0...v1.1.0) (2025-03-26)
+
+
+### Features
+
+* update project branding and email functionality ([ed5ecbd](https://github.com/nestorzamili/sasuai-store/commit/ed5ecbdeef91803cbeb0492ff2393d8c062360b1))
+
+
+### Chores
+
+* update project name and license information ([440e027](https://github.com/nestorzamili/sasuai-store/commit/440e027683e2ee941649d3d3b9001033ff9c81e1))
+* update project name and middleware authentication logic ([a09cb53](https://github.com/nestorzamili/sasuai-store/commit/a09cb5394154eed80328e231d20f10256d20efd0))
+
 ## 1.0.0 (2025-03-25)
 
 
