@@ -15,11 +15,12 @@ export async function signInWithEmail(email: string, password: string) {
       success: true,
     };
   } catch (error: any) {
-    console.error('Authentication error:', error);
+    let statusCode = error?.statusCode || error?.status;
 
     return {
       success: false,
-      error: error.code,
+      error: error,
+      statusCode: statusCode,
       errorMessage: error.message,
     };
   }

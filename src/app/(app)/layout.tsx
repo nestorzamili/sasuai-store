@@ -9,8 +9,8 @@ import { ThemeProvider } from '@/context/theme-context';
 
 export const metadata = {
   title: {
-    template: '%s | Samunu',
-    default: 'Samunu',
+    template: '%s | Sasuai Store',
+    default: 'Sasuai Store',
   },
 };
 

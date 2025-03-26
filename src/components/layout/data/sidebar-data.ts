@@ -23,11 +23,11 @@ export const sidebarData: SidebarData = {
     email: 'satnaingdev@gmail.com',
     avatar: '/avatars/shadcn.jpg',
   },
-  teams: [
+  stores: [
     {
-      name: 'Samunu',
+      name: 'Sasuai Store',
       logo: Command,
-      plan: 'Project Management',
+      plan: 'Store Management',
     },
   ],
   navGroups: [

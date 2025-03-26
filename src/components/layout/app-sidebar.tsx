@@ -10,7 +10,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { NavGroup } from '@/components/layout/nav-group';
-import { TeamSwitcher } from '@/components/layout/team-switcher';
+import { StoreSwitcher } from '@/components/layout/store-switcher';
 import { sidebarData } from './data/sidebar-data';
 import { Footer } from '@/components/layout/footer';
 import Link from 'next/link';
@@ -21,7 +21,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="icon" variant="floating" {...props}>
       <SidebarHeader>
-        <TeamSwitcher teams={sidebarData.teams} />
+        <StoreSwitcher stores={sidebarData.stores} />
       </SidebarHeader>
       <SidebarContent>
         {sidebarData.navGroups.map((props) => (
