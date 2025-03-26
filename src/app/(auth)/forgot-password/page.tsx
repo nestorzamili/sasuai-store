@@ -9,25 +9,24 @@ export default function ForgotPassword() {
   return (
     <AuthLayout>
       <Card className="p-6">
-        <div className="mb-2 flex flex-col space-y-2 text-left">
-          <h1 className="text-md font-semibold tracking-tight">
+        <div className="mb-4 flex flex-col space-y-2 text-left">
+          <h1 className="text-xl font-semibold tracking-tight">
             Forgot Password
           </h1>
           <p className="text-sm text-muted-foreground">
-            Enter your registered email and <br /> we will send you a link to
-            reset your password.
+            Enter your registered email and we will send you a link to reset
+            your password.
           </p>
         </div>
         <ForgotForm />
-        <p className="mt-4 px-8 text-center text-sm text-muted-foreground">
-          Don't have an account?{' '}
+        <p className="mt-4 text-center text-sm text-muted-foreground">
+          Remember your password?{' '}
           <Link
-            href="/sign-up"
+            href="/sign-in"
             className="underline underline-offset-4 hover:text-primary"
           >
-            Sign up
+            Sign in
           </Link>
-          .
         </p>
       </Card>
     </AuthLayout>

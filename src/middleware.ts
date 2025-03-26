@@ -8,7 +8,12 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const authPaths = ['/sign-in', '/sign-up', '/forgot-password'];
+  const authPaths = [
+    '/sign-in',
+    '/sign-up',
+    '/forgot-password',
+    '/reset-password',
+  ];
   const publicPaths = [...authPaths, '/errors/503'];
   const isAuthPath = authPaths.includes(pathname);
   const isPublicPath = publicPaths.includes(pathname);
