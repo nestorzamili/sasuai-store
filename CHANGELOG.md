@@ -10,6 +10,14 @@
 
 - optimize states in users/tasks context (#71)
 
+## [1.5.0](https://github.com/nestorzamili/sasuai-store/compare/v1.4.0...v1.5.0) (2025-03-27)
+
+
+### Features
+
+* **profile:** enhance password change form with improved validation and error handling ([50886bd](https://github.com/nestorzamili/sasuai-store/commit/50886bda17d6820d576843e649c9af518e89dbe7))
+* **sign-up:** enhance form validation and error handling ([594cb04](https://github.com/nestorzamili/sasuai-store/commit/594cb048e3bd9e2d92ee8876fafdc2444998d397))
+
 ## [1.4.0](https://github.com/nestorzamili/sasuai-store/compare/v1.3.0...v1.4.0) (2025-03-26)
 
 
