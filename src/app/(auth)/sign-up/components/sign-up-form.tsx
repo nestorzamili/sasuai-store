@@ -1,6 +1,6 @@
 'use client';
 
-import { HTMLAttributes, useState } from 'react';
+import { HTMLAttributes, useState, useMemo } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -23,32 +23,43 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 
 type SignUpFormProps = HTMLAttributes<HTMLDivElement>;
 
+// Enhanced form validation schema
 const formSchema = z
   .object({
-    name: z.string().min(3, { message: 'Please enter your name' }),
+    name: z
+      .string()
+      .trim()
+      .min(3, { message: 'Name must be at least 3 characters' })
+      .max(50, { message: 'Name must not exceed 50 characters' })
+      .regex(/^[a-zA-Z\s'-]+$/, {
+        message: 'Name contains invalid characters',
+      }),
     email: z
       .string()
-      .min(1, { message: 'Please enter your email' })
+      .trim()
+      .min(1, { message: 'Email is required' })
       .email({ message: 'Invalid email address' }),
     password: z
       .string()
-      .min(1, {
-        message: 'Please enter your password',
-      })
-      .min(8, {
-        message: 'Password must be at least 8 characters long',
+      .trim()
+      .min(8, { message: 'Password must be at least 8 characters' })
+      .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).{8,}$/, {
+        message:
+          'Password must include uppercase, lowercase, number, and special character',
       }),
-    confirmPassword: z.string(),
+    confirmPassword: z.string().trim(),
   })
   .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords don't match.",
+    message: "Passwords don't match",
     path: ['confirmPassword'],
   });
 
 export function SignUpForm({ className, ...props }: SignUpFormProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const [authMessage, setAuthMessage] = useState<string | null>(null);
-  const [isSuccess, setIsSuccess] = useState(false);
+  const [authState, setAuthState] = useState<{
+    message: string | null;
+    isSuccess: boolean;
+  }>({ message: null, isSuccess: false });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -58,12 +69,38 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
       password: '',
       confirmPassword: '',
     },
+    mode: 'onBlur', // Validate on field blur for better UX
   });
 
+  // Memoized form validation check
+  const isSubmitDisabled = useMemo(() => {
+    return (
+      isLoading ||
+      !form.formState.isValid ||
+      !Object.values(form.getValues()).every(Boolean)
+    );
+  }, [isLoading, form.formState.isValid, form.watch()]);
+
+  // Centralized error handling
+  const handleAuthError = (error: { code?: string; message?: string }) => {
+    const errorMap: { [key: string]: string } = {
+      AuthUserAlreadyExists: 'This email address is already registered.',
+      AuthInvalidEmail: 'Please provide a valid email address.',
+      AuthWeakPassword:
+        'Password is too weak. Please choose a stronger password.',
+    };
+
+    return (
+      errorMap[error.code as string] ||
+      error.message ||
+      'Failed to sign up. Please try again.'
+    );
+  };
+
+  // Sign-up submission handler
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
-    setAuthMessage(null);
-    setIsSuccess(false);
+    setAuthState({ message: null, isSuccess: false });
 
     const { name, email, password } = values;
 
@@ -76,40 +113,24 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
       });
 
       if (error) {
-        // Handle different error codes
-        let errorMessage = 'Failed to sign up. Please try again.';
-
-        switch (error.code) {
-          case 'AuthUserAlreadyExists':
-            errorMessage = 'This email address is already registered.';
-            break;
-          case 'AuthInvalidEmail':
-            errorMessage = 'Please provide a valid email address.';
-            break;
-          case 'AuthWeakPassword':
-            errorMessage =
-              'Password is too weak. Please choose a stronger password.';
-            break;
-          default:
-            if (error.message) {
-              errorMessage = error.message;
-            }
-        }
-
-        setAuthMessage(errorMessage);
-        setIsSuccess(false);
+        setAuthState({
+          message: handleAuthError(error),
+          isSuccess: false,
+        });
       } else {
-        // Registration successful
         form.reset();
-        setIsSuccess(true);
-        setAuthMessage(
-          'Registration successful! Please check your email to verify your account.',
-        );
+        setAuthState({
+          message:
+            'Registration successful! Please check your email to verify your account.',
+          isSuccess: true,
+        });
       }
     } catch (err) {
       console.error('Registration error:', err);
-      setAuthMessage('An unexpected error occurred. Please try again.');
-      setIsSuccess(false);
+      setAuthState({
+        message: 'An unexpected error occurred. Please try again.',
+        isSuccess: false,
+      });
     } finally {
       setIsLoading(false);
     }
@@ -120,22 +141,22 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="grid gap-4">
-            {authMessage && (
+            {authState.message && (
               <Alert
-                variant={isSuccess ? 'default' : 'destructive'}
+                variant={authState.isSuccess ? 'default' : 'destructive'}
                 className={
-                  isSuccess
+                  authState.isSuccess
                     ? 'border-green-500 text-green-700 bg-green-50 dark:bg-green-950 dark:text-green-400'
                     : ''
                 }
               >
                 <div className="flex items-center gap-2">
-                  {isSuccess ? (
+                  {authState.isSuccess ? (
                     <CheckCircle className="h-4 w-4" />
                   ) : (
                     <AlertCircle className="h-4 w-4" />
                   )}
-                  <AlertDescription>{authMessage}</AlertDescription>
+                  <AlertDescription>{authState.message}</AlertDescription>
                 </div>
               </Alert>
             )}
@@ -175,6 +196,10 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
                   <FormControl>
                     <PasswordInput placeholder="********" {...field} />
                   </FormControl>
+                  <p className="text-xs text-muted-foreground">
+                    At least 8 characters, including uppercase, lowercase,
+                    number, and special character
+                  </p>
                   <FormMessage className="text-xs font-medium text-destructive" />
                 </FormItem>
               )}
@@ -192,7 +217,7 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
                 </FormItem>
               )}
             />
-            <Button className="mt-2" disabled={isLoading} type="submit">
+            <Button className="mt-2" disabled={isSubmitDisabled} type="submit">
               {isLoading ? 'Creating account...' : 'Create Account'}
             </Button>
 
