@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { authClient } from '@/lib/auth-client';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Card,
   CardContent,
@@ -26,20 +26,38 @@ import { useRouter } from 'next/navigation';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 
-// Password change schema
+// Enhanced password validation schema
 const passwordFormSchema = z
   .object({
     currentPassword: z
       .string()
-      .min(8, { message: 'Password must be at least 8 characters' }),
+      .trim()
+      .min(8, { message: 'Current password must be at least 8 characters' }),
     newPassword: z
       .string()
-      .min(8, { message: 'Password must be at least 8 characters' }),
-    confirmPassword: z.string(),
+      .trim()
+      .min(8, { message: 'New password must be at least 8 characters' })
+      .refine(
+        (password) => {
+          // Optional: Add password complexity requirements
+          const complexityRegex =
+            /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).{8,}$/;
+          return complexityRegex.test(password);
+        },
+        {
+          message:
+            'Password must include uppercase, lowercase, number, and special character',
+        },
+      ),
+    confirmPassword: z.string().trim(),
   })
   .refine((data) => data.newPassword === data.confirmPassword, {
     message: "Passwords don't match",
     path: ['confirmPassword'],
+  })
+  .refine((data) => data.currentPassword !== data.newPassword, {
+    message: 'New password must be different from current password',
+    path: ['newPassword'],
   });
 
 type PasswordFormValues = z.infer<typeof passwordFormSchema>;
@@ -49,7 +67,7 @@ export default function ChangePasswordForm() {
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
 
-  // Password change form
+  // Password change form with improved configuration
   const form = useForm<PasswordFormValues>({
     resolver: zodResolver(passwordFormSchema),
     defaultValues: {
@@ -57,61 +75,87 @@ export default function ChangePasswordForm() {
       newPassword: '',
       confirmPassword: '',
     },
-    mode: 'onChange',
+    mode: 'onBlur', // Validate on field blur for better UX
   });
 
+  // Memoized form validation check
+  const formValidation = useMemo(() => {
+    const { currentPassword, newPassword, confirmPassword } = form.getValues();
+    return {
+      hasValues: Boolean(currentPassword && newPassword && confirmPassword),
+      isValid: form.formState.isValid,
+    };
+  }, [
+    form.watch('currentPassword'),
+    form.watch('newPassword'),
+    form.watch('confirmPassword'),
+    form.formState.isValid,
+  ]);
+
+  // Centralized error handling for password change
+  const handlePasswordChangeError = (errorMessage: string) => {
+    if (
+      ['invalid password', 'incorrect password', 'wrong password'].some((err) =>
+        errorMessage.toLowerCase().includes(err),
+      )
+    ) {
+      setPasswordError('The current password you entered is incorrect.');
+      form.setFocus('currentPassword');
+    } else {
+      toast({
+        title: 'Password change failed',
+        description:
+          errorMessage || 'There was a problem changing your password.',
+        variant: 'destructive',
+      });
+    }
+  };
+
   // Handle password change
-  async function onSubmit(data: PasswordFormValues) {
+  const onSubmit = async (data: PasswordFormValues) => {
     setIsChangingPassword(true);
     setPasswordError(null);
 
     try {
-      await authClient.changePassword({
-        newPassword: data.newPassword,
-        currentPassword: data.currentPassword,
-        revokeOtherSessions: true,
-      });
-
-      toast({
-        title: 'Password changed successfully',
-        description: 'Your password has been updated.',
-      });
-
-      // Reset the form
-      form.reset();
-
-      // Refresh the page
-      router.refresh();
+      await authClient.changePassword(
+        {
+          newPassword: data.newPassword,
+          currentPassword: data.currentPassword,
+          revokeOtherSessions: true,
+        },
+        {
+          onSuccess: () => {
+            toast({
+              title: 'Password changed successfully',
+              description:
+                'Your password has been updated and other sessions have been logged out.',
+            });
+            form.reset();
+            router.refresh();
+          },
+          onError: (ctx) => {
+            handlePasswordChangeError(ctx.error?.message || '');
+          },
+        },
+      );
     } catch (error: any) {
       console.error('Password change error:', error);
-
-      // Handle specific password errors
-      const errorMessage = error?.message || '';
-
-      if (
-        errorMessage.toLowerCase().includes('invalid password') ||
-        errorMessage.toLowerCase().includes('incorrect password') ||
-        errorMessage.toLowerCase().includes('wrong password')
-      ) {
-        setPasswordError('The current password you entered is incorrect.');
-      } else {
-        toast({
-          title: 'Password change failed',
-          description:
-            errorMessage || 'There was a problem changing your password.',
-          variant: 'destructive',
-        });
-      }
+      toast({
+        title: 'Password change failed',
+        description:
+          error?.message || 'There was a problem changing your password.',
+        variant: 'destructive',
+      });
     } finally {
       setIsChangingPassword(false);
     }
-  }
+  };
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Change Password</CardTitle>
-        <CardDescription>Update your account password</CardDescription>
+        <CardDescription>Update your account password securely</CardDescription>
       </CardHeader>
       <CardContent>
         {passwordError && (
@@ -123,6 +167,7 @@ export default function ChangePasswordForm() {
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            {/* Current Password field */}
             <FormField
               control={form.control}
               name="currentPassword"
@@ -130,13 +175,19 @@ export default function ChangePasswordForm() {
                 <FormItem>
                   <FormLabel>Current Password</FormLabel>
                   <FormControl>
-                    <Input type="password" placeholder="••••••••" {...field} />
+                    <Input
+                      type="password"
+                      placeholder="••••••••"
+                      {...field}
+                      autoComplete="current-password"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
+            {/* New Password field */}
             <FormField
               control={form.control}
               name="newPassword"
@@ -144,16 +195,23 @@ export default function ChangePasswordForm() {
                 <FormItem>
                   <FormLabel>New Password</FormLabel>
                   <FormControl>
-                    <Input type="password" placeholder="••••••••" {...field} />
+                    <Input
+                      type="password"
+                      placeholder="••••••••"
+                      {...field}
+                      autoComplete="new-password"
+                    />
                   </FormControl>
                   <FormDescription>
-                    Password must be at least 8 characters
+                    Password must be at least 8 characters, include uppercase,
+                    lowercase, number, and special character
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
+            {/* Confirm Password field */}
             <FormField
               control={form.control}
               name="confirmPassword"
@@ -161,14 +219,26 @@ export default function ChangePasswordForm() {
                 <FormItem>
                   <FormLabel>Confirm Password</FormLabel>
                   <FormControl>
-                    <Input type="password" placeholder="••••••••" {...field} />
+                    <Input
+                      type="password"
+                      placeholder="••••••••"
+                      {...field}
+                      autoComplete="new-password"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            <Button type="submit" disabled={isChangingPassword}>
+            <Button
+              type="submit"
+              disabled={
+                isChangingPassword ||
+                !formValidation.hasValues ||
+                !formValidation.isValid
+              }
+            >
               {isChangingPassword ? 'Changing Password...' : 'Change Password'}
             </Button>
           </form>

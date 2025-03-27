@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { authClient } from '@/lib/auth-client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   Card,
   CardContent,
@@ -23,24 +23,15 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { useRouter } from 'next/navigation';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle } from 'lucide-react';
 
-// Profile form schema
+// Memoized schema to prevent unnecessary re-creation
 const profileFormSchema = z.object({
   name: z
     .string()
-    .min(2, {
-      message: 'Name must be at least 2 characters.',
-    })
-    .max(50, {
-      message: 'Name must not be longer than 50 characters.',
-    }),
-  email: z
-    .string({
-      required_error: 'Email is required',
-    })
-    .email(),
+    .trim()
+    .min(2, { message: 'Name must be at least 2 characters.' })
+    .max(50, { message: 'Name must not be longer than 50 characters.' }),
+  email: z.string({ required_error: 'Email is required' }).email(),
   image: z
     .string()
     .url({ message: 'Please enter a valid image URL.' })
@@ -55,10 +46,13 @@ export default function ProfileForm() {
   const router = useRouter();
   const [isUpdating, setIsUpdating] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [userEmail, setUserEmail] = useState('');
-  const [authError, setAuthError] = useState<string | null>(null);
+  const [userProfile, setUserProfile] = useState<{
+    name: string;
+    email: string;
+    image: string;
+  } | null>(null);
 
-  // Profile update form
+  // Optimize form initialization
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
@@ -69,7 +63,18 @@ export default function ProfileForm() {
     mode: 'onChange',
   });
 
-  // Fetch user data from session
+  // Memoized form change detection
+  const hasFormChanges = useMemo(() => {
+    if (!userProfile) return false;
+    const formValues = form.getValues();
+    return (
+      formValues.name !== userProfile.name ||
+      formValues.email !== userProfile.email ||
+      formValues.image !== userProfile.image
+    );
+  }, [form.watch(), userProfile]);
+
+  // Consolidated data fetching with better error handling
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -77,19 +82,16 @@ export default function ProfileForm() {
 
         if (session?.user) {
           const { name, email, image } = session.user;
-
-          // Update form with user data
-          form.reset({
+          const userValues = {
             name: name || '',
             email: email || '',
             image: image || '',
-          });
+          };
 
-          // Store original email for comparison during submission
-          setUserEmail(email || '');
+          form.reset(userValues);
+          setUserProfile(userValues);
         }
       } catch (error) {
-        console.error('Error fetching user session:', error);
         toast({
           title: 'Error',
           description: 'Failed to load profile data',
@@ -103,69 +105,35 @@ export default function ProfileForm() {
     fetchUserData();
   }, [form]);
 
-  // Handle profile update
-  async function onSubmit(data: ProfileFormValues) {
+  // Improved profile update logic
+  const handleProfileUpdate = async (data: ProfileFormValues) => {
     setIsUpdating(true);
-    setAuthError(null);
 
     try {
-      // Update user info first
+      // Update user info
       await authClient.updateUser({
         name: data.name,
         image: data.image,
       });
 
-      // If email changed, handle it separately
-      if (data.email !== userEmail) {
-        try {
-          await authClient.changeEmail({
-            newEmail: data.email,
-            callbackURL: '/profile',
-          });
-
-          toast({
-            title: 'Email change initiated',
-            description:
-              'Please check your current email to verify this change.',
-          });
-        } catch (error: any) {
-          console.error('Email change error:', error);
-
-          // Handle any email-related error
-          const errorMessage = error?.message || '';
-
-          if (errorMessage.toLowerCase().includes('email already exists')) {
-            setAuthError(
-              'This email address is already registered with another account.',
-            );
-            // Reset email field to the original value
-            form.setValue('email', userEmail);
-            setIsUpdating(false);
-            return;
-          } else {
-            toast({
-              title: 'Email change failed',
-              description:
-                errorMessage || 'There was a problem changing your email.',
-              variant: 'destructive',
-            });
-            setIsUpdating(false);
-            return;
-          }
-        }
+      // Handle email change separately
+      if (data.email !== userProfile?.email) {
+        await handleEmailChange(data.email);
       } else {
         toast({
-          title: 'Profile updated successfully',
+          title: 'Profile Updated',
           description: 'Your profile information has been updated.',
         });
+        setUserProfile({
+          name: data.name,
+          email: data.email,
+          image: data.image || '',
+        });
+        router.refresh();
       }
-
-      // Only refresh if everything succeeded
-      router.refresh();
     } catch (error: any) {
-      console.error('Profile update error:', error);
       toast({
-        title: 'Update failed',
+        title: 'Update Failed',
         description:
           error?.message || 'There was a problem updating your profile.',
         variant: 'destructive',
@@ -173,8 +141,59 @@ export default function ProfileForm() {
     } finally {
       setIsUpdating(false);
     }
-  }
+  };
 
+  // Extracted email change logic
+  const handleEmailChange = async (newEmail: string) => {
+    try {
+      await authClient.changeEmail(
+        {
+          newEmail,
+          callbackURL: '/',
+        },
+        {
+          onSuccess: () => {
+            toast({
+              title: 'Verification Required',
+              description:
+                'Please check your email to confirm the email change.',
+            });
+            router.refresh();
+          },
+          onError: (ctx) => {
+            const errorMessage = ctx.error?.message || '';
+            if (
+              errorMessage.includes('Email already exists') ||
+              errorMessage.includes("Couldn't update your email")
+            ) {
+              form.setValue('email', userProfile?.email || '');
+              toast({
+                title: 'Email Change Failed',
+                description:
+                  'This email address is already registered with another account.',
+                variant: 'destructive',
+              });
+            } else {
+              toast({
+                title: 'Email Change Failed',
+                description: errorMessage,
+                variant: 'destructive',
+              });
+            }
+          },
+        },
+      );
+    } catch (error) {
+      // Additional error handling if needed
+      toast({
+        title: 'Unexpected Error',
+        description: 'An unexpected error occurred while changing email.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  // Loading state rendering
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[200px]">
@@ -190,15 +209,12 @@ export default function ProfileForm() {
         <CardDescription>Update your personal information</CardDescription>
       </CardHeader>
       <CardContent>
-        {authError && (
-          <Alert variant="destructive" className="mb-6">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{authError}</AlertDescription>
-          </Alert>
-        )}
-
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form
+            onSubmit={form.handleSubmit(handleProfileUpdate)}
+            className="space-y-6"
+          >
+            {/* Name field */}
             <FormField
               control={form.control}
               name="name"
@@ -216,6 +232,7 @@ export default function ProfileForm() {
               )}
             />
 
+            {/* Email field */}
             <FormField
               control={form.control}
               name="email"
@@ -237,6 +254,7 @@ export default function ProfileForm() {
               )}
             />
 
+            {/* Image URL field */}
             <FormField
               control={form.control}
               name="image"
@@ -258,7 +276,12 @@ export default function ProfileForm() {
               )}
             />
 
-            <Button type="submit" disabled={isUpdating}>
+            <Button
+              type="submit"
+              disabled={
+                isUpdating || !hasFormChanges || !form.formState.isValid
+              }
+            >
               {isUpdating ? 'Updating...' : 'Update Profile'}
             </Button>
           </form>
