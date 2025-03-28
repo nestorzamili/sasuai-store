@@ -14,45 +14,15 @@ import {
 } from '@/components/ui/dropdown-menu';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { authClient } from '@/lib/auth-client';
-import { useState, useEffect } from 'react';
+import { useAuth } from '@/context/auth-context';
 
 export function ProfileDropdown() {
   const router = useRouter();
-  const [user, setUser] = useState<{
-    name?: string | null;
-    email: string;
-    image?: string | null;
-  } | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const { data: session } = await authClient.getSession();
-
-        if (session) {
-          setUser(session.user);
-        }
-      } catch (error) {
-        console.error('Error fetching user session:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchUser();
-  }, []);
+  const { user, isLoading, signOut } = useAuth();
 
   const handleLogout = async () => {
     try {
-      await authClient.signOut({
-        fetchOptions: {
-          onSuccess: () => {
-            router.push('/sign-in');
-          },
-        },
-      });
+      await signOut();
       router.refresh();
     } catch (error) {
       console.error('Error signing out:', error);
