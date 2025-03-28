@@ -10,6 +10,13 @@
 
 - optimize states in users/tasks context (#71)
 
+## [1.7.0](https://github.com/nestorzamili/sasuai-store/compare/v1.6.0...v1.7.0) (2025-03-28)
+
+
+### Features
+
+* **auth:** enhance session management and middleware for admin access ([1a6e62e](https://github.com/nestorzamili/sasuai-store/commit/1a6e62e32efa3f6606afbc141f0468b2f4af4865))
+
 ## [1.6.0](https://github.com/nestorzamili/sasuai-store/compare/v1.5.0...v1.6.0) (2025-03-28)
 
 
