@@ -4,7 +4,7 @@ import { getSessionCookie } from 'better-auth/cookies';
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  if (pathname.startsWith('/api/')) {
+  if (pathname.startsWith('/api/auth/verify-email')) {
     return NextResponse.next();
   }
 
