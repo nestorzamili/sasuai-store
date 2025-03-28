@@ -23,8 +23,8 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/auth-context';
 
-// Memoized schema to prevent unnecessary re-creation
 const profileFormSchema = z.object({
   name: z
     .string()
@@ -45,14 +45,13 @@ type ProfileFormValues = z.infer<typeof profileFormSchema>;
 export default function ProfileForm() {
   const router = useRouter();
   const [isUpdating, setIsUpdating] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const { user, isLoading: isAuthLoading, refreshSession } = useAuth();
   const [userProfile, setUserProfile] = useState<{
     name: string;
     email: string;
     image: string;
   } | null>(null);
 
-  // Optimize form initialization
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
@@ -63,7 +62,6 @@ export default function ProfileForm() {
     mode: 'onChange',
   });
 
-  // Memoized form change detection
   const hasFormChanges = useMemo(() => {
     if (!userProfile) return false;
     const formValues = form.getValues();
@@ -74,49 +72,28 @@ export default function ProfileForm() {
     );
   }, [form.watch(), userProfile]);
 
-  // Consolidated data fetching with better error handling
   useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const { data: session } = await authClient.getSession();
+    if (user) {
+      const userValues = {
+        name: user.name || '',
+        email: user.email || '',
+        image: user.image || '',
+      };
 
-        if (session?.user) {
-          const { name, email, image } = session.user;
-          const userValues = {
-            name: name || '',
-            email: email || '',
-            image: image || '',
-          };
+      form.reset(userValues);
+      setUserProfile(userValues);
+    }
+  }, [user, form]);
 
-          form.reset(userValues);
-          setUserProfile(userValues);
-        }
-      } catch (error) {
-        toast({
-          title: 'Error',
-          description: 'Failed to load profile data',
-          variant: 'destructive',
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchUserData();
-  }, [form]);
-
-  // Improved profile update logic
   const handleProfileUpdate = async (data: ProfileFormValues) => {
     setIsUpdating(true);
 
     try {
-      // Update user info
       await authClient.updateUser({
         name: data.name,
         image: data.image,
       });
 
-      // Handle email change separately
       if (data.email !== userProfile?.email) {
         await handleEmailChange(data.email);
       } else {
@@ -129,6 +106,8 @@ export default function ProfileForm() {
           email: data.email,
           image: data.image || '',
         });
+
+        await refreshSession();
         router.refresh();
       }
     } catch (error: any) {
@@ -143,7 +122,6 @@ export default function ProfileForm() {
     }
   };
 
-  // Extracted email change logic
   const handleEmailChange = async (newEmail: string) => {
     try {
       await authClient.changeEmail(
@@ -184,7 +162,6 @@ export default function ProfileForm() {
         },
       );
     } catch (error) {
-      // Additional error handling if needed
       toast({
         title: 'Unexpected Error',
         description: 'An unexpected error occurred while changing email.',
@@ -193,8 +170,7 @@ export default function ProfileForm() {
     }
   };
 
-  // Loading state rendering
-  if (isLoading) {
+  if (isAuthLoading) {
     return (
       <div className="flex justify-center items-center min-h-[200px]">
         <div className="text-muted-foreground">Loading...</div>
@@ -214,7 +190,6 @@ export default function ProfileForm() {
             onSubmit={form.handleSubmit(handleProfileUpdate)}
             className="space-y-6"
           >
-            {/* Name field */}
             <FormField
               control={form.control}
               name="name"
@@ -232,7 +207,6 @@ export default function ProfileForm() {
               )}
             />
 
-            {/* Email field */}
             <FormField
               control={form.control}
               name="email"
@@ -254,7 +228,6 @@ export default function ProfileForm() {
               )}
             />
 
-            {/* Image URL field */}
             <FormField
               control={form.control}
               name="image"

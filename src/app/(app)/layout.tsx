@@ -5,7 +5,7 @@ import SkipToMain from '@/components/skip-to-main';
 import { AppSidebar } from '@/components/layout/app-sidebar';
 import { cn } from '@/lib/utils';
 import { StrictMode } from 'react';
-import { ThemeProvider } from '@/context/theme-context';
+import { AuthProvider } from '@/context/auth-context';
 
 export const metadata = {
   title: {
@@ -24,7 +24,7 @@ export default async function AppLayout({
   return (
     <div className="group/body">
       <StrictMode>
-        <ThemeProvider defaultTheme="light" storageKey="ui-theme">
+        <AuthProvider>
           <SearchProvider>
             <SidebarProvider defaultOpen={defaultOpen}>
               <SkipToMain />
@@ -45,7 +45,7 @@ export default async function AppLayout({
               </div>
             </SidebarProvider>
           </SearchProvider>
-        </ThemeProvider>
+        </AuthProvider>
       </StrictMode>
     </div>
   );
