@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSessionCookie } from 'better-auth/cookies';
+import type { auth } from '@/lib/auth';
+import { betterFetch } from '@better-fetch/fetch';
+
+type Session = typeof auth.$Infer.Session;
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -15,21 +18,31 @@ export async function middleware(request: NextRequest) {
     '/reset-password',
   ];
   const publicPaths = [...authPaths, '/errors/503'];
+  const adminPaths = ['/users'];
+  const isAdminPath = adminPaths.includes(pathname);
   const isAuthPath = authPaths.includes(pathname);
   const isPublicPath = publicPaths.includes(pathname);
 
-  const sessionCookie = getSessionCookie(request, {
-    cookieName: 'session_token',
-    cookiePrefix: 'better-auth',
-    useSecureCookies: process.env.NODE_ENV === 'production',
-  });
+  const { data: session } = await betterFetch<Session>(
+    '/api/auth/get-session',
+    {
+      baseURL: request.nextUrl.origin,
+      headers: {
+        cookie: request.headers.get('cookie') || '', // Forward the cookies from the request
+      },
+    },
+  );
 
-  if (sessionCookie && isAuthPath) {
+  if (session && isAuthPath) {
     return NextResponse.redirect(new URL('/', request.url));
   }
 
-  if (!sessionCookie && !isPublicPath) {
+  if (!session && !isPublicPath) {
     return NextResponse.redirect(new URL('/sign-in', request.url));
+  }
+
+  if (session && isAdminPath && session.user?.role !== 'admin') {
+    return NextResponse.redirect(new URL('/errors/403', request.url));
   }
 
   const isMaintenanceMode = process.env.MAINTENANCE_MODE === 'true';
