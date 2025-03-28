@@ -10,6 +10,24 @@
 
 - optimize states in users/tasks context (#71)
 
+## [1.6.0](https://github.com/nestorzamili/sasuai-store/compare/v1.5.0...v1.6.0) (2025-03-28)
+
+
+### Features
+
+* **auth:** add admin schema and enhance user management ([284a114](https://github.com/nestorzamili/sasuai-store/commit/284a114336b335dcfb31b4ef62e446debe0c6fed))
+* **auth:** implement authentication context and refactor user session handling ([991fa21](https://github.com/nestorzamili/sasuai-store/commit/991fa21bade88ebe9835ffe8f9bf7db34c7fe093))
+
+
+### Bug Fixes
+
+* **middleware:** restrict API access to email verification endpoint ([0cc89b4](https://github.com/nestorzamili/sasuai-store/commit/0cc89b41a5dbaf6f12da55744a0f3c397048ae91))
+
+
+### Code Refactoring
+
+* **auth:** remove social login options from sign-in and sign-up forms ([9d6393e](https://github.com/nestorzamili/sasuai-store/commit/9d6393e080f403e46a7fc745a4956e602a3b702c))
+
 ## [1.5.0](https://github.com/nestorzamili/sasuai-store/compare/v1.4.0...v1.5.0) (2025-03-27)
 
 
