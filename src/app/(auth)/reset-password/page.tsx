@@ -1,18 +1,18 @@
-'use client';
+"use client";
 
-import { Card } from '@/components/ui/card';
-import AuthLayout from '../auth-layout';
-import { ResetForm } from './components/reset-password-form';
-import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Card } from "@/components/ui/card";
+import AuthLayout from "../auth-layout";
+import { ResetForm } from "./components/reset-password-form";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function ResetPassword() {
   const searchParams = useSearchParams();
-  const token = searchParams?.get('token');
+  const token = searchParams?.get("token");
   const [isValidating, setIsValidating] = useState(true);
   const [tokenValid, setTokenValid] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -20,7 +20,7 @@ export default function ResetPassword() {
   useEffect(() => {
     const validateToken = async () => {
       if (!token) {
-        setError('Invalid or missing reset token.');
+        setError("Invalid or missing reset token.");
         setIsValidating(false);
         return;
       }
@@ -29,10 +29,10 @@ export default function ResetPassword() {
         setTokenValid(token.length > 0);
 
         if (token.length === 0) {
-          setError('Your password reset link is invalid or has expired.');
+          setError("Your password reset link is invalid or has expired.");
         }
       } catch (err) {
-        setError('An error occurred while validating your reset link.');
+        setError("An error occurred while validating your reset link.");
       } finally {
         setIsValidating(false);
       }
@@ -80,7 +80,7 @@ export default function ResetPassword() {
         </div>
 
         <p className="mt-4 text-center text-sm text-muted-foreground">
-          Remember your password?{' '}
+          Remember your password?{" "}
           <Link
             href="/sign-in"
             className="underline underline-offset-4 hover:text-primary"
