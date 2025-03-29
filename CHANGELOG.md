@@ -10,6 +10,21 @@
 
 - optimize states in users/tasks context (#71)
 
+## [1.8.0](https://github.com/nestorzamili/sasuai-store/compare/v1.7.0...v1.8.0) (2025-03-29)
+
+
+### Features
+
+* add core business model ([a9258cc](https://github.com/nestorzamili/sasuai-store/commit/a9258ccbfde135c4e078b2e9027ad5764c12a27c))
+* **next:** add logging configuration for fetches ([ee7a45c](https://github.com/nestorzamili/sasuai-store/commit/ee7a45ca0f183db3270126033b0a8e27a2986388))
+
+## [1.7.0](https://github.com/nestorzamili/sasuai-store/compare/v1.6.0...v1.7.0) (2025-03-28)
+
+
+### Features
+
+* **auth:** enhance session management and middleware for admin access ([1a6e62e](https://github.com/nestorzamili/sasuai-store/commit/1a6e62e32efa3f6606afbc141f0468b2f4af4865))
+
 ## [1.6.0](https://github.com/nestorzamili/sasuai-store/compare/v1.5.0...v1.6.0) (2025-03-28)
 
 
