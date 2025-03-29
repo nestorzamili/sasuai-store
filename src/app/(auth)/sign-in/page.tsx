@@ -1,9 +1,8 @@
-'use client';
-
-import { Card } from '@/components/ui/card';
-import AuthLayout from '../auth-layout';
-import { UserAuthForm } from './components/user-auth-form';
-
+"use client";
+import { Card } from "@/components/ui/card";
+import AuthLayout from "../auth-layout";
+import { UserAuthForm } from "./components/user-auth-form";
+import { Suspense } from "react";
 export default function SignIn() {
   return (
     <AuthLayout>
@@ -15,16 +14,20 @@ export default function SignIn() {
             to log into your account
           </p>
         </div>
-        <UserAuthForm />
+        <Suspense
+          fallback={<p className="text-sm text-muted-foreground">Loading...</p>}
+        >
+          <UserAuthForm />
+        </Suspense>
         <p className="mt-4 px-8 text-center text-sm text-muted-foreground">
-          By clicking login, you agree to our{' '}
+          By clicking login, you agree to our{" "}
           <a
             href="/terms"
             className="underline underline-offset-4 hover:text-primary"
           >
             Terms of Service
-          </a>{' '}
-          and{' '}
+          </a>{" "}
+          and{" "}
           <a
             href="/privacy"
             className="underline underline-offset-4 hover:text-primary"
