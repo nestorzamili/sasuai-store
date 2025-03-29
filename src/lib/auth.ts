@@ -31,7 +31,12 @@ export const auth = betterAuth({
     },
   },
   plugins: [nextCookies(), admin()],
-
+  session: {
+    cookieCache: {
+      enabled: true,
+      maxAge: 5 * 60, // Cache duration in seconds
+    },
+  },
   emailVerification: {
     sendOnSignUp: true,
     autoSignInAfterVerification: true,
