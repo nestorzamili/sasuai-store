@@ -1,108 +1,135 @@
-'use client';
+"use client";
 
 import {
-  IconChecklist,
   IconHelp,
   IconLayoutDashboard,
-  IconMessages,
-  IconPackages,
   IconUsers,
   IconShoppingCart,
   IconBoxSeam,
-  IconFileInvoice,
-  IconCreditCard,
-  IconTruckDelivery,
   IconDiscount,
-} from '@tabler/icons-react';
-import { Command, KanbanIcon } from 'lucide-react';
-import { type SidebarData } from '../types';
+  IconCategory,
+  IconCube,
+  IconPlane,
+  IconSettings,
+  IconLogout,
+  IconUserStar,
+  IconUsersGroup,
+  IconGift,
+  IconCubeSend,
+} from "@tabler/icons-react";
+import { Command } from "lucide-react";
+import { type SidebarData } from "../types";
 
 export const sidebarData: SidebarData = {
   user: {
-    name: 'satnaing',
-    email: 'satnaingdev@gmail.com',
-    avatar: '/avatars/shadcn.jpg',
+    name: "satnaing",
+    email: "satnaingdev@gmail.com",
+    avatar: "/avatars/shadcn.jpg",
   },
   stores: [
     {
-      name: 'Sasuai Store',
+      name: "Sasuai Store",
       logo: Command,
-      plan: 'Store Management',
+      plan: "Store Management",
     },
   ],
   navGroups: [
     {
-      title: 'General',
+      title: "General",
       items: [
         {
-          title: 'Dashboard',
-          url: '/',
+          title: "Dashboard",
+          url: "/",
           icon: IconLayoutDashboard,
         },
         {
-          title: 'Kanban',
-          url: '/kanban',
-          icon: KanbanIcon,
-        },
-        {
-          title: 'Tasks',
-          url: '/tasks',
-          icon: IconChecklist,
-        },
-        {
-          title: 'Apps',
-          url: '/apps',
-          icon: IconPackages,
-        },
-        {
-          title: 'Chats',
-          url: '/chats',
-          badge: '3',
-          icon: IconMessages,
-        },
-        {
-          title: 'Users',
-          url: '/users',
-          icon: IconUsers,
-        },
-        {
-          title: 'Products',
-          url: '/products',
-          icon: IconBoxSeam,
-        },
-        {
-          title: 'Orders',
-          url: '/orders',
+          title: "Orders",
+          url: "/orders",
           icon: IconShoppingCart,
         },
         {
-          title: 'Invoices',
-          url: '/invoices',
-          icon: IconFileInvoice,
+          title: "Task",
+          url: "/tasks",
+          icon: IconShoppingCart,
+        },
+      ],
+    },
+    {
+      title: "Product Management",
+      items: [
+        {
+          title: "Products",
+          url: "/products",
+          icon: IconBoxSeam,
         },
         {
-          title: 'Payments',
-          url: '/payments',
-          icon: IconCreditCard,
+          title: "Categories",
+          url: "/products/categories",
+          icon: IconCategory,
         },
         {
-          title: 'Shipping',
-          url: '/shipping',
-          icon: IconTruckDelivery,
+          title: "Stock",
+          url: "/products/stock",
+          icon: IconCubeSend,
         },
+      ],
+    },
+    {
+      title: "Discount Management",
+      items: [
         {
-          title: 'Discounts',
-          url: '/discounts',
+          title: "Discounts",
+          url: "/discounts",
           icon: IconDiscount,
         },
       ],
     },
     {
-      title: 'Other',
+      title: "Member Management",
       items: [
         {
-          title: 'Help Center',
-          url: '/help-center',
+          title: "Members",
+          url: "/members",
+          icon: IconUsersGroup,
+        },
+        {
+          title: "Plans",
+          url: "/members/plans",
+          icon: IconSettings,
+        },
+        {
+          title: "Reward",
+          url: "/members/reward",
+          icon: IconGift,
+        },
+      ],
+    },
+    {
+      title: "User Management",
+      items: [
+        {
+          title: "Users",
+          url: "/users",
+          icon: IconUsers,
+        },
+      ],
+    },
+    {
+      title: "Partner Platform",
+      items: [
+        {
+          title: "Blastify",
+          url: "www.blastify.tech",
+          icon: IconPlane,
+        },
+      ],
+    },
+    {
+      title: "Other",
+      items: [
+        {
+          title: "Help Center",
+          url: "/help-center",
           icon: IconHelp,
         },
       ],

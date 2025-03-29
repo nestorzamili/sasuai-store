@@ -6,8 +6,8 @@ import { ProfileDropdown } from "@/components/profile-dropdown";
 import { Search } from "@/components/search";
 import { ThemeSwitch } from "@/components/theme-switch";
 import ComingSoon from "@/components/coming-soon";
-import MainContent from "./_components/main-content";
-export default function ProductsPage() {
+
+export default function Categories() {
   return (
     <>
       <Header fixed>
@@ -17,8 +17,9 @@ export default function ProductsPage() {
           <ProfileDropdown />
         </div>
       </Header>
+
       <Main>
-        <MainContent />
+        <ComingSoon />
       </Main>
     </>
   );

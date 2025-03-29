@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { Github } from 'lucide-react';
+import { Github } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -8,12 +8,12 @@ import {
   SidebarHeader,
   SidebarRail,
   useSidebar,
-} from '@/components/ui/sidebar';
-import { NavGroup } from '@/components/layout/nav-group';
-import { StoreSwitcher } from '@/components/layout/store-switcher';
-import { sidebarData } from './data/sidebar-data';
-import { Footer } from '@/components/layout/footer';
-import Link from 'next/link';
+} from "@/components/ui/sidebar";
+import { NavGroup } from "@/components/layout/nav-group";
+import { StoreSwitcher } from "@/components/layout/store-switcher";
+import { sidebarData } from "./data/sidebar-data";
+import { Footer } from "@/components/layout/footer";
+import Link from "next/link";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { state } = useSidebar();
@@ -29,7 +29,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         ))}
       </SidebarContent>
       <SidebarFooter>
-        {state === 'collapsed' ? (
+        {state === "collapsed" ? (
           <Link
             href="https://github.com/nestorzamili"
             target="_blank"
