@@ -47,6 +47,11 @@ export const sidebarData: SidebarData = {
           url: "/orders",
           icon: IconShoppingCart,
         },
+        {
+          title: "Task",
+          url: "/tasks",
+          icon: IconShoppingCart,
+        },
       ],
     },
     {
