@@ -30,7 +30,7 @@ export async function middleware(request: NextRequest) {
       headers: {
         cookie: request.headers.get('cookie') || '', // Forward the cookies from the request
       },
-    }
+    },
   );
 
   if (session && isAuthPath) {
