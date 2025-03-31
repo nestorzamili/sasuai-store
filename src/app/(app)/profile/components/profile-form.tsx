@@ -36,7 +36,7 @@ const profileFormSchema = z.object({
     .trim()
     .min(3, { message: 'Display Name must be at least 3 characters.' })
     .max(20, {
-      message: 'Dispplay Name must not be longer than 20 characters.',
+      message: 'Display Name must not be longer than 20 characters.',
     }),
   username: z
     .string()
