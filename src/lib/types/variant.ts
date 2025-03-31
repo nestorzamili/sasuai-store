@@ -1,5 +1,3 @@
-import { Prisma } from '@prisma/client';
-
 export interface VariantWhereInput {
   some?: {
     unitId?: string;
@@ -9,7 +7,7 @@ export interface VariantWhereInput {
 export interface ProductVariantCreateInput {
   name: string;
   unitId: string;
-  price: Prisma.Decimal | number | string;
+  price: number | string;
   currentStock: number;
   skuCode?: string | null;
   product?: { connect: { id: string } };
@@ -18,7 +16,7 @@ export interface ProductVariantCreateInput {
 export interface ProductVariantUpdateInput {
   name?: string;
   unitId?: string;
-  price?: Prisma.Decimal | number | string;
+  price?: number | string;
   currentStock?: number | { increment: number } | { decrement: number };
   skuCode?: string | null;
 }

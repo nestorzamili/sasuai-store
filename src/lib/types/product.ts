@@ -1,7 +1,6 @@
 import { CategoryWhereInput } from './category';
 import { BrandWhereInput } from './brand';
 import { VariantWhereInput } from './variant';
-import { Prisma } from '@prisma/client';
 
 /**
  * Product-specific Prisma types
@@ -25,7 +24,7 @@ export interface ProductBatchCreateInput {
   expiryDate: Date;
   initialQuantity: number;
   remainingQuantity?: number;
-  buyPrice: Prisma.Decimal | number | string;
+  buyPrice: number | string;
   variant?: { connect: { id: string } };
   barcodes?: {
     create: {
