@@ -29,8 +29,26 @@ const profileFormSchema = z.object({
   name: z
     .string()
     .trim()
-    .min(2, { message: 'Name must be at least 2 characters.' })
+    .min(3, { message: 'Name must be at least 3 characters.' })
     .max(50, { message: 'Name must not be longer than 50 characters.' }),
+  displayUsername: z
+    .string()
+    .trim()
+    .min(3, { message: 'Display Name must be at least 3 characters.' })
+    .max(20, {
+      message: 'Display Name must not be longer than 20 characters.',
+    }),
+  username: z
+    .string()
+    .trim()
+    .min(5, { message: 'Username must be at least 5 characters.' })
+    .max(20, { message: 'Username must not be longer than 20 characters.' })
+    .regex(/^[a-z0-9_-]+$/, {
+      message:
+        'Username can only contain lowercase letters, numbers, underscores, and hyphens.',
+    })
+    .optional()
+    .nullable(),
   email: z.string({ required_error: 'Email is required' }).email(),
   image: z
     .string()
@@ -48,6 +66,8 @@ export default function ProfileForm() {
   const { user, isLoading: isAuthLoading, refreshSession } = useAuth();
   const [userProfile, setUserProfile] = useState<{
     name: string;
+    displayUsername?: string | null;
+    username?: string | null;
     email: string;
     image: string;
   } | null>(null);
@@ -56,6 +76,8 @@ export default function ProfileForm() {
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
       name: '',
+      displayUsername: '',
+      username: '',
       email: '',
       image: '',
     },
@@ -67,6 +89,8 @@ export default function ProfileForm() {
     const formValues = form.getValues();
     return (
       formValues.name !== userProfile.name ||
+      formValues.displayUsername !== userProfile.displayUsername ||
+      formValues.username !== userProfile.username ||
       formValues.email !== userProfile.email ||
       formValues.image !== userProfile.image
     );
@@ -76,6 +100,8 @@ export default function ProfileForm() {
     if (user) {
       const userValues = {
         name: user.name || '',
+        displayUsername: user.displayUsername || '',
+        username: user.username || '',
         email: user.email || '',
         image: user.image || '',
       };
@@ -89,8 +115,11 @@ export default function ProfileForm() {
     setIsUpdating(true);
 
     try {
+      // Update user profile with username
       await authClient.updateUser({
         name: data.name,
+        displayUsername: data.displayUsername,
+        username: data.username,
         image: data.image,
       });
 
@@ -103,6 +132,8 @@ export default function ProfileForm() {
         });
         setUserProfile({
           name: data.name,
+          displayUsername: data.displayUsername,
+          username: data.username,
           email: data.email,
           image: data.image || '',
         });
@@ -111,12 +142,30 @@ export default function ProfileForm() {
         router.refresh();
       }
     } catch (error: any) {
-      toast({
-        title: 'Update Failed',
-        description:
-          error?.message || 'There was a problem updating your profile.',
-        variant: 'destructive',
-      });
+      if (error?.message?.includes('username')) {
+        if (
+          error?.message?.includes('taken') ||
+          error?.message?.includes('exists')
+        ) {
+          form.setError('username', {
+            type: 'manual',
+            message: 'This username is already taken. Please try another one.',
+          });
+        } else {
+          form.setError('username', {
+            type: 'manual',
+            message:
+              error?.message || 'There was a problem updating your username.',
+          });
+        }
+      } else {
+        toast({
+          title: 'Update Failed',
+          description:
+            error?.message || 'There was a problem updating your profile.',
+          variant: 'destructive',
+        });
+      }
     } finally {
       setIsUpdating(false);
     }
@@ -195,12 +244,54 @@ export default function ProfileForm() {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Name</FormLabel>
+                  <FormLabel>Full Name</FormLabel>
                   <FormControl>
                     <Input placeholder="John Doe" {...field} />
                   </FormControl>
                   <FormDescription>
                     Your full name as displayed on your profile
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="displayUsername"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Display Name</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="John Doe"
+                      {...field}
+                      value={field.value || ''}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Your display name for your profile
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="username"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Username</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="johndoe"
+                      {...field}
+                      value={field.value || ''}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Your unique username for signing in
                   </FormDescription>
                   <FormMessage />
                 </FormItem>

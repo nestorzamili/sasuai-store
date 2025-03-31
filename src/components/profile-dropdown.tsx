@@ -39,8 +39,8 @@ export function ProfileDropdown() {
     );
   }
 
-  const userInitials = user.name
-    ? user.name
+  const userInitials = user.displayUsername
+    ? user.displayUsername
         .split(' ')
         .map((n) => n[0])
         .join('')
@@ -54,7 +54,10 @@ export function ProfileDropdown() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
           <Avatar className="h-8 w-8">
-            <AvatarImage src={userImage} alt={user.name || user.email} />
+            <AvatarImage
+              src={userImage}
+              alt={user.displayUsername || user.email}
+            />
             <AvatarFallback>{userInitials}</AvatarFallback>
           </Avatar>
         </Button>
@@ -63,7 +66,7 @@ export function ProfileDropdown() {
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium leading-none">
-              {user.name || 'User'}
+              {user.displayUsername || 'User'}
             </p>
             <p className="text-xs leading-none text-muted-foreground">
               {user.email}
