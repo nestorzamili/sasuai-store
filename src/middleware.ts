@@ -30,7 +30,7 @@ export async function middleware(request: NextRequest) {
       headers: {
         cookie: request.headers.get('cookie') || '', // Forward the cookies from the request
       },
-    }
+    },
   );
 
   if (session && isAuthPath) {
@@ -73,5 +73,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
 };
