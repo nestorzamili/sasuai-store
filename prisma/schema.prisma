@@ -1,3 +1,4 @@
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -24,7 +25,11 @@ model User {
   banReason     String?
   banExpires    DateTime?
 
+  username        String?
+  displayUsername String?
+
   @@map("user")
+  @@unique([username])
 }
 
 model Session {

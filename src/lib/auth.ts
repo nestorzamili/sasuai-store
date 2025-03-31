@@ -1,6 +1,6 @@
 import { betterAuth } from 'better-auth';
 import { nextCookies } from 'better-auth/next-js';
-import { admin, openAPI } from 'better-auth/plugins';
+import { admin, openAPI, username } from 'better-auth/plugins';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
 import prisma from './prisma';
 import { sendEmail } from '@/utils/nodemailer';
@@ -14,6 +14,30 @@ export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: 'postgresql',
   }),
+
+  plugins: [
+    nextCookies(),
+    admin(),
+    openAPI(),
+    username({
+      minUsernameLength: 5,
+      maxUsernameLength: 20,
+      usernameValidator: (username) => {
+        if (username === 'admin') {
+          return false;
+        }
+        return true;
+      },
+    }),
+  ],
+
+  session: {
+    cookieCache: {
+      enabled: true,
+      maxAge: 5 * 60, // Cache duration in seconds
+    },
+  },
+
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: true,
@@ -30,13 +54,7 @@ export const auth = betterAuth({
       }
     },
   },
-  plugins: [nextCookies(), admin(), openAPI()],
-  session: {
-    cookieCache: {
-      enabled: true,
-      maxAge: 5 * 60, // Cache duration in seconds
-    },
-  },
+
   emailVerification: {
     sendOnSignUp: true,
     autoSignInAfterVerification: true,
