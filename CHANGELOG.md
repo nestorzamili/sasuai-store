@@ -10,6 +10,33 @@
 
 - optimize states in users/tasks context (#71)
 
+## [1.9.0](https://github.com/nestorzamili/sasuai-store/compare/v1.8.0...v1.9.0) (2025-03-31)
+
+
+### Features
+
+* **api:** add product management endpoints and types ([393e8f9](https://github.com/nestorzamili/sasuai-store/commit/393e8f95153a4edcb89b27e173b2027239ab9505))
+* **auth:** add openAPI plugin to authentication setup ([6553e1b](https://github.com/nestorzamili/sasuai-store/commit/6553e1b0fae96e84a3fa1f46ac95ffb6ede6cd13))
+* **auth:** add username and displayUsername fields to User model ([a0c8c8b](https://github.com/nestorzamili/sasuai-store/commit/a0c8c8b984647693da531ec503edd8227a491e49))
+
+
+### Bug Fixes
+
+* **auth:** trim identifier before checking for email ([7939df2](https://github.com/nestorzamili/sasuai-store/commit/7939df260e328af02ce9c430dd498ef05aff7e92))
+* **middleware:** update matcher to exclude api routes ([10f845d](https://github.com/nestorzamili/sasuai-store/commit/10f845de065027fd5fec813f79f82f88b12a5a79))
+* **middleware:** update matcher to exclude API routes ([bc8afb8](https://github.com/nestorzamili/sasuai-store/commit/bc8afb89974be3a8a1b0161c9bea2897bd46c0a4))
+* **profile:** correct typo in display name validation message ([b47c2ce](https://github.com/nestorzamili/sasuai-store/commit/b47c2cea1f1695fcf701d9994065dee831c2ea47))
+
+
+### Chores
+
+* **package:** update better-auth to version 1.2.5 ([d55b06d](https://github.com/nestorzamili/sasuai-store/commit/d55b06db20d3f297aec8dea29c2d497bac08b5e8))
+
+
+### Code Refactoring
+
+* **types:** remove Prisma.Decimal type from product and variant price fields ([8bc09a3](https://github.com/nestorzamili/sasuai-store/commit/8bc09a370e0f8c7bd9c3a7f11152f1737ddc4ad6))
+
 ## [1.8.0](https://github.com/nestorzamili/sasuai-store/compare/v1.7.0...v1.8.0) (2025-03-29)
 
 
