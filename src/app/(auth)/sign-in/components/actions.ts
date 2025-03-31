@@ -25,3 +25,27 @@ export async function signInWithEmail(email: string, password: string) {
     };
   }
 }
+
+export async function signInWithUsername(username: string, password: string) {
+  try {
+    await auth.api.signInUsername({
+      body: {
+        username,
+        password,
+      },
+    });
+
+    return {
+      success: true,
+    };
+  } catch (error: any) {
+    let statusCode = error?.statusCode || error?.status;
+
+    return {
+      success: false,
+      error: error,
+      statusCode: statusCode,
+      errorMessage: error.message,
+    };
+  }
+}

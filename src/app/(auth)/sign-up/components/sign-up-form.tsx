@@ -4,7 +4,6 @@ import { HTMLAttributes, useState, useMemo } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { IconBrandFacebook, IconBrandGithub } from '@tabler/icons-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -33,6 +32,15 @@ const formSchema = z
       .max(50, { message: 'Name must not exceed 50 characters' })
       .regex(/^[a-zA-Z\s'-]+$/, {
         message: 'Name contains invalid characters',
+      }),
+    username: z
+      .string()
+      .trim()
+      .min(5, { message: 'Username must be at least 5 characters' })
+      .max(20, { message: 'Username must not exceed 20 characters' })
+      .regex(/^[a-zA-Z0-9_-]+$/, {
+        message:
+          'Username can only contain letters, numbers, dashes, and underscores',
       }),
     email: z
       .string()
@@ -65,6 +73,7 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: '',
+      username: '',
       email: '',
       password: '',
       confirmPassword: '',
@@ -102,11 +111,12 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
     setIsLoading(true);
     setAuthState({ message: null, isSuccess: false });
 
-    const { name, email, password } = values;
+    const { name, username, email, password } = values;
 
     try {
-      const { data, error } = await authClient.signUp.email({
+      const { error } = await authClient.signUp.email({
         name,
+        username,
         email,
         password,
         callbackURL: '/sign-in',
@@ -166,9 +176,22 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
               name="name"
               render={({ field }) => (
                 <FormItem className="space-y-2">
-                  <FormLabel>Name</FormLabel>
+                  <FormLabel>Full Name</FormLabel>
                   <FormControl>
                     <Input placeholder="John Doe" {...field} />
+                  </FormControl>
+                  <FormMessage className="text-xs font-medium text-destructive" />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="username"
+              render={({ field }) => (
+                <FormItem className="space-y-2">
+                  <FormLabel>Username</FormLabel>
+                  <FormControl>
+                    <Input placeholder="johndoe" {...field} />
                   </FormControl>
                   <FormMessage className="text-xs font-medium text-destructive" />
                 </FormItem>
