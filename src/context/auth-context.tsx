@@ -11,7 +11,6 @@ import { authClient } from '@/lib/auth-client';
 
 export interface User {
   name?: string | null;
-  displayUsername?: string | null;
   username?: string | null;
   email: string;
   image?: string | null;

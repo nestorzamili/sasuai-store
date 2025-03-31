@@ -31,13 +31,6 @@ const profileFormSchema = z.object({
     .trim()
     .min(3, { message: 'Name must be at least 3 characters.' })
     .max(50, { message: 'Name must not be longer than 50 characters.' }),
-  displayUsername: z
-    .string()
-    .trim()
-    .min(3, { message: 'Display Name must be at least 3 characters.' })
-    .max(20, {
-      message: 'Display Name must not be longer than 20 characters.',
-    }),
   username: z
     .string()
     .trim()
@@ -66,7 +59,6 @@ export default function ProfileForm() {
   const { user, isLoading: isAuthLoading, refreshSession } = useAuth();
   const [userProfile, setUserProfile] = useState<{
     name: string;
-    displayUsername?: string | null;
     username?: string | null;
     email: string;
     image: string;
@@ -76,7 +68,6 @@ export default function ProfileForm() {
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
       name: '',
-      displayUsername: '',
       username: '',
       email: '',
       image: '',
@@ -89,7 +80,6 @@ export default function ProfileForm() {
     const formValues = form.getValues();
     return (
       formValues.name !== userProfile.name ||
-      formValues.displayUsername !== userProfile.displayUsername ||
       formValues.username !== userProfile.username ||
       formValues.email !== userProfile.email ||
       formValues.image !== userProfile.image
@@ -100,7 +90,6 @@ export default function ProfileForm() {
     if (user) {
       const userValues = {
         name: user.name || '',
-        displayUsername: user.displayUsername || '',
         username: user.username || '',
         email: user.email || '',
         image: user.image || '',
@@ -118,7 +107,6 @@ export default function ProfileForm() {
       // Update user profile with username
       await authClient.updateUser({
         name: data.name,
-        displayUsername: data.displayUsername,
         username: data.username,
         image: data.image,
       });
@@ -132,7 +120,6 @@ export default function ProfileForm() {
         });
         setUserProfile({
           name: data.name,
-          displayUsername: data.displayUsername,
           username: data.username,
           email: data.email,
           image: data.image || '',
@@ -244,33 +231,12 @@ export default function ProfileForm() {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Full Name</FormLabel>
+                  <FormLabel>Name</FormLabel>
                   <FormControl>
                     <Input placeholder="John Doe" {...field} />
                   </FormControl>
                   <FormDescription>
-                    Your full name as displayed on your profile
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="displayUsername"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Display Name</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="John Doe"
-                      {...field}
-                      value={field.value || ''}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Your display name for your profile
+                    Your name as displayed on your profile
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
