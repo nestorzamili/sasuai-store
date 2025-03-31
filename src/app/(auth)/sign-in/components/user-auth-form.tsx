@@ -98,7 +98,8 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
 
     try {
       // Check if identifier is email (contains @) or username
-      const isEmail = values.identifier.includes('@');
+      const trimmedIdentifier = values.identifier.trim();
+      const isEmail = trimmedIdentifier.includes('@');
 
       let result;
       if (isEmail) {
