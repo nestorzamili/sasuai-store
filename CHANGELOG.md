@@ -10,6 +10,13 @@
 
 - optimize states in users/tasks context (#71)
 
+## [1.9.1](https://github.com/nestorzamili/sasuai-store/compare/v1.9.0...v1.9.1) (2025-03-31)
+
+
+### Code Refactoring
+
+* **profile:** remove displayUsername field and update related components ([460a9fe](https://github.com/nestorzamili/sasuai-store/commit/460a9fe3a6e1431a8812ba195742d19602fd5e05))
+
 ## [1.9.0](https://github.com/nestorzamili/sasuai-store/compare/v1.8.0...v1.9.0) (2025-03-31)
 
 
