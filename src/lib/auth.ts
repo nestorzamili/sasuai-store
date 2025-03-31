@@ -1,6 +1,6 @@
 import { betterAuth } from 'better-auth';
 import { nextCookies } from 'better-auth/next-js';
-import { admin } from 'better-auth/plugins';
+import { admin, openAPI } from 'better-auth/plugins';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
 import prisma from './prisma';
 import { sendEmail } from '@/utils/nodemailer';
@@ -30,7 +30,7 @@ export const auth = betterAuth({
       }
     },
   },
-  plugins: [nextCookies(), admin()],
+  plugins: [nextCookies(), admin(), openAPI()],
   session: {
     cookieCache: {
       enabled: true,
