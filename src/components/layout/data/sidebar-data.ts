@@ -124,7 +124,7 @@ export const sidebarData: SidebarData = {
       items: [
         {
           title: 'Blastify',
-          url: 'www.blastify.tech',
+          url: 'https://blastify.tech',
           icon: IconPlane,
         },
       ],
