@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import {
   IconHelp,
@@ -16,120 +16,125 @@ import {
   IconUsersGroup,
   IconGift,
   IconCubeSend,
-} from "@tabler/icons-react";
-import { Command } from "lucide-react";
-import { type SidebarData } from "../types";
+} from '@tabler/icons-react';
+import { Command } from 'lucide-react';
+import { type SidebarData } from '../types';
 
 export const sidebarData: SidebarData = {
   user: {
-    name: "satnaing",
-    email: "satnaingdev@gmail.com",
-    avatar: "/avatars/shadcn.jpg",
+    name: 'satnaing',
+    email: 'satnaingdev@gmail.com',
+    avatar: '/avatars/shadcn.jpg',
   },
   stores: [
     {
-      name: "Sasuai Store",
+      name: 'Sasuai Store',
       logo: Command,
-      plan: "Store Management",
+      plan: 'Store Management',
     },
   ],
   navGroups: [
     {
-      title: "General",
+      title: 'General',
       items: [
         {
-          title: "Dashboard",
-          url: "/",
+          title: 'Dashboard',
+          url: '/',
           icon: IconLayoutDashboard,
         },
         {
-          title: "Orders",
-          url: "/orders",
+          title: 'Orders',
+          url: '/orders',
           icon: IconShoppingCart,
         },
         {
-          title: "Task",
-          url: "/tasks",
+          title: 'Task',
+          url: '/tasks',
           icon: IconShoppingCart,
         },
       ],
     },
     {
-      title: "Product Management",
+      title: 'Product Management',
       items: [
         {
-          title: "Products",
-          url: "/products",
+          title: 'Products',
+          url: '/products',
           icon: IconBoxSeam,
         },
         {
-          title: "Categories",
-          url: "/products/categories",
+          title: 'Categories',
+          url: '/products/categories',
           icon: IconCategory,
         },
         {
-          title: "Stock",
-          url: "/products/stock",
+          title: 'Stock',
+          url: '/products/stock',
           icon: IconCubeSend,
+        },
+        {
+          title: 'Brands',
+          url: '/products/brands',
+          icon: IconCube,
         },
       ],
     },
     {
-      title: "Discount Management",
+      title: 'Discount Management',
       items: [
         {
-          title: "Discounts",
-          url: "/discounts",
+          title: 'Discounts',
+          url: '/discounts',
           icon: IconDiscount,
         },
       ],
     },
     {
-      title: "Member Management",
+      title: 'Member Management',
       items: [
         {
-          title: "Members",
-          url: "/members",
+          title: 'Members',
+          url: '/members',
           icon: IconUsersGroup,
         },
         {
-          title: "Plans",
-          url: "/members/plans",
+          title: 'Plans',
+          url: '/members/plans',
           icon: IconSettings,
         },
         {
-          title: "Reward",
-          url: "/members/reward",
+          title: 'Reward',
+          url: '/members/reward',
           icon: IconGift,
         },
       ],
     },
     {
-      title: "User Management",
+      title: 'User Management',
       items: [
         {
-          title: "Users",
-          url: "/users",
+          title: 'Users',
+          url: '/users',
           icon: IconUsers,
         },
       ],
     },
     {
-      title: "Partner Platform",
+      title: 'Partner Platform',
       items: [
         {
-          title: "Blastify",
-          url: "www.blastify.tech",
+          title: 'Blastify',
+          url: 'www.blastify.tech',
           icon: IconPlane,
         },
       ],
     },
     {
-      title: "Other",
+      title: 'Other',
       items: [
         {
-          title: "Help Center",
-          url: "/help-center",
+          title: 'Help Center',
+          url: '/help-center',
           icon: IconHelp,
         },
       ],
