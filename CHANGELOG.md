@@ -10,6 +10,23 @@
 
 - optimize states in users/tasks context (#71)
 
+## [1.10.0](https://github.com/nestorzamili/sasuai-store/compare/v1.9.1...v1.10.0) (2025-04-01)
+
+
+### Features
+
+* **brands:** implement brands management functionality ([5d4bdeb](https://github.com/nestorzamili/sasuai-store/commit/5d4bdeb5d0577bdcb7a95539777308daa43bb144))
+
+
+### Bug Fixes
+
+* **sidebar:** update Blastify URL to include protocol ([4735c89](https://github.com/nestorzamili/sasuai-store/commit/4735c89f4543b50fd914f65ba252d436c36495ed))
+
+
+### Code Refactoring
+
+* **prisma:** update mapping for User and UnitConversion models ([330d279](https://github.com/nestorzamili/sasuai-store/commit/330d279f2a5792d209d91d1c4a5b5087c606c4cd))
+
 ## [1.9.1](https://github.com/nestorzamili/sasuai-store/compare/v1.9.0...v1.9.1) (2025-03-31)
 
 
