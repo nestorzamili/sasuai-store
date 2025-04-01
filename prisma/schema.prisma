@@ -1,4 +1,3 @@
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -28,8 +27,8 @@ model User {
   username        String?
   displayUsername String?
 
-  @@map("user")
   @@unique([username])
+  @@map("user")
 }
 
 model Session {
@@ -126,7 +125,7 @@ model UnitConversion {
   createdAt        DateTime @default(now()) @db.Timestamptz
   updatedAt        DateTime @updatedAt @db.Timestamptz
 
-  @@map("unit_conversions")
+  @@map("unit_conversion")
 }
 
 model Product {
