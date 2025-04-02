@@ -38,6 +38,7 @@ import {
 import { DataTablePagination } from '@/components/ui/data-table-pagination';
 import { Skeleton } from '@/components/ui/skeleton';
 import { BrandDeleteDialog } from './brand-delete-dialog';
+import { Input } from '@/components/ui/input';
 
 // Define the brand type with count
 interface BrandWithCount extends Brand {
@@ -59,16 +60,30 @@ export function BrandTable({
   onEdit,
   onRefresh,
 }: BrandTableProps) {
+  // State for deletion dialog
   const [selectedBrandForDelete, setSelectedBrandForDelete] =
     useState<BrandWithCount | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [globalFilter, setGlobalFilter] = useState('');
 
+  // Table state
+  const [sorting, setSorting] = React.useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+    [],
+  );
+  const [columnVisibility, setColumnVisibility] =
+    React.useState<VisibilityState>({});
+  const [rowSelection, setRowSelection] = React.useState({});
+
+  // Handlers
   const handleDeleteClick = (brand: BrandWithCount) => {
     setSelectedBrandForDelete(brand);
     setIsDeleteDialogOpen(true);
   };
 
+  // Define columns
   const columns: ColumnDef<BrandWithCount>[] = [
+    // Selection column
     {
       id: 'select',
       header: ({ table }) => (
@@ -91,41 +106,41 @@ export function BrandTable({
       enableSorting: false,
       enableHiding: false,
     },
+
+    // Name column
     {
       accessorKey: 'name',
-      header: ({ column }) => {
-        return (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-          >
-            Brand Name
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
-        );
-      },
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+        >
+          Brand Name
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      ),
       cell: ({ row }) => (
         <div className="font-medium">{row.getValue('name')}</div>
       ),
     },
+
+    // Products count column
     {
       id: 'productsCount',
       header: 'Products Count',
-      cell: ({ row }) => {
-        const brand = row.original;
-        return (
-          <Badge variant="outline" className="text-xs">
-            {brand._count?.products || 0} products
-          </Badge>
-        );
-      },
+      cell: ({ row }) => (
+        <Badge variant="outline" className="text-xs">
+          {row.original._count?.products || 0} products
+        </Badge>
+      ),
     },
+
+    // Actions column
     {
       id: 'actions',
-      enableHiding: false,
+      header: 'Actions',
       cell: ({ row }) => {
         const brand = row.original;
-
         return (
           <div className="text-right">
             <DropdownMenu>
@@ -158,18 +173,11 @@ export function BrandTable({
     },
   ];
 
-  // Table state and configuration
-  const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    [],
-  );
-  const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({});
-  const [rowSelection, setRowSelection] = React.useState({});
-
+  // Create table instance
   const table = useReactTable({
     data,
     columns,
+    onGlobalFilterChange: setGlobalFilter,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
@@ -183,16 +191,27 @@ export function BrandTable({
       columnFilters,
       columnVisibility,
       rowSelection,
+      globalFilter,
     },
   });
 
+  // Show skeleton while loading
   if (isLoading) {
     return <BrandTableSkeleton />;
   }
 
   return (
     <>
+      {/* Search input */}
       <div className="space-y-4">
+        <Input
+          placeholder="Search brands..."
+          value={globalFilter}
+          onChange={(e) => setGlobalFilter(e.target.value)}
+          className="max-w-sm"
+        />
+
+        {/* Table */}
         <div className="rounded-md border">
           <Table>
             <TableHeader>
@@ -241,11 +260,14 @@ export function BrandTable({
             </TableBody>
           </Table>
         </div>
+
+        {/* Pagination */}
         <div className="mt-4">
           <DataTablePagination table={table} />
         </div>
       </div>
 
+      {/* Delete dialog */}
       {selectedBrandForDelete && (
         <BrandDeleteDialog
           open={isDeleteDialogOpen}
@@ -258,14 +280,17 @@ export function BrandTable({
   );
 }
 
+// Skeleton component for loading state
 function BrandTableSkeleton() {
   return (
     <div className="space-y-4">
+      <div>
+        <Skeleton className="h-10 w-[384px]" />
+      </div>
       <div className="rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
-              {/* Header cells for column headings */}
               <TableHead className="w-[40px]">
                 <Skeleton className="h-6 w-6" />
               </TableHead>
@@ -281,7 +306,6 @@ function BrandTableSkeleton() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {/* Generate 5 skeleton rows */}
             {Array.from({ length: 5 }).map((_, index) => (
               <TableRow key={index}>
                 <TableCell>
