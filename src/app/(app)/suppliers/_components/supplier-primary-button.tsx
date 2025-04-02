@@ -1,17 +1,13 @@
 'use client';
 
 import SupplierFormDialog from './supplier-form-dialog';
-import { Supplier } from '@prisma/client';
+import { SupplierFormInitialData } from '@/lib/types/supplier';
 
 // Define props type
 interface SupplierPrimaryButtonProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
-  initialData?: Supplier & {
-    _count?: {
-      stockIns: number;
-    };
-  };
+  initialData?: SupplierFormInitialData;
   onSuccess?: () => void;
 }
 

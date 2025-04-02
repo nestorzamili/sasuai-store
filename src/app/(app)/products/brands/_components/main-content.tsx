@@ -2,16 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { getAllBrandsWithCount } from '../action';
-import { Brand } from '@prisma/client';
+import { BrandWithCount } from '@/lib/types/brand';
 import BrandPrimaryButton from './brand-primary-button';
 import { BrandTable } from './brand-table';
-
-// Define the brand type with count
-interface BrandWithCount extends Brand {
-  _count?: {
-    products: number;
-  };
-}
 
 export default function MainContent() {
   const [isLoading, setIsLoading] = useState(true);

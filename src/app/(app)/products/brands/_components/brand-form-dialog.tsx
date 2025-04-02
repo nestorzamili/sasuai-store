@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
-import { Brand } from '@prisma/client';
+import { BrandWithCount } from '@/lib/types/brand';
 import {
   Dialog,
   DialogContent,
@@ -35,15 +35,10 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-// Make sure this interface has a consistent definition with the other components
 interface BrandFormDialogProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
-  initialData?: Brand & {
-    _count?: {
-      products: number;
-    };
-  };
+  initialData?: BrandWithCount;
   onSuccess?: () => void;
 }
 
