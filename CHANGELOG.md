@@ -10,6 +10,26 @@
 
 - optimize states in users/tasks context (#71)
 
+## [1.11.0](https://github.com/nestorzamili/sasuai-store/compare/v1.10.0...v1.11.0) (2025-04-02)
+
+
+### Features
+
+* **brands:** enhance brand management table with search functionality ([5745202](https://github.com/nestorzamili/sasuai-store/commit/5745202b9acb43f3cbb975d08803e8f2c525ac40))
+* **categories:** implement category management features ([1bb01e4](https://github.com/nestorzamili/sasuai-store/commit/1bb01e4ce211bf64a0324495393dff1bf9bd5779))
+* **sidebar:** update sidebar icons and add suppliers section ([119dd85](https://github.com/nestorzamili/sasuai-store/commit/119dd856835767d3a399002603dc4e2011f1081f))
+* **suppliers:** implement supplier management features ([6879a0d](https://github.com/nestorzamili/sasuai-store/commit/6879a0d04d39b6075a600c0e5a50b0ce428d859c))
+
+
+### Chores
+
+* **api:** remove deprecated API routes ([0e5ea53](https://github.com/nestorzamili/sasuai-store/commit/0e5ea535c7e2c68b0064589433cacdea2a07e31c))
+
+
+### Code Refactoring
+
+* **tables:** rename globalFilter to searchQuery for clarity ([667204c](https://github.com/nestorzamili/sasuai-store/commit/667204caba289c51abcd2e4625461f5aab4ba3f5))
+
 ## [1.10.0](https://github.com/nestorzamili/sasuai-store/compare/v1.9.1...v1.10.0) (2025-04-01)
 
 
