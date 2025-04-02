@@ -8,11 +8,11 @@ import {
   IconBoxSeam,
   IconDiscount,
   IconCategory,
-  IconCube,
+  IconTruck,
   IconPlane,
-  IconSettings,
-  IconLogout,
-  IconUserStar,
+  IconPackage,
+  IconBuildingStore,
+  IconListCheck,
   IconUsersGroup,
   IconGift,
   IconCubeSend,
@@ -22,8 +22,8 @@ import { type SidebarData } from '../types';
 
 export const sidebarData: SidebarData = {
   user: {
-    name: 'satnaing',
-    email: 'satnaingdev@gmail.com',
+    name: 'sasuai',
+    email: 'admin@sasuai.com',
     avatar: '/avatars/shadcn.jpg',
   },
   stores: [
@@ -50,7 +50,12 @@ export const sidebarData: SidebarData = {
         {
           title: 'Task',
           url: '/tasks',
-          icon: IconShoppingCart,
+          icon: IconCubeSend,
+        },
+        {
+          title: 'Suppliers',
+          url: '/suppliers',
+          icon: IconTruck,
         },
       ],
     },
@@ -70,12 +75,12 @@ export const sidebarData: SidebarData = {
         {
           title: 'Stock',
           url: '/products/stock',
-          icon: IconCubeSend,
+          icon: IconPackage,
         },
         {
           title: 'Brands',
           url: '/products/brands',
-          icon: IconCube,
+          icon: IconBuildingStore,
         },
       ],
     },
@@ -100,7 +105,7 @@ export const sidebarData: SidebarData = {
         {
           title: 'Plans',
           url: '/members/plans',
-          icon: IconSettings,
+          icon: IconListCheck,
         },
         {
           title: 'Reward',

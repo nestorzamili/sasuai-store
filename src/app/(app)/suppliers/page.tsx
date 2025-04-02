@@ -7,7 +7,7 @@ import { Search } from '@/components/search';
 import { ThemeSwitch } from '@/components/theme-switch';
 import MainContent from './_components/main-content';
 
-export default function CategoriesPage() {
+export default function SuppliersPage() {
   return (
     <>
       <Header fixed>
