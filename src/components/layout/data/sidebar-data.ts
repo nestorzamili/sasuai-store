@@ -11,8 +11,6 @@ import {
   IconCube,
   IconPlane,
   IconSettings,
-  IconLogout,
-  IconUserStar,
   IconUsersGroup,
   IconGift,
   IconCubeSend,
@@ -22,8 +20,8 @@ import { type SidebarData } from '../types';
 
 export const sidebarData: SidebarData = {
   user: {
-    name: 'satnaing',
-    email: 'satnaingdev@gmail.com',
+    name: 'sasuai',
+    email: 'admin@sasuai.com',
     avatar: '/avatars/shadcn.jpg',
   },
   stores: [
