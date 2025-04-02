@@ -5,7 +5,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
-import { Supplier } from '@prisma/client';
 import {
   Dialog,
   DialogContent,
@@ -27,6 +26,7 @@ import { Input } from '@/components/ui/input';
 import { toast } from '@/hooks/use-toast';
 import { IconPlus } from '@tabler/icons-react';
 import { createSupplier, updateSupplier } from '../action';
+import { SupplierFormInitialData } from '@/lib/types/supplier';
 
 // Form schema for supplier
 const formSchema = z.object({
@@ -39,11 +39,7 @@ type FormValues = z.infer<typeof formSchema>;
 interface SupplierFormDialogProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
-  initialData?: Supplier & {
-    _count?: {
-      stockIns: number;
-    };
-  };
+  initialData?: SupplierFormInitialData;
   onSuccess?: () => void;
 }
 

@@ -5,7 +5,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
-import { CategoryWithCount } from '@/lib/types/category';
 import {
   Dialog,
   DialogContent,
@@ -24,42 +23,41 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
 import { IconPlus } from '@tabler/icons-react';
-import { createCategory, updateCategory } from '../action';
+import { UnitWithCounts } from '@/lib/types/unit';
+import { createUnit, updateUnit } from '../action';
 
-// Update the form schema to include description
+// Form schema for unit
 const formSchema = z.object({
-  name: z.string().min(1, 'Category name is required'),
-  description: z.string().optional(),
+  name: z.string().min(1, 'Unit name is required'),
+  symbol: z.string().min(1, 'Unit symbol is required'),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
-// Make sure this interface has a consistent definition with the other components
-interface CategoryFormDialogProps {
+interface UnitFormDialogProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
-  initialData?: CategoryWithCount;
+  initialData?: UnitWithCounts;
   onSuccess?: () => void;
 }
 
-export default function CategoryFormDialog({
+export default function UnitFormDialog({
   open,
   onOpenChange,
   initialData,
   onSuccess,
-}: CategoryFormDialogProps) {
+}: UnitFormDialogProps) {
   const [loading, setLoading] = useState(false);
   const isEditing = Boolean(initialData?.id);
 
-  // Initialize the form with description
+  // Initialize the form
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: initialData?.name || '',
-      description: initialData?.description || '',
+      symbol: initialData?.symbol || '',
     },
   });
 
@@ -68,38 +66,38 @@ export default function CategoryFormDialog({
     if (initialData) {
       form.reset({
         name: initialData.name || '',
-        description: initialData.description || '',
+        symbol: initialData.symbol || '',
       });
     } else {
       form.reset({
         name: '',
-        description: '',
+        symbol: '',
       });
     }
   }, [form, initialData]);
 
-  // Handle form submission with description
+  // Handle form submission
   const onSubmit = async (values: FormValues) => {
     try {
       setLoading(true);
 
       const result =
         isEditing && initialData
-          ? await updateCategory(initialData.id, {
+          ? await updateUnit(initialData.id, {
               name: values.name,
-              description: values.description,
+              symbol: values.symbol,
             })
-          : await createCategory({
+          : await createUnit({
               name: values.name,
-              description: values.description,
+              symbol: values.symbol,
             });
 
       if (result.success) {
         toast({
-          title: isEditing ? 'Category updated' : 'Category created',
+          title: isEditing ? 'Unit updated' : 'Unit created',
           description: isEditing
-            ? 'Category has been updated successfully'
-            : 'New category has been created',
+            ? 'Unit has been updated successfully'
+            : 'New unit has been created',
         });
 
         form.reset();
@@ -132,13 +130,11 @@ export default function CategoryFormDialog({
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>
-            {isEditing ? 'Edit Category' : 'Create Category'}
-          </DialogTitle>
+          <DialogTitle>{isEditing ? 'Edit Unit' : 'Create Unit'}</DialogTitle>
           <DialogDescription>
             {isEditing
-              ? 'Edit the category information below'
-              : 'Add a new category to your product catalog'}
+              ? 'Edit the measurement unit information below'
+              : 'Add a new measurement unit to your inventory system'}
           </DialogDescription>
         </DialogHeader>
 
@@ -149,9 +145,12 @@ export default function CategoryFormDialog({
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Category Name</FormLabel>
+                  <FormLabel>Unit Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter category name" {...field} />
+                    <Input
+                      placeholder="Enter unit name (e.g., Kilogram)"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -160,14 +159,13 @@ export default function CategoryFormDialog({
 
             <FormField
               control={form.control}
-              name="description"
+              name="symbol"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description</FormLabel>
+                  <FormLabel>Symbol</FormLabel>
                   <FormControl>
-                    <Textarea
-                      placeholder="Enter category description (optional)"
-                      className="resize-none"
+                    <Input
+                      placeholder="Enter unit symbol (e.g., kg)"
                       {...field}
                     />
                   </FormControl>
@@ -188,7 +186,7 @@ export default function CategoryFormDialog({
                 {loading ? (
                   <>{isEditing ? 'Updating...' : 'Creating...'}</>
                 ) : (
-                  <>{isEditing ? 'Update Category' : 'Create Category'}</>
+                  <>{isEditing ? 'Update Unit' : 'Create Unit'}</>
                 )}
               </Button>
             </DialogFooter>

@@ -5,14 +5,8 @@ import { IconAlertTriangle } from '@tabler/icons-react';
 import { toast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ConfirmDialog } from '@/components/confirm-dialog';
-import { Category } from '@prisma/client';
+import { CategoryWithCount } from '@/lib/types/category';
 import { deleteCategory } from '../action';
-
-interface CategoryWithCount extends Category {
-  _count?: {
-    products: number;
-  };
-}
 
 interface Props {
   open: boolean;
