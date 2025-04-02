@@ -26,6 +26,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { UnitWithCounts } from '@/lib/types/unit';
 import {
   Table,
   TableBody,
@@ -36,26 +37,25 @@ import {
 } from '@/components/ui/table';
 import { DataTablePagination } from '@/components/ui/data-table-pagination';
 import { Skeleton } from '@/components/ui/skeleton';
-import { SupplierDeleteDialog } from './supplier-delete-dialog';
+import { UnitDeleteDialog } from './unit-delete-dialog';
 import { Input } from '@/components/ui/input';
-import { SupplierWithCount } from '@/lib/types/supplier';
 
-interface SupplierTableProps {
-  data: SupplierWithCount[];
+interface UnitTableProps {
+  data: UnitWithCounts[];
   isLoading?: boolean;
-  onEdit?: (supplier: SupplierWithCount) => void;
+  onEdit?: (unit: UnitWithCounts) => void;
   onRefresh?: () => void;
 }
 
-export function SupplierTable({
+export function UnitTable({
   data,
   isLoading = false,
   onEdit,
   onRefresh,
-}: SupplierTableProps) {
+}: UnitTableProps) {
   // State for deletion dialog
-  const [selectedSupplierForDelete, setSelectedSupplierForDelete] =
-    useState<SupplierWithCount | null>(null);
+  const [selectedUnitForDelete, setSelectedUnitForDelete] =
+    useState<UnitWithCounts | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -68,14 +68,24 @@ export function SupplierTable({
     React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
 
+  // Calculate if a unit is in use
+  const isUnitInUse = (unit: UnitWithCounts): boolean => {
+    return !!(
+      (unit._count?.productVariants && unit._count.productVariants > 0) ||
+      (unit._count?.stockIns && unit._count.stockIns > 0) ||
+      (unit._count?.stockOuts && unit._count.stockOuts > 0) ||
+      (unit._count?.transactionItems && unit._count.transactionItems > 0)
+    );
+  };
+
   // Handlers
-  const handleDeleteClick = (supplier: SupplierWithCount) => {
-    setSelectedSupplierForDelete(supplier);
+  const handleDeleteClick = (unit: UnitWithCounts) => {
+    setSelectedUnitForDelete(unit);
     setIsDeleteDialogOpen(true);
   };
 
   // Define columns
-  const columns: ColumnDef<SupplierWithCount>[] = [
+  const columns: ColumnDef<UnitWithCounts>[] = [
     // Selection column
     {
       id: 'select',
@@ -108,7 +118,7 @@ export function SupplierTable({
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
         >
-          Supplier Name
+          Unit Name
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       ),
@@ -117,35 +127,79 @@ export function SupplierTable({
       ),
     },
 
-    // Contact column
+    // Symbol column
     {
-      accessorKey: 'contact',
-      header: 'Contact',
+      accessorKey: 'symbol',
+      header: 'Symbol',
+      cell: ({ row }) => (
+        <div className="font-mono">{row.getValue('symbol')}</div>
+      ),
+    },
+
+    // Usage column
+    {
+      id: 'usage',
+      header: 'Usage',
       cell: ({ row }) => {
-        const contact = row.getValue('contact') as string;
+        const unit = row.original;
+        const counts = unit._count || {};
+        const productVariants = counts.productVariants || 0;
+        const stockIns = counts.stockIns || 0;
+        const stockOuts = counts.stockOuts || 0;
+        const transactions = counts.transactionItems || 0;
+
         return (
-          <div className="max-w-[700px] truncate" title={contact || ''}>
-            {contact ? (
-              contact
-            ) : (
-              <span className="text-muted-foreground italic">
-                No contact info
-              </span>
+          <div className="flex flex-wrap gap-1">
+            {productVariants > 0 && (
+              <Badge variant="outline" className="text-xs">
+                {productVariants} products
+              </Badge>
             )}
+            {stockIns > 0 && (
+              <Badge variant="outline" className="text-xs">
+                {stockIns} stock-ins
+              </Badge>
+            )}
+            {stockOuts > 0 && (
+              <Badge variant="outline" className="text-xs">
+                {stockOuts} stock-outs
+              </Badge>
+            )}
+            {transactions > 0 && (
+              <Badge variant="outline" className="text-xs">
+                {transactions} transactions
+              </Badge>
+            )}
+            {productVariants === 0 &&
+              stockIns === 0 &&
+              stockOuts === 0 &&
+              transactions === 0 && (
+                <span className="text-muted-foreground italic text-xs">
+                  Not in use
+                </span>
+              )}
           </div>
         );
       },
     },
 
-    // Stock-ins count column
+    // Conversions column
     {
-      id: 'stockInsCount',
-      header: 'Stock-Ins Count',
-      cell: ({ row }) => (
-        <Badge variant="outline" className="text-xs">
-          {row.original._count?.stockIns || 0} stock-ins
-        </Badge>
-      ),
+      id: 'conversions',
+      header: 'Conversions',
+      cell: ({ row }) => {
+        const unit = row.original;
+        const counts = unit._count || {};
+        const fromConversions = counts.fromUnitConversions || 0;
+        const toConversions = counts.toUnitConversions || 0;
+        const totalConversions = fromConversions + toConversions;
+
+        return (
+          <Badge variant="outline" className="text-xs">
+            {totalConversions} conversions
+          </Badge>
+        );
+      },
     },
 
     // Actions column
@@ -153,7 +207,7 @@ export function SupplierTable({
       id: 'actions',
       header: 'Actions',
       cell: ({ row }) => {
-        const supplier = row.original;
+        const unit = row.original;
         return (
           <div className="text-right">
             <DropdownMenu>
@@ -168,13 +222,14 @@ export function SupplierTable({
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   className="flex justify-between cursor-pointer"
-                  onClick={() => onEdit?.(supplier)}
+                  onClick={() => onEdit?.(unit)}
                 >
                   Edit <IconEdit className="h-4 w-4" />
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="flex justify-between cursor-pointer text-destructive focus:text-destructive"
-                  onClick={() => handleDeleteClick(supplier)}
+                  onClick={() => handleDeleteClick(unit)}
+                  disabled={isUnitInUse(unit)}
                 >
                   Delete <IconTrash className="h-4 w-4" />
                 </DropdownMenuItem>
@@ -210,7 +265,7 @@ export function SupplierTable({
 
   // Show skeleton while loading
   if (isLoading) {
-    return <SupplierTableSkeleton />;
+    return <UnitTableSkeleton />;
   }
 
   return (
@@ -218,7 +273,7 @@ export function SupplierTable({
       {/* Search input */}
       <div className="space-y-4">
         <Input
-          placeholder="Search suppliers..."
+          placeholder="Search units..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="max-w-sm"
@@ -281,11 +336,11 @@ export function SupplierTable({
       </div>
 
       {/* Delete dialog */}
-      {selectedSupplierForDelete && (
-        <SupplierDeleteDialog
+      {selectedUnitForDelete && (
+        <UnitDeleteDialog
           open={isDeleteDialogOpen}
           onOpenChange={setIsDeleteDialogOpen}
-          supplier={selectedSupplierForDelete}
+          unit={selectedUnitForDelete}
           onSuccess={onRefresh}
         />
       )}
@@ -294,7 +349,7 @@ export function SupplierTable({
 }
 
 // Skeleton component for loading state
-function SupplierTableSkeleton() {
+function UnitTableSkeleton() {
   return (
     <div className="space-y-4">
       <div>
@@ -309,6 +364,9 @@ function SupplierTableSkeleton() {
               </TableHead>
               <TableHead>
                 <Skeleton className="h-7 w-24" />
+              </TableHead>
+              <TableHead>
+                <Skeleton className="h-7 w-16" />
               </TableHead>
               <TableHead>
                 <Skeleton className="h-7 w-40" />
@@ -331,7 +389,10 @@ function SupplierTableSkeleton() {
                   <Skeleton className="h-5 w-full max-w-[180px]" />
                 </TableCell>
                 <TableCell>
-                  <Skeleton className="h-5 w-full max-w-[300px]" />
+                  <Skeleton className="h-5 w-16" />
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-5 w-full max-w-[200px]" />
                 </TableCell>
                 <TableCell>
                   <Skeleton className="h-6 w-20" />

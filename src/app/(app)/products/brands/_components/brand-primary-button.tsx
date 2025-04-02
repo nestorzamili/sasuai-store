@@ -1,17 +1,13 @@
 'use client';
 
 import BrandFormDialog from './brand-form-dialog';
-import { Brand } from '@prisma/client';
+import { BrandWithCount } from '@/lib/types/brand';
 
 // Define props type
 interface BrandPrimaryButtonProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
-  initialData?: Brand & {
-    _count?: {
-      products: number;
-    };
-  };
+  initialData?: BrandWithCount;
   onSuccess?: () => void;
 }
 

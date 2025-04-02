@@ -1,7 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { SupplierService } from '@/lib/api/services/supplier.service';
+import { SupplierService } from '@/lib/services/supplier.service';
 import { z } from 'zod';
 
 // Supplier schema for validation

@@ -2,16 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { getAllCategoriesWithCount } from '../action';
-import { Category } from '@prisma/client';
+import { CategoryWithCount } from '@/lib/types/category';
 import CategoryPrimaryButton from './category-primary-button';
 import { CategoryTable } from './category-table';
-
-// Define the category type with count
-interface CategoryWithCount extends Category {
-  _count?: {
-    products: number;
-  };
-}
 
 export default function MainContent() {
   const [isLoading, setIsLoading] = useState(true);

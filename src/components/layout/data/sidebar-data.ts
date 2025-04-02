@@ -82,6 +82,11 @@ export const sidebarData: SidebarData = {
           url: '/products/brands',
           icon: IconBuildingStore,
         },
+        {
+          title: 'Units',
+          url: '/products/units',
+          icon: IconPackage,
+        },
       ],
     },
     {

@@ -5,14 +5,8 @@ import { IconAlertTriangle } from '@tabler/icons-react';
 import { toast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ConfirmDialog } from '@/components/confirm-dialog';
-import { Brand } from '@prisma/client';
+import { BrandWithCount } from '@/lib/types/brand';
 import { deleteBrand } from '../action';
-
-interface BrandWithCount extends Brand {
-  _count?: {
-    products: number;
-  };
-}
 
 interface Props {
   open: boolean;

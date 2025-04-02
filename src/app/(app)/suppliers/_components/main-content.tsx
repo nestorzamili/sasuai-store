@@ -2,16 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { getAllSuppliersWithCount } from '../action';
-import { Supplier } from '@prisma/client';
 import SupplierPrimaryButton from './supplier-primary-button';
 import { SupplierTable } from './supplier-table';
-
-// Define the supplier type with count
-interface SupplierWithCount extends Supplier {
-  _count?: {
-    stockIns: number;
-  };
-}
+import { SupplierWithCount } from '@/lib/types/supplier';
 
 export default function MainContent() {
   const [isLoading, setIsLoading] = useState(true);

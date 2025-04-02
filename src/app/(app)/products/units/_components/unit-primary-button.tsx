@@ -1,25 +1,25 @@
 'use client';
 
-import CategoryFormDialog from './category-form-dialog';
-import { CategoryWithCount } from '@/lib/types/category';
+import UnitFormDialog from './unit-form-dialog';
+import { UnitWithCounts } from '@/lib/types/unit';
 
 // Define props type
-interface CategoryPrimaryButtonProps {
+interface UnitPrimaryButtonProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
-  initialData?: CategoryWithCount;
+  initialData?: UnitWithCounts;
   onSuccess?: () => void;
 }
 
-export default function CategoryPrimaryButton({
+export default function UnitPrimaryButton({
   open,
   onOpenChange,
   initialData,
   onSuccess,
-}: CategoryPrimaryButtonProps) {
+}: UnitPrimaryButtonProps) {
   return (
     <div className="flex gap-2">
-      <CategoryFormDialog
+      <UnitFormDialog
         open={open}
         onOpenChange={onOpenChange}
         initialData={initialData}
