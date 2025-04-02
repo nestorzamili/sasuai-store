@@ -64,7 +64,7 @@ export function SupplierTable({
   const [selectedSupplierForDelete, setSelectedSupplierForDelete] =
     useState<SupplierWithCount | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [globalFilter, setGlobalFilter] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Table state
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -197,7 +197,7 @@ export function SupplierTable({
   const table = useReactTable({
     data,
     columns,
-    onGlobalFilterChange: setGlobalFilter,
+    onGlobalFilterChange: setSearchQuery,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
@@ -211,7 +211,7 @@ export function SupplierTable({
       columnFilters,
       columnVisibility,
       rowSelection,
-      globalFilter,
+      globalFilter: searchQuery,
     },
   });
 
@@ -226,8 +226,8 @@ export function SupplierTable({
       <div className="space-y-4">
         <Input
           placeholder="Search suppliers..."
-          value={globalFilter}
-          onChange={(e) => setGlobalFilter(e.target.value)}
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
           className="max-w-sm"
         />
 
