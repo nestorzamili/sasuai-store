@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
-import { Category } from '@prisma/client';
+import { CategoryWithCount } from '@/lib/types/category';
 import {
   Dialog,
   DialogContent,
@@ -41,11 +41,7 @@ type FormValues = z.infer<typeof formSchema>;
 interface CategoryFormDialogProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
-  initialData?: Category & {
-    _count?: {
-      products: number;
-    };
-  };
+  initialData?: CategoryWithCount;
   onSuccess?: () => void;
 }
 

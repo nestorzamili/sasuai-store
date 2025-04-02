@@ -1,7 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { CategoryService } from '@/lib/api/services/category.service';
+import { CategoryService } from '@/lib/services/category.service';
 import { z } from 'zod';
 
 // Category schema for validation

@@ -5,14 +5,8 @@ import { IconAlertTriangle } from '@tabler/icons-react';
 import { toast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ConfirmDialog } from '@/components/confirm-dialog';
-import { Supplier } from '@prisma/client';
 import { deleteSupplier } from '../action';
-
-interface SupplierWithCount extends Supplier {
-  _count?: {
-    stockIns: number;
-  };
-}
+import { SupplierWithCount } from '@/lib/types/supplier';
 
 interface Props {
   open: boolean;

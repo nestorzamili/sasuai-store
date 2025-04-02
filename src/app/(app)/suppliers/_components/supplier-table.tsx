@@ -26,7 +26,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Supplier } from '@prisma/client';
 import {
   Table,
   TableBody,
@@ -39,13 +38,7 @@ import { DataTablePagination } from '@/components/ui/data-table-pagination';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SupplierDeleteDialog } from './supplier-delete-dialog';
 import { Input } from '@/components/ui/input';
-
-// Define the supplier type with count
-interface SupplierWithCount extends Supplier {
-  _count?: {
-    stockIns: number;
-  };
-}
+import { SupplierWithCount } from '@/lib/types/supplier';
 
 interface SupplierTableProps {
   data: SupplierWithCount[];

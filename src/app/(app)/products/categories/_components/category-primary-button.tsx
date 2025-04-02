@@ -1,17 +1,13 @@
 'use client';
 
 import CategoryFormDialog from './category-form-dialog';
-import { Category } from '@prisma/client';
+import { CategoryWithCount } from '@/lib/types/category';
 
 // Define props type
 interface CategoryPrimaryButtonProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
-  initialData?: Category & {
-    _count?: {
-      products: number;
-    };
-  };
+  initialData?: CategoryWithCount;
   onSuccess?: () => void;
 }
 

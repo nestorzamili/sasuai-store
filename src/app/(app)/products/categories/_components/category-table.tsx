@@ -26,7 +26,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Category } from '@prisma/client';
+import { CategoryWithCount } from '@/lib/types/category';
 import {
   Table,
   TableBody,
@@ -39,13 +39,6 @@ import { DataTablePagination } from '@/components/ui/data-table-pagination';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CategoryDeleteDialog } from './category-delete-dialog';
 import { Input } from '@/components/ui/input';
-
-// Define the category type with count
-interface CategoryWithCount extends Category {
-  _count?: {
-    products: number;
-  };
-}
 
 interface CategoryTableProps {
   data: CategoryWithCount[];

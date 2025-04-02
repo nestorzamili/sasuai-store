@@ -1,7 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { BrandService } from '@/lib/api/services/brand.service';
+import { BrandService } from '@/lib/services/brand.service';
 import { z } from 'zod';
 
 // Brand schema for validation - removed logoUrl

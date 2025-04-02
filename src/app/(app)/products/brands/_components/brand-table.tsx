@@ -26,7 +26,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Brand } from '@prisma/client';
+import { BrandWithCount } from '@/lib/types/brand';
 import {
   Table,
   TableBody,
@@ -39,13 +39,6 @@ import { DataTablePagination } from '@/components/ui/data-table-pagination';
 import { Skeleton } from '@/components/ui/skeleton';
 import { BrandDeleteDialog } from './brand-delete-dialog';
 import { Input } from '@/components/ui/input';
-
-// Define the brand type with count
-interface BrandWithCount extends Brand {
-  _count?: {
-    products: number;
-  };
-}
 
 interface BrandTableProps {
   data: BrandWithCount[];
