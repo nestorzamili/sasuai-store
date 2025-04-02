@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { getAllBrandsWithCount } from '../action';
 import { Brand } from '@prisma/client';
-import { Input } from '@/components/ui/input';
 import BrandPrimaryButton from './brand-primary-button';
 import { BrandTable } from './brand-table';
 
@@ -85,24 +84,13 @@ export default function MainContent() {
       <div className="flex items-center justify-between flex-wrap gap-x-4">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Manage Brands</h2>
-          <p className="text-muted-foreground">
-            Manage your product brands and set preferences.
-          </p>
+          <p className="text-muted-foreground">Manage your product brands.</p>
         </div>
         <BrandPrimaryButton
           open={isDialogOpen}
           onOpenChange={setIsDialogOpen}
           initialData={selectedBrand || undefined}
           onSuccess={handleSuccess}
-        />
-      </div>
-
-      <div className="flex items-center">
-        <Input
-          placeholder="Search brands..."
-          className="max-w-xs"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
         />
       </div>
 

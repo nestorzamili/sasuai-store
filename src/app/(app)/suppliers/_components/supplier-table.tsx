@@ -26,7 +26,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Brand } from '@prisma/client';
+import { Supplier } from '@prisma/client';
 import {
   Table,
   TableBody,
@@ -37,32 +37,32 @@ import {
 } from '@/components/ui/table';
 import { DataTablePagination } from '@/components/ui/data-table-pagination';
 import { Skeleton } from '@/components/ui/skeleton';
-import { BrandDeleteDialog } from './brand-delete-dialog';
+import { SupplierDeleteDialog } from './supplier-delete-dialog';
 import { Input } from '@/components/ui/input';
 
-// Define the brand type with count
-interface BrandWithCount extends Brand {
+// Define the supplier type with count
+interface SupplierWithCount extends Supplier {
   _count?: {
-    products: number;
+    stockIns: number;
   };
 }
 
-interface BrandTableProps {
-  data: BrandWithCount[];
+interface SupplierTableProps {
+  data: SupplierWithCount[];
   isLoading?: boolean;
-  onEdit?: (brand: BrandWithCount) => void;
+  onEdit?: (supplier: SupplierWithCount) => void;
   onRefresh?: () => void;
 }
 
-export function BrandTable({
+export function SupplierTable({
   data,
   isLoading = false,
   onEdit,
   onRefresh,
-}: BrandTableProps) {
+}: SupplierTableProps) {
   // State for deletion dialog
-  const [selectedBrandForDelete, setSelectedBrandForDelete] =
-    useState<BrandWithCount | null>(null);
+  const [selectedSupplierForDelete, setSelectedSupplierForDelete] =
+    useState<SupplierWithCount | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [globalFilter, setGlobalFilter] = useState('');
 
@@ -76,13 +76,13 @@ export function BrandTable({
   const [rowSelection, setRowSelection] = React.useState({});
 
   // Handlers
-  const handleDeleteClick = (brand: BrandWithCount) => {
-    setSelectedBrandForDelete(brand);
+  const handleDeleteClick = (supplier: SupplierWithCount) => {
+    setSelectedSupplierForDelete(supplier);
     setIsDeleteDialogOpen(true);
   };
 
   // Define columns
-  const columns: ColumnDef<BrandWithCount>[] = [
+  const columns: ColumnDef<SupplierWithCount>[] = [
     // Selection column
     {
       id: 'select',
@@ -115,7 +115,7 @@ export function BrandTable({
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
         >
-          Brand Name
+          Supplier Name
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       ),
@@ -124,13 +124,33 @@ export function BrandTable({
       ),
     },
 
-    // Products count column
+    // Contact column
     {
-      id: 'productsCount',
-      header: 'Products Count',
+      accessorKey: 'contact',
+      header: 'Contact',
+      cell: ({ row }) => {
+        const contact = row.getValue('contact') as string;
+        return (
+          <div className="max-w-[700px] truncate" title={contact || ''}>
+            {contact ? (
+              contact
+            ) : (
+              <span className="text-muted-foreground italic">
+                No contact info
+              </span>
+            )}
+          </div>
+        );
+      },
+    },
+
+    // Stock-ins count column
+    {
+      id: 'stockInsCount',
+      header: 'Stock-Ins Count',
       cell: ({ row }) => (
         <Badge variant="outline" className="text-xs">
-          {row.original._count?.products || 0} products
+          {row.original._count?.stockIns || 0} stock-ins
         </Badge>
       ),
     },
@@ -140,7 +160,7 @@ export function BrandTable({
       id: 'actions',
       header: 'Actions',
       cell: ({ row }) => {
-        const brand = row.original;
+        const supplier = row.original;
         return (
           <div className="text-right">
             <DropdownMenu>
@@ -155,13 +175,13 @@ export function BrandTable({
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   className="flex justify-between cursor-pointer"
-                  onClick={() => onEdit?.(brand)}
+                  onClick={() => onEdit?.(supplier)}
                 >
                   Edit <IconEdit className="h-4 w-4" />
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="flex justify-between cursor-pointer text-destructive focus:text-destructive"
-                  onClick={() => handleDeleteClick(brand)}
+                  onClick={() => handleDeleteClick(supplier)}
                 >
                   Delete <IconTrash className="h-4 w-4" />
                 </DropdownMenuItem>
@@ -197,7 +217,7 @@ export function BrandTable({
 
   // Show skeleton while loading
   if (isLoading) {
-    return <BrandTableSkeleton />;
+    return <SupplierTableSkeleton />;
   }
 
   return (
@@ -205,7 +225,7 @@ export function BrandTable({
       {/* Search input */}
       <div className="space-y-4">
         <Input
-          placeholder="Search brands..."
+          placeholder="Search suppliers..."
           value={globalFilter}
           onChange={(e) => setGlobalFilter(e.target.value)}
           className="max-w-sm"
@@ -268,11 +288,11 @@ export function BrandTable({
       </div>
 
       {/* Delete dialog */}
-      {selectedBrandForDelete && (
-        <BrandDeleteDialog
+      {selectedSupplierForDelete && (
+        <SupplierDeleteDialog
           open={isDeleteDialogOpen}
           onOpenChange={setIsDeleteDialogOpen}
-          brand={selectedBrandForDelete}
+          supplier={selectedSupplierForDelete}
           onSuccess={onRefresh}
         />
       )}
@@ -281,7 +301,7 @@ export function BrandTable({
 }
 
 // Skeleton component for loading state
-function BrandTableSkeleton() {
+function SupplierTableSkeleton() {
   return (
     <div className="space-y-4">
       <div>
@@ -296,6 +316,9 @@ function BrandTableSkeleton() {
               </TableHead>
               <TableHead>
                 <Skeleton className="h-7 w-24" />
+              </TableHead>
+              <TableHead>
+                <Skeleton className="h-7 w-40" />
               </TableHead>
               <TableHead>
                 <Skeleton className="h-7 w-28" />
@@ -313,6 +336,9 @@ function BrandTableSkeleton() {
                 </TableCell>
                 <TableCell>
                   <Skeleton className="h-5 w-full max-w-[180px]" />
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-5 w-full max-w-[300px]" />
                 </TableCell>
                 <TableCell>
                   <Skeleton className="h-6 w-20" />
