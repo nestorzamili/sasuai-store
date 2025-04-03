@@ -10,6 +10,27 @@
 
 - optimize states in users/tasks context (#71)
 
+## [1.12.0](https://github.com/nestorzamili/sasuai-store/compare/v1.11.0...v1.12.0) (2025-04-03)
+
+
+### Features
+
+* **discount:** implement discount service and interface for CRUD operations ([a7eb79e](https://github.com/nestorzamili/sasuai-store/commit/a7eb79e0ceaf4b1adf70df80470bb6d0db5d3841))
+* **discount:** implement discounts management UI and data fetching ([b657fea](https://github.com/nestorzamili/sasuai-store/commit/b657fea817b3f63c028841cc75516b43bf21abfe))
+* **discount:** refactor discount table and enhance data fetching ([93c58da](https://github.com/nestorzamili/sasuai-store/commit/93c58da4d0b75c4957f80c1f0169910330cdda93))
+* **query:** add QueryOptions interface and buildQueryOptions function ([b7c107c](https://github.com/nestorzamili/sasuai-store/commit/b7c107cd4a5cfa3c24a1770a951f64976ee3f86f))
+* **services:** add brand, category, and supplier services ([f284b8d](https://github.com/nestorzamili/sasuai-store/commit/f284b8d95f757e12253706c9eb2c063b177e9039))
+* **table:** implement debounce effect and clean up table layout ([dc5869b](https://github.com/nestorzamili/sasuai-store/commit/dc5869b4f021196a710d23161124b7dd8fd21793))
+* **types:** add Supplier, Brand, and Category interfaces with count properties ([2683b4d](https://github.com/nestorzamili/sasuai-store/commit/2683b4d56a5125e2e4a7a3583b73947fda50b55f))
+* **units:** add unit management functionality with CRUD operations ([56e5042](https://github.com/nestorzamili/sasuai-store/commit/56e504263c14e2bfab49d0d495ef9a7c1e900997))
+
+
+### Code Refactoring
+
+* **discount:** change value and minPurchase types from Decimal to Integer ([183b079](https://github.com/nestorzamili/sasuai-store/commit/183b079906d5774d52a63ed926bf687aa2dce1d5))
+* **discount:** restructure discount model and remove unused tables ([5abe30d](https://github.com/nestorzamili/sasuai-store/commit/5abe30dfa41c85cf69a21c800284657fa987c8e8))
+* **types:** remove unused type definitions for barcode, common, product, and variant ([7b6f577](https://github.com/nestorzamili/sasuai-store/commit/7b6f5779f6d57bc7b6970bae3bd697513e3c997f))
+
 ## [1.11.0](https://github.com/nestorzamili/sasuai-store/compare/v1.10.0...v1.11.0) (2025-04-02)
 
 
