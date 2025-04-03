@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { useProductForm } from './product-form-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -18,77 +19,26 @@ import {
   IconStar,
   IconMaximize,
   IconX,
+  IconUpload,
+  IconArrowLeft,
+  IconArrowRight,
 } from '@tabler/icons-react';
 import {
-  addProductImage,
   deleteProductImage,
   setPrimaryProductImage,
 } from '@/app/(app)/products/images/action';
-import { ImageUploadPortal } from '@/components/image-upload-portal';
 
 export function ProductImagesSection() {
   const { isEditing, productId, primaryImageUrl, images, fetchProductImages } =
     useProductForm();
-  const [isUploading, setIsUploading] = useState(false);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [isPrimarySetting, setIsPrimarySetting] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [imageToDelete, setImageToDelete] = useState<any | null>(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [currentImage, setCurrentImage] = useState<string | null>(null);
-
-  // Handle image upload success from Cloudinary widget
-  const handleUploadSuccess = async (result: any) => {
-    // Check if result contains expected data structure
-    if (!result.info || result.event !== 'success' || !productId) return;
-    try {
-      setIsUploading(true);
-      // Determine if this should be primary (if no images exist yet)
-      const isPrimary = images.length === 0;
-      const response = await addProductImage(
-        productId,
-        {
-          event: result.event,
-          info: {
-            public_id: result.info.public_id,
-            secure_url: result.info.secure_url,
-            resource_type: result.info.resource_type || '',
-            type: result.info.type || '',
-            format: result.info.format || '',
-            bytes: result.info.bytes || 0,
-            width: result.info.width || 0,
-            height: result.info.height || 0,
-          },
-        },
-        isPrimary,
-      );
-      if (response.success) {
-        toast({
-          title: 'Image uploaded',
-          description: 'Product image has been uploaded successfully',
-        });
-        // Refresh images
-        if (fetchProductImages && productId) {
-          fetchProductImages(productId);
-        }
-      } else {
-        toast({
-          title: 'Upload failed',
-          description: response.error || 'Failed to save image information',
-          variant: 'destructive',
-        });
-      }
-    } catch (error) {
-      console.error('Error saving image:', error);
-      toast({
-        title: 'Upload failed',
-        description: 'An unexpected error occurred while saving the image',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsUploading(false);
-    }
-  };
+  const [currentImageIndex, setCurrentImageIndex] = useState<number>(0);
+  const router = useRouter();
 
   // Handle setting an image as primary
   const handleSetPrimary = async (imageId: string) => {
@@ -169,7 +119,48 @@ export function ProductImagesSection() {
   // Open lightbox for image preview
   const openLightbox = (imageUrl: string) => {
     setCurrentImage(imageUrl);
+    // Find the index of the image in the array
+    const index = images.findIndex((img) => img.fullUrl === imageUrl);
+    setCurrentImageIndex(index !== -1 ? index : 0);
     setLightboxOpen(true);
+  };
+
+  // Navigate to the next image in lightbox
+  const goToNextImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (images.length <= 1) return;
+
+    const nextIndex = (currentImageIndex + 1) % images.length;
+    setCurrentImageIndex(nextIndex);
+    setCurrentImage(images[nextIndex].fullUrl);
+  };
+
+  // Navigate to the previous image in lightbox
+  const goToPrevImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (images.length <= 1) return;
+
+    const prevIndex = (currentImageIndex - 1 + images.length) % images.length;
+    setCurrentImageIndex(prevIndex);
+    setCurrentImage(images[prevIndex].fullUrl);
+  };
+
+  // Handle keyboard navigation in lightbox
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'ArrowRight') {
+      goToNextImage(e as unknown as React.MouseEvent);
+    } else if (e.key === 'ArrowLeft') {
+      goToPrevImage(e as unknown as React.MouseEvent);
+    } else if (e.key === 'Escape') {
+      setLightboxOpen(false);
+    }
+  };
+
+  // Handle redirect to image upload page
+  const handleNavigateToImageUpload = () => {
+    if (productId) {
+      router.push(`/products/images?product=${productId}`);
+    }
   };
 
   return (
@@ -222,12 +213,12 @@ export function ProductImagesSection() {
           <Separator />
           <div>
             <Label>All Images</Label>
-            <ScrollArea className="h-[180px] py-2">
-              <div className="flex gap-2 pb-4">
+            <ScrollArea className="h-[140px] py-2">
+              <div className="flex gap-2 pb-2">
                 {images.map((image) => (
                   <Card
                     key={image.id}
-                    className={`w-[140px] flex-shrink-0 ${
+                    className={`w-[110px] flex-shrink-0 ${
                       image.isPrimary ? 'ring-2 ring-primary' : ''
                     }`}
                   >
@@ -242,24 +233,24 @@ export function ProductImagesSection() {
                       {image.isPrimary && (
                         <Badge
                           variant="secondary"
-                          className="absolute top-2 left-2 px-2 py-1"
+                          className="absolute top-1 left-1 px-1 py-0.5 text-[10px]"
                         >
-                          <IconStarFilled className="h-3 w-3 mr-1" /> Primary
+                          <IconStarFilled className="h-2 w-2 mr-0.5" /> Primary
                         </Badge>
                       )}
                       <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                         <Button
                           variant="secondary"
-                          size="sm"
-                          className="bg-background/80 hover:bg-background"
+                          size="icon"
+                          className="bg-background/80 hover:bg-background h-7 w-7"
                           onClick={() => openLightbox(image.fullUrl)}
                         >
-                          <IconMaximize className="h-4 w-4 mr-1" /> View
+                          <IconMaximize className="h-3 w-3" />
                         </Button>
                       </div>
                     </div>
-                    <CardContent className="p-2">
-                      <div className="flex justify-between items-center">
+                    <CardContent className="p-1">
+                      <div className="flex justify-between items-center gap-1">
                         <Button
                           variant={image.isPrimary ? 'ghost' : 'outline'}
                           size="sm"
@@ -267,33 +258,32 @@ export function ProductImagesSection() {
                           disabled={image.isPrimary || !!isPrimarySetting}
                           className={
                             image.isPrimary
-                              ? 'cursor-not-allowed opacity-50 h-8'
-                              : 'h-8'
+                              ? 'cursor-not-allowed opacity-50 h-7 px-1'
+                              : 'h-7 px-1'
                           }
                         >
                           {isPrimarySetting === image.id ? (
-                            <span className="flex items-center gap-1 text-xs">
-                              Setting... <IconStar className="h-3 w-3" />
+                            <span className="flex items-center text-[10px]">
+                              <IconStar className="h-2 w-2" />
                             </span>
                           ) : image.isPrimary ? (
-                            <span className="flex items-center gap-1 text-xs">
-                              Primary{' '}
-                              <IconStarFilled className="h-3 w-3 text-yellow-400" />
+                            <span className="flex items-center text-[10px]">
+                              <IconStarFilled className="h-2 w-2 text-yellow-400" />
                             </span>
                           ) : (
-                            <span className="flex items-center gap-1 text-xs">
-                              Set Primary <IconStar className="h-3 w-3" />
+                            <span className="flex items-center text-[10px]">
+                              <IconStar className="h-2 w-2" />
                             </span>
                           )}
                         </Button>
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                          className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
                           onClick={() => openDeleteDialog(image)}
                           disabled={!!isDeleting}
                         >
-                          <IconTrash className="h-4 w-4" />
+                          <IconTrash className="h-3 w-3" />
                         </Button>
                       </div>
                     </CardContent>
@@ -307,14 +297,14 @@ export function ProductImagesSection() {
 
       {/* Upload button */}
       {isEditing && productId ? (
-        <div className="relative z-[100]">
-          <ImageUploadPortal
-            onSuccess={handleUploadSuccess}
-            isUploading={isUploading}
-            disabled={false}
-            folder="sasuai-store"
-          />
-        </div>
+        <Button
+          onClick={handleNavigateToImageUpload}
+          className="w-full"
+          variant="outline"
+        >
+          <IconUpload className="h-4 w-4 mr-2" />
+          Manage Images
+        </Button>
       ) : (
         <div className="text-sm text-muted-foreground">
           Save the product first to enable image uploads
@@ -338,6 +328,8 @@ export function ProductImagesSection() {
         <div
           className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center"
           onClick={() => setLightboxOpen(false)}
+          onKeyDown={handleKeyDown}
+          tabIndex={0}
         >
           <div
             className="relative w-full max-w-screen-xl p-4"
@@ -352,6 +344,29 @@ export function ProductImagesSection() {
               <IconX className="h-5 w-5" />
             </Button>
 
+            {images.length > 1 && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute left-4 top-1/2 -translate-y-1/2 z-50 rounded-full bg-background/50 hover:bg-background/80"
+                  onClick={goToPrevImage}
+                  aria-label="Previous image"
+                >
+                  <IconArrowLeft className="h-5 w-5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 z-50 rounded-full bg-background/50 hover:bg-background/80"
+                  onClick={goToNextImage}
+                  aria-label="Next image"
+                >
+                  <IconArrowRight className="h-5 w-5" />
+                </Button>
+              </>
+            )}
+
             <div className="relative w-full h-[80vh] flex items-center justify-center overflow-hidden">
               <Image
                 src={currentImage}
@@ -362,6 +377,12 @@ export function ProductImagesSection() {
                 priority
               />
             </div>
+
+            {images.length > 0 && (
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-background/50 px-3 py-1 rounded-md backdrop-blur-sm">
+                {currentImageIndex + 1} / {images.length}
+              </div>
+            )}
           </div>
         </div>
       )}
