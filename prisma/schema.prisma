@@ -139,7 +139,6 @@ model Product {
   isActive         Boolean           @default(true) @map("is_active")
   variants         ProductVariant[]
   images           ProductImage[]
-  productDiscounts ProductDiscount[]
   createdAt        DateTime          @default(now()) @db.Timestamptz
   updatedAt        DateTime          @updatedAt @db.Timestamptz
 
@@ -213,56 +212,32 @@ model ProductImage {
 model Discount {
   id               String            @id @default(uuid())
   name             String
-  type             String
-  value            Decimal
-  minPurchase      Decimal?          @map("min_purchase")
+  discountType     String            @map("discount_type")   
+  valueType        String            @map("value_type")
+  value            Int               @map("value")
+  minPurchase      Int?              @map("min_purchase")
   startDate        DateTime          @map("start_date") @db.Timestamptz
   endDate          DateTime          @map("end_date") @db.Timestamptz
   isActive         Boolean           @default(true) @map("is_active")
-  productDiscounts ProductDiscount[]
-  memberDiscounts  MemberDiscount[]
-  transactionItems TransactionItem[]
   createdAt        DateTime          @default(now()) @db.Timestamptz
   updatedAt        DateTime          @updatedAt @db.Timestamptz
 
   @@map("discount")
 }
 
-model ProductDiscount {
-  id         String   @id @default(uuid())
-  product    Product  @relation(fields: [productId], references: [id])
-  productId  String   @map("product_id")
-  discount   Discount @relation(fields: [discountId], references: [id])
-  discountId String   @map("discount_id")
-  createdAt  DateTime @default(now()) @db.Timestamptz
-  updatedAt  DateTime @updatedAt @db.Timestamptz
 
-  @@map("product_discount")
-}
 
 model MemberTier {
   id              String           @id @default(uuid())
   name            String
   minPoints       Int              @map("min_points")
   members         Member[]
-  memberDiscounts MemberDiscount[]
   createdAt       DateTime         @default(now()) @db.Timestamptz
   updatedAt       DateTime         @updatedAt @db.Timestamptz
 
   @@map("member_tier")
 }
 
-model MemberDiscount {
-  id         String     @id @default(uuid())
-  tier       MemberTier @relation(fields: [tierId], references: [id])
-  tierId     String     @map("tier_id")
-  discount   Discount   @relation(fields: [discountId], references: [id])
-  discountId String     @map("discount_id")
-  createdAt  DateTime   @default(now()) @db.Timestamptz
-  updatedAt  DateTime   @updatedAt @db.Timestamptz
-
-  @@map("member_discount")
-}
 
 // ==============================
 // MEMBER & REWARD MODELS
@@ -405,7 +380,6 @@ model TransactionItem {
   unit          Unit         @relation(fields: [unitId], references: [id])
   unitId        String       @map("unit_id")
   pricePerUnit  Decimal      @map("price_per_unit")
-  discount      Discount?    @relation(fields: [discountId], references: [id])
   discountId    String?      @map("discount_id")
   subtotal      Decimal
   createdAt     DateTime     @default(now()) @db.Timestamptz

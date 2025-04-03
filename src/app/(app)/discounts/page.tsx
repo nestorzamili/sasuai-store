@@ -5,7 +5,7 @@ import { Main } from '@/components/layout/main';
 import { ProfileDropdown } from '@/components/profile-dropdown';
 import { Search } from '@/components/search';
 import { ThemeSwitch } from '@/components/theme-switch';
-import ComingSoon from '@/components/coming-soon';
+import DiscountsMainContent from './_components/discount-main-content';
 
 export default function DiscountsPage() {
   return (
@@ -19,7 +19,7 @@ export default function DiscountsPage() {
       </Header>
 
       <Main>
-        <ComingSoon />
+        <DiscountsMainContent />
       </Main>
     </>
   );
