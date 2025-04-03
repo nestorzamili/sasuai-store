@@ -105,7 +105,7 @@ model Unit {
   symbol              String
   fromUnitConversions UnitConversion[]  @relation("FromUnit")
   toUnitConversions   UnitConversion[]  @relation("ToUnit")
-  productVariants     ProductVariant[]
+  products            Product[] // Updated relation
   stockIns            StockIn[]
   stockOuts           StockOut[]
   transactionItems    TransactionItem[]
@@ -129,49 +129,37 @@ model UnitConversion {
 }
 
 model Product {
-  id          String           @id @default(uuid())
-  name        String
-  category    Category         @relation(fields: [categoryId], references: [id])
-  categoryId  String           @map("category_id")
-  brand       Brand?           @relation(fields: [brandId], references: [id])
-  brandId     String?          @map("brand_id")
-  description String?
-  isActive    Boolean          @default(true) @map("is_active")
-  variants    ProductVariant[]
-  images      ProductImage[]
-  createdAt   DateTime         @default(now()) @db.Timestamptz
-  updatedAt   DateTime         @updatedAt @db.Timestamptz
-
-  @@map("product")
-}
-
-model ProductVariant {
   id           String         @id @default(uuid())
-  product      Product        @relation(fields: [productId], references: [id])
-  productId    String         @map("product_id")
   name         String
+  category     Category       @relation(fields: [categoryId], references: [id])
+  categoryId   String         @map("category_id")
+  brand        Brand?         @relation(fields: [brandId], references: [id])
+  brandId      String?        @map("brand_id")
+  description  String?
   unit         Unit           @relation(fields: [unitId], references: [id])
   unitId       String         @map("unit_id")
   price        Int
-  currentStock Int            @map("current_stock")
+  currentStock Int            @default(0) @map("current_stock")
   skuCode      String?        @map("sku_code")
+  barcode      String?
+  isActive     Boolean        @default(true) @map("is_active")
+  images       ProductImage[]
   batches      ProductBatch[]
   createdAt    DateTime       @default(now()) @db.Timestamptz
   updatedAt    DateTime       @updatedAt @db.Timestamptz
 
-  @@map("product_variant")
+  @@map("product")
 }
 
 model ProductBatch {
   id                String            @id @default(uuid())
-  variant           ProductVariant    @relation(fields: [variantId], references: [id])
-  variantId         String            @map("variant_id")
+  product           Product           @relation(fields: [productId], references: [id])
+  productId         String            @map("product_id")
   batchCode         String            @map("batch_code")
   expiryDate        DateTime          @map("expiry_date") @db.Date
   initialQuantity   Int               @map("initial_quantity")
   remainingQuantity Int               @map("remaining_quantity")
   buyPrice          Int               @map("buy_price")
-  barcodes          Barcode[]
   stockIns          StockIn[]
   stockOuts         StockOut[]
   transactionItems  TransactionItem[]
@@ -179,18 +167,6 @@ model ProductBatch {
   updatedAt         DateTime          @updatedAt @db.Timestamptz
 
   @@map("product_batch")
-}
-
-model Barcode {
-  id        String       @id @default(uuid())
-  batch     ProductBatch @relation(fields: [batchId], references: [id])
-  batchId   String       @map("batch_id")
-  code      String
-  isPrimary Boolean      @default(false) @map("is_primary")
-  createdAt DateTime     @default(now()) @db.Timestamptz
-  updatedAt DateTime     @updatedAt @db.Timestamptz
-
-  @@map("barcode")
 }
 
 model ProductImage {
