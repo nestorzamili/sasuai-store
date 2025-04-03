@@ -18,7 +18,7 @@ export class UnitService {
       include: {
         _count: {
           select: {
-            productVariants: true,
+            products: true,
           },
         },
       },
@@ -74,10 +74,20 @@ export class UnitService {
    * Check if a unit is in use
    */
   static async isInUse(id: string): Promise<boolean> {
-    const count = await prisma.productVariant.count({
+    const count = await prisma.product.count({
       where: { unitId: id },
     });
 
+    return count > 0;
+  }
+
+  /**
+   * Check if a unit has associated products
+   */
+  static async hasProducts(id: string): Promise<boolean> {
+    const count = await prisma.product.count({
+      where: { unitId: id },
+    });
     return count > 0;
   }
 }

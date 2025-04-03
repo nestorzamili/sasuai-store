@@ -90,11 +90,7 @@ export const SupplierService = {
           include: {
             batch: {
               include: {
-                variant: {
-                  include: {
-                    product: true,
-                  },
-                },
+                product: true,
               },
             },
             unit: true,
