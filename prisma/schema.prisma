@@ -214,8 +214,8 @@ model Discount {
   name             String
   discountType     String            @map("discount_type")   
   valueType        String            @map("value_type")
-  value            Decimal
-  minPurchase      Decimal?          @map("min_purchase")
+  value            Int               @map("value")
+  minPurchase      Int?              @map("min_purchase")
   startDate        DateTime          @map("start_date") @db.Timestamptz
   endDate          DateTime          @map("end_date") @db.Timestamptz
   isActive         Boolean           @default(true) @map("is_active")
