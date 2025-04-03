@@ -92,8 +92,8 @@ export async function createUnit(data: { name: string; symbol: string }) {
       symbol: validatedData.symbol,
     });
 
-    // Revalidate units page
-    revalidatePath('/units');
+    // Revalidate units path
+    revalidatePath('/products/units');
 
     return {
       success: true,
@@ -134,8 +134,8 @@ export async function updateUnit(
       symbol: validatedData.symbol,
     });
 
-    // Revalidate units page
-    revalidatePath('/units');
+    // Revalidate units path
+    revalidatePath('/products/units');
 
     return {
       success: true,
@@ -170,16 +170,15 @@ export async function deleteUnit(id: string) {
     if (isInUse) {
       return {
         success: false,
-        error:
-          'Cannot delete unit that is in use by products, stock, or transactions',
+        error: 'Cannot delete a unit that is in use by products',
       };
     }
 
     // Delete unit
     await UnitService.delete(id);
 
-    // Revalidate units page
-    revalidatePath('/units');
+    // Revalidate units path
+    revalidatePath('/products/units');
 
     return {
       success: true,
