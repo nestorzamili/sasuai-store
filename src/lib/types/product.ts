@@ -1,46 +1,58 @@
 import {
-  Product,
-  ProductImage,
-  ProductVariant,
-  ProductBatch,
-  Barcode,
-  Unit,
-  Category,
   Brand,
+  Category,
+  Product,
+  ProductBatch,
+  ProductImage,
   StockIn,
   StockOut,
+  Unit,
 } from '@prisma/client';
 
 // Basic types with relationships
 export type ProductWithRelations = Product & {
-  images?: ProductImage[];
-  category?: { name: string; id: string };
-  brand?: { name: string; id: string; logoUrl: string | null } | null;
-  variants?: ProductVariant[];
-  _count?: { variants: number };
+  category: Category;
+  brand: Brand | null;
+  unit: Unit;
+  images: ProductImage[];
+  batches?: ProductBatch[];
+};
+
+export type ProductWithCount = Product & {
+  category: Category;
+  brand: Brand | null;
+  unit: Unit;
+  images: ProductImage[];
+  _count?: {
+    images: number;
+    batches: number;
+  };
+};
+
+export type ProductSimple = {
+  id: string;
+  name: string;
+  price: number;
+  currentStock: number;
+  categoryName: string;
+  brandName: string | null;
+  unitSymbol: string;
+  primaryImage: string | null;
 };
 
 export type ProductWithFullRelations = Product & {
   images?: ProductImage[];
   category: Category;
   brand?: Brand | null;
-  variants: (ProductVariant & {
-    unit: Unit;
-    batches: (ProductBatch & {
-      barcodes?: Barcode[];
-    })[];
+  unit: Unit;
+  batches: (ProductBatch & {
+    stockIns?: StockIn[];
+    stockOuts?: StockOut[];
   })[];
 };
 
-export type ProductVariantWithRelations = ProductVariant & {
-  unit: Unit;
-  product: Product;
-  batches?: ProductBatch[];
-};
-
 export type ProductBatchWithRelations = ProductBatch & {
-  variant: ProductVariant;
-  barcodes?: Barcode[];
+  product: Product;
 };
 
 // Type with image URLs for frontend display
@@ -51,20 +63,23 @@ export type ProductImageWithUrl = ProductImage & {
 // Type for product list view with primary image
 export type ProductListItem = ProductWithRelations & {
   primaryImage?: string;
-  variantCount: number;
-  lowestPrice?: number;
-  highestPrice?: number;
+  batchCount: number;
+  price: number;
 };
 
 // Type for stock history
 export type StockHistoryItem =
   | (StockIn & {
       type: 'in';
-      batch: ProductBatch;
+      batch: ProductBatch & { product: Product };
       supplier?: { name: string } | null;
       unit: Unit;
     })
-  | (StockOut & { type: 'out'; batch: ProductBatch; unit: Unit });
+  | (StockOut & {
+      type: 'out';
+      batch: ProductBatch & { product: Product };
+      unit: Unit;
+    });
 
 // Search params for product search
 export type ProductSearchParams = {
@@ -90,16 +105,11 @@ export type ProductFormData = {
   categoryId: string;
   brandId?: string | null;
   description?: string | null;
-  isActive: boolean;
-  variants: ProductVariantFormData[];
-};
-
-export type ProductVariantFormData = {
-  id?: string;
-  name: string;
   unitId: string;
   price: number;
   skuCode?: string | null;
+  barcode?: string | null;
+  isActive: boolean;
 };
 
 export type ProductBatchFormData = {
@@ -107,5 +117,4 @@ export type ProductBatchFormData = {
   expiryDate: Date;
   quantity: number;
   buyPrice: number;
-  barcodes?: string[];
 };

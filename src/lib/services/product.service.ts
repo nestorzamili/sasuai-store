@@ -1,5 +1,4 @@
 import prisma from '@/lib/prisma';
-import { ProductWithRelations } from '@/lib/types/product';
 
 export class ProductService {
   /**
@@ -7,35 +6,27 @@ export class ProductService {
    */
   static async getAll() {
     return prisma.product.findMany({
+      include: {
+        category: true,
+        brand: true,
+        unit: true,
+        images: true,
+      },
       orderBy: { name: 'asc' },
     });
   }
 
   /**
-   * Get all products with related data
+   * Get active products
    */
-  static async getAllWithRelations(): Promise<ProductWithRelations[]> {
+  static async getActive() {
     return prisma.product.findMany({
+      where: { isActive: true },
       include: {
-        category: {
-          select: {
-            name: true,
-            id: true,
-          },
-        },
-        brand: {
-          select: {
-            name: true,
-            id: true,
-            logoUrl: true,
-          },
-        },
-        images: {
-          where: {
-            isPrimary: true,
-          },
-          take: 1,
-        },
+        category: true,
+        brand: true,
+        unit: true,
+        images: true,
       },
       orderBy: { name: 'asc' },
     });
@@ -50,17 +41,69 @@ export class ProductService {
       include: {
         category: true,
         brand: true,
+        unit: true,
+        images: true,
+        batches: true,
+      },
+    });
+  }
+
+  /**
+   * Get products by category
+   */
+  static async getByCategory(categoryId: string) {
+    return prisma.product.findMany({
+      where: { categoryId, isActive: true },
+      include: {
+        category: true,
+        brand: true,
+        unit: true,
+        images: true,
+      },
+      orderBy: { name: 'asc' },
+    });
+  }
+
+  /**
+   * Get products by brand
+   */
+  static async getByBrand(brandId: string) {
+    return prisma.product.findMany({
+      where: { brandId, isActive: true },
+      include: {
+        category: true,
+        brand: true,
+        unit: true,
+        images: true,
+      },
+      orderBy: { name: 'asc' },
+    });
+  }
+
+  /**
+   * Search products by name, description, or SKU
+   */
+  static async search(query: string) {
+    return prisma.product.findMany({
+      where: {
+        OR: [
+          { name: { contains: query, mode: 'insensitive' } },
+          { description: { contains: query, mode: 'insensitive' } },
+          { skuCode: { contains: query, mode: 'insensitive' } },
+          { barcode: { contains: query, mode: 'insensitive' } },
+        ],
+        isActive: true,
+      },
+      include: {
+        category: true,
+        brand: true,
+        unit: true,
         images: {
-          orderBy: [{ isPrimary: 'desc' }, { createdAt: 'asc' }],
-        },
-        variants: {
-          include: {
-            unit: true,
-            batches: true,
-          },
-          orderBy: { name: 'asc' },
+          where: { isPrimary: true },
+          take: 1,
         },
       },
+      orderBy: { name: 'asc' },
     });
   }
 
@@ -72,10 +115,19 @@ export class ProductService {
     categoryId: string;
     brandId?: string | null;
     description?: string | null;
+    unitId: string;
+    price: number;
+    skuCode?: string | null;
+    barcode?: string | null;
     isActive?: boolean;
   }) {
     return prisma.product.create({
       data,
+      include: {
+        category: true,
+        brand: true,
+        unit: true,
+      },
     });
   }
 
@@ -89,12 +141,22 @@ export class ProductService {
       categoryId?: string;
       brandId?: string | null;
       description?: string | null;
+      unitId?: string;
+      price?: number;
+      skuCode?: string | null;
+      barcode?: string | null;
       isActive?: boolean;
     },
   ) {
     return prisma.product.update({
       where: { id },
       data,
+      include: {
+        category: true,
+        brand: true,
+        unit: true,
+        images: true,
+      },
     });
   }
 
@@ -102,8 +164,12 @@ export class ProductService {
    * Delete a product
    */
   static async delete(id: string) {
-    // First delete all related images
+    // First delete related images and batches
     await prisma.productImage.deleteMany({
+      where: { productId: id },
+    });
+
+    await prisma.productBatch.deleteMany({
       where: { productId: id },
     });
 
@@ -114,304 +180,184 @@ export class ProductService {
   }
 
   /**
-   * Get active products
+   * Add product image
    */
-  static async getActive() {
+  static async addImage(data: {
+    productId: string;
+    imageUrl: string;
+    isPrimary: boolean;
+  }) {
+    // If this is a primary image, make all other images non-primary
+    if (data.isPrimary) {
+      await prisma.productImage.updateMany({
+        where: { productId: data.productId },
+        data: { isPrimary: false },
+      });
+    }
+
+    return prisma.productImage.create({
+      data,
+    });
+  }
+
+  /**
+   * Update product image
+   */
+  static async updateImage(id: string, data: { isPrimary?: boolean }) {
+    // If making this image primary, update all other images
+    if (data.isPrimary) {
+      const image = await prisma.productImage.findUnique({
+        where: { id },
+      });
+
+      if (image) {
+        await prisma.productImage.updateMany({
+          where: { productId: image.productId, id: { not: id } },
+          data: { isPrimary: false },
+        });
+      }
+    }
+
+    return prisma.productImage.update({
+      where: { id },
+      data,
+    });
+  }
+
+  /**
+   * Delete product image
+   */
+  static async deleteImage(id: string) {
+    const image = await prisma.productImage.findUnique({
+      where: { id },
+    });
+
+    const result = await prisma.productImage.delete({
+      where: { id },
+    });
+
+    // If the deleted image was primary, make another image primary if any exist
+    if (image && image.isPrimary) {
+      const firstImage = await prisma.productImage.findFirst({
+        where: { productId: image.productId },
+      });
+
+      if (firstImage) {
+        await prisma.productImage.update({
+          where: { id: firstImage.id },
+          data: { isPrimary: true },
+        });
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * Add product batch
+   */
+  static async addBatch(data: {
+    productId: string;
+    batchCode: string;
+    expiryDate: Date;
+    initialQuantity: number;
+    buyPrice: number;
+  }) {
+    // Create new batch with remaining quantity equal to initial quantity
+    const batch = await prisma.productBatch.create({
+      data: {
+        ...data,
+        remainingQuantity: data.initialQuantity,
+      },
+    });
+
+    // Update product's current stock
+    await prisma.product.update({
+      where: { id: data.productId },
+      data: {
+        currentStock: {
+          increment: data.initialQuantity,
+        },
+      },
+    });
+
+    return batch;
+  }
+
+  /**
+   * Update product batch
+   */
+  static async updateBatch(
+    id: string,
+    data: {
+      batchCode?: string;
+      expiryDate?: Date;
+      buyPrice?: number;
+    },
+  ) {
+    return prisma.productBatch.update({
+      where: { id },
+      data,
+    });
+  }
+
+  /**
+   * Get low stock products
+   * @param threshold Minimum stock level to consider low
+   */
+  static async getLowStock(threshold: number = 10) {
     return prisma.product.findMany({
-      where: { isActive: true },
-      orderBy: { name: 'asc' },
+      where: {
+        isActive: true,
+        currentStock: { lte: threshold },
+      },
       include: {
         category: true,
         brand: true,
+        unit: true,
+        images: {
+          where: { isPrimary: true },
+          take: 1,
+        },
+      },
+      orderBy: { currentStock: 'asc' },
+    });
+  }
+
+  /**
+   * Get products with expiring batches
+   * @param daysThreshold Number of days to consider as soon expiring
+   */
+  static async getExpiringProducts(daysThreshold: number = 30) {
+    const thresholdDate = new Date();
+    thresholdDate.setDate(thresholdDate.getDate() + daysThreshold);
+
+    return prisma.product.findMany({
+      where: {
+        isActive: true,
+        batches: {
+          some: {
+            expiryDate: { lte: thresholdDate },
+            remainingQuantity: { gt: 0 },
+          },
+        },
+      },
+      include: {
+        category: true,
+        brand: true,
+        unit: true,
+        batches: {
+          where: {
+            expiryDate: { lte: thresholdDate },
+            remainingQuantity: { gt: 0 },
+          },
+          orderBy: { expiryDate: 'asc' },
+        },
         images: {
           where: { isPrimary: true },
           take: 1,
         },
       },
     });
-  }
-
-  /**
-   * Count products by category
-   */
-  static async countByCategory() {
-    return prisma.product.groupBy({
-      by: ['categoryId'],
-      _count: true,
-    });
-  }
-
-  /**
-   * Count products by brand
-   */
-  static async countByBrand() {
-    return prisma.product.groupBy({
-      by: ['brandId'],
-      _count: true,
-    });
-  }
-
-  /**
-   * Get product with variants by ID
-   */
-  static async getProductWithVariants(id: string) {
-    return prisma.product.findUnique({
-      where: { id },
-      include: {
-        category: true,
-        brand: true,
-        images: {
-          orderBy: [{ isPrimary: 'desc' }, { createdAt: 'asc' }],
-        },
-        variants: {
-          include: {
-            unit: true,
-            batches: {
-              orderBy: { expiryDate: 'asc' },
-              include: {
-                barcodes: true,
-              },
-            },
-          },
-          orderBy: { name: 'asc' },
-        },
-      },
-    });
-  }
-
-  /**
-   * Create a new product with variants
-   */
-  static async createWithVariants(data: {
-    name: string;
-    categoryId: string;
-    brandId?: string | null;
-    description?: string | null;
-    isActive?: boolean;
-    variants: Array<{
-      name: string;
-      unitId: string;
-      price: number;
-      skuCode?: string | null;
-    }>;
-  }) {
-    return prisma.product.create({
-      data: {
-        name: data.name,
-        categoryId: data.categoryId,
-        brandId: data.brandId,
-        description: data.description,
-        isActive: data.isActive ?? true,
-        variants: {
-          create: data.variants.map((variant) => ({
-            name: variant.name,
-            unitId: variant.unitId,
-            price: variant.price,
-            skuCode: variant.skuCode,
-            currentStock: 0, // Initial stock is zero
-          })),
-        },
-      },
-      include: {
-        category: true,
-        brand: true,
-        variants: {
-          include: {
-            unit: true,
-          },
-        },
-      },
-    });
-  }
-
-  /**
-   * Update a product with variants
-   */
-  static async updateWithVariants(
-    id: string,
-    data: {
-      name?: string;
-      categoryId?: string;
-      brandId?: string | null;
-      description?: string | null;
-      isActive?: boolean;
-      variants?: Array<{
-        id?: string; // If provided, update existing variant
-        name: string;
-        unitId: string;
-        price: number;
-        skuCode?: string | null;
-      }>;
-    },
-  ) {
-    // Start a transaction
-    return prisma.$transaction(async (tx) => {
-      // 1. Update the product basic information
-      const updatedProduct = await tx.product.update({
-        where: { id },
-        data: {
-          name: data.name,
-          categoryId: data.categoryId,
-          brandId: data.brandId,
-          description: data.description,
-          isActive: data.isActive,
-        },
-      });
-
-      // 2. Handle variants if provided
-      if (data.variants && data.variants.length > 0) {
-        // Get existing variants
-        const existingVariants = await tx.productVariant.findMany({
-          where: { productId: id },
-        });
-
-        // Process each variant from the input
-        for (const variant of data.variants) {
-          if (variant.id) {
-            // Update existing variant
-            await tx.productVariant.update({
-              where: { id: variant.id },
-              data: {
-                name: variant.name,
-                unitId: variant.unitId,
-                price: variant.price,
-                skuCode: variant.skuCode,
-              },
-            });
-          } else {
-            // Create new variant
-            await tx.productVariant.create({
-              data: {
-                productId: id,
-                name: variant.name,
-                unitId: variant.unitId,
-                price: variant.price,
-                skuCode: variant.skuCode,
-                currentStock: 0, // Initial stock is zero
-              },
-            });
-          }
-        }
-      }
-
-      // Get the updated product with all relations
-      return tx.product.findUnique({
-        where: { id },
-        include: {
-          category: true,
-          brand: true,
-          variants: {
-            include: {
-              unit: true,
-            },
-            orderBy: { name: 'asc' },
-          },
-          images: {
-            orderBy: [{ isPrimary: 'desc' }, { createdAt: 'asc' }],
-          },
-        },
-      });
-    });
-  }
-
-  /**
-   * Delete a variant
-   */
-  static async deleteVariant(variantId: string) {
-    // Check if there are batches with remaining stock
-    const hasBatchesWithStock = await prisma.productBatch.findFirst({
-      where: {
-        variantId,
-        remainingQuantity: { gt: 0 },
-      },
-    });
-
-    if (hasBatchesWithStock) {
-      throw new Error('Cannot delete variant with remaining stock');
-    }
-
-    // Delete associated batches first (and cascade to barcodes)
-    await prisma.productBatch.deleteMany({
-      where: { variantId },
-    });
-
-    // Delete the variant
-    return prisma.productVariant.delete({
-      where: { id: variantId },
-    });
-  }
-
-  /**
-   * Search products
-   */
-  static async search(
-    query: string,
-    options: {
-      categoryId?: string;
-      brandId?: string;
-      isActive?: boolean;
-      limit?: number;
-      page?: number;
-    } = {},
-  ) {
-    const { categoryId, brandId, isActive, limit = 10, page = 1 } = options;
-
-    const skip = (page - 1) * limit;
-
-    // Build where conditions
-    const where: any = {};
-
-    if (query) {
-      where.name = { contains: query, mode: 'insensitive' };
-    }
-
-    if (categoryId) {
-      where.categoryId = categoryId;
-    }
-
-    if (brandId) {
-      where.brandId = brandId;
-    }
-
-    if (typeof isActive === 'boolean') {
-      where.isActive = isActive;
-    }
-
-    // Get products and total count
-    const [products, totalCount] = await Promise.all([
-      prisma.product.findMany({
-        where,
-        include: {
-          category: true,
-          brand: true,
-          images: {
-            where: { isPrimary: true },
-            take: 1,
-          },
-          variants: {
-            include: {
-              unit: true,
-            },
-            take: 1,
-          },
-          _count: {
-            select: {
-              variants: true,
-            },
-          },
-        },
-        orderBy: { name: 'asc' },
-        skip,
-        take: limit,
-      }),
-      prisma.product.count({ where }),
-    ]);
-
-    return {
-      products,
-      totalCount,
-      totalPages: Math.ceil(totalCount / limit),
-      currentPage: page,
-    };
   }
 }
