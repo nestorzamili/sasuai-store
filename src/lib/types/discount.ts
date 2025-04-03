@@ -4,8 +4,8 @@ export interface DiscountInterface {
   discountType: 'member' | 'product';
   valueType: 'percentage' | 'flat';
   value: number;
-  type: string;
-  minPurchase: number;
+  type?: string;
+  minPurchase?: number;
   startDate: Date;
   endDate: Date;
   isActive: boolean;
