@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { getAllProducts, getProductImages } from '../action';
 import { Product } from '@prisma/client';
 import { ProductImageWithUrl } from '@/lib/types/product';
@@ -10,6 +11,10 @@ import { ComboBox } from '@/components/ui/combobox';
 import { Separator } from '@/components/ui/separator';
 
 export default function ProductImagesContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const productIdFromUrl = searchParams.get('product');
+
   const [isLoading, setIsLoading] = useState(true);
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -22,6 +27,16 @@ export default function ProductImagesContent() {
       const response = await getAllProducts();
       if (response.success && response.data) {
         setProducts(response.data);
+
+        // If product ID was provided in URL, find and select that product
+        if (productIdFromUrl) {
+          const productFromUrl = response.data.find(
+            (p) => p.id === productIdFromUrl,
+          );
+          if (productFromUrl) {
+            setSelectedProduct(productFromUrl);
+          }
+        }
       }
     } catch (error) {
       console.error('Error fetching products:', error);
@@ -58,11 +73,23 @@ export default function ProductImagesContent() {
   useEffect(() => {
     if (selectedProduct && selectedProduct.id) {
       fetchProductImages(selectedProduct.id);
+
+      // Update URL with the selected product ID
+      const newParams = new URLSearchParams(searchParams);
+      newParams.set('product', selectedProduct.id);
+      router.replace(`/products/images?${newParams.toString()}`);
     } else {
       setImages([]);
+
+      // Remove product param from URL if no product is selected
+      if (productIdFromUrl) {
+        const newParams = new URLSearchParams(searchParams);
+        newParams.delete('product');
+        router.replace('/products/images');
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedProduct?.id]); // Only depend on the product ID
+  }, [selectedProduct?.id]);
 
   // Handle product selection
   const handleProductChange = (productId: string) => {
