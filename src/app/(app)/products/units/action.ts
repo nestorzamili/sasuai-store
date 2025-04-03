@@ -170,7 +170,7 @@ export async function deleteUnit(id: string) {
     if (isInUse) {
       return {
         success: false,
-        error: 'Cannot delete a unit that is in use by products',
+        error: 'Cannot delete a unit that is in use by products', // Updated error message
       };
     }
 
