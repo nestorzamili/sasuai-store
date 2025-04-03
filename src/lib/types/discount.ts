@@ -2,7 +2,7 @@ export interface DiscountInterface {
   id: string;
   name: string;
   discountType: 'member' | 'product';
-  valueType: 'percentage' | 'fixed';
+  valueType: 'percentage' | 'flat';
   value: number;
   type: string;
   minPurchase: number;
