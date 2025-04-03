@@ -24,9 +24,6 @@ export function ProductDeleteDialog({
   const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
 
-  const primaryImage =
-    product.images.find((img) => img.isPrimary) || product.images[0];
-
   const handleDelete = async () => {
     try {
       setIsDeleting(true);
