@@ -1,20 +1,8 @@
 import prisma from '@/lib/prisma';
-import { buildQueryOptions, QueryOptions } from '@/lib/common/query-options';
-import { responseFormatter } from '../common/response-formatter';
 export const Discount = {
-  async getAll(options: QueryOptions) {
-    const queryOptions = buildQueryOptions(options);
-    const discounts = await prisma.discount.findMany(queryOptions);
-    const discountCount = await prisma.discount.count({
-      where: queryOptions.where,
-    });
-
-    return responseFormatter(
-      discounts,
-      discountCount,
-      queryOptions.skip,
-      queryOptions.take
-    );
+  async getAll() {
+    const discounts = await prisma.discount.findMany();
+    return discounts;
   },
 
   async getById(id: string) {
