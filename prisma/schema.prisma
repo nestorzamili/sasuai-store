@@ -121,7 +121,7 @@ model UnitConversion {
   fromUnitId       String   @map("from_unit_id")
   toUnit           Unit     @relation("ToUnit", fields: [toUnitId], references: [id])
   toUnitId         String   @map("to_unit_id")
-  conversionFactor Decimal  @map("conversion_factor")
+  conversionFactor Int      @map("conversion_factor")
   createdAt        DateTime @default(now()) @db.Timestamptz
   updatedAt        DateTime @updatedAt @db.Timestamptz
 
@@ -129,18 +129,18 @@ model UnitConversion {
 }
 
 model Product {
-  id               String            @id @default(uuid())
-  name             String
-  category         Category          @relation(fields: [categoryId], references: [id])
-  categoryId       String            @map("category_id")
-  brand            Brand?            @relation(fields: [brandId], references: [id])
-  brandId          String?           @map("brand_id")
-  description      String?
-  isActive         Boolean           @default(true) @map("is_active")
-  variants         ProductVariant[]
-  images           ProductImage[]
-  createdAt        DateTime          @default(now()) @db.Timestamptz
-  updatedAt        DateTime          @updatedAt @db.Timestamptz
+  id          String           @id @default(uuid())
+  name        String
+  category    Category         @relation(fields: [categoryId], references: [id])
+  categoryId  String           @map("category_id")
+  brand       Brand?           @relation(fields: [brandId], references: [id])
+  brandId     String?          @map("brand_id")
+  description String?
+  isActive    Boolean          @default(true) @map("is_active")
+  variants    ProductVariant[]
+  images      ProductImage[]
+  createdAt   DateTime         @default(now()) @db.Timestamptz
+  updatedAt   DateTime         @updatedAt @db.Timestamptz
 
   @@map("product")
 }
@@ -152,7 +152,7 @@ model ProductVariant {
   name         String
   unit         Unit           @relation(fields: [unitId], references: [id])
   unitId       String         @map("unit_id")
-  price        Decimal
+  price        Int
   currentStock Int            @map("current_stock")
   skuCode      String?        @map("sku_code")
   batches      ProductBatch[]
@@ -170,7 +170,7 @@ model ProductBatch {
   expiryDate        DateTime          @map("expiry_date") @db.Date
   initialQuantity   Int               @map("initial_quantity")
   remainingQuantity Int               @map("remaining_quantity")
-  buyPrice          Decimal           @map("buy_price")
+  buyPrice          Int               @map("buy_price")
   barcodes          Barcode[]
   stockIns          StockIn[]
   stockOuts         StockOut[]
@@ -210,34 +210,31 @@ model ProductImage {
 // ==============================
 
 model Discount {
-  id               String            @id @default(uuid())
-  name             String
-  discountType     String            @map("discount_type")   
-  valueType        String            @map("value_type")
-  value            Int               @map("value")
-  minPurchase      Int?              @map("min_purchase")
-  startDate        DateTime          @map("start_date") @db.Timestamptz
-  endDate          DateTime          @map("end_date") @db.Timestamptz
-  isActive         Boolean           @default(true) @map("is_active")
-  createdAt        DateTime          @default(now()) @db.Timestamptz
-  updatedAt        DateTime          @updatedAt @db.Timestamptz
+  id           String   @id @default(uuid())
+  name         String
+  discountType String   @map("discount_type")
+  valueType    String   @map("value_type")
+  value        Int      @map("value")
+  minPurchase  Int?     @map("min_purchase")
+  startDate    DateTime @map("start_date") @db.Timestamptz
+  endDate      DateTime @map("end_date") @db.Timestamptz
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @db.Timestamptz
+  updatedAt    DateTime @updatedAt @db.Timestamptz
 
   @@map("discount")
 }
 
-
-
 model MemberTier {
-  id              String           @id @default(uuid())
-  name            String
-  minPoints       Int              @map("min_points")
-  members         Member[]
-  createdAt       DateTime         @default(now()) @db.Timestamptz
-  updatedAt       DateTime         @updatedAt @db.Timestamptz
+  id        String   @id @default(uuid())
+  name      String
+  minPoints Int      @map("min_points")
+  members   Member[]
+  createdAt DateTime @default(now()) @db.Timestamptz
+  updatedAt DateTime @updatedAt @db.Timestamptz
 
   @@map("member_tier")
 }
-
 
 // ==============================
 // MEMBER & REWARD MODELS
@@ -358,9 +355,9 @@ model Transaction {
   cashierId      String            @map("cashier_id")
   member         Member?           @relation(fields: [memberId], references: [id])
   memberId       String?           @map("member_id")
-  totalAmount    Decimal           @map("total_amount")
-  discountAmount Decimal           @map("discount_amount")
-  finalAmount    Decimal           @map("final_amount")
+  totalAmount    Int               @map("total_amount")
+  discountAmount Int               @map("discount_amount")
+  finalAmount    Int               @map("final_amount")
   paymentMethod  String            @map("payment_method")
   items          TransactionItem[]
   memberPoints   MemberPoint[]
@@ -379,9 +376,9 @@ model TransactionItem {
   quantity      Int
   unit          Unit         @relation(fields: [unitId], references: [id])
   unitId        String       @map("unit_id")
-  pricePerUnit  Decimal      @map("price_per_unit")
+  pricePerUnit  Int          @map("price_per_unit")
   discountId    String?      @map("discount_id")
-  subtotal      Decimal
+  subtotal      Int
   createdAt     DateTime     @default(now()) @db.Timestamptz
   updatedAt     DateTime     @updatedAt @db.Timestamptz
 
@@ -391,8 +388,8 @@ model TransactionItem {
 model FinancialReport {
   id           String         @id @default(uuid())
   period       String
-  totalRevenue Decimal        @map("total_revenue")
-  totalProfit  Decimal        @map("total_profit")
+  totalRevenue Int            @map("total_revenue")
+  totalProfit  Int            @map("total_profit")
   createdAt    DateTime       @default(now()) @db.Timestamptz
   updatedAt    DateTime       @updatedAt @db.Timestamptz
   details      ReportDetail[]
@@ -405,7 +402,7 @@ model ReportDetail {
   report      FinancialReport @relation(fields: [reportId], references: [id])
   reportId    String          @map("report_id")
   type        String
-  amount      Decimal
+  amount      Int
   description String
   date        DateTime        @db.Date
   createdAt   DateTime        @default(now()) @db.Timestamptz
@@ -416,7 +413,7 @@ model ReportDetail {
 
 model Expense {
   id          String   @id @default(uuid())
-  amount      Decimal
+  amount      Int
   category    String
   description String
   date        DateTime @db.Date
