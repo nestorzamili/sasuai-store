@@ -66,7 +66,9 @@ export function CategoryCombobox({ value, onChange }: CategoryComboboxProps) {
                   }}
                 >
                   <IconPlus className="mr-1 h-3 w-3" />
-                  Create "{searchQuery}"
+                  {searchQuery.trim()
+                    ? `Create "${searchQuery}"`
+                    : 'Create New Category'}
                 </Button>
               </div>
             </CommandEmpty>
