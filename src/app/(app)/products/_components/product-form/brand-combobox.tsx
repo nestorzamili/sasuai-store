@@ -43,7 +43,7 @@ export function BrandCombobox({ value, onChange }: BrandComboboxProps) {
         >
           {value && selectedBrand
             ? selectedBrand.name
-            : value === 'none'
+            : value === ''
             ? 'None'
             : 'Select brand...'}
           <IconSelector className="ml-2 h-4 w-4 shrink-0 opacity-50" />
