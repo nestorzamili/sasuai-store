@@ -48,6 +48,15 @@ export default function MainContent() {
     fetchProducts();
   }, []);
 
+  // Handle dialog open state change
+  const handleDialogOpenChange = (open: boolean) => {
+    setIsDialogOpen(open);
+    // Reset selectedProduct when dialog is closed
+    if (!open) {
+      setSelectedProduct(null);
+    }
+  };
+
   // Handle edit product
   const handleEdit = (product: ProductWithRelations) => {
     setSelectedProduct(product);
@@ -76,7 +85,7 @@ export default function MainContent() {
         </div>
         <ProductPrimaryButton
           open={isDialogOpen}
-          onOpenChange={setIsDialogOpen}
+          onOpenChange={handleDialogOpenChange}
           initialData={selectedProduct || undefined}
           onSuccess={handleSuccess}
         />
