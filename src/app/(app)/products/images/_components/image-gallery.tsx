@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import Image from 'next/image';
 import { ProductImageWithUrl } from '@/lib/types/product';
 import { Card, CardContent } from '@/components/ui/card';
@@ -14,6 +14,8 @@ import {
   IconTrash,
   IconPhoto,
   IconMaximize,
+  IconChevronLeft,
+  IconChevronRight,
 } from '@tabler/icons-react';
 import { deleteProductImage, setPrimaryProductImage } from '../action';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -26,6 +28,8 @@ interface ImageGalleryProps {
   productId?: string;
 }
 
+const ITEMS_PER_PAGE = 8; // Number of images per page
+
 export function ImageGallery({
   images,
   isLoading,
@@ -37,58 +41,77 @@ export function ImageGallery({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [imageToDelete, setImageToDelete] =
     useState<ProductImageWithUrl | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Lightbox state
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  // Handle opening the lightbox
-  const openLightbox = (index: number) => {
-    setCurrentImageIndex(index);
-    setLightboxOpen(true);
-  };
+  // Calculate pagination
+  const totalPages = Math.ceil(images.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = Math.min(startIndex + ITEMS_PER_PAGE, images.length);
+  const currentImages = images.slice(startIndex, endIndex);
+
+  // Reset to first page when images change
+  if (images.length > 0 && currentPage > totalPages) {
+    setCurrentPage(1);
+  }
+
+  // Handle opening the lightbox - calculate real index based on pagination
+  const openLightbox = useCallback(
+    (pageIndex: number) => {
+      const realIndex = startIndex + pageIndex;
+      setCurrentImageIndex(realIndex);
+      setLightboxOpen(true);
+    },
+    [startIndex],
+  );
 
   // Handle setting an image as primary
-  const handleSetPrimary = async (imageId: string) => {
-    if (!productId) return;
+  const handleSetPrimary = useCallback(
+    async (imageId: string) => {
+      if (!productId) return;
 
-    try {
-      setIsPrimarySetting(imageId);
-      const result = await setPrimaryProductImage(imageId, productId);
+      try {
+        setIsPrimarySetting(imageId);
+        const result = await setPrimaryProductImage(imageId, productId);
 
-      if (result.success) {
-        toast({
-          title: 'Primary image updated',
-          description: 'The primary image has been updated successfully',
-        });
-        onImageChange?.();
-      } else {
+        if (result.success) {
+          toast({
+            title: 'Primary image updated',
+            description: 'The primary image has been updated successfully',
+          });
+          onImageChange?.();
+        } else {
+          toast({
+            title: 'Error',
+            description: result.error || 'Failed to update primary image',
+            variant: 'destructive',
+          });
+        }
+      } catch (error) {
+        console.error('Error setting primary image:', error);
         toast({
           title: 'Error',
-          description: result.error || 'Failed to update primary image',
+          description: 'An unexpected error occurred',
           variant: 'destructive',
         });
+      } finally {
+        setIsPrimarySetting(null);
       }
-    } catch (error) {
-      console.error('Error setting primary image:', error);
-      toast({
-        title: 'Error',
-        description: 'An unexpected error occurred',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsPrimarySetting(null);
-    }
-  };
+    },
+    [productId, onImageChange],
+  );
 
   // Open delete confirmation dialog
-  const openDeleteDialog = (image: ProductImageWithUrl) => {
+  const openDeleteDialog = useCallback((image: ProductImageWithUrl) => {
     setImageToDelete(image);
     setDeleteDialogOpen(true);
-  };
+  }, []);
 
   // Handle image deletion
-  const handleDelete = async () => {
+  const handleDelete = useCallback(async () => {
     if (!imageToDelete) return;
 
     try {
@@ -119,6 +142,19 @@ export function ImageGallery({
       setIsDeleting(null);
       setDeleteDialogOpen(false);
       setImageToDelete(null);
+    }
+  }, [imageToDelete, onImageChange]);
+
+  // Handle page navigation
+  const goToNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage((prev) => prev + 1);
+    }
+  };
+
+  const goToPrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage((prev) => prev - 1);
     }
   };
 
@@ -157,7 +193,7 @@ export function ImageGallery({
   return (
     <>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {images.map((image, index) => (
+        {currentImages.map((image, index) => (
           <Card key={image.id} className="overflow-hidden">
             <div className="relative aspect-square group">
               <Image
@@ -167,6 +203,7 @@ export function ImageGallery({
                 className="object-cover cursor-pointer transition-transform group-hover:scale-105"
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 onClick={() => openLightbox(index)}
+                priority={index < 4} // Only prioritize first 4 images
               />
               {image.isPrimary && (
                 <Badge
@@ -181,7 +218,10 @@ export function ImageGallery({
                   variant="secondary"
                   size="sm"
                   className="bg-background/80 hover:bg-background"
-                  onClick={() => openLightbox(index)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openLightbox(index);
+                  }}
                 >
                   <IconMaximize className="h-4 w-4 mr-1" /> View
                 </Button>
@@ -227,6 +267,33 @@ export function ImageGallery({
           </Card>
         ))}
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center space-x-2 mt-6">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={goToPrevPage}
+            disabled={currentPage === 1}
+          >
+            <IconChevronLeft className="h-4 w-4" />
+            <span className="sr-only">Previous Page</span>
+          </Button>
+          <span className="text-sm">
+            Page {currentPage} of {totalPages}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={goToNextPage}
+            disabled={currentPage === totalPages}
+          >
+            <IconChevronRight className="h-4 w-4" />
+            <span className="sr-only">Next Page</span>
+          </Button>
+        </div>
+      )}
 
       {/* Delete confirmation dialog */}
       <ConfirmDialog

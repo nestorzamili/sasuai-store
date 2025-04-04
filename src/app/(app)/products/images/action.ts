@@ -7,16 +7,16 @@ import { CloudinaryUploadResult } from '@/lib/types/cloudinary';
 import { getImageUrl } from '@/utils/image';
 
 /**
- * Get all products
+ * Get all products with minimal data for dropdown
  */
 export async function getAllProducts() {
   try {
-    // Only fetch active products to reduce data load
-    const products = await ProductService.getAll();
+    // Only fetch essential fields: id & name to reduce payload size
+    const products = await ProductService.getAllMinimal();
 
     return {
       success: true,
-      data: products,
+      data: products, // Explicitly typed as {id: string, name: string, isActive: boolean}[]
     };
   } catch (error) {
     console.error('Failed to fetch products:', error);

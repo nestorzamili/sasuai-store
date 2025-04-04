@@ -1,114 +1,206 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getAllProducts, getProductImages } from '../action';
-import { Product } from '@prisma/client';
-import { ProductImageWithUrl } from '@/lib/types/product';
+import { ProductImageWithUrl, MinimalProduct } from '@/lib/types/product';
 import { ImageGallery } from './image-gallery';
 import { ImageUploadButton } from './image-upload-button';
 import { ComboBox } from '@/components/ui/combobox';
 import { Separator } from '@/components/ui/separator';
+import { useToast } from '@/hooks/use-toast';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function ProductImagesContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const productIdFromUrl = searchParams.get('product');
+  const initialProductId = useRef(searchParams.get('product'));
+  const { toast } = useToast();
 
-  const [isLoading, setIsLoading] = useState(true);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  // Menandai apakah komponen sudah di-mount untuk mencegah efek pada mount pertama
+  const isMounted = useRef(false);
+
+  // Referensi untuk mencegah update saat URL berubah secara programatik
+  const isUrlBeingUpdated = useRef(false);
+
+  // Separating loading states for different operations
+  const [isLoadingProducts, setIsLoadingProducts] = useState(true);
+  const [isLoadingImages, setIsLoadingImages] = useState(false);
+
+  const [products, setProducts] = useState<MinimalProduct[]>([]);
+  const [selectedProduct, setSelectedProduct] = useState<MinimalProduct | null>(
+    null,
+  );
   const [images, setImages] = useState<ProductImageWithUrl[]>([]);
 
-  // Fetch all products
-  const fetchProducts = async () => {
-    setIsLoading(true);
+  // Memoize product options to prevent unnecessary re-renders
+  const productOptions = useMemo(
+    () =>
+      products.map((product) => ({
+        value: product.id,
+        label: product.name,
+      })),
+    [products],
+  );
+
+  // Fetch products dengan handling untuk initial URL parameter
+  const fetchProducts = useCallback(async () => {
+    setIsLoadingProducts(true);
     try {
       const response = await getAllProducts();
       if (response.success && response.data) {
-        setProducts(response.data);
+        // Sort products alphabetically for easier finding
+        const sortedProducts = [...response.data].sort((a, b) =>
+          a.name.localeCompare(b.name),
+        );
+        setProducts(sortedProducts);
 
-        // If product ID was provided in URL, find and select that product
-        if (productIdFromUrl) {
-          const productFromUrl = response.data.find(
-            (p) => p.id === productIdFromUrl,
+        // Pilih produk dari URL hanya pada load awal
+        const productIdToSelect = initialProductId.current;
+        if (productIdToSelect) {
+          const productFromUrl = sortedProducts.find(
+            (p) => p.id === productIdToSelect,
           );
           if (productFromUrl) {
             setSelectedProduct(productFromUrl);
+            // Langsung fetch images untuk produk yang dipilih
+            fetchProductImages(productIdToSelect, true);
+          } else {
+            toast({
+              title: 'Product not found',
+              description: 'The requested product could not be found.',
+              variant: 'destructive',
+            });
           }
         }
+      } else {
+        toast({
+          title: 'Failed to load products',
+          description: response.error || 'Could not load product list',
+          variant: 'destructive',
+        });
       }
     } catch (error) {
       console.error('Error fetching products:', error);
+      toast({
+        title: 'Error',
+        description: 'An unexpected error occurred while loading products.',
+        variant: 'destructive',
+      });
     } finally {
-      setIsLoading(false);
+      setIsLoadingProducts(false);
+      // Tandai bahwa komponen sudah di-mount
+      isMounted.current = true;
     }
-  };
+  }, [toast]);
 
-  // Fetch images for selected product
-  const fetchProductImages = async (productId: string) => {
-    setIsLoading(true);
-    try {
-      const response = await getProductImages(productId);
-      if (response.success && response.data) {
-        setImages(response.data);
-      } else {
-        setImages([]);
+  // Fetch images dengan caching
+  const imageCache = useRef<Record<string, ProductImageWithUrl[]>>({});
+
+  const fetchProductImages = useCallback(
+    async (productId: string, skipUrlUpdate = false) => {
+      if (!productId) return;
+
+      setIsLoadingImages(true);
+
+      // Cek cache terlebih dahulu
+      if (imageCache.current[productId]) {
+        setImages(imageCache.current[productId]);
+        setIsLoadingImages(false);
+
+        // Update URL jika tidak di-skip
+        if (!skipUrlUpdate && !isUrlBeingUpdated.current) {
+          updateUrlWithProductId(productId);
+        }
+        return;
       }
-    } catch (error) {
-      console.error('Error fetching product images:', error);
-      setImages([]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
-  // Initial fetch of products - only run once
+      try {
+        const response = await getProductImages(productId);
+        if (response.success && response.data) {
+          // Simpan ke cache
+          imageCache.current[productId] = response.data;
+          setImages(response.data);
+
+          // Update URL jika tidak di-skip
+          if (!skipUrlUpdate && !isUrlBeingUpdated.current) {
+            updateUrlWithProductId(productId);
+          }
+        } else {
+          setImages([]);
+          if (response.error) {
+            console.warn('Warning fetching product images:', response.error);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching product images:', error);
+        setImages([]);
+        toast({
+          title: 'Error',
+          description: 'Failed to load product images.',
+          variant: 'destructive',
+        });
+      } finally {
+        setIsLoadingImages(false);
+      }
+    },
+    [toast],
+  );
+
+  // Fungsi terpisah untuk memperbarui URL
+  const updateUrlWithProductId = useCallback(
+    (productId: string) => {
+      isUrlBeingUpdated.current = true;
+
+      const params = new URLSearchParams(searchParams.toString());
+      params.set('product', productId);
+
+      router.replace(`/products/images?${params.toString()}`, {
+        scroll: false,
+      });
+
+      // Reset flag dengan sedikit penundaan
+      setTimeout(() => {
+        isUrlBeingUpdated.current = false;
+      }, 50);
+    },
+    [router, searchParams],
+  );
+
+  // Initial fetch of products - hanya dilakukan sekali
   useEffect(() => {
     fetchProducts();
+    // Tidak perlu dependency pada fetchProducts di sini karena kita hanya ingin jalankan sekali
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Fetch images when a product is selected - prevent unnecessary refetches
-  useEffect(() => {
-    if (selectedProduct && selectedProduct.id) {
-      fetchProductImages(selectedProduct.id);
-
-      // Update URL with the selected product ID
-      const newParams = new URLSearchParams(searchParams);
-      newParams.set('product', selectedProduct.id);
-      router.replace(`/products/images?${newParams.toString()}`);
-    } else {
-      setImages([]);
-
-      // Remove product param from URL if no product is selected
-      if (productIdFromUrl) {
-        const newParams = new URLSearchParams(searchParams);
-        newParams.delete('product');
-        router.replace('/products/images');
+  // Handle product selection - tanpa efek samping URL
+  const handleProductChange = useCallback(
+    (productId: string) => {
+      const product = products.find((p) => p.id === productId);
+      if (product) {
+        setSelectedProduct(product);
+        // Fetch images dan update URL
+        fetchProductImages(productId);
+      } else {
+        setSelectedProduct(null);
+        setImages([]);
       }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedProduct?.id]);
+    },
+    [products, fetchProductImages],
+  );
 
-  // Handle product selection
-  const handleProductChange = (productId: string) => {
-    const product = products.find((p) => p.id === productId);
-    setSelectedProduct(product || null);
-  };
-
-  // Handle image upload success
-  const handleImageUploadSuccess = () => {
+  // Handle image upload success dengan invalidasi cache
+  const handleImageUploadSuccess = useCallback(() => {
     if (selectedProduct) {
-      fetchProductImages(selectedProduct.id);
+      // Invalidasi cache untuk produk ini
+      if (imageCache.current[selectedProduct.id]) {
+        delete imageCache.current[selectedProduct.id];
+      }
+      // Skip URL update karena kita tidak mengubah produk
+      fetchProductImages(selectedProduct.id, true);
     }
-  };
-
-  // Format products for combobox
-  const productOptions = products.map((product) => ({
-    value: product.id,
-    label: product.name,
-  }));
+  }, [selectedProduct, fetchProductImages]);
 
   return (
     <div className="space-y-6">
@@ -124,13 +216,18 @@ export default function ProductImagesContent() {
         <div className="space-y-4">
           <div className="space-y-2">
             <h3 className="text-lg font-medium">Select Product</h3>
-            <ComboBox
-              options={productOptions}
-              value={selectedProduct?.id || ''}
-              onChange={handleProductChange}
-              placeholder="Select a product..."
-              disabled={isLoading || products.length === 0}
-            />
+            {isLoadingProducts ? (
+              <Skeleton className="h-10 w-full" />
+            ) : (
+              <ComboBox
+                options={productOptions}
+                value={selectedProduct?.id || ''}
+                onChange={handleProductChange}
+                placeholder="Search products..."
+                disabled={isLoadingProducts || products.length === 0}
+                initialDisplayCount={15}
+              />
+            )}
           </div>
 
           {selectedProduct && (
@@ -159,7 +256,7 @@ export default function ProductImagesContent() {
 
             <ImageGallery
               images={images}
-              isLoading={isLoading}
+              isLoading={isLoadingImages}
               onImageChange={handleImageUploadSuccess}
               productId={selectedProduct?.id}
             />

@@ -17,6 +17,25 @@ export class ProductService {
   }
 
   /**
+   * Get all products with minimal data (just id and name)
+   * @returns Promise<{id: string, name: string, isActive: boolean}[]>
+   */
+  static async getAllMinimal() {
+    const products = await prisma.product.findMany({
+      select: {
+        id: true,
+        name: true,
+        isActive: true,
+      },
+      orderBy: {
+        name: 'asc',
+      },
+    });
+
+    return products;
+  }
+
+  /**
    * Get active products
    */
   static async getActive() {
