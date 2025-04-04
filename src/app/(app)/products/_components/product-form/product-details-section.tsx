@@ -98,7 +98,7 @@ export function ProductDetailsSection() {
                   {...field}
                   onChange={(e) => {
                     const value = e.target.valueAsNumber;
-                    field.onChange(Number.isNaN(value) ? '' : value);
+                    field.onChange(Number.isNaN(value) ? 0 : value);
                   }}
                 />
               </FormControl>
