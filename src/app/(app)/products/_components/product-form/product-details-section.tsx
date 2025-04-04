@@ -63,7 +63,7 @@ export function ProductDetailsSection() {
               <BrandCombobox
                 value={field.value || ''}
                 onChange={(value) =>
-                  field.onChange(value === 'none' ? null : value)
+                  field.onChange(value === '' ? null : value)
                 }
               />
               <FormMessage />
