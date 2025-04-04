@@ -1,12 +1,20 @@
 import { Supplier } from '@prisma/client';
+import { StockInComplete } from './stock-movement';
 
 /**
- * Supplier extended with stock-in counts
+ * Supplier with stock-in count
  */
 export interface SupplierWithCount extends Supplier {
-  _count?: {
+  _count: {
     stockIns: number;
   };
+}
+
+/**
+ * Supplier with stock-in history
+ */
+export interface SupplierWithStockIns extends Supplier {
+  stockIns: StockInComplete[];
 }
 
 /**
@@ -18,9 +26,12 @@ export interface SupplierFormValues {
 }
 
 /**
- * Supplier with optional initial form data
+ * Form initial data for suppliers
  */
-export interface SupplierFormInitialData extends Supplier {
+export interface SupplierFormInitialData {
+  id: string;
+  name: string;
+  contact?: string | null;
   _count?: {
     stockIns: number;
   };

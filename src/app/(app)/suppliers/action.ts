@@ -79,6 +79,33 @@ export async function getSupplier(id: string) {
 }
 
 /**
+ * Get supplier with stock-ins
+ */
+export async function getSupplierWithStockIns(id: string) {
+  try {
+    const supplier = await SupplierService.getWithStockIns(id);
+
+    if (!supplier) {
+      return {
+        success: false,
+        error: 'Supplier not found',
+      };
+    }
+
+    return {
+      success: true,
+      data: supplier,
+    };
+  } catch (error) {
+    console.error(`Failed to fetch supplier details ${id}:`, error);
+    return {
+      success: false,
+      error: 'Failed to fetch supplier details',
+    };
+  }
+}
+
+/**
  * Create a new supplier
  */
 export async function createSupplier(data: { name: string; contact?: string }) {
@@ -160,14 +187,35 @@ export async function updateSupplier(
 }
 
 /**
+ * Check if supplier can be deleted
+ */
+export async function canDeleteSupplier(id: string) {
+  try {
+    const canDelete = await SupplierService.canDelete(id);
+
+    return {
+      success: true,
+      canDelete,
+    };
+  } catch (error) {
+    console.error(`Failed to check if supplier can be deleted ${id}:`, error);
+    return {
+      success: false,
+      error: 'Failed to check if supplier can be deleted',
+      canDelete: false,
+    };
+  }
+}
+
+/**
  * Delete a supplier
  */
 export async function deleteSupplier(id: string) {
   try {
-    // Check if supplier has stock-ins
-    const hasStockIns = await SupplierService.hasStockIns(id);
+    // Check if supplier can be deleted
+    const canDelete = await SupplierService.canDelete(id);
 
-    if (hasStockIns) {
+    if (!canDelete) {
       return {
         success: false,
         error: 'Cannot delete supplier with associated stock-ins',
@@ -187,7 +235,8 @@ export async function deleteSupplier(id: string) {
     console.error(`Failed to delete supplier ${id}:`, error);
     return {
       success: false,
-      error: 'Failed to delete supplier',
+      error:
+        error instanceof Error ? error.message : 'Failed to delete supplier',
     };
   }
 }
