@@ -1,7 +1,7 @@
 'use client';
 
 import { useFormContext } from 'react-hook-form';
-import { useProductForm, ProductFormValues } from './product-form-provider';
+import { ProductFormValues } from './product-form-provider';
 import {
   FormControl,
   FormDescription,
@@ -96,7 +96,10 @@ export function ProductDetailsSection() {
                   type="number"
                   placeholder="0"
                   {...field}
-                  onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
+                  onChange={(e) => {
+                    const value = e.target.valueAsNumber;
+                    field.onChange(Number.isNaN(value) ? '' : value);
+                  }}
                 />
               </FormControl>
               <FormMessage />
