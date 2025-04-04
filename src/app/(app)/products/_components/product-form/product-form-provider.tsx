@@ -46,6 +46,7 @@ interface ProductFormContextProps {
   setImages: (images: ProductImageWithUrl[]) => void;
   primaryImageUrl: string | null;
   submitForm: () => void;
+  cancelForm: () => void;
   openCategoryCreate: boolean;
   setOpenCategoryCreate: (open: boolean) => void;
   openBrandCreate: boolean;
@@ -238,6 +239,12 @@ export function ProductFormProvider({
     methods.handleSubmit(onSubmit)();
   };
 
+  // Function to handle form cancellation
+  const cancelForm = () => {
+    methods.reset();
+    onOpenChange?.(false);
+  };
+
   // Context value
   const contextValue: ProductFormContextProps = {
     isEditing,
@@ -249,6 +256,7 @@ export function ProductFormProvider({
     setImages,
     primaryImageUrl,
     submitForm,
+    cancelForm,
     openCategoryCreate,
     setOpenCategoryCreate,
     openBrandCreate,
