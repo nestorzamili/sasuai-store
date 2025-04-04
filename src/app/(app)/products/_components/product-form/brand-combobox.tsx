@@ -55,7 +55,10 @@ export function BrandCombobox({ value, onChange }: BrandComboboxProps) {
             placeholder="Search brands..."
             onValueChange={setSearchQuery}
           />
-          <CommandList>
+          <CommandList
+            className="max-h-[200px] overflow-auto"
+            onWheel={(e) => e.stopPropagation()}
+          >
             <CommandEmpty>
               <div className="py-4 text-center text-sm">
                 <p className="text-muted-foreground">No brand found</p>
@@ -68,7 +71,9 @@ export function BrandCombobox({ value, onChange }: BrandComboboxProps) {
                   }}
                 >
                   <IconPlus className="mr-1 h-3 w-3" />
-                  Create "{searchQuery}"
+                  {searchQuery.trim()
+                    ? `Create "${searchQuery}"`
+                    : 'Create New Brand'}
                 </Button>
               </div>
             </CommandEmpty>

@@ -53,7 +53,10 @@ export function CategoryCombobox({ value, onChange }: CategoryComboboxProps) {
             placeholder="Search categories..."
             onValueChange={setSearchQuery}
           />
-          <CommandList>
+          <CommandList
+            className="max-h-[200px] overflow-auto"
+            onWheel={(e) => e.stopPropagation()}
+          >
             <CommandEmpty>
               <div className="py-4 text-center text-sm">
                 <p className="text-muted-foreground">No category found</p>
