@@ -74,8 +74,8 @@ export const sidebarData: SidebarData = {
           icon: IconCategory,
         },
         {
-          title: 'Stock',
-          url: '/products/stock',
+          title: 'Inventory',
+          url: '/inventory',
           icon: IconPackage,
         },
         {
