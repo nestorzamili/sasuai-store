@@ -10,7 +10,7 @@ import { CreateBrandDialog } from './create-brand-dialog';
 import { CreateUnitDialog } from './create-unit-dialog';
 
 export function ProductFormContent() {
-  const { loading, isEditing, submitForm } = useProductForm();
+  const { loading, isEditing, submitForm, cancelForm } = useProductForm();
 
   return (
     <>
@@ -26,7 +26,7 @@ export function ProductFormContent() {
         <Button
           type="button"
           variant="outline"
-          onClick={() => submitForm()}
+          onClick={() => cancelForm()}
           disabled={loading}
         >
           Cancel
