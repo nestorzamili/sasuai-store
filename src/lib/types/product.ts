@@ -60,6 +60,12 @@ export type ProductImageWithUrl = ProductImage & {
   fullUrl: string;
 };
 
+export type MinimalProduct = {
+  id: string;
+  name: string;
+  isActive: boolean;
+};
+
 // Type for product list view with primary image
 export type ProductListItem = ProductWithRelations & {
   primaryImage?: string;
