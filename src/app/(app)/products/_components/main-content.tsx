@@ -1,78 +1,112 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { getAllProducts } from '../action';
+import { useState, useEffect, useCallback } from 'react';
+import { getPaginatedProducts } from '../action';
 import { ProductWithRelations } from '@/lib/types/product';
 import ProductPrimaryButton from './product-primary-button';
 import { ProductTable } from './product-table';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent } from '@/components/ui/card';
 
 export default function MainContent() {
-  const [isLoading, setIsLoading] = useState(true);
-  const [products, setProducts] = useState<ProductWithRelations[]>([]);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] =
     useState<ProductWithRelations | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('all');
+  const [refreshKey, setRefreshKey] = useState(Date.now());
   const { toast } = useToast();
 
-  const fetchProducts = async () => {
-    setIsLoading(true);
-    try {
-      const { data, success } = await getAllProducts();
-      if (success) {
-        // Cast the data to the correct type
-        const productData = (data as ProductWithRelations[]) || [];
-        setProducts(productData);
-      } else {
-        toast({
-          title: 'Error',
-          description: 'Failed to fetch products',
-          variant: 'destructive',
-        });
-      }
-    } catch (error) {
-      console.error('Error fetching products:', error);
-      toast({
-        title: 'Error',
-        description: 'An unexpected error occurred',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Track tab counts for display
+  const [tabCounts, setTabCounts] = useState({
+    all: null as number | null,
+    active: null as number | null,
+    inactive: null as number | null,
+  });
 
-  useEffect(() => {
-    fetchProducts();
+  // Load counts for tab headers
+  const loadTabCounts = useCallback(async () => {
+    try {
+      const [allResult, activeResult, inactiveResult] = await Promise.all([
+        getPaginatedProducts({ page: 1, pageSize: 1 }),
+        getPaginatedProducts({ page: 1, pageSize: 1, isActive: true }),
+        getPaginatedProducts({ page: 1, pageSize: 1, isActive: false }),
+      ]);
+
+      setTabCounts({
+        all:
+          allResult.success && allResult.data
+            ? allResult.data.totalCount
+            : null,
+        active:
+          activeResult.success && activeResult.data
+            ? activeResult.data.totalCount
+            : null,
+        inactive:
+          inactiveResult.success && inactiveResult.data
+            ? inactiveResult.data.totalCount
+            : null,
+      });
+    } catch (error) {
+      console.error('Error loading tab counts:', error);
+    }
   }, []);
 
+  // Refresh tables and tab counts
+  const refreshData = useCallback(() => {
+    setRefreshKey(Date.now());
+    loadTabCounts();
+  }, [loadTabCounts]);
+
   // Handle dialog open state change
-  const handleDialogOpenChange = (open: boolean) => {
+  const handleDialogOpenChange = useCallback((open: boolean) => {
     setIsDialogOpen(open);
-    // Reset selectedProduct when dialog is closed
-    if (!open) {
-      setSelectedProduct(null);
-    }
-  };
+    if (!open) setSelectedProduct(null);
+  }, []);
 
   // Handle edit product
-  const handleEdit = (product: ProductWithRelations) => {
+  const handleEdit = useCallback((product: ProductWithRelations) => {
     setSelectedProduct(product);
     setIsDialogOpen(true);
-  };
+  }, []);
 
   // Handle product operation success
-  const handleSuccess = () => {
+  const handleSuccess = useCallback(() => {
     setIsDialogOpen(false);
     setSelectedProduct(null);
-    fetchProducts();
-  };
+    refreshData();
+  }, [refreshData]);
 
-  // Filter products by status
-  const activeProducts = products.filter((product) => product.isActive);
-  const inactiveProducts = products.filter((product) => !product.isActive);
+  // Load tab counts on initial render
+  useEffect(() => {
+    loadTabCounts();
+  }, [loadTabCounts]);
+
+  // Prepare tab content with conditional rendering optimization
+  const renderTabContent = (
+    tabValue: string,
+    isActive: boolean | undefined = undefined,
+  ) => (
+    <TabsContent value={tabValue} className="space-y-4">
+      {activeTab === tabValue && (
+        <ProductTable
+          key={`${tabValue}-${refreshKey}`}
+          onEdit={handleEdit}
+          initialData={
+            isActive !== undefined
+              ? {
+                  products: [],
+                  totalCount:
+                    tabCounts[tabValue as keyof typeof tabCounts] || 0,
+                  totalPages: 0,
+                  currentPage: 1,
+                }
+              : undefined
+          }
+          filterParams={isActive !== undefined ? { isActive } : undefined}
+        />
+      )}
+    </TabsContent>
+  );
 
   return (
     <div className="space-y-6">
@@ -91,45 +125,28 @@ export default function MainContent() {
         />
       </div>
 
-      <Tabs defaultValue="all" className="space-y-4">
+      <Tabs
+        defaultValue="all"
+        className="space-y-4"
+        onValueChange={setActiveTab}
+      >
         <TabsList>
-          <TabsTrigger value="all">
-            All Products ({products.length})
-          </TabsTrigger>
-          <TabsTrigger value="active">
-            Active ({activeProducts.length})
-          </TabsTrigger>
-          <TabsTrigger value="inactive">
-            Inactive ({inactiveProducts.length})
-          </TabsTrigger>
+          {Object.entries({
+            all: 'All Products',
+            active: 'Active',
+            inactive: 'Inactive',
+          }).map(([value, label]) => (
+            <TabsTrigger key={value} value={value}>
+              {label}{' '}
+              {tabCounts[value as keyof typeof tabCounts] !== null &&
+                `(${tabCounts[value as keyof typeof tabCounts]})`}
+            </TabsTrigger>
+          ))}
         </TabsList>
 
-        <TabsContent value="all" className="space-y-4">
-          <ProductTable
-            data={products}
-            isLoading={isLoading}
-            onEdit={handleEdit}
-            onRefresh={fetchProducts}
-          />
-        </TabsContent>
-
-        <TabsContent value="active" className="space-y-4">
-          <ProductTable
-            data={activeProducts}
-            isLoading={isLoading}
-            onEdit={handleEdit}
-            onRefresh={fetchProducts}
-          />
-        </TabsContent>
-
-        <TabsContent value="inactive" className="space-y-4">
-          <ProductTable
-            data={inactiveProducts}
-            isLoading={isLoading}
-            onEdit={handleEdit}
-            onRefresh={fetchProducts}
-          />
-        </TabsContent>
+        {renderTabContent('all')}
+        {renderTabContent('active', true)}
+        {renderTabContent('inactive', false)}
       </Tabs>
     </div>
   );

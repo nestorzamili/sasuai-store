@@ -97,6 +97,26 @@ export type ProductSearchParams = {
   limit?: number;
 };
 
+// Pagination params for server-side pagination
+export type ProductPaginationParams = {
+  page: number;
+  pageSize: number;
+  sortField?: string;
+  sortDirection?: 'asc' | 'desc';
+  search?: string;
+  categoryId?: string;
+  brandId?: string;
+  isActive?: boolean;
+};
+
+// Server response for paginated products
+export type PaginatedProductResponse = {
+  products: ProductListItem[];
+  totalCount: number;
+  totalPages: number;
+  currentPage: number;
+};
+
 // Response type for product search results
 export type ProductSearchResult = {
   products: ProductListItem[];

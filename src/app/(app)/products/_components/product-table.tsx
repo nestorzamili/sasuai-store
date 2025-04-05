@@ -1,17 +1,13 @@
 'use client';
 
 import * as React from 'react';
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useCallback, useEffect } from 'react';
 import {
   ColumnDef,
-  ColumnFiltersState,
   SortingState,
   VisibilityState,
   flexRender,
   getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table';
 import { ArrowUpDown, MoreHorizontal } from 'lucide-react';
@@ -27,7 +23,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { ProductWithRelations } from '@/lib/types/product';
+import {
+  ProductWithRelations,
+  PaginatedProductResponse,
+  ProductPaginationParams,
+} from '@/lib/types/product';
 import {
   Table,
   TableBody,
@@ -36,54 +36,279 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { DataTablePagination } from '@/components/ui/data-table-pagination';
 import { ProductTableSkeleton } from './product-skeleton';
 import { ProductDeleteDialog } from './product-delete-dialog';
 import { Input } from '@/components/ui/input';
 import { formatRupiah } from '@/lib/currency';
+import { getPaginatedProducts } from '../action';
+import { debounce } from '@/lib/common/debounce-effect';
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  DoubleArrowLeftIcon,
+  DoubleArrowRightIcon,
+} from '@radix-ui/react-icons';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface ProductTableProps {
-  data: ProductWithRelations[];
-  isLoading?: boolean;
+  initialData?: PaginatedProductResponse;
   onEdit?: (product: ProductWithRelations) => void;
-  onRefresh?: () => void;
+  filterParams?: {
+    isActive?: boolean;
+    categoryId?: string;
+    brandId?: string;
+  };
 }
 
 export function ProductTable({
-  data,
-  isLoading = false,
+  initialData,
   onEdit,
-  onRefresh,
+  filterParams,
 }: ProductTableProps) {
-  // State for deletion dialog
-  const [selectedProductForDelete, setSelectedProductForDelete] =
-    useState<ProductWithRelations | null>(null);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  // Combine deletion dialog state
+  const [deleteState, setDeleteState] = useState<{
+    isOpen: boolean;
+    product: ProductWithRelations | null;
+  }>({
+    isOpen: false,
+    product: null,
+  });
 
-  // Table state
-  const [sorting, setSorting] = useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
-  const [rowSelection, setRowSelection] = useState({});
-
-  // Handlers
-  const handleDeleteClick = useCallback((product: ProductWithRelations) => {
-    setSelectedProductForDelete(product);
-    setIsDeleteDialogOpen(true);
-  }, []);
-
-  const handleSearchChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setSearchQuery(e.target.value);
+  // Server-side state with combined paginationData and loading state
+  const [tableState, setTableState] = useState<{
+    paginationData: PaginatedProductResponse;
+    paginationParams: ProductPaginationParams;
+    isLoading: boolean;
+    searchQuery: string;
+  }>({
+    paginationData: initialData || {
+      products: [],
+      totalCount: 0,
+      totalPages: 0,
+      currentPage: 1,
     },
+    paginationParams: {
+      page: 1,
+      pageSize: 10,
+      sortField: 'name',
+      sortDirection: 'asc',
+      ...filterParams, // Apply filter params here
+    },
+    isLoading: !initialData,
+    searchQuery: '',
+  });
+
+  // Table UI state
+  const [tableUIState, setTableUIState] = useState<{
+    sorting: SortingState;
+    columnVisibility: VisibilityState;
+    rowSelection: Record<string, boolean>;
+  }>({
+    sorting: [],
+    columnVisibility: {},
+    rowSelection: {},
+  });
+
+  // Create stable reference to debouncedSearch
+  const debouncedSearch = useMemo(
+    () =>
+      debounce((value: string) => {
+        setTableState((prev) => ({
+          ...prev,
+          paginationParams: { ...prev.paginationParams, page: 1 },
+          searchQuery: value,
+        }));
+      }, 300),
     [],
   );
 
-  // Define columns - memoize to prevent unnecessary recreations
+  // Load data from server
+  const loadData = useCallback(async () => {
+    setTableState((prev) => ({ ...prev, isLoading: true }));
+
+    try {
+      const response = await getPaginatedProducts({
+        ...tableState.paginationParams,
+        search: tableState.searchQuery,
+        ...filterParams, // Make sure filterParams are applied on every load
+      });
+
+      if (response.success && response.data) {
+        setTableState((prev) => ({
+          ...prev,
+          paginationData: response.data as PaginatedProductResponse,
+          isLoading: false,
+        }));
+      } else {
+        console.error('Failed to fetch products:', response.error);
+        setTableState((prev) => ({ ...prev, isLoading: false }));
+      }
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      setTableState((prev) => ({ ...prev, isLoading: false }));
+    }
+  }, [tableState.paginationParams, tableState.searchQuery, filterParams]);
+
+  // Initial data load
+  useEffect(() => {
+    if (!initialData) {
+      loadData();
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Effect to load data when pagination params or search query change
+  useEffect(() => {
+    loadData();
+  }, [tableState.paginationParams, tableState.searchQuery, loadData]);
+
+  // Event handlers - combined and simplified
+  const handlers = useMemo(
+    () => ({
+      // Delete handling
+      onDeleteClick: (product: ProductWithRelations) => {
+        setDeleteState({ isOpen: true, product });
+      },
+
+      onDeleteDialogChange: (isOpen: boolean) => {
+        setDeleteState((prev) => ({ ...prev, isOpen }));
+      },
+
+      onDeleteSuccess: () => {
+        loadData();
+      },
+
+      // Search handling
+      onSearchChange: (e: React.ChangeEvent<HTMLInputElement>) => {
+        debouncedSearch(e.target.value);
+      },
+
+      // Pagination handling
+      onPageChange: (page: number) => {
+        setTableState((prev) => ({
+          ...prev,
+          paginationParams: { ...prev.paginationParams, page },
+        }));
+      },
+
+      onPageSizeChange: (pageSize: number) => {
+        setTableState((prev) => ({
+          ...prev,
+          paginationParams: { ...prev.paginationParams, pageSize, page: 1 },
+        }));
+      },
+
+      // Table navigation
+      goToPage: (pageIndex: number) => {
+        setTableState((prev) => ({
+          ...prev,
+          paginationParams: {
+            ...prev.paginationParams,
+            page: pageIndex + 1, // Convert to 1-indexed for server
+          },
+        }));
+      },
+
+      previousPage: () => {
+        setTableState((prev) => ({
+          ...prev,
+          paginationParams: {
+            ...prev.paginationParams,
+            page: Math.max(1, prev.paginationParams.page - 1),
+          },
+        }));
+      },
+
+      nextPage: () => {
+        setTableState((prev) => ({
+          ...prev,
+          paginationParams: {
+            ...prev.paginationParams,
+            page: Math.min(
+              prev.paginationData.totalPages,
+              prev.paginationParams.page + 1,
+            ),
+          },
+        }));
+      },
+
+      setPageSize: (size: number) => {
+        setTableState((prev) => ({
+          ...prev,
+          paginationParams: {
+            ...prev.paginationParams,
+            pageSize: size,
+            page: 1,
+          },
+        }));
+      },
+
+      // Sorting handling
+      onSortingChange: (
+        updaterOrValue: SortingState | ((old: SortingState) => SortingState),
+      ) => {
+        const newSorting =
+          typeof updaterOrValue === 'function'
+            ? updaterOrValue(tableUIState.sorting)
+            : updaterOrValue;
+
+        setTableUIState((prev) => ({ ...prev, sorting: newSorting }));
+
+        if (newSorting.length) {
+          setTableState((prev) => ({
+            ...prev,
+            paginationParams: {
+              ...prev.paginationParams,
+              sortField: newSorting[0].id,
+              sortDirection: newSorting[0].desc ? 'desc' : 'asc',
+              page: 1,
+            },
+          }));
+        }
+      },
+
+      // UI state changes
+      onColumnVisibilityChange: (
+        updaterOrValue:
+          | VisibilityState
+          | ((old: VisibilityState) => VisibilityState),
+      ) => {
+        const newVisibility =
+          typeof updaterOrValue === 'function'
+            ? updaterOrValue(tableUIState.columnVisibility)
+            : updaterOrValue;
+
+        setTableUIState((prev) => ({
+          ...prev,
+          columnVisibility: newVisibility,
+        }));
+      },
+
+      onRowSelectionChange: (
+        updaterOrValue:
+          | Record<string, boolean>
+          | ((old: Record<string, boolean>) => Record<string, boolean>),
+      ) => {
+        const newSelection =
+          typeof updaterOrValue === 'function'
+            ? updaterOrValue(tableUIState.rowSelection)
+            : updaterOrValue;
+
+        setTableUIState((prev) => ({ ...prev, rowSelection: newSelection }));
+      },
+    }),
+    [debouncedSearch, loadData, tableUIState.sorting],
+  );
+
+  // Table columns definition - memoized
   const columns = useMemo<ColumnDef<ProductWithRelations>[]>(
     () => [
-      // Selection column - improved checkbox implementation
+      // Selection column
       {
         id: 'select',
         header: ({ table }) => (
@@ -115,7 +340,7 @@ export function ProductTable({
         ),
         enableSorting: false,
         enableHiding: false,
-        size: 40, // Fixed width for the checkbox column
+        size: 40,
       },
 
       // Product name column
@@ -147,6 +372,7 @@ export function ProductTable({
             </div>
           );
         },
+        enableHiding: true,
       },
 
       // Category column
@@ -167,9 +393,7 @@ export function ProductTable({
       {
         accessorKey: 'barcode',
         header: 'Barcode',
-        cell: ({ row }) => {
-          return <div>{row.original.barcode || 'N/A'}</div>;
-        },
+        cell: ({ row }) => <div>{row.original.barcode || 'N/A'}</div>,
       },
 
       // Price column
@@ -268,7 +492,7 @@ export function ProductTable({
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     className="flex justify-between cursor-pointer text-destructive focus:text-destructive"
-                    onClick={() => handleDeleteClick(product)}
+                    onClick={() => handlers.onDeleteClick(product)}
                   >
                     Delete <IconTrash className="h-4 w-4" />
                   </DropdownMenuItem>
@@ -279,38 +503,33 @@ export function ProductTable({
         },
       },
     ],
-    [handleDeleteClick, onEdit],
+    [handlers, onEdit],
   );
 
-  // Create table instance with memoized dependencies
+  // Create table instance
   const table = useReactTable({
-    data,
+    data: tableState.paginationData.products,
     columns,
-    globalFilterFn: 'includesString',
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
+    pageCount: tableState.paginationData.totalPages,
+    onSortingChange: handlers.onSortingChange,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange: setRowSelection,
+    onColumnVisibilityChange: handlers.onColumnVisibilityChange,
+    onRowSelectionChange: handlers.onRowSelectionChange,
+    manualPagination: true,
+    manualSorting: true,
     state: {
-      sorting,
-      columnFilters,
-      columnVisibility,
-      rowSelection,
-      globalFilter: searchQuery,
+      sorting: tableUIState.sorting,
+      columnVisibility: tableUIState.columnVisibility,
+      rowSelection: tableUIState.rowSelection,
+      pagination: {
+        pageIndex: tableState.paginationParams.page - 1, // Convert to 0-indexed for table
+        pageSize: tableState.paginationParams.pageSize,
+      },
     },
   });
 
-  // Apply global filter when search query changes
-  React.useEffect(() => {
-    table.setGlobalFilter(searchQuery);
-  }, [searchQuery, table]);
-
-  // Show skeleton while loading
-  if (isLoading) {
+  // Show skeleton while loading initial data
+  if (tableState.isLoading && !tableState.paginationData.products.length) {
     return <ProductTableSkeleton />;
   }
 
@@ -320,13 +539,18 @@ export function ProductTable({
       <div className="space-y-4">
         <Input
           placeholder="Search products by name, barcode..."
-          value={searchQuery}
-          onChange={handleSearchChange}
+          defaultValue={tableState.searchQuery}
+          onChange={handlers.onSearchChange}
           className="max-w-sm"
         />
 
-        {/* Table */}
-        <div className="rounded-md border">
+        {/* Table with loading state indicator */}
+        <div className="rounded-md border relative">
+          {tableState.isLoading && (
+            <div className="absolute inset-0 bg-background/50 flex items-center justify-center z-10">
+              <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full"></div>
+            </div>
+          )}
           <Table>
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
@@ -345,7 +569,7 @@ export function ProductTable({
               ))}
             </TableHeader>
             <TableBody>
-              {table.getRowModel().rows?.length ? (
+              {tableState.paginationData.products.length ? (
                 table.getRowModel().rows.map((row) => (
                   <TableRow
                     key={row.id}
@@ -375,16 +599,107 @@ export function ProductTable({
           </Table>
         </div>
 
-        <DataTablePagination table={table} />
+        {/* Pagination controls */}
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-2">
+          <div className="text-sm text-muted-foreground">
+            {table.getFilteredSelectedRowModel().rows.length > 0 && (
+              <span className="mr-2">
+                {table.getFilteredSelectedRowModel().rows.length} of{' '}
+                {table.getFilteredRowModel().rows.length} row(s) selected.
+              </span>
+            )}
+            <span>Total: {tableState.paginationData.totalCount} products</span>
+          </div>
+
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">Rows per page</span>
+              <Select
+                value={`${tableState.paginationParams.pageSize}`}
+                onValueChange={(value) => {
+                  handlers.setPageSize(Number(value));
+                }}
+              >
+                <SelectTrigger className="h-8 w-[70px]">
+                  <SelectValue
+                    placeholder={tableState.paginationParams.pageSize}
+                  />
+                </SelectTrigger>
+                <SelectContent side="top">
+                  {[10, 20, 30, 40, 50].map((pageSize) => (
+                    <SelectItem key={pageSize} value={`${pageSize}`}>
+                      {pageSize}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex items-center gap-1">
+              <div className="flex w-[120px] items-center justify-center text-sm font-medium">
+                Page {tableState.paginationParams.page} of{' '}
+                {tableState.paginationData.totalPages || 1}
+              </div>
+
+              <Button
+                variant="outline"
+                className="hidden h-8 w-8 p-0 lg:flex"
+                onClick={() => handlers.goToPage(0)}
+                disabled={tableState.paginationParams.page <= 1}
+              >
+                <span className="sr-only">Go to first page</span>
+                <DoubleArrowLeftIcon className="h-4 w-4" />
+              </Button>
+
+              <Button
+                variant="outline"
+                className="h-8 w-8 p-0"
+                onClick={handlers.previousPage}
+                disabled={tableState.paginationParams.page <= 1}
+              >
+                <span className="sr-only">Go to previous page</span>
+                <ChevronLeftIcon className="h-4 w-4" />
+              </Button>
+
+              <Button
+                variant="outline"
+                className="h-8 w-8 p-0"
+                onClick={handlers.nextPage}
+                disabled={
+                  tableState.paginationParams.page >=
+                  tableState.paginationData.totalPages
+                }
+              >
+                <span className="sr-only">Go to next page</span>
+                <ChevronRightIcon className="h-4 w-4" />
+              </Button>
+
+              <Button
+                variant="outline"
+                className="hidden h-8 w-8 p-0 lg:flex"
+                onClick={() =>
+                  handlers.goToPage(tableState.paginationData.totalPages - 1)
+                }
+                disabled={
+                  tableState.paginationParams.page >=
+                  tableState.paginationData.totalPages
+                }
+              >
+                <span className="sr-only">Go to last page</span>
+                <DoubleArrowRightIcon className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Delete dialog - Only render when needed */}
-      {isDeleteDialogOpen && selectedProductForDelete && (
+      {/* Delete dialog - Conditional rendering with short-circuit */}
+      {deleteState.isOpen && deleteState.product && (
         <ProductDeleteDialog
-          open={isDeleteDialogOpen}
-          onOpenChange={setIsDeleteDialogOpen}
-          product={selectedProductForDelete}
-          onSuccess={onRefresh}
+          open={deleteState.isOpen}
+          onOpenChange={handlers.onDeleteDialogChange}
+          product={deleteState.product}
+          onSuccess={handlers.onDeleteSuccess}
         />
       )}
     </>

@@ -351,3 +351,41 @@ export async function getProductsByCategory(categoryId: string) {
     };
   }
 }
+
+/**
+ * Get paginated products with filters and sorting
+ */
+export async function getPaginatedProducts(params: {
+  page?: number;
+  pageSize?: number;
+  sortField?: string;
+  sortDirection?: 'asc' | 'desc';
+  search?: string;
+  categoryId?: string;
+  brandId?: string;
+  isActive?: boolean;
+}) {
+  try {
+    const result = await ProductService.getPaginated({
+      page: params.page || 1,
+      pageSize: params.pageSize || 10,
+      sortField: params.sortField || 'name',
+      sortDirection: params.sortDirection || 'asc',
+      search: params.search || '',
+      categoryId: params.categoryId,
+      brandId: params.brandId,
+      isActive: params.isActive,
+    });
+
+    return {
+      success: true,
+      data: result,
+    };
+  } catch (error) {
+    console.error('Failed to fetch paginated products:', error);
+    return {
+      success: false,
+      error: 'Failed to fetch paginated products',
+    };
+  }
+}
