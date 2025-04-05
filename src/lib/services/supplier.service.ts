@@ -1,25 +1,20 @@
 import prisma from '@/lib/prisma';
 
-export const SupplierService = {
+export class SupplierService {
   /**
    * Get all suppliers
    */
-  async getAll() {
-    return await prisma.supplier.findMany({
-      orderBy: {
-        name: 'asc',
-      },
+  static async getAll() {
+    return prisma.supplier.findMany({
+      orderBy: { name: 'asc' },
     });
-  },
+  }
 
   /**
    * Get all suppliers with stock-in count
    */
-  async getAllWithStockInCount() {
-    return await prisma.supplier.findMany({
-      orderBy: {
-        name: 'asc',
-      },
+  static async getAllWithStockInCount() {
+    return prisma.supplier.findMany({
       include: {
         _count: {
           select: {
@@ -27,83 +22,85 @@ export const SupplierService = {
           },
         },
       },
+      orderBy: { name: 'asc' },
     });
-  },
+  }
 
   /**
-   * Get supplier by ID
+   * Get a supplier by ID
    */
-  async getById(id: string) {
-    return await prisma.supplier.findUnique({
+  static async getById(id: string) {
+    return prisma.supplier.findUnique({
       where: { id },
     });
-  },
+  }
 
   /**
-   * Create a new supplier
+   * Get supplier details with stock-in history
    */
-  async create(data: { name: string; contact?: string }) {
-    return await prisma.supplier.create({
-      data,
-    });
-  },
-
-  /**
-   * Update a supplier
-   */
-  async update(id: string, data: { name?: string; contact?: string }) {
-    return await prisma.supplier.update({
-      where: { id },
-      data,
-    });
-  },
-
-  /**
-   * Delete a supplier
-   */
-  async delete(id: string) {
-    return await prisma.supplier.delete({
-      where: { id },
-    });
-  },
-
-  /**
-   * Check if a supplier has stock-ins
-   */
-  async hasStockIns(id: string): Promise<boolean> {
-    const count = await prisma.stockIn.count({
-      where: {
-        supplierId: id,
-      },
-    });
-    return count > 0;
-  },
-
-  /**
-   * Get supplier with their stock-ins
-   */
-  async getWithStockIns(id: string) {
-    return await prisma.supplier.findUnique({
+  static async getWithStockIns(id: string) {
+    return prisma.supplier.findUnique({
       where: { id },
       include: {
         stockIns: {
           include: {
             batch: {
               include: {
-                variant: {
-                  include: {
-                    product: true,
-                  },
-                },
+                product: true,
               },
             },
             unit: true,
           },
-          orderBy: {
-            date: 'desc',
-          },
+          orderBy: { date: 'desc' },
         },
       },
     });
-  },
-};
+  }
+
+  /**
+   * Create a new supplier
+   */
+  static async create(data: { name: string; contact?: string }) {
+    return prisma.supplier.create({
+      data,
+    });
+  }
+
+  /**
+   * Update a supplier
+   */
+  static async update(id: string, data: { name?: string; contact?: string }) {
+    return prisma.supplier.update({
+      where: { id },
+      data,
+    });
+  }
+
+  /**
+   * Check if a supplier can be deleted
+   */
+  static async canDelete(id: string): Promise<boolean> {
+    const stockInCount = await prisma.stockIn.count({
+      where: { supplierId: id },
+    });
+
+    return stockInCount === 0;
+  }
+
+  /**
+   * Delete a supplier
+   */
+  static async delete(id: string) {
+    const canDelete = await this.canDelete(id);
+
+    if (!canDelete) {
+      throw new Error(
+        'Cannot delete a supplier with associated stock-in records',
+      );
+    }
+
+    return prisma.supplier.delete({
+      where: { id },
+    });
+  }
+}

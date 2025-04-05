@@ -2,15 +2,26 @@
 
 import { useState, useEffect } from 'react';
 import { getAllUnitsWithCounts } from '../action';
+import { getAllConversions } from '../conversion-actions';
 import UnitPrimaryButton from './unit-primary-button';
 import { UnitTable } from './unit-table';
-import { UnitWithCounts } from '@/lib/types/unit';
+import { UnitWithCounts, UnitConversionWithUnits } from '@/lib/types/unit';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { UnitConversionTable } from './unit-conversion-table';
+import ConversionPrimaryButton from './conversion-primary-button';
+import UnitConversionCalculator from './unit-conversion-calculator';
 
 export default function MainContent() {
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingConversions, setIsLoadingConversions] = useState(true);
   const [units, setUnits] = useState<UnitWithCounts[]>([]);
+  const [conversions, setConversions] = useState<UnitConversionWithUnits[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isConversionDialogOpen, setIsConversionDialogOpen] = useState(false);
   const [selectedUnit, setSelectedUnit] = useState<UnitWithCounts | null>(null);
+  const [selectedConversion, setSelectedConversion] =
+    useState<UnitConversionWithUnits | null>(null);
+  const [activeTab, setActiveTab] = useState('units');
 
   const fetchUnits = async () => {
     setIsLoading(true);
@@ -27,9 +38,33 @@ export default function MainContent() {
     }
   };
 
+  const fetchConversions = async () => {
+    setIsLoadingConversions(true);
+    try {
+      const { data, success } = await getAllConversions();
+      if (success) {
+        const conversionData = (data as UnitConversionWithUnits[]) || [];
+        setConversions(conversionData);
+      }
+    } catch (error) {
+      console.error('Error fetching conversions:', error);
+    } finally {
+      setIsLoadingConversions(false);
+    }
+  };
+
   useEffect(() => {
     fetchUnits();
+    fetchConversions();
   }, []);
+
+  // Handle tab change
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    if (value === 'conversions' && conversions.length === 0) {
+      fetchConversions();
+    }
+  };
 
   // Handle edit unit
   const handleEdit = (unit: UnitWithCounts) => {
@@ -37,11 +72,24 @@ export default function MainContent() {
     setIsDialogOpen(true);
   };
 
+  // Handle edit conversion
+  const handleEditConversion = (conversion: UnitConversionWithUnits) => {
+    setSelectedConversion(conversion);
+    setIsConversionDialogOpen(true);
+  };
+
   // Handle unit operation success
   const handleSuccess = () => {
     setIsDialogOpen(false);
     setSelectedUnit(null);
     fetchUnits();
+  };
+
+  // Handle conversion operation success
+  const handleConversionSuccess = () => {
+    setIsConversionDialogOpen(false);
+    setSelectedConversion(null);
+    fetchConversions();
   };
 
   return (
@@ -53,20 +101,56 @@ export default function MainContent() {
             Manage your measurement units for products and inventory.
           </p>
         </div>
-        <UnitPrimaryButton
-          open={isDialogOpen}
-          onOpenChange={setIsDialogOpen}
-          initialData={selectedUnit || undefined}
-          onSuccess={handleSuccess}
-        />
+        {activeTab === 'units' ? (
+          <UnitPrimaryButton
+            open={isDialogOpen}
+            onOpenChange={setIsDialogOpen}
+            initialData={selectedUnit || undefined}
+            onSuccess={handleSuccess}
+          />
+        ) : (
+          <ConversionPrimaryButton
+            open={isConversionDialogOpen}
+            onOpenChange={setIsConversionDialogOpen}
+            units={units}
+            initialData={selectedConversion || undefined}
+            onSuccess={handleConversionSuccess}
+          />
+        )}
       </div>
 
-      <UnitTable
-        data={units}
-        isLoading={isLoading}
-        onEdit={handleEdit}
-        onRefresh={fetchUnits}
-      />
+      <Tabs
+        defaultValue="units"
+        value={activeTab}
+        onValueChange={handleTabChange}
+        className="w-full"
+      >
+        <TabsList>
+          <TabsTrigger value="units">Units</TabsTrigger>
+          <TabsTrigger value="conversions">Unit Conversions</TabsTrigger>
+          <TabsTrigger value="calculator">Conversion Calculator</TabsTrigger>
+        </TabsList>
+        <TabsContent value="units" className="mt-6">
+          <UnitTable
+            data={units}
+            isLoading={isLoading}
+            onEdit={handleEdit}
+            onRefresh={fetchUnits}
+          />
+        </TabsContent>
+        <TabsContent value="conversions" className="mt-6">
+          <UnitConversionTable
+            data={conversions}
+            isLoading={isLoadingConversions}
+            units={units}
+            onEdit={handleEditConversion}
+            onRefresh={fetchConversions}
+          />
+        </TabsContent>
+        <TabsContent value="calculator" className="mt-6">
+          <UnitConversionCalculator units={units} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

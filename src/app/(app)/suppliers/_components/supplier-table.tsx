@@ -16,7 +16,7 @@ import {
 import { ArrowUpDown, MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { IconTrash, IconEdit } from '@tabler/icons-react';
+import { IconTrash, IconEdit, IconEye } from '@tabler/icons-react';
 import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
@@ -37,8 +37,10 @@ import {
 import { DataTablePagination } from '@/components/ui/data-table-pagination';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SupplierDeleteDialog } from './supplier-delete-dialog';
+import { SupplierDetailDialog } from './supplier-detail-dialog';
 import { Input } from '@/components/ui/input';
 import { SupplierWithCount } from '@/lib/types/supplier';
+import { useRouter } from 'next/navigation';
 
 interface SupplierTableProps {
   data: SupplierWithCount[];
@@ -53,11 +55,18 @@ export function SupplierTable({
   onEdit,
   onRefresh,
 }: SupplierTableProps) {
+  const router = useRouter();
   // State for deletion dialog
   const [selectedSupplierForDelete, setSelectedSupplierForDelete] =
     useState<SupplierWithCount | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // New state for detail dialog
+  const [selectedSupplierId, setSelectedSupplierId] = useState<string | null>(
+    null,
+  );
+  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
 
   // Table state
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -72,6 +81,12 @@ export function SupplierTable({
   const handleDeleteClick = (supplier: SupplierWithCount) => {
     setSelectedSupplierForDelete(supplier);
     setIsDeleteDialogOpen(true);
+  };
+
+  // Handle view details
+  const handleViewDetails = (supplier: SupplierWithCount) => {
+    setSelectedSupplierId(supplier.id);
+    setIsDetailDialogOpen(true);
   };
 
   // Define columns
@@ -166,6 +181,12 @@ export function SupplierTable({
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="flex justify-between cursor-pointer"
+                  onClick={() => handleViewDetails(supplier)}
+                >
+                  View Details <IconEye className="h-4 w-4" />
+                </DropdownMenuItem>
                 <DropdownMenuItem
                   className="flex justify-between cursor-pointer"
                   onClick={() => onEdit?.(supplier)}
@@ -289,6 +310,13 @@ export function SupplierTable({
           onSuccess={onRefresh}
         />
       )}
+
+      {/* Details dialog */}
+      <SupplierDetailDialog
+        open={isDetailDialogOpen}
+        onOpenChange={setIsDetailDialogOpen}
+        supplierId={selectedSupplierId}
+      />
     </>
   );
 }
