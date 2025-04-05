@@ -379,4 +379,102 @@ export class ProductService {
       },
     });
   }
+
+  /**
+   * Get paginated products with filters and sorting
+   */
+  static async getPaginated({
+    page = 1,
+    pageSize = 10,
+    sortField = 'name',
+    sortDirection = 'asc',
+    search = '',
+    categoryId,
+    brandId,
+    isActive,
+  }: {
+    page?: number;
+    pageSize?: number;
+    sortField?: string;
+    sortDirection?: 'asc' | 'desc';
+    search?: string;
+    categoryId?: string;
+    brandId?: string;
+    isActive?: boolean;
+  }) {
+    // Build where clause based on filters
+    const where: any = {};
+
+    // Add search filter
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } },
+        { skuCode: { contains: search, mode: 'insensitive' } },
+        { barcode: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
+    // Add other filters
+    if (categoryId) where.categoryId = categoryId;
+    if (brandId) where.brandId = brandId;
+    if (isActive !== undefined) where.isActive = isActive;
+
+    // Calculate pagination
+    const skip = (page - 1) * pageSize;
+
+    // Get order by field - handle nested fields like 'category.name'
+    const orderBy: any = {};
+
+    // Handle nested fields
+    if (sortField.includes('.')) {
+      const [relation, field] = sortField.split('.');
+      orderBy[relation] = { [field]: sortDirection };
+    } else {
+      orderBy[sortField] = sortDirection;
+    }
+
+    // Execute query with count
+    const [products, totalCount] = await Promise.all([
+      prisma.product.findMany({
+        where,
+        include: {
+          category: true,
+          brand: true,
+          unit: true,
+          images: {
+            where: { isPrimary: true },
+            take: 1,
+          },
+          _count: {
+            select: {
+              images: true,
+              batches: true,
+            },
+          },
+        },
+        orderBy,
+        skip,
+        take: pageSize,
+      }),
+      prisma.product.count({ where }),
+    ]);
+
+    // Process product data to include primary image URL and other calculated fields
+    const processedProducts = products.map((product) => ({
+      ...product,
+      primaryImage: product.images?.[0]?.imageUrl || null,
+      batchCount: product._count?.batches || 0,
+    }));
+
+    // Calculate total pages
+    const totalPages = Math.ceil(totalCount / pageSize);
+
+    return {
+      products: processedProducts,
+      totalCount,
+      totalPages,
+      currentPage: page,
+    };
+  }
 }
