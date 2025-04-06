@@ -8,6 +8,7 @@ import { Search } from '@/components/search';
 import { ThemeSwitch } from '@/components/theme-switch';
 import ProductImagesContent from './_components/product-images-content';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Toaster } from '@/components/ui/toaster';
 
 function ProductImagesLoading() {
   return (
@@ -53,6 +54,7 @@ export default function ImagesPage() {
           <ProductImagesContent />
         </Suspense>
       </Main>
+      <Toaster />
     </>
   );
 }
