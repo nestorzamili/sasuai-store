@@ -61,7 +61,6 @@ export function ImageUploadButton({
           });
         }
       } catch (error) {
-        console.error('Error saving image:', error);
         toast({
           title: 'Upload failed',
           description: 'An unexpected error occurred while saving the image',

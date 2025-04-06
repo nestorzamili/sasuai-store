@@ -47,7 +47,11 @@ export default function MainContent() {
             : null,
       });
     } catch (error) {
-      console.error('Error loading tab counts:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load tab counts',
+        variant: 'destructive',
+      });
     }
   }, []);
 

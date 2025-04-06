@@ -76,7 +76,6 @@ export function UserRoleDialog({ open, onOpenChange, user, onSuccess }: Props) {
         });
       }
     } catch (error) {
-      console.error('Error updating role:', error);
       toast({
         title: 'Error',
         description: 'An unexpected error occurred',

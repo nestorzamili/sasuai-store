@@ -23,7 +23,6 @@ export async function getAllSuppliersWithCount() {
       data: suppliers,
     };
   } catch (error) {
-    console.error('Failed to fetch suppliers:', error);
     return {
       success: false,
       error: 'Failed to fetch suppliers',
@@ -43,7 +42,6 @@ export async function getAllSuppliers() {
       data: suppliers,
     };
   } catch (error) {
-    console.error('Failed to fetch suppliers:', error);
     return {
       success: false,
       error: 'Failed to fetch suppliers',
@@ -70,7 +68,6 @@ export async function getSupplier(id: string) {
       data: supplier,
     };
   } catch (error) {
-    console.error(`Failed to fetch supplier ${id}:`, error);
     return {
       success: false,
       error: 'Failed to fetch supplier',
@@ -97,7 +94,6 @@ export async function getSupplierWithStockIns(id: string) {
       data: supplier,
     };
   } catch (error) {
-    console.error(`Failed to fetch supplier details ${id}:`, error);
     return {
       success: false,
       error: 'Failed to fetch supplier details',
@@ -127,8 +123,6 @@ export async function createSupplier(data: { name: string; contact?: string }) {
       data: supplier,
     };
   } catch (error) {
-    console.error('Failed to create supplier:', error);
-
     if (error instanceof z.ZodError) {
       return {
         success: false,
@@ -169,8 +163,6 @@ export async function updateSupplier(
       data: supplier,
     };
   } catch (error) {
-    console.error(`Failed to update supplier ${id}:`, error);
-
     if (error instanceof z.ZodError) {
       return {
         success: false,
@@ -198,7 +190,6 @@ export async function canDeleteSupplier(id: string) {
       canDelete,
     };
   } catch (error) {
-    console.error(`Failed to check if supplier can be deleted ${id}:`, error);
     return {
       success: false,
       error: 'Failed to check if supplier can be deleted',
@@ -232,7 +223,6 @@ export async function deleteSupplier(id: string) {
       success: true,
     };
   } catch (error) {
-    console.error(`Failed to delete supplier ${id}:`, error);
     return {
       success: false,
       error:

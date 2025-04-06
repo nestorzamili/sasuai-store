@@ -19,7 +19,6 @@ import {
 import { ProductWithRelations, ProductImageWithUrl } from '@/lib/types/product';
 import { Category, Brand, Unit } from '@prisma/client';
 import { getProductImages } from '@/app/(app)/products/images/action';
-import { getImageUrl } from '@/utils/image';
 
 // Form schema for product
 const formSchema = z.object({
@@ -134,7 +133,11 @@ export function ProductFormProvider({
           }
         }
       } catch (error) {
-        console.error('Error fetching form options:', error);
+        toast({
+          title: 'Error fetching form options',
+          description: 'Failed to load categories, brands, or units',
+          variant: 'destructive',
+        });
       }
     }
     fetchOptions();
@@ -185,7 +188,6 @@ export function ProductFormProvider({
         setImages([]);
       }
     } catch (error) {
-      console.error('Error fetching product images:', error);
       setImages([]);
     }
   };
@@ -223,7 +225,6 @@ export function ProductFormProvider({
         });
       }
     } catch (error) {
-      console.error('Error submitting form:', error);
       toast({
         title: 'Error',
         description: 'An unexpected error occurred',

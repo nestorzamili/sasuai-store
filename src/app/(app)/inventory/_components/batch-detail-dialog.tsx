@@ -61,7 +61,6 @@ export function BatchDetailDialog({
           setBatch(response.data as ProductBatchWithDetails);
         }
       } catch (error) {
-        console.error('Error fetching batch details:', error);
       } finally {
         setIsLoading(false);
       }

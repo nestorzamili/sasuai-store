@@ -75,7 +75,6 @@ export function CreateBrandDialog() {
         });
       }
     } catch (error) {
-      console.error('Error creating brand:', error);
       toast({
         title: 'Error',
         description: 'An unexpected error occurred',

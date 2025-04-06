@@ -103,7 +103,11 @@ export default function ProductFormDialog({
           // Units will be implemented later
         }
       } catch (error) {
-        console.error('Error fetching form options:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to fetch form options',
+          variant: 'destructive',
+        });
       }
     }
     fetchOptions();
@@ -166,7 +170,6 @@ export default function ProductFormDialog({
         });
       }
     } catch (error) {
-      console.error('Error submitting form:', error);
       toast({
         title: 'Error',
         description: 'An unexpected error occurred',

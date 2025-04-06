@@ -146,11 +146,9 @@ export function ProductTable({
           isLoading: false,
         }));
       } else {
-        console.error('Failed to fetch products:', response.error);
         setTableState((prev) => ({ ...prev, isLoading: false }));
       }
     } catch (error) {
-      console.error('Error fetching products:', error);
       setTableState((prev) => ({ ...prev, isLoading: false }));
     }
   }, [tableState.paginationParams, tableState.searchQuery, filterParams]);

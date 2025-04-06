@@ -32,7 +32,6 @@ export async function POST(request: Request) {
       apiKey: process.env.CLOUDINARY_API_KEY,
     });
   } catch (error) {
-    console.error('Error generating signature:', error);
     return Response.json(
       { error: 'Failed to generate signature' },
       { status: 500 },

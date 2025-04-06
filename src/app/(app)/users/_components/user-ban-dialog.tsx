@@ -94,7 +94,6 @@ export function UserBanDialog({ open, onOpenChange, user, onSuccess }: Props) {
         });
       }
     } catch (error) {
-      console.error('Error banning user:', error);
       toast({
         title: 'Error',
         description: 'An unexpected error occurred',
@@ -126,7 +125,6 @@ export function UserBanDialog({ open, onOpenChange, user, onSuccess }: Props) {
         });
       }
     } catch (error) {
-      console.error('Error unbanning user:', error);
       toast({
         title: 'Error',
         description: 'An unexpected error occurred',

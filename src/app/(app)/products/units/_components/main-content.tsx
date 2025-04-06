@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UnitConversionTable } from './unit-conversion-table';
 import ConversionPrimaryButton from './conversion-primary-button';
 import UnitConversionCalculator from './unit-conversion-calculator';
+import { toast } from '@/hooks/use-toast';
 
 export default function MainContent() {
   const [isLoading, setIsLoading] = useState(true);
@@ -32,7 +33,11 @@ export default function MainContent() {
         setUnits(unitData);
       }
     } catch (error) {
-      console.error('Error fetching units:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch units. Please try again later.',
+        variant: 'destructive',
+      });
     } finally {
       setIsLoading(false);
     }
@@ -47,7 +52,11 @@ export default function MainContent() {
         setConversions(conversionData);
       }
     } catch (error) {
-      console.error('Error fetching conversions:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch conversions. Please try again later.',
+        variant: 'destructive',
+      });
     } finally {
       setIsLoadingConversions(false);
     }

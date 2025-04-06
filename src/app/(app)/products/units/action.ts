@@ -23,7 +23,6 @@ export async function getAllUnitsWithCounts() {
       data: units,
     };
   } catch (error) {
-    console.error('Failed to fetch units:', error);
     return {
       success: false,
       error: 'Failed to fetch units',
@@ -43,7 +42,6 @@ export async function getAllUnits() {
       data: units,
     };
   } catch (error) {
-    console.error('Failed to fetch units:', error);
     return {
       success: false,
       error: 'Failed to fetch units',
@@ -70,7 +68,6 @@ export async function getUnit(id: string) {
       data: unit,
     };
   } catch (error) {
-    console.error(`Failed to fetch unit ${id}:`, error);
     return {
       success: false,
       error: 'Failed to fetch unit',
@@ -100,8 +97,6 @@ export async function createUnit(data: { name: string; symbol: string }) {
       data: unit,
     };
   } catch (error) {
-    console.error('Failed to create unit:', error);
-
     if (error instanceof z.ZodError) {
       return {
         success: false,
@@ -142,8 +137,6 @@ export async function updateUnit(
       data: unit,
     };
   } catch (error) {
-    console.error(`Failed to update unit ${id}:`, error);
-
     if (error instanceof z.ZodError) {
       return {
         success: false,
@@ -184,7 +177,6 @@ export async function deleteUnit(id: string) {
       success: true,
     };
   } catch (error) {
-    console.error(`Failed to delete unit ${id}:`, error);
     return {
       success: false,
       error: 'Failed to delete unit',

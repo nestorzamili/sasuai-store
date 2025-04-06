@@ -81,7 +81,6 @@ export function CreateUnitDialog() {
         });
       }
     } catch (error) {
-      console.error('Error creating unit:', error);
       toast({
         title: 'Error',
         description: 'An unexpected error occurred',

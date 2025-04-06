@@ -32,7 +32,6 @@ export async function getAllProducts() {
       data: products,
     };
   } catch (error) {
-    console.error('Failed to fetch products:', error);
     return {
       success: false,
       error: 'Failed to fetch products',
@@ -52,7 +51,6 @@ export async function getActiveProducts() {
       data: products,
     };
   } catch (error) {
-    console.error('Failed to fetch active products:', error);
     return {
       success: false,
       error: 'Failed to fetch active products',
@@ -79,7 +77,6 @@ export async function getProduct(id: string) {
       data: product,
     };
   } catch (error) {
-    console.error(`Failed to fetch product ${id}:`, error);
     return {
       success: false,
       error: 'Failed to fetch product',
@@ -116,8 +113,6 @@ export async function createProduct(data: {
       data: product,
     };
   } catch (error) {
-    console.error('Failed to create product:', error);
-
     if (error instanceof z.ZodError) {
       return {
         success: false,
@@ -165,8 +160,6 @@ export async function updateProduct(
       data: product,
     };
   } catch (error) {
-    console.error(`Failed to update product ${id}:`, error);
-
     if (error instanceof z.ZodError) {
       return {
         success: false,
@@ -197,7 +190,6 @@ export async function deleteProduct(id: string) {
       success: true,
     };
   } catch (error) {
-    console.error(`Failed to delete product ${id}:`, error);
     return {
       success: false,
       error: 'Failed to delete product',
@@ -224,7 +216,6 @@ export async function addProductImage(data: {
       data: image,
     };
   } catch (error) {
-    console.error('Failed to add product image:', error);
     return {
       success: false,
       error: 'Failed to add product image',
@@ -246,7 +237,6 @@ export async function deleteProductImage(id: string, productId: string) {
       success: true,
     };
   } catch (error) {
-    console.error(`Failed to delete product image ${id}:`, error);
     return {
       success: false,
       error: 'Failed to delete product image',
@@ -270,11 +260,10 @@ export async function getProductFormOptions() {
       data: {
         categories,
         brands,
-        units, // Now including units in the response from the service
+        units,
       },
     };
   } catch (error) {
-    console.error('Failed to fetch form options:', error);
     return {
       success: false,
       error: 'Failed to fetch form options',
@@ -301,7 +290,6 @@ export async function searchProducts(query: string) {
       data: products,
     };
   } catch (error) {
-    console.error('Failed to search products:', error);
     return {
       success: false,
       error: 'Failed to search products',
@@ -321,7 +309,6 @@ export async function getLowStockProducts(threshold: number = 10) {
       data: products,
     };
   } catch (error) {
-    console.error('Failed to fetch low stock products:', error);
     return {
       success: false,
       error: 'Failed to fetch low stock products',
@@ -341,10 +328,6 @@ export async function getProductsByCategory(categoryId: string) {
       data: products,
     };
   } catch (error) {
-    console.error(
-      `Failed to fetch products for category ${categoryId}:`,
-      error,
-    );
     return {
       success: false,
       error: 'Failed to fetch products for this category',
@@ -382,7 +365,6 @@ export async function getPaginatedProducts(params: {
       data: result,
     };
   } catch (error) {
-    console.error('Failed to fetch paginated products:', error);
     return {
       success: false,
       error: 'Failed to fetch paginated products',

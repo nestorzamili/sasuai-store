@@ -18,12 +18,10 @@ export default function MainContent() {
     try {
       const { data, success } = await getAllCategoriesWithCount();
       if (success) {
-        // Cast the data to the correct type
         const categoryData = (data as CategoryWithCount[]) || [];
         setCategories(categoryData);
       }
     } catch (error) {
-      console.error('Error fetching categories:', error);
     } finally {
       setIsLoading(false);
     }

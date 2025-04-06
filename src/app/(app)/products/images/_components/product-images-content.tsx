@@ -81,7 +81,6 @@ export default function ProductImagesContent() {
         });
       }
     } catch (error) {
-      console.error('Error fetching products:', error);
       toast({
         title: 'Error',
         description: 'An unexpected error occurred while loading products.',
@@ -129,11 +128,14 @@ export default function ProductImagesContent() {
         } else {
           setImages([]);
           if (response.error) {
-            console.warn('Warning fetching product images:', response.error);
+            toast({
+              title: 'Failed to load images',
+              description: 'Failed to load product images.',
+              variant: 'destructive',
+            });
           }
         }
       } catch (error) {
-        console.error('Error fetching product images:', error);
         setImages([]);
         toast({
           title: 'Error',

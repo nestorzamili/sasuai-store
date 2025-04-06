@@ -62,7 +62,6 @@ export default function MainContent() {
         });
       }
     } catch (error) {
-      console.error('Error fetching batches:', error);
       toast({
         title: 'Error',
         description: 'An unexpected error occurred while fetching batches',
@@ -81,7 +80,11 @@ export default function MainContent() {
         setProducts(productData);
       }
     } catch (error) {
-      console.error('Error fetching products:', error);
+      toast({
+        title: 'Error',
+        description: 'An unexpected error occurred while fetching products',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -93,7 +96,11 @@ export default function MainContent() {
         setUnits(unitData);
       }
     } catch (error) {
-      console.error('Error fetching units:', error);
+      toast({
+        title: 'Error',
+        description: 'An unexpected error occurred while fetching units',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -105,7 +112,11 @@ export default function MainContent() {
         setSuppliers(supplierData);
       }
     } catch (error) {
-      console.error('Error fetching suppliers:', error);
+      toast({
+        title: 'Error',
+        description: 'An unexpected error occurred while fetching suppliers',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -117,7 +128,12 @@ export default function MainContent() {
         setExpiringBatches(expiringData);
       }
     } catch (error) {
-      console.error('Error fetching expiring batches:', error);
+      toast({
+        title: 'Error',
+        description:
+          'An unexpected error occurred while fetching expiring batches',
+        variant: 'destructive',
+      });
     }
   };
 

@@ -23,7 +23,6 @@ export async function getAllConversions() {
       data: conversions,
     };
   } catch (error) {
-    console.error('Failed to fetch unit conversions:', error);
     return {
       success: false,
       error: 'Failed to fetch unit conversions',
@@ -47,7 +46,6 @@ export async function getConversionsForUnit(unitId: string) {
       },
     };
   } catch (error) {
-    console.error(`Failed to fetch conversions for unit ${unitId}:`, error);
     return {
       success: false,
       error: 'Failed to fetch unit conversions',
@@ -90,8 +88,6 @@ export async function createConversion(data: {
       data: conversion,
     };
   } catch (error) {
-    console.error('Failed to create unit conversion:', error);
-
     if (error instanceof z.ZodError) {
       return {
         success: false,
@@ -144,7 +140,6 @@ export async function updateConversion(
       data: conversion,
     };
   } catch (error) {
-    console.error(`Failed to update unit conversion ${id}:`, error);
     return {
       success: false,
       error: 'Failed to update unit conversion',
@@ -166,7 +161,6 @@ export async function deleteConversion(id: string) {
       success: true,
     };
   } catch (error) {
-    console.error(`Failed to delete unit conversion ${id}:`, error);
     return {
       success: false,
       error: 'Failed to delete unit conversion',
@@ -193,7 +187,6 @@ export async function convertQuantity(
       data: result,
     };
   } catch (error) {
-    console.error('Failed to convert quantity:', error);
     return {
       success: false,
       error:

@@ -39,7 +39,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(session?.user || null);
       setError(null);
     } catch (err) {
-      console.error('Error fetching session:', err);
       setError(
         err instanceof Error ? err : new Error('Failed to fetch session'),
       );
@@ -58,7 +57,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await authClient.signOut();
       setUser(null);
     } catch (err) {
-      console.error('Error signing out:', err);
       throw err;
     }
   };
