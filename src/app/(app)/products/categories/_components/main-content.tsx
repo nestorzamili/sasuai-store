@@ -33,6 +33,14 @@ export default function MainContent() {
     fetchCategories();
   }, []);
 
+  // Handle dialog reset on close
+  const handleDialogOpenChange = (open: boolean) => {
+    setIsDialogOpen(open);
+    if (!open) {
+      setSelectedCategory(null);
+    }
+  };
+
   // Handle edit category
   const handleEdit = (category: CategoryWithCount) => {
     setSelectedCategory(category);
@@ -59,7 +67,7 @@ export default function MainContent() {
         </div>
         <CategoryPrimaryButton
           open={isDialogOpen}
-          onOpenChange={setIsDialogOpen}
+          onOpenChange={handleDialogOpenChange}
           initialData={selectedCategory || undefined}
           onSuccess={handleSuccess}
         />

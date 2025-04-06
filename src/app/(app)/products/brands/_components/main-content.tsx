@@ -59,6 +59,14 @@ export default function MainContent() {
     setFilteredBrands(filtered);
   }, [brands, searchTerm, sortOrder]);
 
+  // Handle dialog reset on close
+  const handleDialogOpenChange = (open: boolean) => {
+    setIsDialogOpen(open);
+    if (!open) {
+      setSelectedBrand(null);
+    }
+  };
+
   // Handle edit brand
   const handleEdit = (brand: BrandWithCount) => {
     setSelectedBrand(brand);
@@ -81,7 +89,7 @@ export default function MainContent() {
         </div>
         <BrandPrimaryButton
           open={isDialogOpen}
-          onOpenChange={setIsDialogOpen}
+          onOpenChange={handleDialogOpenChange}
           initialData={selectedBrand || undefined}
           onSuccess={handleSuccess}
         />

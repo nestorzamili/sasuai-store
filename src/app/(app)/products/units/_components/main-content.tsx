@@ -58,6 +58,14 @@ export default function MainContent() {
     fetchConversions();
   }, []);
 
+  // Handle dialog reset on close
+  const handleDialogOpenChange = (open: boolean) => {
+    setIsDialogOpen(open);
+    if (!open) {
+      setSelectedUnit(null);
+    }
+  };
+
   // Handle tab change
   const handleTabChange = (value: string) => {
     setActiveTab(value);
@@ -104,7 +112,7 @@ export default function MainContent() {
         {activeTab === 'units' ? (
           <UnitPrimaryButton
             open={isDialogOpen}
-            onOpenChange={setIsDialogOpen}
+            onOpenChange={handleDialogOpenChange}
             initialData={selectedUnit || undefined}
             onSuccess={handleSuccess}
           />
