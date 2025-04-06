@@ -246,9 +246,10 @@ export function BatchAdjustmentDialog({
                         type="number"
                         placeholder="Enter quantity"
                         {...field}
-                        onChange={(e) =>
-                          field.onChange(parseInt(e.target.value) || 0)
-                        }
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          field.onChange(value === '' ? '' : parseInt(value));
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
