@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { getUsers } from '../action';
 import UserPrimaryButton from './user-primary-button';
 import { UserTable } from './user-table';
+import { toast } from '@/hooks/use-toast';
 
 export type User = {
   id: string;
@@ -39,10 +40,18 @@ export default function MainContent() {
           setUsers(response.users as unknown as User[]);
         }
       } else {
-        console.error('Failed to fetch users');
+        toast({
+          title: 'Error fetching users',
+          description: 'Failed to fetch users',
+          variant: 'destructive',
+        });
       }
     } catch (error) {
-      console.error('Error fetching users:', error);
+      toast({
+        title: 'Error',
+        description: 'An unexpected error occurred',
+        variant: 'destructive',
+      });
     } finally {
       setIsLoading(false);
     }

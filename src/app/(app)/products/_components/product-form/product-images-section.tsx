@@ -63,7 +63,6 @@ export function ProductImagesSection() {
         });
       }
     } catch (error) {
-      console.error('Error setting primary image:', error);
       toast({
         title: 'Error',
         description: 'An unexpected error occurred',
@@ -103,7 +102,6 @@ export function ProductImagesSection() {
         });
       }
     } catch (error) {
-      console.error('Error deleting image:', error);
       toast({
         title: 'Error',
         description: 'An unexpected error occurred',

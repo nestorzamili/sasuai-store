@@ -11,7 +11,6 @@ export const getImageUrl = (publicId: string | null | undefined) => {
       quality: 'auto',
     });
   } catch (error) {
-    console.error('Error generating image URL:', error);
     return publicId;
   }
 };

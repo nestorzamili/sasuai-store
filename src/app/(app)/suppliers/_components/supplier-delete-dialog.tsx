@@ -42,7 +42,6 @@ export function SupplierDeleteDialog({
             setCanDelete(false);
           }
         } catch (error) {
-          console.error('Error checking if supplier can be deleted:', error);
           setCanDelete(false);
         } finally {
           setIsCheckingDelete(false);

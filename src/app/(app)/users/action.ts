@@ -52,7 +52,6 @@ export async function getUsers(query?: {
       error: 'Failed to parse user data',
     };
   } catch (error) {
-    console.error('Failed to fetch users:', error);
     return {
       success: false,
       error: 'Failed to fetch users. Please try again.',
@@ -77,7 +76,6 @@ export async function createUser(data: {
     revalidatePath('/users');
     return { success: true, user: result };
   } catch (error) {
-    console.error('Failed to create user:', error);
     return {
       success: false,
       error: 'Failed to create user. Please try again.',
@@ -105,7 +103,6 @@ export async function setUserRole({
     revalidatePath('/users');
     return { success: true, user: result };
   } catch (error) {
-    console.error('Failed to update user role:', error);
     return {
       success: false,
       error: 'Failed to update user role. Please try again.',
@@ -135,7 +132,6 @@ export async function banUser({
     revalidatePath('/users');
     return { success: true, user: result };
   } catch (error) {
-    console.error('Failed to ban user:', error);
     return { success: false, error: 'Failed to ban user. Please try again.' };
   }
 }
@@ -151,7 +147,6 @@ export async function unbanUser({ userId }: { userId: string }) {
     revalidatePath('/users');
     return { success: true, user: result };
   } catch (error) {
-    console.error('Failed to unban user:', error);
     return { success: false, error: 'Failed to unban user. Please try again.' };
   }
 }
@@ -167,7 +162,6 @@ export async function removeUser({ userId }: { userId: string }) {
     revalidatePath('/users');
     return { success: true, user: result };
   } catch (error) {
-    console.error('Failed to remove user:', error);
     return {
       success: false,
       error: 'Failed to remove user. Please try again.',
@@ -188,7 +182,6 @@ export async function getUserSessions({ userId }: { userId: string }) {
     );
     return { success: true, sessions };
   } catch (error) {
-    console.error('Failed to fetch user sessions:', error);
     return {
       success: false,
       error: 'Failed to fetch user sessions. Please try again.',
@@ -210,7 +203,6 @@ export async function revokeUserSession({
     await authClient.admin.revokeUserSession({ sessionToken }, authHeaders);
     return { success: true };
   } catch (error) {
-    console.error('Failed to revoke session:', error);
     return {
       success: false,
       error: 'Failed to revoke session. Please try again.',
@@ -228,7 +220,6 @@ export async function revokeAllUserSessions({ userId }: { userId: string }) {
     await authClient.admin.revokeUserSessions({ userId }, authHeaders);
     return { success: true };
   } catch (error) {
-    console.error('Failed to revoke all sessions:', error);
     return {
       success: false,
       error: 'Failed to revoke all sessions. Please try again.',
@@ -249,7 +240,6 @@ export async function checkPermission(permission: Record<string, string[]>) {
     );
     return { success: true, hasPermission };
   } catch (error) {
-    console.error('Failed to check permission:', error);
     return { success: false, error: 'Failed to check permission.' };
   }
 }
@@ -267,7 +257,6 @@ export async function impersonateUser({ userId }: { userId: string }) {
     );
     return { success: true, session: result };
   } catch (error) {
-    console.error('Failed to impersonate user:', error);
     return {
       success: false,
       error: 'Failed to impersonate user. Please try again.',
@@ -283,7 +272,6 @@ export async function stopImpersonating() {
     await authClient.admin.stopImpersonating();
     return { success: true };
   } catch (error) {
-    console.error('Failed to stop impersonating:', error);
     return {
       success: false,
       error: 'Failed to stop impersonating. Please try again.',

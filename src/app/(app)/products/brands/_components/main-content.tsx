@@ -5,6 +5,7 @@ import { getAllBrandsWithCount } from '../action';
 import { BrandWithCount } from '@/lib/types/brand';
 import BrandPrimaryButton from './brand-primary-button';
 import { BrandTable } from './brand-table';
+import { toast } from '@/hooks/use-toast';
 
 export default function MainContent() {
   const [isLoading, setIsLoading] = useState(true);
@@ -28,7 +29,11 @@ export default function MainContent() {
         setFilteredBrands(brandData);
       }
     } catch (error) {
-      console.error('Error fetching brands:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch brands',
+        variant: 'destructive',
+      });
     } finally {
       setIsLoading(false);
     }

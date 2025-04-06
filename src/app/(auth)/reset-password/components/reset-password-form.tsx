@@ -79,7 +79,6 @@ export function ResetForm({ className, token, ...props }: ResetFormProps) {
         router.push('/sign-in?success=password_reset');
       }, 2000);
     } catch (err) {
-      console.error('Error resetting password:', err);
       setError('An unexpected error occurred. Please try again.');
     } finally {
       setIsLoading(false);

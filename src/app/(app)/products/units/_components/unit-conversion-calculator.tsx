@@ -104,7 +104,6 @@ export default function UnitConversionCalculator({
         });
       }
     } catch (error) {
-      console.error('Error in conversion:', error);
       const errorMessage =
         error instanceof Error
           ? `Failed to convert: ${error.message}`

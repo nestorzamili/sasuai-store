@@ -43,7 +43,6 @@ export function BatchDeleteDialog({
             setCanDelete(false);
           }
         } catch (error) {
-          console.error('Error checking if batch can be deleted:', error);
           setCanDelete(false);
         } finally {
           setIsCheckingDelete(false);

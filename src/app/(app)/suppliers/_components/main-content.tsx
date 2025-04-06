@@ -43,7 +43,6 @@ export default function MainContent() {
         });
       }
     } catch (error) {
-      console.error('Error fetching suppliers:', error);
       toast({
         title: 'Error',
         description: 'An unexpected error occurred while fetching suppliers',

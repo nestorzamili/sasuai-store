@@ -19,7 +19,6 @@ export async function getAllProducts() {
       data: products, // Explicitly typed as {id: string, name: string, isActive: boolean}[]
     };
   } catch (error) {
-    console.error('Failed to fetch products:', error);
     return {
       success: false,
       error: 'Failed to fetch products',
@@ -52,7 +51,6 @@ export async function getProductImages(productId: string) {
       data: imagesWithUrl,
     };
   } catch (error) {
-    console.error(`Failed to fetch images for product ${productId}:`, error);
     return {
       success: false,
       error: 'Failed to fetch product images',
@@ -85,7 +83,6 @@ export async function addProductImage(
       },
     };
   } catch (error) {
-    console.error(`Failed to add image to product ${productId}:`, error);
     return {
       success: false,
       error: 'Failed to add product image',
@@ -110,7 +107,6 @@ export async function setPrimaryProductImage(
       data: image,
     };
   } catch (error) {
-    console.error(`Failed to set primary image ${imageId}:`, error);
     return {
       success: false,
       error: 'Failed to set primary image',
@@ -132,7 +128,6 @@ export async function deleteProductImage(imageId: string) {
       data: image,
     };
   } catch (error) {
-    console.error(`Failed to delete image ${imageId}:`, error);
     return {
       success: false,
       error: 'Failed to delete image',

@@ -24,6 +24,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
+import { toast } from '@/hooks/use-toast';
 
 interface SupplierDetailDialogProps {
   open: boolean;
@@ -54,7 +55,12 @@ export function SupplierDetailDialog({
           setSupplier(response.data as SupplierWithStockIns);
         }
       } catch (error) {
-        console.error('Error fetching supplier details:', error);
+        toast({
+          title: 'Error fetching supplier details',
+          description:
+            'An unexpected error occurred while fetching supplier details',
+          variant: 'destructive',
+        });
       } finally {
         setIsLoading(false);
       }

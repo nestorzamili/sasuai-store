@@ -56,7 +56,6 @@ export async function getAllBatches() {
       data: batches,
     };
   } catch (error) {
-    console.error('Failed to fetch batches:', error);
     return {
       success: false,
       error: 'Failed to fetch batches',
@@ -76,7 +75,6 @@ export async function getBatchesByProductId(productId: string) {
       data: batches,
     };
   } catch (error) {
-    console.error('Failed to fetch batches:', error);
     return {
       success: false,
       error: 'Failed to fetch batches',
@@ -107,7 +105,6 @@ export async function getBatchById(id: string) {
       data: batch,
     };
   } catch (error) {
-    console.error(`Failed to fetch batch ${id}:`, error);
     return {
       success: false,
       error: 'Failed to fetch batch',
@@ -136,7 +133,6 @@ export async function getBatch(id: string) {
       data: batch,
     };
   } catch (error) {
-    console.error(`Failed to fetch batch ${id}:`, error);
     return {
       success: false,
       error: 'Failed to fetch batch',
@@ -182,8 +178,6 @@ export async function createBatch(data: {
       data: result,
     };
   } catch (error) {
-    console.error('Failed to create batch:', error);
-
     if (error instanceof z.ZodError) {
       return {
         success: false,
@@ -225,8 +219,6 @@ export async function updateBatch(
       data: batch,
     };
   } catch (error) {
-    console.error(`Failed to update batch ${id}:`, error);
-
     if (error instanceof z.ZodError) {
       return {
         success: false,
@@ -275,8 +267,6 @@ export async function adjustBatchQuantity(
       data: batch,
     };
   } catch (error) {
-    console.error(`Failed to adjust quantity for batch ${id}:`, error);
-
     if (error instanceof z.ZodError) {
       return {
         success: false,
@@ -305,7 +295,6 @@ export async function canDeleteBatch(id: string) {
       canDelete,
     };
   } catch (error) {
-    console.error(`Failed to check if batch can be deleted ${id}:`, error);
     return {
       success: false,
       error: 'Failed to check if batch can be deleted',
@@ -342,7 +331,6 @@ export async function deleteBatch(id: string) {
       success: true,
     };
   } catch (error) {
-    console.error(`Failed to delete batch ${id}:`, error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to delete batch',
@@ -362,7 +350,6 @@ export async function getExpiringBatches(daysThreshold: number = 30) {
       data: batches,
     };
   } catch (error) {
-    console.error('Failed to fetch expiring batches:', error);
     return {
       success: false,
       error: 'Failed to fetch expiring batches',
@@ -382,7 +369,6 @@ export async function getExpiredBatches() {
       data: batches,
     };
   } catch (error) {
-    console.error('Failed to fetch expired batches:', error);
     return {
       success: false,
       error: 'Failed to fetch expired batches',
@@ -402,10 +388,6 @@ export async function getProductBatchStats(productId: string) {
       data: stats,
     };
   } catch (error) {
-    console.error(
-      `Failed to fetch batch stats for product ${productId}:`,
-      error,
-    );
     return {
       success: false,
       error: 'Failed to fetch batch statistics',
