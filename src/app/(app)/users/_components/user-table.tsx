@@ -16,7 +16,13 @@ import {
 import { ArrowUpDown, MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { IconTrash, IconEdit, IconBan, IconKey } from '@tabler/icons-react';
+import {
+  IconTrash,
+  IconEdit,
+  IconBan,
+  IconKey,
+  IconDevices,
+} from '@tabler/icons-react';
 import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
@@ -42,6 +48,7 @@ import { User } from './main-content';
 import { UserDeleteDialog } from './user-delete-dialog';
 import { UserBanDialog } from './user-ban-dialog';
 import { UserRoleDialog } from './user-role-dialog';
+import { UserSessionsDialog } from './user-sessions-dialog';
 
 interface UserTableProps {
   data: User[];
@@ -73,6 +80,11 @@ export function UserTable({
   );
   const [isRoleDialogOpen, setIsRoleDialogOpen] = useState(false);
 
+  // State for sessions dialog
+  const [selectedUserForSessions, setSelectedUserForSessions] =
+    useState<User | null>(null);
+  const [isSessionsDialogOpen, setIsSessionsDialogOpen] = useState(false);
+
   const [searchQuery, setSearchQuery] = useState('');
 
   // Table state
@@ -98,6 +110,11 @@ export function UserTable({
   const handleRoleClick = (user: User) => {
     setSelectedUserForRole(user);
     setIsRoleDialogOpen(true);
+  };
+
+  const handleSessionsClick = (user: User) => {
+    setSelectedUserForSessions(user);
+    setIsSessionsDialogOpen(true);
   };
 
   // Get initials for avatar
@@ -156,12 +173,28 @@ export function UserTable({
               <AvatarImage src={user.image || undefined} alt={user.name} />
               <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
             </Avatar>
-            <div className="flex flex-col">
-              <span className="font-medium">{user.name}</span>
-              <span className="text-xs text-muted-foreground">
-                {user.email}
-              </span>
-            </div>
+            <div className="font-medium">{user.name}</div>
+          </div>
+        );
+      },
+    },
+
+    // Email column
+    {
+      accessorKey: 'email',
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+        >
+          Email
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      ),
+      cell: ({ row }) => {
+        return (
+          <div className="text-sm text-muted-foreground">
+            {row.getValue('email')}
           </div>
         );
       },
@@ -245,6 +278,12 @@ export function UserTable({
                   onClick={() => handleRoleClick(user)}
                 >
                   Change Role <IconKey className="h-4 w-4" />
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="flex justify-between cursor-pointer"
+                  onClick={() => handleSessionsClick(user)}
+                >
+                  Sessions <IconDevices className="h-4 w-4" />
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="flex justify-between cursor-pointer"
@@ -391,6 +430,16 @@ export function UserTable({
           onSuccess={onRefresh}
         />
       )}
+
+      {/* Sessions dialog */}
+      {selectedUserForSessions && (
+        <UserSessionsDialog
+          open={isSessionsDialogOpen}
+          onOpenChange={setIsSessionsDialogOpen}
+          user={selectedUserForSessions}
+          onSuccess={onRefresh}
+        />
+      )}
     </>
   );
 }
@@ -411,6 +460,9 @@ function UserTableSkeleton() {
               </TableHead>
               <TableHead>
                 <Skeleton className="h-7 w-24" />
+              </TableHead>
+              <TableHead>
+                <Skeleton className="h-7 w-32" />
               </TableHead>
               <TableHead>
                 <Skeleton className="h-7 w-20" />
@@ -435,11 +487,11 @@ function UserTableSkeleton() {
                 <TableCell>
                   <div className="flex items-center gap-3">
                     <Skeleton className="h-10 w-10 rounded-full" />
-                    <div className="flex flex-col space-y-1">
-                      <Skeleton className="h-5 w-32" />
-                      <Skeleton className="h-4 w-40" />
-                    </div>
+                    <Skeleton className="h-5 w-32" />
                   </div>
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-5 w-40" />
                 </TableCell>
                 <TableCell>
                   <Skeleton className="h-6 w-16" />
