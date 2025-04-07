@@ -202,19 +202,16 @@ model Discount {
 }
 
 model MemberTier {
-  id        String   @id @default(uuid())
-  name      String
-  minPoints Int      @map("min_points")
-  members   Member[]
-  createdAt DateTime @default(now()) @db.Timestamptz
-  updatedAt DateTime @updatedAt @db.Timestamptz
+  id         String   @id @default(uuid())
+  name       String
+  minPoints  Int      @map("min_points")
+  multiplier Float    @default(1.0) @map("multiplier")
+  members    Member[]
+  createdAt  DateTime @default(now()) @db.Timestamptz
+  updatedAt  DateTime @updatedAt @db.Timestamptz
 
   @@map("member_tier")
 }
-
-// ==============================
-// MEMBER & REWARD MODELS
-// ==============================
 
 model Member {
   id           String        @id @default(uuid())
@@ -242,6 +239,7 @@ model MemberPoint {
   transactionId String      @map("transaction_id")
   pointsEarned  Int         @map("points_earned")
   dateEarned    DateTime    @map("date_earned") @db.Timestamptz
+  notes         String?
   createdAt     DateTime    @default(now()) @db.Timestamptz
   updatedAt     DateTime    @updatedAt @db.Timestamptz
 
