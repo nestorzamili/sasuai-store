@@ -6,6 +6,8 @@ export type CreateRewardData = {
   pointsCost: number;
   stock: number;
   isActive?: boolean;
+  description?: string;
+  expiryDate?: Date;
 };
 
 // Type for reward update
@@ -14,6 +16,8 @@ export type UpdateRewardData = {
   pointsCost?: number;
   stock?: number;
   isActive?: boolean;
+  description?: string | null;
+  expiryDate?: Date | null;
 };
 
 // Reward search parameters

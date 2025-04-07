@@ -39,6 +39,7 @@ import { DataTablePagination } from '@/components/ui/data-table-pagination';
 import { Skeleton } from '@/components/ui/skeleton';
 import { RewardDeleteDialog } from './reward-delete-dialog';
 import { Input } from '@/components/ui/input';
+import { format } from 'date-fns';
 
 interface RewardTableProps {
   data: RewardWithClaimCount[];
@@ -133,7 +134,9 @@ export function RewardTable({
         </Button>
       ),
       cell: ({ row }) => (
-        <div className="font-medium">{row.getValue('pointsCost')} points</div>
+        <div className="font-medium ml-4">
+          {row.getValue('pointsCost')} points
+        </div>
       ),
     },
 
@@ -152,7 +155,7 @@ export function RewardTable({
       cell: ({ row }) => {
         const stock = row.getValue('stock') as number;
         return (
-          <div className="font-medium">
+          <div className="font-medium ml-4">
             {stock === 0 ? (
               <Badge variant="destructive">Out of Stock</Badge>
             ) : stock < 10 ? (
@@ -183,6 +186,45 @@ export function RewardTable({
           >
             {isActive ? 'Active' : 'Inactive'}
           </Badge>
+        );
+      },
+    },
+
+    // Expiry date column
+    {
+      accessorKey: 'expiryDate',
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+        >
+          Expiry
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      ),
+      cell: ({ row }) => {
+        const expiryDate = row.original.expiryDate;
+        if (!expiryDate)
+          return (
+            <span className="text-muted-foreground text-sm">No expiry</span>
+          );
+
+        const isExpired = new Date(expiryDate) < new Date();
+
+        return (
+          <div>
+            <Badge
+              variant={isExpired ? 'destructive' : 'outline'}
+              className={
+                isExpired
+                  ? ''
+                  : 'bg-yellow-100 text-yellow-800 border-yellow-300'
+              }
+            >
+              {isExpired ? 'Expired' : 'Expires'}:{' '}
+              {format(new Date(expiryDate), 'MMM d, yyyy')}
+            </Badge>
+          </div>
         );
       },
     },
@@ -234,7 +276,7 @@ export function RewardTable({
         );
       },
     },
-  ];
+  ]; // Fixed the bracket closure here - it was missing the closing bracket
 
   // Create table instance
   const table = useReactTable({

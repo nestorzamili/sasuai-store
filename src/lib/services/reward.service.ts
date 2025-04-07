@@ -6,8 +6,30 @@ export class RewardService {
    * Get all rewards
    */
   static async getAll(includeInactive: boolean = false) {
+    const now = new Date();
+
+    // First, update any rewards that have expired
+    await prisma.reward.updateMany({
+      where: {
+        expiryDate: {
+          lt: now,
+        },
+        isActive: true,
+      },
+      data: {
+        isActive: false,
+      },
+    });
+
+    // Then return the rewards
     return prisma.reward.findMany({
-      where: includeInactive ? undefined : { isActive: true },
+      where: includeInactive
+        ? undefined
+        : {
+            isActive: true,
+            // Only include rewards that either have no expiry date or haven't expired yet
+            OR: [{ expiryDate: null }, { expiryDate: { gt: now } }],
+          },
       orderBy: {
         pointsCost: 'asc',
       },
@@ -18,9 +40,30 @@ export class RewardService {
    * Get a reward by ID
    */
   static async getById(id: string) {
-    return prisma.reward.findUnique({
+    // First check if the reward has expired
+    const reward = await prisma.reward.findUnique({
       where: { id },
     });
+
+    if (
+      reward &&
+      reward.isActive &&
+      reward.expiryDate &&
+      new Date(reward.expiryDate) < new Date()
+    ) {
+      // Update expired reward
+      await prisma.reward.update({
+        where: { id },
+        data: { isActive: false },
+      });
+
+      // Re-fetch the updated reward
+      return prisma.reward.findUnique({
+        where: { id },
+      });
+    }
+
+    return reward;
   }
 
   /**
@@ -31,13 +74,23 @@ export class RewardService {
     pointsCost: number;
     stock: number;
     isActive?: boolean;
+    description?: string;
+    expiryDate?: Date;
   }) {
+    // If the reward has an expiry date that has passed, automatically set isActive to false
+    const isActive =
+      data.expiryDate && new Date(data.expiryDate) < new Date()
+        ? false
+        : data.isActive ?? true;
+
     return prisma.reward.create({
       data: {
         name: data.name,
         pointsCost: data.pointsCost,
         stock: data.stock,
-        isActive: data.isActive ?? true,
+        isActive,
+        description: data.description,
+        expiryDate: data.expiryDate,
       },
     });
   }
@@ -52,11 +105,20 @@ export class RewardService {
       pointsCost?: number;
       stock?: number;
       isActive?: boolean;
+      description?: string | null;
+      expiryDate?: Date | null;
     },
   ) {
+    // If expiry date is being updated and has passed, automatically set isActive to false
+    let updatedData = { ...data };
+
+    if (data.expiryDate && new Date(data.expiryDate) < new Date()) {
+      updatedData.isActive = false;
+    }
+
     return prisma.reward.update({
       where: { id },
-      data,
+      data: updatedData,
     });
   }
 
@@ -140,6 +202,20 @@ export class RewardService {
     includeInactive?: boolean;
   }) {
     const skip = (page - 1) * limit;
+    const now = new Date();
+
+    // Update any expired rewards first
+    await prisma.reward.updateMany({
+      where: {
+        expiryDate: {
+          lt: now,
+        },
+        isActive: true,
+      },
+      data: {
+        isActive: false,
+      },
+    });
 
     const where: Prisma.RewardWhereInput = {};
 
@@ -148,7 +224,10 @@ export class RewardService {
     }
 
     if (query) {
-      where.name = { contains: query, mode: 'insensitive' };
+      where.OR = [
+        { name: { contains: query, mode: 'insensitive' } },
+        { description: { contains: query, mode: 'insensitive' } },
+      ];
     }
 
     const [rewards, totalCount] = await Promise.all([

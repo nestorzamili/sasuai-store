@@ -16,7 +16,14 @@ import {
 import { ArrowUpDown, MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { IconTrash, IconEdit, IconEye } from '@tabler/icons-react';
+import {
+  IconTrash,
+  IconEdit,
+  IconEye,
+  IconUser,
+  IconMail,
+  IconPhone,
+} from '@tabler/icons-react';
 import { MemberTierBadge } from './member-tier-badge';
 import {
   DropdownMenu,
@@ -35,6 +42,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { DataTablePagination } from '@/components/ui/data-table-pagination';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MemberDeleteDialog } from './member-delete-dialog';
 import { Input } from '@/components/ui/input';
@@ -60,11 +68,7 @@ export function MemberTable({
   onEdit,
   onRefresh,
   onSearch,
-  onSort,
-  onPaginate,
-  currentPage = 1,
   totalPages = 1,
-  totalItems = 0,
 }: MemberTableProps) {
   const router = useRouter();
   // State for deletion dialog
@@ -72,9 +76,6 @@ export function MemberTable({
     useState<MemberWithTier | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [debounceTimeout, setDebounceTimeout] = useState<NodeJS.Timeout | null>(
-    null,
-  );
 
   // Table state
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -95,26 +96,15 @@ export function MemberTable({
     const value = e.target.value;
     setSearchQuery(value);
 
-    if (debounceTimeout) {
-      clearTimeout(debounceTimeout);
+    // Debounce search
+    if (onSearch) {
+      const timeoutId = setTimeout(() => {
+        onSearch(value);
+      }, 500);
+
+      return () => clearTimeout(timeoutId);
     }
-
-    const timeoutId = setTimeout(() => {
-      onSearch?.(value);
-    }, 500);
-
-    setDebounceTimeout(timeoutId);
   };
-
-  const handleSortChange = (column: string) => {
-    const direction = sortDirection === 'asc' ? 'desc' : 'asc';
-    setSortDirection(direction);
-    setSortColumn(column);
-    onSort?.(column, direction);
-  };
-
-  const [sortColumn, setSortColumn] = useState('name');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
   const viewMemberDetails = (member: MemberWithTier) => {
     router.push(`/members/${member.id}`);
@@ -149,38 +139,82 @@ export function MemberTable({
     // Name column
     {
       accessorKey: 'name',
-      header: () => (
+      header: ({ column }) => (
         <Button
           variant="ghost"
-          onClick={() => handleSortChange('name')}
-          className="flex items-center"
+          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
         >
-          Name
+          Member Name
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       ),
       cell: ({ row }) => (
-        <div className="font-medium">{row.getValue('name')}</div>
+        <div className="flex items-center">
+          <IconUser className="mr-2 h-4 w-4 text-blue-500" />
+          <div className="font-medium">{row.getValue('name')}</div>
+        </div>
       ),
     },
 
-    // Contact column (email)
+    // Email column
     {
-      id: 'email',
-      header: 'Email',
+      accessorKey: 'email',
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+        >
+          Email
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      ),
       cell: ({ row }) => {
-        const email = row.original.email || 'No email provided';
-        return <div className="text-sm text-muted-foreground">{email}</div>;
+        const email = row.getValue('email') as string;
+        return (
+          <div className="flex items-center">
+            {email ? (
+              <>
+                <IconMail className="mr-2 h-4 w-4 text-muted-foreground" />
+                <span>{email}</span>
+              </>
+            ) : (
+              <span className="text-xs italic text-muted-foreground">
+                Not provided
+              </span>
+            )}
+          </div>
+        );
       },
     },
 
-    // Contact column (phone)
+    // Phone column
     {
-      id: 'phone',
-      header: 'Phone',
+      accessorKey: 'phone',
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+        >
+          Phone
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      ),
       cell: ({ row }) => {
-        const phone = row.original.phone || 'No phone provided';
-        return <div className="text-sm text-muted-foreground">{phone}</div>;
+        const phone = row.getValue('phone') as string;
+        return (
+          <div className="flex items-center">
+            {phone ? (
+              <>
+                <IconPhone className="mr-2 h-4 w-4 text-muted-foreground" />
+                <span>{phone}</span>
+              </>
+            ) : (
+              <span className="text-xs italic text-muted-foreground">
+                Not provided
+              </span>
+            )}
+          </div>
+        );
       },
     },
 
@@ -203,11 +237,10 @@ export function MemberTable({
     // Current Points column
     {
       accessorKey: 'totalPoints',
-      header: () => (
+      header: ({ column }) => (
         <Button
           variant="ghost"
-          onClick={() => handleSortChange('totalPoints')}
-          className="flex items-center"
+          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
         >
           Current Points
           <ArrowUpDown className="ml-2 h-4 w-4" />
@@ -225,11 +258,10 @@ export function MemberTable({
     // Lifetime Points column
     {
       accessorKey: 'totalPointsEarned',
-      header: () => (
+      header: ({ column }) => (
         <Button
           variant="ghost"
-          onClick={() => handleSortChange('totalPointsEarned')}
-          className="flex items-center"
+          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
         >
           Lifetime Points
           <ArrowUpDown className="ml-2 h-4 w-4" />
@@ -247,11 +279,10 @@ export function MemberTable({
     // Join date column
     {
       accessorKey: 'joinDate',
-      header: () => (
+      header: ({ column }) => (
         <Button
           variant="ghost"
-          onClick={() => handleSortChange('joinDate')}
-          className="flex items-center"
+          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
         >
           Join Date
           <ArrowUpDown className="ml-2 h-4 w-4" />
@@ -261,7 +292,7 @@ export function MemberTable({
         const joinDate = row.original.joinDate;
         return (
           <div className="font-medium ml-4">
-            {format(new Date(joinDate), 'MMM d, yyyy')}
+            {format(new Date(joinDate), 'MMMM dd, yyyy')}
           </div>
         );
       },
@@ -270,7 +301,7 @@ export function MemberTable({
     // Actions column
     {
       id: 'actions',
-      header: '',
+      header: 'Actions',
       cell: ({ row }) => {
         const member = row.original;
         return (
@@ -315,20 +346,25 @@ export function MemberTable({
   const table = useReactTable({
     data,
     columns,
+    onGlobalFilterChange: setSearchQuery,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    onColumnVisibilityChange: setColumnVisibility,
+    onRowSelectionChange: setRowSelection,
     state: {
       sorting,
       columnFilters,
       columnVisibility,
       rowSelection,
+      globalFilter: searchQuery,
     },
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange: setRowSelection,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
+    // Added pagination initialization
+    manualPagination: true,
+    pageCount: totalPages,
   });
 
   // Show skeleton while loading
@@ -389,7 +425,7 @@ export function MemberTable({
                     colSpan={columns.length}
                     className="h-24 text-center"
                   >
-                    No members found.
+                    No results.
                   </TableCell>
                 </TableRow>
               )}
@@ -397,52 +433,8 @@ export function MemberTable({
           </Table>
         </div>
 
-        {/* Custom pagination for server-side pagination */}
-        <div className="flex items-center justify-end space-x-2 py-4">
-          <div className="flex-1 text-sm text-muted-foreground">
-            {totalItems > 0 ? (
-              <span>
-                Showing page {currentPage} of {totalPages} ({totalItems} total
-                members)
-              </span>
-            ) : (
-              <span>No results</span>
-            )}
-          </div>
-          <div className="space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onPaginate?.(1)}
-              disabled={currentPage <= 1}
-            >
-              First
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onPaginate?.(currentPage - 1)}
-              disabled={currentPage <= 1}
-            >
-              Previous
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onPaginate?.(currentPage + 1)}
-              disabled={currentPage >= totalPages}
-            >
-              Next
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onPaginate?.(totalPages)}
-              disabled={currentPage >= totalPages}
-            >
-              Last
-            </Button>
-          </div>
+        <div className="mt-4">
+          <DataTablePagination table={table} />
         </div>
       </div>
 
@@ -480,6 +472,9 @@ function MemberTableSkeleton() {
                 <Skeleton className="h-7 w-32" />
               </TableHead>
               <TableHead>
+                <Skeleton className="h-7 w-32" />
+              </TableHead>
+              <TableHead>
                 <Skeleton className="h-7 w-28" />
               </TableHead>
               <TableHead>
@@ -506,10 +501,10 @@ function MemberTableSkeleton() {
                   <Skeleton className="h-5 w-full max-w-[180px]" />
                 </TableCell>
                 <TableCell>
-                  <div className="space-y-1">
-                    <Skeleton className="h-5 w-32" />
-                    <Skeleton className="h-4 w-24" />
-                  </div>
+                  <Skeleton className="h-5 w-32" />
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-5 w-32" />
                 </TableCell>
                 <TableCell>
                   <Skeleton className="h-6 w-20" />
