@@ -24,7 +24,6 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/hooks/use-toast';
-import { adjustBatchQuantity } from '../action';
 import { ProductBatchWithProduct } from '@/lib/types/product-batch';
 import {
   Tooltip,
@@ -38,6 +37,7 @@ import { IconInfoCircle } from '@tabler/icons-react';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { ComboBox, ComboBoxOption } from '@/components/ui/combobox';
+import { createStockIn, createStockOut } from '../stock-actions';
 
 // Form schema for batch adjustment
 const formSchema = z.object({
@@ -94,31 +94,38 @@ export function BatchAdjustmentDialog({
     try {
       setLoading(true);
 
-      // Calculate the adjustment value (positive for add, negative for remove)
-      const adjustmentValue =
-        values.adjustmentType === 'add'
-          ? Math.abs(values.quantity)
-          : -Math.abs(values.quantity);
+      let result;
 
-      // Check if removing more than available
-      if (
-        values.adjustmentType === 'remove' &&
-        values.quantity > batch.remainingQuantity
-      ) {
-        toast({
-          title: 'Invalid adjustment',
-          description: `Cannot remove more than the remaining quantity (${batch.remainingQuantity})`,
-          variant: 'destructive',
+      if (values.adjustmentType === 'add') {
+        // Create a stock-in record using StockMovementService
+        result = await createStockIn({
+          batchId: batch.id,
+          quantity: values.quantity,
+          unitId: values.unitId,
+          date: new Date(),
+          // We don't include a supplier for manual adjustments
         });
-        setLoading(false);
-        return;
-      }
+      } else {
+        // Check if removing more than available
+        if (values.quantity > batch.remainingQuantity) {
+          toast({
+            title: 'Invalid adjustment',
+            description: `Cannot remove more than the remaining quantity (${batch.remainingQuantity})`,
+            variant: 'destructive',
+          });
+          setLoading(false);
+          return;
+        }
 
-      const result = await adjustBatchQuantity(batch.id, {
-        adjustment: adjustmentValue,
-        reason: values.reason,
-        unitId: values.unitId,
-      });
+        // Create a stock-out record using StockMovementService
+        result = await createStockOut({
+          batchId: batch.id,
+          quantity: values.quantity,
+          unitId: values.unitId,
+          date: new Date(),
+          reason: values.reason,
+        });
+      }
 
       if (result.success) {
         toast({

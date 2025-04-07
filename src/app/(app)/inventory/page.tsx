@@ -5,10 +5,10 @@ import { Main } from '@/components/layout/main';
 import { ProfileDropdown } from '@/components/profile-dropdown';
 import { Search } from '@/components/search';
 import { ThemeSwitch } from '@/components/theme-switch';
-import MainContent from './_components/main-content';
 import { Toaster } from '@/components/ui/toaster';
+import { InventoryTabs } from './_components/inventory-tabs';
 
-export default function BatchesPage() {
+export default function InventoryPage() {
   return (
     <>
       <Header fixed>
@@ -19,7 +19,7 @@ export default function BatchesPage() {
         </div>
       </Header>
       <Main>
-        <MainContent />
+        <InventoryTabs />
       </Main>
       <Toaster />
     </>
