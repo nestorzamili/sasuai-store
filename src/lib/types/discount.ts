@@ -11,4 +11,6 @@ export interface DiscountInterface {
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
+  onDelete?: () => void;
+  onEdit?: () => void;
 }
