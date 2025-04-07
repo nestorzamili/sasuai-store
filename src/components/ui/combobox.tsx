@@ -15,7 +15,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { IconCheck, IconSelector } from '@tabler/icons-react';
+import { IconCheck, IconSelector, IconLoader2 } from '@tabler/icons-react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { cn } from '@/lib/utils';
 import { debounce } from '@/lib/common/debounce-effect';
@@ -23,6 +23,7 @@ import { debounce } from '@/lib/common/debounce-effect';
 export type ComboBoxOption = {
   value: string;
   label: string;
+  data?: any; // Optional data field for custom data
 };
 
 interface ComboBoxProps {
@@ -34,6 +35,10 @@ interface ComboBoxProps {
   className?: string;
   emptyMessage?: string;
   initialDisplayCount?: number;
+  loadingState?: boolean;
+  customSearchFunction?: (query: string) => Promise<void>;
+  customSelectedRenderer?: () => React.ReactNode;
+  customEmptyComponent?: React.ReactNode;
 }
 
 export function ComboBox({
@@ -44,7 +49,11 @@ export function ComboBox({
   disabled = false,
   className,
   emptyMessage = 'No items found.',
-  initialDisplayCount = 10, // Jumlah item yang ditampilkan di awal
+  initialDisplayCount = 10,
+  loadingState = false,
+  customSearchFunction,
+  customSelectedRenderer,
+  customEmptyComponent,
 }: ComboBoxProps) {
   const [open, setOpen] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState('');
@@ -53,21 +62,19 @@ export function ComboBox({
   >([]);
   const parentRef = React.useRef<HTMLDivElement>(null);
 
-  // Memoize options untuk mencegah re-render yang tidak perlu
+  // Memoize options to prevent unnecessary re-renders
   const memoizedOptions = React.useMemo(() => options, [options]);
 
-  // Fungsi untuk memfilter opsi
+  // Filter options function - only used if customSearchFunction isn't provided
   const filterOptions = React.useCallback(
     (query: string) => {
       if (!query.trim()) {
-        // Tampilkan data awal ketika tidak ada query
         return initialDisplayCount > 0 &&
           memoizedOptions.length > initialDisplayCount
           ? memoizedOptions.slice(0, initialDisplayCount)
           : memoizedOptions;
       }
 
-      // Filter berdasarkan query
       const lowerQuery = query.toLowerCase().trim();
       return memoizedOptions.filter(
         (option) =>
@@ -78,51 +85,63 @@ export function ComboBox({
     [memoizedOptions, initialDisplayCount],
   );
 
-  // Buat debounced search dengan useCallback
-  const debouncedSearch = React.useCallback(
-    debounce((query: string) => {
-      setFilteredOptions(filterOptions(query));
-    }, 150),
-    [filterOptions],
+  // Handle search with either custom or default function
+  const handleSearchChange = React.useCallback(
+    (query: string) => {
+      setSearchQuery(query);
+
+      if (customSearchFunction) {
+        // Using custom search function (usually server-side search)
+        if (query.length >= 2) {
+          customSearchFunction(query);
+        }
+      } else {
+        // Using client-side filtering
+        const debouncedFilter = debounce(() => {
+          setFilteredOptions(filterOptions(query));
+        }, 150);
+
+        debouncedFilter();
+      }
+    },
+    [customSearchFunction, filterOptions],
   );
 
-  // Reset filtered options saat komponen mount, options berubah atau dropdown dibuka
+  // Reset filtered options when component mounts or options change
   React.useEffect(() => {
-    // Tampilkan data awal (terbatas) saat tidak ada pencarian
-    setFilteredOptions(filterOptions(''));
-  }, [memoizedOptions, open, filterOptions]);
+    if (!customSearchFunction) {
+      setFilteredOptions(filterOptions(''));
+    } else {
+      setFilteredOptions(options);
+    }
+  }, [options, open, filterOptions, customSearchFunction]);
 
-  // Handle search input
-  const handleSearchChange = (query: string) => {
-    setSearchQuery(query);
-    debouncedSearch(query);
-  };
-
-  // Set up virtualization untuk daftar yang besar
+  // Set up virtualization for large lists
   const rowVirtualizer = useVirtualizer({
     count: filteredOptions.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: React.useCallback(() => 36, []), // approximate height of each item
-    overscan: 5, // Mengurangi overscan untuk performa lebih baik
+    estimateSize: React.useCallback(() => 36, []),
+    overscan: 5,
   });
 
-  // Find currently selected option - menggunakan useMemo untuk mencegah kalkulasi ulang
+  // Find currently selected option
   const selectedOption = React.useMemo(
     () => memoizedOptions.find((option) => option.value === value),
     [memoizedOptions, value],
   );
 
-  // Fungsi untuk menangani pemilihan item
+  // Handle selection
   const handleSelect = React.useCallback(
     (selectedValue: string) => {
       onChange(selectedValue);
       setOpen(false);
-      // Reset search query setelah pemilihan
       setSearchQuery('');
-      // Reset filter kembali ke tampilan awal
-      setFilteredOptions(filterOptions(''));
+
+      if (!customSearchFunction) {
+        setFilteredOptions(filterOptions(''));
+      }
     },
-    [onChange, filterOptions],
+    [onChange, filterOptions, customSearchFunction],
   );
 
   return (
@@ -135,7 +154,11 @@ export function ComboBox({
           className={cn('w-full justify-between', className)}
           disabled={disabled}
         >
-          {selectedOption ? selectedOption.label : placeholder}
+          {customSelectedRenderer
+            ? customSelectedRenderer()
+            : selectedOption
+            ? selectedOption.label
+            : placeholder}
           <IconSelector className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
@@ -155,13 +178,25 @@ export function ComboBox({
             ref={parentRef}
             onWheel={(e) => e.stopPropagation()}
           >
-            {filteredOptions.length === 0 ? (
-              <CommandEmpty>{emptyMessage}</CommandEmpty>
+            {loadingState && (
+              <div className="flex items-center justify-center py-6">
+                <IconLoader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                <span className="ml-2 text-sm text-muted-foreground">
+                  Loading...
+                </span>
+              </div>
+            )}
+
+            {!loadingState && filteredOptions.length === 0 ? (
+              <CommandEmpty>
+                {customEmptyComponent || emptyMessage}
+              </CommandEmpty>
             ) : (
               <div
                 style={{
                   height: `${rowVirtualizer.getTotalSize()}px`,
                   position: 'relative',
+                  display: loadingState ? 'none' : 'block',
                 }}
               >
                 <CommandGroup>
