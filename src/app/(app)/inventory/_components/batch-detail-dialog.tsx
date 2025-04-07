@@ -84,7 +84,14 @@ export function BatchDetailDialog({
     try {
       const response = await getBatchStockMovementHistory(id);
       if (response.success) {
-        setMovements(response.data as StockMovement[]);
+        // Map the response data to include the required batchId property
+        const mappedMovements = response.data
+          ? response.data.map((item) => ({
+              ...item,
+              batchId: id,
+            }))
+          : [];
+        setMovements(mappedMovements as StockMovement[]);
       }
     } catch (error) {
       console.error('Failed to fetch stock movements', error);

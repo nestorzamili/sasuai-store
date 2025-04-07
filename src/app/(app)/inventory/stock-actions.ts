@@ -116,11 +116,12 @@ export async function createStockIn(data: {
 /**
  * Get all stock-out records
  */
-export async function getAllStockOuts() {
+export async function getAllStockOuts(includeTransactions: boolean = true) {
   try {
     const stockOuts = await StockMovementService.getAllStockOuts({
       includeBatch: true,
       includeUnit: true,
+      includeTransactions,
     });
 
     return {
@@ -150,6 +151,26 @@ export async function getStockOutsByBatchId(batchId: string) {
     return {
       success: false,
       error: 'Failed to fetch stock-out records',
+    };
+  }
+}
+
+/**
+ * Get transaction-related stock reductions for a specific batch
+ */
+export async function getTransactionStockOutsByBatchId(batchId: string) {
+  try {
+    const transactionItems =
+      await StockMovementService.getTransactionStockOutsByBatchId(batchId);
+
+    return {
+      success: true,
+      data: transactionItems,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: 'Failed to fetch transaction stock-out records',
     };
   }
 }

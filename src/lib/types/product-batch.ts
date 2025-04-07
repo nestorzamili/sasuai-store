@@ -9,6 +9,18 @@ import {
   Category,
 } from '@prisma/client';
 
+// Re-export Prisma types
+export type {
+  ProductBatch,
+  Product,
+  StockIn,
+  StockOut,
+  TransactionItem,
+  Unit,
+  Supplier,
+  Category,
+};
+
 /**
  * Product batch with its product
  */
@@ -68,6 +80,18 @@ export interface ProductBatchWithDetails extends ProductBatch {
   stockIns: StockInWithRelations[];
   stockOuts: StockOutWithRelations[];
   transactionItems: TransactionItemWithRelations[];
+}
+
+/**
+ * Available product batch for transactions
+ */
+export interface AvailableProductBatch extends ProductBatch {
+  product: Product & {
+    category?: Category | null;
+    unit?: Unit;
+  };
+  availableQuantity: number;
+  unit: Unit;
 }
 
 /**
