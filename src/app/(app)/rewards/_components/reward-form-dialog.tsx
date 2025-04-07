@@ -29,6 +29,16 @@ import { Switch } from '@/components/ui/switch';
 import { toast } from '@/hooks/use-toast';
 import { IconPlus } from '@tabler/icons-react';
 import { createReward, updateReward } from '../actions';
+import { Textarea } from '@/components/ui/textarea';
+import { CalendarIcon } from 'lucide-react';
+import { Calendar } from '@/components/ui/calendar';
+import { format } from 'date-fns';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
 
 // Define the form schema
 const formSchema = z.object({
@@ -36,6 +46,8 @@ const formSchema = z.object({
   pointsCost: z.coerce.number().min(1, 'Points cost must be at least 1'),
   stock: z.coerce.number().min(0, 'Stock cannot be negative'),
   isActive: z.boolean().default(true),
+  description: z.string().optional(),
+  expiryDate: z.date().optional().nullable(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -64,6 +76,10 @@ export default function RewardFormDialog({
       pointsCost: initialData?.pointsCost || 100,
       stock: initialData?.stock || 10,
       isActive: initialData?.isActive ?? true,
+      description: initialData?.description || '',
+      expiryDate: initialData?.expiryDate
+        ? new Date(initialData.expiryDate)
+        : null,
     },
   });
 
@@ -75,6 +91,10 @@ export default function RewardFormDialog({
         pointsCost: initialData.pointsCost || 100,
         stock: initialData.stock || 0,
         isActive: initialData.isActive ?? true,
+        description: initialData.description || '',
+        expiryDate: initialData.expiryDate
+          ? new Date(initialData.expiryDate)
+          : null,
       });
     } else {
       form.reset({
@@ -82,6 +102,8 @@ export default function RewardFormDialog({
         pointsCost: 100,
         stock: 10,
         isActive: true,
+        description: '',
+        expiryDate: null,
       });
     }
   }, [form, initialData]);
@@ -98,12 +120,16 @@ export default function RewardFormDialog({
               pointsCost: values.pointsCost,
               stock: values.stock,
               isActive: values.isActive,
+              description: values.description,
+              expiryDate: values.expiryDate,
             })
           : await createReward({
               name: values.name,
               pointsCost: values.pointsCost,
               stock: values.stock,
               isActive: values.isActive,
+              description: values.description,
+              expiryDate: values.expiryDate,
             });
 
       if (result.success) {
@@ -171,27 +197,96 @@ export default function RewardFormDialog({
 
             <FormField
               control={form.control}
-              name="pointsCost"
+              name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Points Cost</FormLabel>
+                  <FormLabel>Description</FormLabel>
                   <FormControl>
-                    <Input type="number" placeholder="100" {...field} />
+                    <Textarea
+                      placeholder="Enter reward description"
+                      className="resize-none"
+                      {...field}
+                      value={field.value || ''}
+                    />
                   </FormControl>
+                  <FormDescription>
+                    Provide details about what the reward includes
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="pointsCost"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Points Cost</FormLabel>
+                    <FormControl>
+                      <Input type="number" placeholder="100" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="stock"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Stock</FormLabel>
+                    <FormControl>
+                      <Input type="number" placeholder="10" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
             <FormField
               control={form.control}
-              name="stock"
+              name="expiryDate"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Stock</FormLabel>
-                  <FormControl>
-                    <Input type="number" placeholder="10" {...field} />
-                  </FormControl>
+                <FormItem className="flex flex-col">
+                  <FormLabel>Expiry Date</FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant={'outline'}
+                          className={cn(
+                            'w-full pl-3 text-left font-normal',
+                            !field.value && 'text-muted-foreground',
+                          )}
+                        >
+                          {field.value ? (
+                            format(field.value, 'PPP')
+                          ) : (
+                            <span>Pick a date</span>
+                          )}
+                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={field.value || undefined}
+                        onSelect={field.onChange}
+                        disabled={(date) =>
+                          date < new Date(new Date().setHours(0, 0, 0, 0))
+                        }
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <FormDescription>
+                    The reward will automatically expire on this date
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}

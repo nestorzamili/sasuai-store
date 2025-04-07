@@ -8,6 +8,11 @@ import { RewardTable } from './reward-table';
 import { toast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import RewardClaimsContent from './reward-claims-content';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { IconLayoutGrid, IconList } from '@tabler/icons-react';
+import { RewardGrid } from './reward-grid';
+import { RewardDeleteDialog } from './reward-delete-dialog';
 
 export default function MainContent() {
   const [isLoading, setIsLoading] = useState(true);
@@ -21,6 +26,8 @@ export default function MainContent() {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [activeTab, setActiveTab] = useState('rewards');
+  const [viewMode, setViewMode] = useState<'table' | 'grid'>('grid');
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const fetchRewards = async () => {
     setIsLoading(true);
@@ -51,8 +58,13 @@ export default function MainContent() {
     let filtered = [...rewards];
 
     if (searchTerm) {
-      filtered = filtered.filter((reward) =>
-        reward.name.toLowerCase().includes(searchTerm.toLowerCase()),
+      filtered = filtered.filter(
+        (reward) =>
+          reward.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (reward.description &&
+            reward.description
+              .toLowerCase()
+              .includes(searchTerm.toLowerCase())),
       );
     }
 
@@ -81,11 +93,23 @@ export default function MainContent() {
     setIsDialogOpen(true);
   };
 
+  // Handle delete reward
+  const handleDelete = (reward: RewardWithClaimCount) => {
+    setSelectedReward(reward);
+    setIsDeleteDialogOpen(true);
+  };
+
   // Handle reward operation success
   const handleSuccess = () => {
     setIsDialogOpen(false);
+    setIsDeleteDialogOpen(false);
     setSelectedReward(null);
     fetchRewards();
+  };
+
+  // Handle search input change
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
   };
 
   return (
@@ -118,17 +142,62 @@ export default function MainContent() {
           <TabsTrigger value="claims">Claims History</TabsTrigger>
         </TabsList>
         <TabsContent value="rewards" className="mt-6">
-          <RewardTable
-            data={filteredRewards}
-            isLoading={isLoading}
-            onEdit={handleEdit}
-            onRefresh={fetchRewards}
-          />
+          <div className="mb-4 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+            <Input
+              placeholder="Search rewards..."
+              value={searchTerm}
+              onChange={handleSearchChange}
+              className="max-w-xs"
+            />
+            <div className="flex gap-2">
+              <Button
+                variant={viewMode === 'grid' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('grid')}
+              >
+                <IconLayoutGrid className="h-4 w-4 mr-1" />
+                Grid
+              </Button>
+              <Button
+                variant={viewMode === 'table' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('table')}
+              >
+                <IconList className="h-4 w-4 mr-1" />
+                Table
+              </Button>
+            </div>
+          </div>
+
+          {viewMode === 'grid' ? (
+            <RewardGrid
+              data={filteredRewards}
+              isLoading={isLoading}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+            />
+          ) : (
+            <RewardTable
+              data={filteredRewards}
+              isLoading={isLoading}
+              onEdit={handleEdit}
+              onRefresh={fetchRewards}
+            />
+          )}
         </TabsContent>
         <TabsContent value="claims" className="mt-6">
           <RewardClaimsContent />
         </TabsContent>
       </Tabs>
+
+      {selectedReward && (
+        <RewardDeleteDialog
+          open={isDeleteDialogOpen}
+          onOpenChange={setIsDeleteDialogOpen}
+          reward={selectedReward}
+          onSuccess={handleSuccess}
+        />
+      )}
     </div>
   );
 }

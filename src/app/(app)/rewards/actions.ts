@@ -6,12 +6,14 @@ import { MemberService } from '@/lib/services/member.service';
 import { z } from 'zod';
 import prisma from '@/lib/prisma';
 
-// Reward schema for validation
+// Update reward schema for validation
 const rewardSchema = z.object({
   name: z.string().min(1, 'Reward name is required'),
   pointsCost: z.number().min(1, 'Points cost must be at least 1'),
   stock: z.number().min(0, 'Stock cannot be negative'),
   isActive: z.boolean().optional(),
+  description: z.string().optional().nullable(),
+  expiryDate: z.date().optional().nullable(),
 });
 
 /**
@@ -86,6 +88,8 @@ export async function createReward(data: {
   pointsCost: number;
   stock: number;
   isActive?: boolean;
+  description?: string | null;
+  expiryDate?: Date | null;
 }) {
   try {
     // Validate data
@@ -97,6 +101,8 @@ export async function createReward(data: {
       pointsCost: validatedData.pointsCost,
       stock: validatedData.stock,
       isActive: validatedData.isActive,
+      description: validatedData.description || undefined,
+      expiryDate: validatedData.expiryDate || undefined,
     });
 
     // Revalidate rewards page
@@ -132,6 +138,8 @@ export async function updateReward(
     pointsCost?: number;
     stock?: number;
     isActive?: boolean;
+    description?: string | null;
+    expiryDate?: Date | null;
   },
 ) {
   try {
@@ -144,6 +152,8 @@ export async function updateReward(
       pointsCost: validatedData.pointsCost,
       stock: validatedData.stock,
       isActive: validatedData.isActive,
+      description: validatedData.description,
+      expiryDate: validatedData.expiryDate,
     });
 
     // Revalidate rewards page
