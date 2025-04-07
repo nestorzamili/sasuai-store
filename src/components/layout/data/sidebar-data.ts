@@ -120,7 +120,7 @@ export const sidebarData: SidebarData = {
         },
         {
           title: 'Reward',
-          url: '/members/reward',
+          url: '/rewards',
           icon: IconGift,
         },
       ],
