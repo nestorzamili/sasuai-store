@@ -17,6 +17,8 @@ import {
   IconInfoCircle,
   IconBox,
   IconCoin,
+  IconArrowUp,
+  IconArrowDown,
 } from '@tabler/icons-react';
 import {
   Table,
@@ -30,6 +32,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { getBatchStockMovementHistory } from '../stock-actions';
+import { StockMovement } from '@/lib/types/product-batch';
 
 interface BatchDetailDialogProps {
   open: boolean;
@@ -45,6 +49,8 @@ export function BatchDetailDialog({
   const [batch, setBatch] = useState<ProductBatchWithDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('details');
+  const [movements, setMovements] = useState<StockMovement[]>([]);
+  const [isLoadingMovements, setIsLoadingMovements] = useState(false);
 
   // Fetch batch details when the dialog opens
   useEffect(() => {
@@ -59,8 +65,12 @@ export function BatchDetailDialog({
         const response = await getBatchById(batchId);
         if (response.success) {
           setBatch(response.data as ProductBatchWithDetails);
+
+          // Fetch stock movements separately
+          fetchStockMovements(batchId);
         }
       } catch (error) {
+        console.error('Failed to fetch batch details', error);
       } finally {
         setIsLoading(false);
       }
@@ -69,12 +79,27 @@ export function BatchDetailDialog({
     fetchBatch();
   }, [batchId, open]);
 
+  const fetchStockMovements = async (id: string) => {
+    setIsLoadingMovements(true);
+    try {
+      const response = await getBatchStockMovementHistory(id);
+      if (response.success) {
+        setMovements(response.data as StockMovement[]);
+      }
+    } catch (error) {
+      console.error('Failed to fetch stock movements', error);
+    } finally {
+      setIsLoadingMovements(false);
+    }
+  };
+
   // Reset state when dialog closes
   useEffect(() => {
     if (!open) {
       // Reset with a slight delay to prevent UI flicker
       const timer = setTimeout(() => {
         setBatch(null);
+        setMovements([]);
       }, 300);
       return () => clearTimeout(timer);
     }
@@ -96,6 +121,10 @@ export function BatchDetailDialog({
   const formatDate = (date: Date | string) => {
     return format(new Date(date), 'PPP');
   };
+
+  // Filter movements by type
+  const stockInMovements = movements.filter((move) => move.type === 'IN');
+  const stockOutMovements = movements.filter((move) => move.type === 'OUT');
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -121,6 +150,7 @@ export function BatchDetailDialog({
           >
             <TabsList>
               <TabsTrigger value="details">Batch Details</TabsTrigger>
+              <TabsTrigger value="movements">Stock Movements</TabsTrigger>
               <TabsTrigger value="stockIn">Stock In History</TabsTrigger>
               <TabsTrigger value="stockOut">Stock Out History</TabsTrigger>
             </TabsList>
@@ -266,11 +296,82 @@ export function BatchDetailDialog({
               </Card>
             </TabsContent>
 
+            <TabsContent value="movements" className="mt-6">
+              <Card>
+                <CardContent className="pt-6">
+                  <h3 className="text-lg font-medium mb-4">Stock Movements</h3>
+                  {isLoadingMovements ? (
+                    <div className="space-y-4">
+                      {Array.from({ length: 3 }).map((_, i) => (
+                        <Skeleton key={i} className="h-10 w-full" />
+                      ))}
+                    </div>
+                  ) : movements.length > 0 ? (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Date</TableHead>
+                          <TableHead>Type</TableHead>
+                          <TableHead>Quantity</TableHead>
+                          <TableHead>Unit</TableHead>
+                          <TableHead>Details</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {movements.map((movement) => (
+                          <TableRow key={movement.id}>
+                            <TableCell>{formatDate(movement.date)}</TableCell>
+                            <TableCell>
+                              {movement.type === 'IN' ? (
+                                <Badge className="bg-green-500">
+                                  <IconArrowUp className="h-3 w-3 mr-1" />
+                                  IN
+                                </Badge>
+                              ) : (
+                                <Badge variant="destructive">
+                                  <IconArrowDown className="h-3 w-3 mr-1" />
+                                  OUT
+                                </Badge>
+                              )}
+                            </TableCell>
+                            <TableCell>{movement.quantity}</TableCell>
+                            <TableCell>
+                              {movement.unit?.symbol || '-'}
+                            </TableCell>
+                            <TableCell>
+                              {movement.type === 'IN'
+                                ? movement.supplier
+                                  ? `From: ${movement.supplier.name}`
+                                  : 'Manual adjustment'
+                                : movement.reason || 'No reason provided'}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  ) : (
+                    <div className="py-8 text-center">
+                      <IconInfoCircle className="h-12 w-12 mx-auto text-muted-foreground" />
+                      <p className="mt-2 text-muted-foreground">
+                        No stock movements found
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
             <TabsContent value="stockIn" className="mt-6">
               <Card>
                 <CardContent className="pt-6">
                   <h3 className="text-lg font-medium mb-4">Stock In History</h3>
-                  {batch.stockIns && batch.stockIns.length > 0 ? (
+                  {isLoadingMovements ? (
+                    <div className="space-y-4">
+                      {Array.from({ length: 3 }).map((_, i) => (
+                        <Skeleton key={i} className="h-10 w-full" />
+                      ))}
+                    </div>
+                  ) : stockInMovements.length > 0 ? (
                     <Table>
                       <TableHeader>
                         <TableRow>
@@ -281,16 +382,16 @@ export function BatchDetailDialog({
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {batch.stockIns.map((stockIn) => (
-                          <TableRow key={stockIn.id}>
-                            <TableCell>{formatDate(stockIn.date)}</TableCell>
-                            <TableCell>{stockIn.quantity}</TableCell>
+                        {stockInMovements.map((movement) => (
+                          <TableRow key={movement.id}>
+                            <TableCell>{formatDate(movement.date)}</TableCell>
+                            <TableCell>{movement.quantity}</TableCell>
                             <TableCell>
-                              {stockIn.unit ? stockIn.unit.symbol : '-'}
+                              {movement.unit ? movement.unit.symbol : '-'}
                             </TableCell>
                             <TableCell>
-                              {stockIn.supplier
-                                ? stockIn.supplier.name
+                              {movement.supplier
+                                ? movement.supplier.name
                                 : 'No supplier'}
                             </TableCell>
                           </TableRow>
@@ -315,7 +416,13 @@ export function BatchDetailDialog({
                   <h3 className="text-lg font-medium mb-4">
                     Stock Out History
                   </h3>
-                  {batch.stockOuts && batch.stockOuts.length > 0 ? (
+                  {isLoadingMovements ? (
+                    <div className="space-y-4">
+                      {Array.from({ length: 3 }).map((_, i) => (
+                        <Skeleton key={i} className="h-10 w-full" />
+                      ))}
+                    </div>
+                  ) : stockOutMovements.length > 0 ? (
                     <Table>
                       <TableHeader>
                         <TableRow>
@@ -326,14 +433,14 @@ export function BatchDetailDialog({
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {batch.stockOuts.map((stockOut) => (
-                          <TableRow key={stockOut.id}>
-                            <TableCell>{formatDate(stockOut.date)}</TableCell>
-                            <TableCell>{stockOut.quantity}</TableCell>
+                        {stockOutMovements.map((movement) => (
+                          <TableRow key={movement.id}>
+                            <TableCell>{formatDate(movement.date)}</TableCell>
+                            <TableCell>{movement.quantity}</TableCell>
                             <TableCell>
-                              {stockOut.unit ? stockOut.unit.symbol : '-'}
+                              {movement.unit ? movement.unit.symbol : '-'}
                             </TableCell>
-                            <TableCell>{stockOut.reason || '-'}</TableCell>
+                            <TableCell>{movement.reason || '-'}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>

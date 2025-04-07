@@ -1,7 +1,6 @@
 'use client';
 import * as React from 'react';
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -43,10 +42,7 @@ import {
 import { DataTablePagination } from '@/components/ui/data-table-pagination';
 import { BatchTableSkeleton } from './batch-skeleton';
 import { Input } from '@/components/ui/input';
-import {
-  ProductBatchWithProduct,
-  ProductBatchWithDetails,
-} from '@/lib/types/product-batch';
+import { ProductBatchWithProduct } from '@/lib/types/product-batch';
 import { BatchDeleteDialog } from './batch-delete-dialog';
 import { BatchDetailDialog } from './batch-detail-dialog';
 import { format } from 'date-fns';
@@ -66,8 +62,6 @@ export function BatchTable({
   onAdjust,
   onRefresh,
 }: BatchTableProps) {
-  const router = useRouter();
-  // State for deletion dialog
   const [selectedBatchForDelete, setSelectedBatchForDelete] =
     useState<ProductBatchWithProduct | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);

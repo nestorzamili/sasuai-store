@@ -29,13 +29,6 @@ import { ProductBatchFormInitialData } from '@/lib/types/product-batch';
 import { Product } from '@prisma/client';
 import { createBatch, updateBatch } from '../action';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
   Popover,
   PopoverContent,
   PopoverTrigger,

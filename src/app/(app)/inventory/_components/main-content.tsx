@@ -12,13 +12,17 @@ import { ProductBatchWithProduct } from '@/lib/types/product-batch';
 import { Product } from '@prisma/client';
 import { SupplierWithCount } from '@/lib/types/supplier';
 import { UnitWithCounts } from '@/lib/types/unit';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
   IconRefresh,
   IconFilter,
   IconCalendarExclamation,
+  IconBox,
+  IconPackage,
+  IconPackageOff,
+  IconAlertTriangle,
+  IconCalendarTime,
 } from '@tabler/icons-react';
 import {
   Select,
@@ -241,103 +245,102 @@ export default function MainContent() {
         />
       </div>
 
-      {/* Stats cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      {/* Stats cards to match dashboard style */}
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-5">
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  Total Batches
-                </p>
-                <h3 className="text-2xl font-bold">{batchStats.total}</h3>
-              </div>
-              <Badge variant="outline" className="text-lg px-3 py-1">
-                {batchStats.total}
-              </Badge>
-            </div>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Batches</CardTitle>
+            <IconPackage className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{batchStats.total}</div>
+            <p className="text-xs text-muted-foreground">
+              All product batches in inventory
+            </p>
           </CardContent>
         </Card>
+
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  In Stock
-                </p>
-                <h3 className="text-2xl font-bold">{batchStats.inStock}</h3>
-              </div>
-              <Badge className="text-lg px-3 py-1 bg-green-500">
-                {batchStats.inStock}
-              </Badge>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">In Stock</CardTitle>
+            <IconBox className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">
+              {batchStats.inStock}
             </div>
+            <p className="text-xs text-muted-foreground">
+              {Math.round((batchStats.inStock / batchStats.total) * 100) || 0}%
+              of total batches
+            </p>
           </CardContent>
         </Card>
+
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  Out of Stock
-                </p>
-                <h3 className="text-2xl font-bold">{batchStats.outOfStock}</h3>
-              </div>
-              <Badge variant="secondary" className="text-lg px-3 py-1">
-                {batchStats.outOfStock}
-              </Badge>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Out of Stock</CardTitle>
+            <IconPackageOff className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-gray-500">
+              {batchStats.outOfStock}
             </div>
+            <p className="text-xs text-muted-foreground">
+              {Math.round((batchStats.outOfStock / batchStats.total) * 100) ||
+                0}
+              % of total batches
+            </p>
           </CardContent>
         </Card>
+
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  Expired
-                </p>
-                <h3 className="text-2xl font-bold">{batchStats.expired}</h3>
-              </div>
-              <Badge variant="destructive" className="text-lg px-3 py-1">
-                {batchStats.expired}
-              </Badge>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Expired</CardTitle>
+            <IconAlertTriangle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-destructive">
+              {batchStats.expired}
             </div>
+            <p className="text-xs text-muted-foreground">
+              {Math.round((batchStats.expired / batchStats.total) * 100) || 0}%
+              of total batches
+            </p>
           </CardContent>
         </Card>
+
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  Expiring Soon
-                </p>
-                <h3 className="text-2xl font-bold">
-                  {batchStats.expiringSoon}
-                </h3>
-              </div>
-              <Badge
-                variant="secondary"
-                className="text-lg px-3 py-1 bg-yellow-500"
-              >
-                {batchStats.expiringSoon}
-              </Badge>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Expiring Soon</CardTitle>
+            <IconCalendarTime className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-yellow-500">
+              {batchStats.expiringSoon}
             </div>
+            <p className="text-xs text-muted-foreground">
+              Within the next 30 days
+            </p>
           </CardContent>
         </Card>
       </div>
 
       {/* Warning for expiring batches */}
       {expiringBatches.length > 0 && (
-        <Card className="bg-yellow-50 border-yellow-200">
+        <Card className="border-yellow-200 bg-yellow-50 dark:bg-yellow-900/10">
           <CardContent className="pt-6">
             <div className="flex items-start gap-4">
-              <IconCalendarExclamation size={24} className="text-yellow-600" />
+              <IconCalendarExclamation
+                size={24}
+                className="text-yellow-600 dark:text-yellow-500"
+              />
               <div>
-                <h3 className="text-lg font-semibold text-yellow-800">
+                <h3 className="text-lg font-semibold text-yellow-800 dark:text-yellow-500">
                   {expiringBatches.length}{' '}
                   {expiringBatches.length === 1 ? 'batch is' : 'batches are'}{' '}
                   expiring soon!
                 </h3>
-                <p className="text-sm text-yellow-700">
+                <p className="text-sm text-yellow-700 dark:text-yellow-400">
                   Please check the expiring batches and plan accordingly to
                   minimize waste.
                 </p>
