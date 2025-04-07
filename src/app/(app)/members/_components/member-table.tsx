@@ -17,7 +17,6 @@ import { ArrowUpDown, MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { IconTrash, IconEdit, IconEye } from '@tabler/icons-react';
-import { Badge } from '@/components/ui/badge';
 import { MemberTierBadge } from './member-tier-badge';
 import {
   DropdownMenu,
@@ -165,27 +164,23 @@ export function MemberTable({
       ),
     },
 
-    // Contact column (email/phone)
+    // Contact column (email)
     {
-      id: 'contact',
-      header: 'Contact',
+      id: 'email',
+      header: 'Email',
       cell: ({ row }) => {
-        const member = row.original;
-        return (
-          <div>
-            {member.email && <div className="text-sm">{member.email}</div>}
-            {member.phone && (
-              <div className="text-xs text-muted-foreground">
-                {member.phone}
-              </div>
-            )}
-            {!member.email && !member.phone && (
-              <span className="text-xs italic text-muted-foreground">
-                No contact info
-              </span>
-            )}
-          </div>
-        );
+        const email = row.original.email || 'No email provided';
+        return <div className="text-sm text-muted-foreground">{email}</div>;
+      },
+    },
+
+    // Contact column (phone)
+    {
+      id: 'phone',
+      header: 'Phone',
+      cell: ({ row }) => {
+        const phone = row.original.phone || 'No phone provided';
+        return <div className="text-sm text-muted-foreground">{phone}</div>;
       },
     },
 
@@ -205,7 +200,7 @@ export function MemberTable({
       },
     },
 
-    // Points column
+    // Current Points column
     {
       accessorKey: 'totalPoints',
       header: () => (
@@ -214,13 +209,39 @@ export function MemberTable({
           onClick={() => handleSortChange('totalPoints')}
           className="flex items-center"
         >
-          Points
+          Current Points
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       ),
-      cell: ({ row }) => (
-        <div className="font-medium">{row.getValue('totalPoints')}</div>
+      cell: ({ row }) => {
+        return (
+          <div className="font-medium ml-4">
+            {Number(row.original.totalPoints).toLocaleString()}
+          </div>
+        );
+      },
+    },
+
+    // Lifetime Points column
+    {
+      accessorKey: 'totalPointsEarned',
+      header: () => (
+        <Button
+          variant="ghost"
+          onClick={() => handleSortChange('totalPointsEarned')}
+          className="flex items-center"
+        >
+          Lifetime Points
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
       ),
+      cell: ({ row }) => {
+        return (
+          <div className="text-muted-foreground ml-4">
+            {Number(row.original.totalPointsEarned).toLocaleString()}
+          </div>
+        );
+      },
     },
 
     // Join date column
@@ -239,7 +260,7 @@ export function MemberTable({
       cell: ({ row }) => {
         const joinDate = row.original.joinDate;
         return (
-          <div className="font-medium">
+          <div className="font-medium ml-4">
             {format(new Date(joinDate), 'MMM d, yyyy')}
           </div>
         );
@@ -249,7 +270,7 @@ export function MemberTable({
     // Actions column
     {
       id: 'actions',
-      header: 'Actions',
+      header: '',
       cell: ({ row }) => {
         const member = row.original;
         return (
@@ -346,69 +367,20 @@ export function MemberTable({
               ))}
             </TableHeader>
             <TableBody>
-              {data.length > 0 ? (
-                data.map((member) => (
-                  <TableRow key={member.id}>
-                    <TableCell className="p-4">
-                      <Checkbox />
-                    </TableCell>
-                    <TableCell>{member.name}</TableCell>
-                    <TableCell>
-                      {member.email && (
-                        <div className="text-sm">{member.email}</div>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {member.phone || (
-                        <span className="text-xs italic text-muted-foreground">
-                          No phone
-                        </span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {member.tier ? (
-                        <MemberTierBadge tier={member.tier} />
-                      ) : (
-                        <span className="text-xs italic text-muted-foreground">
-                          No tier
-                        </span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {format(new Date(member.joinDate), 'MMM d, yyyy')}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0">
-                            <span className="sr-only">Open menu</span>
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            className="flex justify-between cursor-pointer"
-                            onClick={() => viewMemberDetails(member)}
-                          >
-                            View Details <IconEye className="h-4 w-4" />
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="flex justify-between cursor-pointer"
-                            onClick={() => onEdit?.(member)}
-                          >
-                            Edit <IconEdit className="h-4 w-4" />
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="flex justify-between cursor-pointer text-destructive focus:text-destructive"
-                            onClick={() => handleDeleteClick(member)}
-                          >
-                            Delete <IconTrash className="h-4 w-4" />
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
+              {table.getRowModel().rows?.length ? (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && 'selected'}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext(),
+                        )}
+                      </TableCell>
+                    ))}
                   </TableRow>
                 ))
               ) : (
@@ -511,7 +483,10 @@ function MemberTableSkeleton() {
                 <Skeleton className="h-7 w-28" />
               </TableHead>
               <TableHead>
-                <Skeleton className="h-7 w-20" />
+                <Skeleton className="h-7 w-28" />
+              </TableHead>
+              <TableHead>
+                <Skeleton className="h-7 w-28" />
               </TableHead>
               <TableHead>
                 <Skeleton className="h-7 w-28" />
@@ -540,7 +515,10 @@ function MemberTableSkeleton() {
                   <Skeleton className="h-6 w-20" />
                 </TableCell>
                 <TableCell>
-                  <Skeleton className="h-5 w-10" />
+                  <Skeleton className="h-5 w-20" />
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-5 w-20" />
                 </TableCell>
                 <TableCell>
                   <Skeleton className="h-5 w-28" />

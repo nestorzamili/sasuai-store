@@ -11,8 +11,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { format } from 'date-fns';
-import { awardPointsToMember } from '../../action';
-import { useState } from 'react';
+import { awardPointsToMember, getAllMemberTiers } from '../../action';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -25,22 +25,54 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { IconGift } from '@tabler/icons-react';
+import { IconGift, IconCrown } from '@tabler/icons-react';
 import { toast } from '@/hooks/use-toast';
+import { Label } from '@/components/ui/label';
 
 interface MemberPointHistoryProps {
   memberId: string;
   points: MemberPointHistoryItem[];
+  memberTier?: any; // Optional tier information
 }
 
 export default function MemberPointHistory({
   memberId,
   points,
+  memberTier,
 }: MemberPointHistoryProps) {
   const [open, setOpen] = useState(false);
   const [pointsToAdd, setPointsToAdd] = useState(0);
   const [pointNotes, setPointNotes] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [tier, setTier] = useState(memberTier);
+
+  useEffect(() => {
+    if (!tier) {
+      // Fetch tier information for this member if not provided
+      const fetchMemberTier = async () => {
+        try {
+          const result = await getAllMemberTiers();
+          if (result.success && result.data) {
+            // Find tier for this member based on points
+            const memberPoints = points.reduce(
+              (sum, p) => sum + p.pointsEarned,
+              0,
+            );
+            const appropriateTier = result.data.find(
+              (t) => t.minPoints <= memberPoints,
+            );
+            if (appropriateTier) {
+              setTier(appropriateTier);
+            }
+          }
+        } catch (error) {
+          console.error('Failed to fetch tier information', error);
+        }
+      };
+
+      fetchMemberTier();
+    }
+  }, [points, tier, memberTier]);
 
   // Format transaction ID to be shorter if needed
   const formatTransactionId = (id: string) => {
@@ -73,6 +105,8 @@ export default function MemberPointHistory({
           description: `${pointsToAdd} points have been added to this member`,
         });
         setOpen(false);
+        setPointsToAdd(0);
+        setPointNotes('');
         // Refresh the page to show the new points
         window.location.reload();
       } else {
@@ -99,7 +133,7 @@ export default function MemberPointHistory({
         <CardTitle>Point History</CardTitle>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button size="sm" className="gap-2">
+            <Button variant="secondary" size="sm" className="gap-1">
               <IconGift size={16} />
               Award Points
             </Button>
@@ -108,19 +142,17 @@ export default function MemberPointHistory({
             <DialogHeader>
               <DialogTitle>Award Points</DialogTitle>
               <DialogDescription>
-                Manually award points to this member.
+                Manually award loyalty points to this member.
               </DialogDescription>
             </DialogHeader>
             <div className="py-4">
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <label htmlFor="points" className="text-sm font-medium">
-                    Points to Award
-                  </label>
+                  <Label htmlFor="points">Points to Award</Label>
                   <Input
                     id="points"
                     type="number"
-                    value={pointsToAdd}
+                    value={pointsToAdd || ''}
                     onChange={(e) =>
                       setPointsToAdd(parseInt(e.target.value) || 0)
                     }
@@ -130,9 +162,7 @@ export default function MemberPointHistory({
                 </div>
 
                 <div className="space-y-2">
-                  <label htmlFor="notes" className="text-sm font-medium">
-                    Notes (Optional)
-                  </label>
+                  <Label htmlFor="notes">Notes (Optional)</Label>
                   <Textarea
                     id="notes"
                     value={pointNotes}
@@ -140,6 +170,19 @@ export default function MemberPointHistory({
                     placeholder="Enter a reason for awarding these points"
                   />
                 </div>
+
+                {tier && (
+                  <div className="rounded-md bg-secondary/50 p-3 text-sm">
+                    <div className="font-semibold mb-1 flex items-center">
+                      <IconCrown size={16} className="mr-1 text-amber-500" />
+                      Point Multiplier Active
+                    </div>
+                    <p>
+                      This member has a {tier.multiplier}x point multiplier from
+                      their {tier.name} tier status.
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
             <DialogFooter>
