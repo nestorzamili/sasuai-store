@@ -37,6 +37,9 @@ import {
 } from '@/components/ui/select';
 import { AvailableProductBatch } from '@/lib/types/product-batch';
 import { useAuth } from '@/context/auth-context';
+import { MemberSearch } from './member-search';
+import { MemberWithTier } from '@/lib/types/member';
+import { calculateMemberPoints } from './transaction-helpers';
 
 // This is a simplified schema - in a real application, this would be more complex
 const formSchema = z.object({
@@ -63,14 +66,30 @@ export function TransactionForm({
   const [items, setItems] = useState<TransactionItemData[]>([]);
   const [activeTab, setActiveTab] = useState('items');
   const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
+  const [selectedMember, setSelectedMember] = useState<MemberWithTier | null>(
+    null,
+  );
+  const [estimatedPoints, setEstimatedPoints] = useState(0);
   const { toast } = useToast();
 
   // Get current user from auth context
   const { user } = useAuth();
 
   // Use the proper ID field from user object
-  // The email is not the primary key, we need to use the id field
   const cashierId = user?.id || '';
+
+  // Calculate totals - moved this up before it's used in the useEffect
+  const totals = useMemo(() => {
+    const subtotal = items.reduce((sum, item) => sum + item.subtotal, 0);
+    const discount = 0; // For simplicity, no discount logic here
+    const finalTotal = subtotal - discount;
+
+    return {
+      subtotal,
+      discount,
+      finalTotal,
+    };
+  }, [items]);
 
   // Initialize form with default values
   const form = useForm<FormValues>({
@@ -82,12 +101,34 @@ export function TransactionForm({
     },
   });
 
+  // Calculate estimated points when total or selected member changes
+  useEffect(() => {
+    if (selectedMember && totals.finalTotal > 0) {
+      const points = calculateMemberPoints(totals.finalTotal, selectedMember);
+      setEstimatedPoints(points);
+    } else {
+      setEstimatedPoints(0);
+    }
+  }, [selectedMember, totals.finalTotal]);
+
+  // Update member ID in form when selected member changes
+  useEffect(() => {
+    form.setValue('memberId', selectedMember?.id || null);
+  }, [selectedMember, form]);
+
   // Update cashier ID when user data is loaded
   useEffect(() => {
     if (cashierId && !form.getValues('cashierId')) {
       form.setValue('cashierId', cashierId);
     }
   }, [cashierId, form]);
+
+  // Initialize selected member from initialData if in edit mode
+  useEffect(() => {
+    if (isEditing && initialData?.member) {
+      setSelectedMember(initialData.member as MemberWithTier);
+    }
+  }, [isEditing, initialData]);
 
   // Initialize items from initialData if in edit mode
   useEffect(() => {
@@ -107,19 +148,6 @@ export function TransactionForm({
       setItems(formattedItems);
     }
   }, [isEditing, initialData]);
-
-  // Calculate totals
-  const totals = useMemo(() => {
-    const subtotal = items.reduce((sum, item) => sum + item.subtotal, 0);
-    const discount = 0; // For simplicity, no discount logic here
-    const finalTotal = subtotal - discount;
-
-    return {
-      subtotal,
-      discount,
-      finalTotal,
-    };
-  }, [items]);
 
   // Handle product selection
   const handleProductSelect = (
@@ -233,7 +261,9 @@ export function TransactionForm({
       if (result.success) {
         toast({
           title: 'Transaction created',
-          description: 'Transaction has been created successfully',
+          description: selectedMember
+            ? `Transaction completed and ${estimatedPoints} points awarded to ${selectedMember.name}`
+            : 'Transaction completed successfully',
         });
         onSuccess?.();
       } else {
@@ -469,65 +499,96 @@ export function TransactionForm({
             </div>
           </div>
 
-          {/* Payment method selection */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="paymentMethod"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Payment Method</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select payment method" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="cash">Cash</SelectItem>
-                      <SelectItem value="card">Card</SelectItem>
-                      <SelectItem value="transfer">Transfer</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          {/* Customer & Payment Section */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Customer & Payment</h3>
 
-            <FormField
-              control={form.control}
-              name="memberId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Member (Optional)</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Member search will be implemented"
-                      {...field}
-                      value={field.value || ''}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Member selection */}
+              <div className="space-y-2">
+                <FormLabel>Member (Optional)</FormLabel>
+                <MemberSearch
+                  onSelect={setSelectedMember}
+                  selectedMember={selectedMember}
+                />
 
-            {/* Hidden cashier ID field that will use the current user */}
-            <input
-              type="hidden"
-              {...form.register('cashierId')}
-              value={cashierId}
-            />
+                {selectedMember && (
+                  <div className="mt-2 border rounded-md p-2 bg-muted/50">
+                    <div className="text-sm grid grid-cols-2 gap-x-4 gap-y-1">
+                      <div>
+                        <span className="text-muted-foreground">
+                          Current Points:
+                        </span>
+                        <span className="font-medium ml-1">
+                          {selectedMember.totalPoints}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">
+                          Multiplier:
+                        </span>
+                        <span className="font-medium ml-1">
+                          {selectedMember.tier?.multiplier || 1}x
+                        </span>
+                      </div>
+                      <div className="col-span-2">
+                        <span className="text-muted-foreground">
+                          Will earn:
+                        </span>
+                        <span className="font-medium ml-1 text-primary">
+                          {estimatedPoints} points
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Payment method selection */}
+              <FormField
+                control={form.control}
+                name="paymentMethod"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Payment Method</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select payment method" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="cash">Cash</SelectItem>
+                        <SelectItem value="card">Card</SelectItem>
+                        <SelectItem value="transfer">Transfer</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Hidden fields */}
+              <input
+                type="hidden"
+                {...form.register('cashierId')}
+                value={cashierId}
+              />
+              <input
+                type="hidden"
+                {...form.register('memberId')}
+                value={selectedMember?.id || ''}
+              />
+            </div>
 
             {/* Display current cashier info */}
             {user && (
-              <div className="col-span-2">
+              <div>
                 <p className="text-sm text-muted-foreground">
-                  Cashier: {user.name || user.email || 'Current User'} (ID:{' '}
-                  {cashierId})
+                  Cashier: {user.name || user.email || 'Current User'}
                 </p>
               </div>
             )}

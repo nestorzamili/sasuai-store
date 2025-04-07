@@ -57,6 +57,8 @@ import {
 } from '@/components/ui/select';
 import { IconPrinter, IconTrash, IconEye } from '@tabler/icons-react';
 import { toast } from '@/hooks/use-toast';
+import { formatMemberInfo } from './transaction-helpers';
+import { MemberTierBadge } from '../../members/_components/member-tier-badge';
 
 interface TransactionTableProps {
   initialData?: PaginatedTransactionResponse;
@@ -439,11 +441,30 @@ export function TransactionTable({
         cell: ({ row }) => <div>{row.getValue('cashierName')}</div>,
       },
 
-      // Member column
+      // Updated Member column
       {
         accessorKey: 'memberName',
         header: 'Member',
-        cell: ({ row }) => <div>{row.getValue('memberName') || 'Guest'}</div>,
+        cell: ({ row }) => {
+          const isGuest = !row.getValue('memberName');
+
+          if (isGuest) {
+            return <span className="text-muted-foreground">Guest</span>;
+          }
+
+          // For detailed view, we'd need the full member object
+          // This is a simplified version
+          return (
+            <div className="flex flex-col">
+              <span>{row.getValue('memberName')}</span>
+              {row.original.memberPoints && row.original.memberPoints > 0 && (
+                <span className="text-xs text-primary">
+                  +{row.original.memberPoints} points
+                </span>
+              )}
+            </div>
+          );
+        },
       },
 
       // Payment Method column
