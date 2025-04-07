@@ -2,22 +2,223 @@ import { TableLayout } from '@/components/layout/table-layout';
 import { DiscountInterface } from '@/lib/types/discount';
 import { getAllDiscounts } from '../actions';
 import * as React from 'react';
-import { columns } from '../_data/discount-column';
+import { ColumnDef } from '@tanstack/react-table';
+import { DeleteDialog } from './discount-delete-dialog';
+
+import { SortingButtonTable } from '@/components/addon-table-component';
+import { Badge } from '@/components/ui/badge';
+import { IconEdit, IconTrash } from '@tabler/icons-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
+import { MoreHorizontal } from 'lucide-react';
+import { useState } from 'react';
+
+const DiscountTypeBagde = (value: string) => {
+  if (value === 'member' || value === 'MEMBER') {
+    return (
+      <Badge variant={'outline'} className="cursor-pointer uppercase">
+        {value}
+      </Badge>
+    );
+  }
+  return (
+    <Badge variant={'secondary'} className="cursor-pointer uppercase">
+      {value}
+    </Badge>
+  );
+};
+
+const isActive = (value: string) => {
+  if (value) {
+    return (
+      <Badge className="cursor-pointer bg-green-500 text-white uppercase">
+        Active
+      </Badge>
+    );
+  }
+  return (
+    <Badge variant={'destructive'} className="cursor-pointer uppercase">
+      Expired
+    </Badge>
+  );
+};
+
+const Value = ({ valueType, value }: { valueType: string; value: any }) => {
+  if (valueType === 'percentage') {
+    return <span>{value}%</span>;
+  }
+  return <span>{value}</span>;
+};
 export function DiscountTable() {
   const [data, setData] = React.useState<DiscountInterface[]>([]);
-  const getDiscount = async () => {
-    const response = await getAllDiscounts();
-    const formattedData = response.data.map((discount: any) => ({
-      ...discount,
-      type: discount.type || null,
-    }));
-    setData(formattedData);
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [deleteDialog, setDeleteDialog] = useState(false);
+  const [deleteData, setDeleteData] = useState<any>(null);
+  const handleOnDeleteClick = (data: any) => {
+    setDeleteDialog(true);
+    setDeleteData(data);
   };
+  const columns: ColumnDef<DiscountInterface>[] = [
+    { header: 'ID', accessorKey: 'id' },
+    {
+      header: ({ column }) => {
+        return <SortingButtonTable column={column} label={'Brand Name'} />;
+      },
+      cell: ({ row }) => (
+        <div className="font-medium">{row.getValue('name')}</div>
+      ),
+      accessorKey: 'name',
+      enableSorting: true,
+      enableColumnFilter: true,
+    },
+    {
+      header: ({ column }) => {
+        return <SortingButtonTable column={column} label={'Discount Type'} />;
+      },
+      accessorKey: 'discountType',
+      cell: ({ row }) => {
+        return DiscountTypeBagde(row.getValue('discountType'));
+      },
+    },
+    {
+      header: ({ column }) => {
+        return <SortingButtonTable column={column} label={'Value Type'} />;
+      },
+      accessorKey: 'valueType',
+      cell: ({ row }) => {
+        return <span className="uppercase">{row.getValue('valueType')}</span>;
+      },
+    },
+    {
+      header: ({ column }) => {
+        return <SortingButtonTable column={column} label={'Value'} />;
+      },
+      accessorKey: 'value',
+      cell: ({ row }) => {
+        return (
+          <Value
+            valueType={row.getValue('valueType')}
+            value={row.getValue('value')}
+          />
+        );
+      },
+    },
+    {
+      header: ({ column }) => {
+        return <span className="">Days Left</span>;
+      },
+      accessorKey: 'daysLeft',
+      cell: ({ row }) => {
+        let endDate = new Date(row.getValue('endDate'));
+        let today = new Date();
+        let timeDiff = endDate.getTime() - today.getTime();
+        let daysLeft = Math.ceil(timeDiff / (1000 * 3600 * 24));
+        return (
+          <Badge
+            variant={daysLeft < 0 ? 'destructive' : 'outline'}
+            className="cursor-pointer uppercase"
+          >
+            {daysLeft} days
+          </Badge>
+        );
+      },
+    },
+    {
+      header: ({ column }) => {
+        return <SortingButtonTable column={column} label={'Status'} />;
+      },
+      accessorKey: 'isActive',
+      cell: ({ row }) => {
+        return isActive(row.getValue('isActive'));
+      },
+    },
+
+    {
+      header: ({ column }) => {
+        return <SortingButtonTable column={column} label={'End Date'} />;
+      },
+      accessorKey: 'endDate',
+      cell: ({ row }) => {
+        return new Date(row.getValue('endDate')).toLocaleDateString('Id-ID');
+      },
+    },
+    {
+      id: 'actions',
+      header: 'Actions',
+      cell: ({ row }) => {
+        const discount = row.original;
+        return (
+          <div className="text-right">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-8 w-8 p-0">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  className="flex justify-between cursor-pointer"
+                  onClick={() => {
+                    // Navigate to edit page or handle edit action
+                  }}
+                >
+                  Edit <IconEdit className="h-4 w-4" />
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="flex justify-between cursor-pointer text-destructive focus:text-destructive"
+                  onClick={() => {
+                    const data = {
+                      id: discount.id,
+                      label: discount.name,
+                    };
+                    handleOnDeleteClick(data);
+                  }}
+                >
+                  Delete <IconTrash className="h-4 w-4" />
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        );
+      },
+    },
+  ];
+  const getDiscount = async () => {
+    setIsLoading(true);
+    try {
+      const response = await getAllDiscounts();
+      const formattedData = response.data.map((discount: any) => ({
+        ...discount,
+        type: discount.type || null,
+      }));
+      setData(formattedData);
+    } catch (error) {
+      console.error('Failed to fetch discounts:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   React.useEffect(() => {
     getDiscount();
   }, []);
 
   return (
-    <TableLayout data={data} columns={columns} isLoading={true}></TableLayout>
+    <div>
+      <TableLayout data={data} columns={columns} isLoading={isLoading} />
+      {deleteDialog && (
+        <DeleteDialog
+          isOpen={deleteDialog}
+          data={deleteData}
+          onClose={() => setDeleteDialog(false)}
+          onRefresh={getDiscount}
+        />
+      )}
+    </div>
   );
 }

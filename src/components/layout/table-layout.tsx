@@ -56,15 +56,7 @@ export function TableLayout({ data, columns, isLoading }: TableProps) {
       rowSelection,
     },
   });
-  React.useEffect(() => {
-    if (isLoading) {
-      setLoading(true);
-      const timer = setTimeout(() => {
-        setLoading(false);
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [data]);
+
   return (
     <div className="w-full">
       <div className="flex items-center py-4">
@@ -75,7 +67,7 @@ export function TableLayout({ data, columns, isLoading }: TableProps) {
             table.getColumn('name')?.setFilterValue(event.target.value)
           }
           className="max-w-sm"
-          disabled={loading}
+          disabled={isLoading}
         />
       </div>
       <div className="rounded-md border">
@@ -99,7 +91,7 @@ export function TableLayout({ data, columns, isLoading }: TableProps) {
             ))}
           </TableHeader>
           <TableBody>
-            {loading ? (
+            {isLoading ? (
               // Default array with 5 skeleton rows
               Array(5)
                 .fill(0)
