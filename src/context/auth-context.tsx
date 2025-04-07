@@ -10,6 +10,7 @@ import {
 import { authClient } from '@/lib/auth-client';
 
 export interface User {
+  id: string; // Add this line to include the id field
   name?: string | null;
   username?: string | null;
   email: string;
