@@ -123,13 +123,15 @@ export class StockMovementService {
   }
 
   /**
-   * Get all stock-out records
+   * Get all stock-out records including transaction-related stock reductions
    */
   static async getAllStockOuts(options?: {
     includeBatch?: boolean;
     includeUnit?: boolean;
+    includeTransactions?: boolean;
   }) {
-    return prisma.stockOut.findMany({
+    // Get manual stock outs
+    const manualStockOuts = await prisma.stockOut.findMany({
       include: {
         batch:
           options?.includeBatch === true
@@ -141,10 +143,56 @@ export class StockMovementService {
             : false,
         unit: options?.includeUnit === true,
       },
-      orderBy: {
-        date: 'desc',
+    });
+
+    // If we don't need to include transactions, just return the manual stock outs
+    if (options?.includeTransactions === false) {
+      return manualStockOuts;
+    }
+
+    // Get transaction-related stock reductions
+    const transactionItems = await prisma.transactionItem.findMany({
+      include: {
+        batch:
+          options?.includeBatch === true
+            ? {
+                include: {
+                  product: true,
+                },
+              }
+            : false,
+        unit: options?.includeUnit === true,
+        transaction: {
+          select: {
+            id: true,
+            createdAt: true,
+          },
+        },
       },
     });
+
+    // Convert transaction items to stock out format
+    const transactionStockOuts = transactionItems.map((item) => ({
+      id: `tr-${item.id}`, // Add prefix to distinguish from manual stock outs
+      batchId: item.batchId,
+      quantity: item.quantity,
+      unitId: item.unitId,
+      date: item.transaction.createdAt,
+      reason: `Transaction ${item.transaction.id}`,
+      createdAt: item.transaction.createdAt,
+      updatedAt: item.transaction.createdAt,
+      transactionId: item.transaction.id,
+      batch: item.batch,
+      unit: item.unit,
+    }));
+
+    // Combine both manual and transaction-related stock outs
+    const allStockOuts = [...manualStockOuts, ...transactionStockOuts];
+
+    // Sort by date (newest first)
+    return allStockOuts.sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+    );
   }
 
   /**
@@ -160,6 +208,29 @@ export class StockMovementService {
       },
       orderBy: {
         date: 'desc',
+      },
+    });
+  }
+
+  /**
+   * Get transaction-related stock reductions for a specific batch
+   */
+  static async getTransactionStockOutsByBatchId(batchId: string) {
+    return prisma.transactionItem.findMany({
+      where: { batchId },
+      include: {
+        unit: true,
+        transaction: {
+          select: {
+            id: true,
+            createdAt: true,
+          },
+        },
+      },
+      orderBy: {
+        transaction: {
+          createdAt: 'desc',
+        },
       },
     });
   }
@@ -248,22 +319,36 @@ export class StockMovementService {
    * Get the stock movement history for a batch
    */
   static async getBatchStockMovementHistory(batchId: string) {
-    // Get all stock-ins and stock-outs for the batch
-    const [stockIns, stockOuts] = await Promise.all([
-      prisma.stockIn.findMany({
-        where: { batchId },
-        include: {
-          supplier: true,
-          unit: true,
+    // Get all stock-ins for the batch
+    const stockIns = await prisma.stockIn.findMany({
+      where: { batchId },
+      include: {
+        supplier: true,
+        unit: true,
+      },
+    });
+
+    // Get all manual stock-outs for the batch
+    const stockOuts = await prisma.stockOut.findMany({
+      where: { batchId },
+      include: {
+        unit: true,
+      },
+    });
+
+    // Get transaction items related to the batch
+    const transactionItems = await prisma.transactionItem.findMany({
+      where: { batchId },
+      include: {
+        unit: true,
+        transaction: {
+          select: {
+            id: true,
+            createdAt: true,
+          },
         },
-      }),
-      prisma.stockOut.findMany({
-        where: { batchId },
-        include: {
-          unit: true,
-        },
-      }),
-    ]);
+      },
+    });
 
     // Combine and sort by date
     const movements = [
@@ -275,6 +360,7 @@ export class StockMovementService {
         unit: stockIn.unit,
         supplier: stockIn.supplier,
         reason: null,
+        transactionId: null,
       })),
       ...stockOuts.map((stockOut) => ({
         id: stockOut.id,
@@ -284,11 +370,24 @@ export class StockMovementService {
         unit: stockOut.unit,
         supplier: null,
         reason: stockOut.reason,
+        transactionId: null,
+      })),
+      ...transactionItems.map((item) => ({
+        id: `tr-${item.id}`,
+        date: item.transaction.createdAt,
+        type: 'OUT' as const,
+        quantity: item.quantity,
+        unit: item.unit,
+        supplier: null,
+        reason: 'Sale',
+        transactionId: item.transaction.id,
       })),
     ];
 
     // Sort by date (newest first)
-    return movements.sort((a, b) => b.date.getTime() - a.date.getTime());
+    return movements.sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+    );
   }
 
   /**
@@ -303,8 +402,8 @@ export class StockMovementService {
 
     const batchIds = batches.map((batch) => batch.id);
 
-    // Get all stock-ins and stock-outs for these batches
-    const [stockIns, stockOuts] = await Promise.all([
+    // Get all stock-ins, stock-outs, and transaction items for these batches
+    const [stockIns, stockOuts, transactionItems] = await Promise.all([
       prisma.stockIn.findMany({
         where: {
           batchId: { in: batchIds },
@@ -322,6 +421,21 @@ export class StockMovementService {
         include: {
           batch: true,
           unit: true,
+        },
+      }),
+      prisma.transactionItem.findMany({
+        where: {
+          batchId: { in: batchIds },
+        },
+        include: {
+          batch: true,
+          unit: true,
+          transaction: {
+            select: {
+              id: true,
+              createdAt: true,
+            },
+          },
         },
       }),
     ]);
@@ -338,6 +452,7 @@ export class StockMovementService {
         batchCode: stockIn.batch.batchCode,
         supplier: stockIn.supplier,
         reason: null,
+        transactionId: null,
       })),
       ...stockOuts.map((stockOut) => ({
         id: stockOut.id,
@@ -349,10 +464,25 @@ export class StockMovementService {
         batchCode: stockOut.batch.batchCode,
         supplier: null,
         reason: stockOut.reason,
+        transactionId: null,
+      })),
+      ...transactionItems.map((item) => ({
+        id: `tr-${item.id}`,
+        date: item.transaction.createdAt,
+        type: 'OUT' as const,
+        quantity: item.quantity,
+        unit: item.unit,
+        batchId: item.batchId,
+        batchCode: item.batch.batchCode,
+        supplier: null,
+        reason: 'Sale',
+        transactionId: item.transaction.id,
       })),
     ];
 
     // Sort by date (newest first)
-    return movements.sort((a, b) => b.date.getTime() - a.date.getTime());
+    return movements.sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+    );
   }
 }
