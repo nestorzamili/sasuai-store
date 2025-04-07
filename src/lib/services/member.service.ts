@@ -82,6 +82,7 @@ export class MemberService {
           phone: data.phone,
           tierId: tierToAssign,
           totalPoints: 0,
+          totalPointsEarned: 0,
           joinDate: new Date(),
         },
         include: {
@@ -236,11 +237,14 @@ export class MemberService {
         },
       });
 
-      // Update the member's total points
+      // Update the member's total points AND totalPointsEarned
       const updatedMember = await tx.member.update({
         where: { id: memberId },
         data: {
           totalPoints: {
+            increment: points,
+          },
+          totalPointsEarned: {
             increment: points,
           },
         },
@@ -250,9 +254,10 @@ export class MemberService {
       });
 
       // Check if member should be upgraded to a higher tier
+      // Using totalPointsEarned instead of totalPoints for tier eligibility
       const eligibleTier = await tx.memberTier.findFirst({
         where: {
-          minPoints: { lte: updatedMember.totalPoints },
+          minPoints: { lte: updatedMember.totalPointsEarned },
         },
         orderBy: {
           minPoints: 'desc',
@@ -334,13 +339,14 @@ export class MemberService {
         },
       });
 
-      // Update the member's points
+      // Update the member's points (only reduce totalPoints, not totalPointsEarned)
       await tx.member.update({
         where: { id: memberId },
         data: {
           totalPoints: {
             decrement: reward.pointsCost,
           },
+          // Note: We do not decrement totalPointsEarned here
         },
       });
 

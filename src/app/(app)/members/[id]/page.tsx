@@ -108,6 +108,7 @@ export default function MemberDetailsPage() {
                 <MemberPointHistory
                   memberId={member.id}
                   points={member.memberPoints}
+                  memberTier={member.tier}
                 />
               </TabsContent>
               <TabsContent value="rewards">

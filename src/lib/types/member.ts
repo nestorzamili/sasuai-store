@@ -22,6 +22,7 @@ export type MemberWithRelations = Member & {
     reward: Reward;
   })[];
   transactions: Transaction[];
+  // totalPointsEarned is already part of the Member model
 };
 
 // Type for member creation

@@ -214,19 +214,20 @@ model MemberTier {
 }
 
 model Member {
-  id           String        @id @default(uuid())
-  name         String
-  email        String?
-  phone        String?
-  tier         MemberTier?   @relation(fields: [tierId], references: [id])
-  tierId       String?       @map("tier_id")
-  totalPoints  Int           @default(0) @map("total_points")
-  joinDate     DateTime      @map("join_date") @db.Timestamptz
-  memberPoints MemberPoint[]
-  rewardClaims RewardClaim[]
-  transactions Transaction[]
-  createdAt    DateTime      @default(now()) @db.Timestamptz
-  updatedAt    DateTime      @updatedAt @db.Timestamptz
+  id                String        @id @default(uuid())
+  name              String
+  email             String?
+  phone             String?
+  tier              MemberTier?   @relation(fields: [tierId], references: [id])
+  tierId            String?       @map("tier_id")
+  totalPoints       Int           @default(0) @map("total_points")
+  totalPointsEarned Int           @default(0) @map("total_points_earned")
+  joinDate          DateTime      @map("join_date") @db.Timestamptz
+  memberPoints      MemberPoint[]
+  rewardClaims      RewardClaim[]
+  transactions      Transaction[]
+  createdAt         DateTime      @default(now()) @db.Timestamptz
+  updatedAt         DateTime      @updatedAt @db.Timestamptz
 
   @@map("member")
 }
@@ -252,6 +253,8 @@ model Reward {
   pointsCost   Int           @map("points_cost")
   stock        Int
   isActive     Boolean       @default(true) @map("is_active")
+  expiryDate   DateTime?     @map("expiry_date") @db.Timestamp
+  description  String?
   rewardClaims RewardClaim[]
   createdAt    DateTime      @default(now()) @db.Timestamptz
   updatedAt    DateTime      @updatedAt @db.Timestamptz

@@ -157,7 +157,7 @@ export default function MemberRewardHistory({
         <CardTitle>Reward Claims</CardTitle>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button size="sm" className="gap-2">
+            <Button variant="secondary" size="sm" className="gap-1">
               <IconGift size={16} />
               Claim Reward
             </Button>
