@@ -44,8 +44,8 @@ export const sidebarData: SidebarData = {
           icon: IconLayoutDashboard,
         },
         {
-          title: 'Orders',
-          url: '/orders',
+          title: 'Transactions',
+          url: '/transactions',
           icon: IconShoppingCart,
         },
         {
