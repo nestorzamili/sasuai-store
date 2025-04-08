@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { IconAlertTriangle } from '@tabler/icons-react';
 import { toast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ConfirmDialog } from '@/components/confirm-dialog';
-import { deleteSupplier } from '../action';
+import { canDeleteSupplier, deleteSupplier } from '../action';
 import { SupplierWithCount } from '@/lib/types/supplier';
 
 interface Props {
@@ -22,19 +22,47 @@ export function SupplierDeleteDialog({
   onSuccess,
 }: Props) {
   const [isDeleting, setIsDeleting] = useState(false);
+  const [canDelete, setCanDelete] = useState<boolean | null>(null);
+  const [isCheckingDelete, setIsCheckingDelete] = useState(false);
 
   const hasStockIns = !!(
     supplier._count?.stockIns && supplier._count.stockIns > 0
   );
 
+  // Check if the supplier can be deleted when the dialog opens
+  useEffect(() => {
+    if (open) {
+      const checkCanDelete = async () => {
+        setIsCheckingDelete(true);
+        try {
+          const result = await canDeleteSupplier(supplier.id);
+          if (result.success) {
+            setCanDelete(result.canDelete);
+          } else {
+            setCanDelete(false);
+          }
+        } catch (error) {
+          setCanDelete(false);
+        } finally {
+          setIsCheckingDelete(false);
+        }
+      };
+
+      checkCanDelete();
+    }
+  }, [open, supplier.id]);
+
   const handleDelete = async () => {
     try {
       setIsDeleting(true);
 
-      if (hasStockIns) {
+      // Double-check if the supplier can be deleted
+      const canDeleteCheck = await canDeleteSupplier(supplier.id);
+
+      if (!canDeleteCheck.success || !canDeleteCheck.canDelete) {
         toast({
           title: 'Cannot Delete Supplier',
-          description: `This supplier has ${supplier._count?.stockIns} stock-ins associated with it. Remove these stock-in records first.`,
+          description: `This supplier has stock-in records associated with it. Remove these stock-in records first.`,
           variant: 'destructive',
         });
         onOpenChange(false);
@@ -73,7 +101,7 @@ export function SupplierDeleteDialog({
       open={open}
       onOpenChange={onOpenChange}
       handleConfirm={handleDelete}
-      disabled={isDeleting || hasStockIns}
+      disabled={isDeleting || isCheckingDelete || canDelete === false}
       title={
         <span className="text-destructive">
           <IconAlertTriangle
@@ -93,13 +121,19 @@ export function SupplierDeleteDialog({
             This cannot be undone.
           </p>
 
-          {hasStockIns ? (
+          {isCheckingDelete ? (
+            <Alert>
+              <AlertTitle>Checking supplier usage...</AlertTitle>
+              <AlertDescription>
+                Please wait while we check if this supplier can be deleted.
+              </AlertDescription>
+            </Alert>
+          ) : canDelete === false ? (
             <Alert variant="destructive">
               <AlertTitle>Cannot Delete</AlertTitle>
               <AlertDescription>
-                This supplier has {supplier._count?.stockIns} stock-in records
-                associated with it. You need to remove those records before
-                deleting this supplier.
+                This supplier has stock-in records associated with it. You need
+                to remove those records before deleting this supplier.
               </AlertDescription>
             </Alert>
           ) : (

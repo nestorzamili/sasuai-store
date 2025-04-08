@@ -139,7 +139,6 @@ export default function ChangePasswordForm() {
         },
       );
     } catch (error: any) {
-      console.error('Password change error:', error);
       toast({
         title: 'Password change failed',
         description:

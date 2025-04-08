@@ -1,12 +1,30 @@
-"use client";
-import ProductCreateButton from "./product-create-dialog";
-import ProductImportButton from "./product-import-dialog";
+'use client';
 
-export default function ProductPrimaryButton() {
+import ProductFormDialog from './product-form';
+import { ProductWithRelations } from '@/lib/types/product';
+
+// Define props type
+interface ProductPrimaryButtonProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  initialData?: ProductWithRelations;
+  onSuccess?: () => void;
+}
+
+export default function ProductPrimaryButton({
+  open,
+  onOpenChange,
+  initialData,
+  onSuccess,
+}: ProductPrimaryButtonProps) {
   return (
     <div className="flex gap-2">
-      <ProductCreateButton />
-      <ProductImportButton />
+      <ProductFormDialog
+        open={open}
+        onOpenChange={onOpenChange}
+        initialData={initialData}
+        onSuccess={onSuccess}
+      />
     </div>
   );
 }

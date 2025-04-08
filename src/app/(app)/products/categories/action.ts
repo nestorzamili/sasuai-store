@@ -23,7 +23,6 @@ export async function getAllCategoriesWithCount() {
       data: categories,
     };
   } catch (error) {
-    console.error('Failed to fetch categories:', error);
     return {
       success: false,
       error: 'Failed to fetch categories',
@@ -43,7 +42,6 @@ export async function getAllCategories() {
       data: categories,
     };
   } catch (error) {
-    console.error('Failed to fetch categories:', error);
     return {
       success: false,
       error: 'Failed to fetch categories',
@@ -70,7 +68,6 @@ export async function getCategory(id: string) {
       data: category,
     };
   } catch (error) {
-    console.error(`Failed to fetch category ${id}:`, error);
     return {
       success: false,
       error: 'Failed to fetch category',
@@ -103,8 +100,6 @@ export async function createCategory(data: {
       data: category,
     };
   } catch (error) {
-    console.error('Failed to create category:', error);
-
     if (error instanceof z.ZodError) {
       return {
         success: false,
@@ -145,8 +140,6 @@ export async function updateCategory(
       data: category,
     };
   } catch (error) {
-    console.error(`Failed to update category ${id}:`, error);
-
     if (error instanceof z.ZodError) {
       return {
         success: false,
@@ -187,7 +180,6 @@ export async function deleteCategory(id: string) {
       success: true,
     };
   } catch (error) {
-    console.error(`Failed to delete category ${id}:`, error);
     return {
       success: false,
       error: 'Failed to delete category',

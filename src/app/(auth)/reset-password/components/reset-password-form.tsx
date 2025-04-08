@@ -26,8 +26,12 @@ const formSchema = z
   .object({
     password: z
       .string()
-      .min(1, { message: 'Please enter a new password' })
-      .min(8, { message: 'Password must be at least 8 characters long' }),
+      .trim()
+      .min(8, { message: 'Password must be at least 8 characters' })
+      .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).{8,}$/, {
+        message:
+          'Password must include uppercase, lowercase, number, and special character',
+      }),
     confirmPassword: z
       .string()
       .min(1, { message: 'Please confirm your password' }),
@@ -75,7 +79,6 @@ export function ResetForm({ className, token, ...props }: ResetFormProps) {
         router.push('/sign-in?success=password_reset');
       }, 2000);
     } catch (err) {
-      console.error('Error resetting password:', err);
       setError('An unexpected error occurred. Please try again.');
     } finally {
       setIsLoading(false);
