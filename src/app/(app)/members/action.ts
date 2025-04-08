@@ -3,6 +3,8 @@
 import { revalidatePath } from 'next/cache';
 import { MemberService } from '@/lib/services/member.service';
 import { z } from 'zod';
+import { headers } from 'next/headers';
+import { auth } from '@/lib/auth';
 
 // Member schema for validation
 const memberSchema = z.object({
@@ -245,7 +247,7 @@ export async function getMemberPointHistory(memberId: string) {
 export async function awardPointsToMember(
   memberId: string,
   points: number,
-  notes?: string, // New parameter
+  notes?: string,
 ) {
   try {
     if (points <= 0) {
@@ -255,17 +257,21 @@ export async function awardPointsToMember(
       };
     }
 
-    // Generate a transaction ID for manual awards
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+    const userId = session?.user?.id || 'system';
+
     const manualTransactionId = `manual-${Date.now()}`;
 
-    // Add descriptive notes if not provided
     const pointNotes = notes || `Manual point award of ${points} points`;
 
     const result = await MemberService.awardPoints(
       memberId,
       manualTransactionId,
       points,
-      pointNotes, // Pass the notes
+      pointNotes,
+      userId,
     );
 
     // Revalidate member paths
@@ -277,7 +283,6 @@ export async function awardPointsToMember(
       data: result,
     };
   } catch (error) {
-    console.error('Error awarding points:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to award points',
