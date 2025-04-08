@@ -47,6 +47,7 @@ const formSchema = z.object({
   stock: z.coerce.number().min(0, 'Stock cannot be negative'),
   isActive: z.boolean().default(true),
   description: z.string().optional(),
+  imageUrl: z.string().optional(),
   expiryDate: z.date().optional().nullable(),
 });
 
@@ -77,6 +78,7 @@ export default function RewardFormDialog({
       stock: initialData?.stock || 10,
       isActive: initialData?.isActive ?? true,
       description: initialData?.description || '',
+      imageUrl: initialData?.imageUrl || '',
       expiryDate: initialData?.expiryDate
         ? new Date(initialData.expiryDate)
         : null,
@@ -92,6 +94,7 @@ export default function RewardFormDialog({
         stock: initialData.stock || 0,
         isActive: initialData.isActive ?? true,
         description: initialData.description || '',
+        imageUrl: initialData.imageUrl || '',
         expiryDate: initialData.expiryDate
           ? new Date(initialData.expiryDate)
           : null,
@@ -103,6 +106,7 @@ export default function RewardFormDialog({
         stock: 10,
         isActive: true,
         description: '',
+        imageUrl: '',
         expiryDate: null,
       });
     }
@@ -113,6 +117,17 @@ export default function RewardFormDialog({
     try {
       setLoading(true);
 
+      // Check if expiry date is in the past
+      if (values.expiryDate && values.expiryDate < new Date()) {
+        toast({
+          title: 'Invalid date',
+          description: 'Expiry date cannot be in the past',
+          variant: 'destructive',
+        });
+        setLoading(false);
+        return;
+      }
+
       const result =
         isEditing && initialData
           ? await updateReward(initialData.id, {
@@ -121,6 +136,7 @@ export default function RewardFormDialog({
               stock: values.stock,
               isActive: values.isActive,
               description: values.description,
+              imageUrl: values.imageUrl,
               expiryDate: values.expiryDate,
             })
           : await createReward({
@@ -129,6 +145,7 @@ export default function RewardFormDialog({
               stock: values.stock,
               isActive: values.isActive,
               description: values.description,
+              imageUrl: values.imageUrl,
               expiryDate: values.expiryDate,
             });
 
@@ -247,45 +264,111 @@ export default function RewardFormDialog({
               />
             </div>
 
+            {/* Add image URL field */}
+            <FormField
+              control={form.control}
+              name="imageUrl"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Image URL</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="https://example.com/reward-image.jpg"
+                      {...field}
+                      value={field.value || ''}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Provide an image URL for the reward (optional)
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <FormField
               control={form.control}
               name="expiryDate"
               render={({ field }) => (
                 <FormItem className="flex flex-col">
-                  <FormLabel>Expiry Date</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant={'outline'}
-                          className={cn(
-                            'w-full pl-3 text-left font-normal',
-                            !field.value && 'text-muted-foreground',
-                          )}
-                        >
-                          {field.value ? (
-                            format(field.value, 'PPP')
-                          ) : (
-                            <span>Pick a date</span>
-                          )}
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value || undefined}
-                        onSelect={field.onChange}
-                        disabled={(date) =>
-                          date < new Date(new Date().setHours(0, 0, 0, 0))
-                        }
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
+                  <FormLabel>Expiry Date & Time</FormLabel>
+                  <div className="flex flex-col space-y-2">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant={'outline'}
+                            className={cn(
+                              'w-full pl-3 text-left font-normal',
+                              !field.value && 'text-muted-foreground',
+                            )}
+                          >
+                            {field.value ? (
+                              format(field.value, 'PPP')
+                            ) : (
+                              <span>Pick a date</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value || undefined}
+                          onSelect={(date) => {
+                            // Keep the time from the existing date if available
+                            if (date && field.value) {
+                              const currentTime = field.value;
+                              date.setHours(
+                                currentTime.getHours(),
+                                currentTime.getMinutes(),
+                                currentTime.getSeconds(),
+                              );
+                            }
+                            field.onChange(date);
+                          }}
+                          disabled={(date) =>
+                            date < new Date(new Date().setHours(0, 0, 0, 0))
+                          }
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+
+                    {field.value && (
+                      <div className="flex gap-2">
+                        <FormControl>
+                          <Input
+                            type="time"
+                            step="1" // Include seconds
+                            value={
+                              field.value ? format(field.value, 'HH:mm:ss') : ''
+                            }
+                            onChange={(e) => {
+                              if (field.value) {
+                                const [hours, minutes, seconds] = e.target.value
+                                  .split(':')
+                                  .map(Number);
+                                const newDate = new Date(field.value);
+                                newDate.setHours(
+                                  hours || 0,
+                                  minutes || 0,
+                                  seconds || 0,
+                                );
+                                field.onChange(newDate);
+                              }
+                            }}
+                            className="w-full"
+                            placeholder="Set time (HH:MM:SS)"
+                          />
+                        </FormControl>
+                      </div>
+                    )}
+                  </div>
                   <FormDescription>
-                    The reward will automatically expire on this date
+                    The reward will automatically expire and become inactive on
+                    this exact date and time
                   </FormDescription>
                   <FormMessage />
                 </FormItem>

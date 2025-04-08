@@ -10,6 +10,8 @@ import {
 } from '@/components/ui/card';
 import { IconTrophy, IconClock, IconGift } from '@tabler/icons-react';
 import { format } from 'date-fns';
+import Image from 'next/image';
+import { CountdownTimer } from '@/components/countdown-timer';
 
 interface RewardCardProps {
   reward: RewardWithClaimCount;
@@ -18,44 +20,48 @@ interface RewardCardProps {
 }
 
 export function RewardCard({ reward, onEdit, onDelete }: RewardCardProps) {
+  // Explicitly check if the expiry date is in the past
   const isExpired =
     reward.expiryDate && new Date(reward.expiryDate) < new Date();
   const isOutOfStock = reward.stock <= 0;
+  // A reward is unavailable if it's explicitly set as inactive OR it has expired OR it's out of stock
   const isUnavailable = !reward.isActive || isExpired || isOutOfStock;
 
   const getStatusBadge = () => {
-    if (!reward.isActive) return <Badge variant="secondary">Inactive</Badge>;
     if (isExpired) return <Badge variant="destructive">Expired</Badge>;
+    if (!reward.isActive) return <Badge variant="secondary">Inactive</Badge>;
     if (isOutOfStock) return <Badge variant="destructive">Out of Stock</Badge>;
 
-    if (reward.expiryDate) {
-      const daysToExpire = Math.ceil(
-        (new Date(reward.expiryDate).getTime() - new Date().getTime()) /
-          (1000 * 60 * 60 * 24),
+    // Active reward with no expiry date
+    if (!reward.expiryDate) {
+      return (
+        <Badge variant="default" className="bg-green-500 hover:bg-green-600">
+          Active
+        </Badge>
       );
-
-      if (daysToExpire <= 7) {
-        return (
-          <Badge
-            variant="outline"
-            className="bg-yellow-100 text-yellow-800 border-yellow-300"
-          >
-            Expires in {daysToExpire} {daysToExpire === 1 ? 'day' : 'days'}
-          </Badge>
-        );
-      }
     }
 
-    return (
-      <Badge variant="default" className="bg-green-500 hover:bg-green-600">
-        Active
-      </Badge>
-    );
+    // Active reward with expiry date - use countdown timer
+    return <CountdownTimer expiryDate={new Date(reward.expiryDate)} />;
   };
 
   return (
     <Card className={`overflow-hidden ${isUnavailable ? 'opacity-70' : ''}`}>
       <div className="absolute top-0 left-0 w-full h-1 bg-primary"></div>
+
+      {/* Add image if available */}
+      {reward.imageUrl && (
+        <div className="relative h-40 w-full">
+          <Image
+            src={reward.imageUrl}
+            alt={reward.name}
+            fill
+            style={{ objectFit: 'cover' }}
+            className="border-b"
+          />
+        </div>
+      )}
+
       <CardHeader className="pb-2">
         <div className="flex justify-between items-center">
           <CardTitle className="flex items-center text-lg">
@@ -85,7 +91,7 @@ export function RewardCard({ reward, onEdit, onDelete }: RewardCardProps) {
           {reward.expiryDate && (
             <div className="flex items-center text-sm text-muted-foreground">
               <IconClock className="mr-1 h-4 w-4" />
-              {format(new Date(reward.expiryDate), 'MMM d, yyyy')}
+              {format(new Date(reward.expiryDate), "MMM d, yyyy 'at' h:mm a")}
             </div>
           )}
         </div>

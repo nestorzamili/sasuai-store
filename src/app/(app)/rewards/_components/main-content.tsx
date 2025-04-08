@@ -35,8 +35,23 @@ export default function MainContent() {
       const { data, success } = await getAllRewardsWithClaimCount();
       if (success) {
         const rewardData = (data as RewardWithClaimCount[]) || [];
-        setRewards(rewardData);
-        setFilteredRewards(rewardData);
+
+        // Additional check for expired rewards on client side
+        const now = new Date();
+        const processedRewards = rewardData.map((reward) => {
+          if (
+            reward.expiryDate &&
+            new Date(reward.expiryDate) < now &&
+            reward.isActive
+          ) {
+            // Mark as inactive in the UI immediately if expired
+            return { ...reward, isActive: false };
+          }
+          return reward;
+        });
+
+        setRewards(processedRewards);
+        setFilteredRewards(processedRewards);
       }
     } catch (error) {
       toast({
@@ -181,6 +196,7 @@ export default function MainContent() {
               data={filteredRewards}
               isLoading={isLoading}
               onEdit={handleEdit}
+              onDelete={handleDelete}
               onRefresh={fetchRewards}
             />
           )}
