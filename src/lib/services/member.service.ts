@@ -183,31 +183,22 @@ export class MemberService {
     transactionId: string,
     points: number,
     notes?: string,
+    cashierId?: string,
   ) {
     return prisma.$transaction(async (tx) => {
-      // Check if this is a manual award (indicated by the notes)
       const isManualAward = notes !== undefined;
+      const finalCashierId = cashierId || 'system';
 
       if (isManualAward) {
-        // For manual awards, we'll create a special transaction record if needed
         let transaction = await tx.transaction.findUnique({
           where: { id: transactionId },
         });
 
         if (!transaction) {
-          // Find an admin user to use as cashier
-          const adminUser = await tx.user.findFirst({
-            where: { role: 'admin' },
-            select: { id: true },
-          });
-
-          const cashierId = adminUser ? adminUser.id : 'system';
-
-          // Create a placeholder transaction for manual awards
           transaction = await tx.transaction.create({
             data: {
               id: transactionId,
-              cashierId,
+              cashierId: finalCashierId,
               totalAmount: 0,
               discountAmount: 0,
               finalAmount: 0,
@@ -216,7 +207,6 @@ export class MemberService {
           });
         }
       } else {
-        // For regular awards, verify the transaction exists
         const transaction = await tx.transaction.findUnique({
           where: { id: transactionId },
         });
@@ -226,18 +216,16 @@ export class MemberService {
         }
       }
 
-      // Create the member point record
       const memberPoint = await tx.memberPoint.create({
         data: {
           memberId,
           transactionId,
           pointsEarned: points,
           dateEarned: new Date(),
-          notes: notes, // Add the notes for manual awards
+          notes: notes,
         },
       });
 
-      // Update the member's total points AND totalPointsEarned
       const updatedMember = await tx.member.update({
         where: { id: memberId },
         data: {
@@ -253,8 +241,6 @@ export class MemberService {
         },
       });
 
-      // Check if member should be upgraded to a higher tier
-      // Using totalPointsEarned instead of totalPoints for tier eligibility
       const eligibleTier = await tx.memberTier.findFirst({
         where: {
           minPoints: { lte: updatedMember.totalPointsEarned },
@@ -268,7 +254,6 @@ export class MemberService {
         eligibleTier &&
         (!updatedMember.tierId || eligibleTier.id !== updatedMember.tierId)
       ) {
-        // Upgrade the member to the new tier
         await tx.member.update({
           where: { id: memberId },
           data: {
