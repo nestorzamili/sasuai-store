@@ -16,7 +16,6 @@ export const auth = betterAuth({
   }),
 
   plugins: [
-    nextCookies(),
     admin(),
     openAPI(),
     username({
@@ -29,6 +28,7 @@ export const auth = betterAuth({
         return true;
       },
     }),
+    nextCookies(),
   ],
 
   session: {
@@ -87,6 +87,18 @@ export const auth = betterAuth({
           throw error;
         }
       },
+    },
+  },
+
+  advanced: {
+    ipAddress: {
+      ipAddressHeaders: [
+        'x-forwarded-for',
+        'cf-connecting-ip',
+        'x-real-ip',
+        'x-client-ip',
+      ],
+      disableIpTracking: false,
     },
   },
 });
