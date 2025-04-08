@@ -253,7 +253,8 @@ model Reward {
   pointsCost   Int           @map("points_cost")
   stock        Int
   isActive     Boolean       @default(true) @map("is_active")
-  expiryDate   DateTime?     @map("expiry_date") @db.Timestamp
+  expiryDate   DateTime?     @map("expiry_date") @db.Timestamptz
+  imageUrl     String?       @map("image_url")
   description  String?
   rewardClaims RewardClaim[]
   createdAt    DateTime      @default(now()) @db.Timestamptz

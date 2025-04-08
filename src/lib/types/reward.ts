@@ -7,6 +7,7 @@ export type CreateRewardData = {
   stock: number;
   isActive?: boolean;
   description?: string;
+  imageUrl?: string;
   expiryDate?: Date;
 };
 
@@ -17,6 +18,7 @@ export type UpdateRewardData = {
   stock?: number;
   isActive?: boolean;
   description?: string | null;
+  imageUrl?: string | null;
   expiryDate?: Date | null;
 };
 

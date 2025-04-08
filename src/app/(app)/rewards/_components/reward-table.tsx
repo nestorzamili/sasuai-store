@@ -36,6 +36,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { DataTablePagination } from '@/components/ui/data-table-pagination';
+import { CountdownTimer } from '@/components/countdown-timer';
 import { Skeleton } from '@/components/ui/skeleton';
 import { RewardDeleteDialog } from './reward-delete-dialog';
 import { Input } from '@/components/ui/input';
@@ -45,6 +46,7 @@ interface RewardTableProps {
   data: RewardWithClaimCount[];
   isLoading?: boolean;
   onEdit?: (reward: RewardWithClaimCount) => void;
+  onDelete: (reward: RewardWithClaimCount) => void;
   onRefresh?: () => void;
 }
 
@@ -211,19 +213,24 @@ export function RewardTable({
 
         const isExpired = new Date(expiryDate) < new Date();
 
+        if (isExpired) {
+          return (
+            <div>
+              <Badge variant="destructive">
+                Expired:{' '}
+                {format(new Date(expiryDate), "MMM d, yyyy 'at' h:mm a")}
+              </Badge>
+            </div>
+          );
+        }
+
+        // Use CountdownTimer for active rewards
         return (
-          <div>
-            <Badge
-              variant={isExpired ? 'destructive' : 'outline'}
-              className={
-                isExpired
-                  ? ''
-                  : 'bg-yellow-100 text-yellow-800 border-yellow-300'
-              }
-            >
-              {isExpired ? 'Expired' : 'Expires'}:{' '}
-              {format(new Date(expiryDate), 'MMM d, yyyy')}
-            </Badge>
+          <div className="flex flex-col gap-1">
+            <CountdownTimer expiryDate={new Date(expiryDate)} />
+            <span className="text-xs text-muted-foreground">
+              {format(new Date(expiryDate), "MMM d, yyyy 'at' h:mm a")}
+            </span>
           </div>
         );
       },
