@@ -1,6 +1,5 @@
 'use client';
 import * as React from 'react';
-import { useState } from 'react';
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -16,12 +15,10 @@ import {
 import { ArrowUpDown, MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { IconEdit } from '@tabler/icons-react';
 import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
@@ -39,60 +36,29 @@ import {
 } from '@/components/ui/table';
 import { DataTablePagination } from '@/components/ui/data-table-pagination';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Input } from '@/components/ui/input';
 import { updateClaimStatus } from '../actions';
 import { toast } from '@/hooks/use-toast';
-
-// Define claim structure
-type RewardClaimWithRelations = {
-  id: string;
-  memberId: string;
-  rewardId: string;
-  claimDate: Date;
-  status: string;
-  createdAt: Date;
-  updatedAt: Date;
-  member: {
-    id: string;
-    name: string;
-    email?: string | null;
-    phone?: string | null;
-  };
-  reward: {
-    id: string;
-    name: string;
-    pointsCost: number;
-  };
-};
+import { RewardClaimWithRelations } from '@/lib/types/reward';
 
 interface RewardClaimsTableProps {
   data: RewardClaimWithRelations[];
-  totalCount: number;
-  pageCount: number;
-  pageIndex: number;
-  pageSize: number;
   isLoading?: boolean;
-  onPaginationChange?: (page: number, pageSize: number) => void;
-  onSearchChange?: (query: string) => void;
   onStatusChange?: (status: string) => void;
+  onRefresh?: () => void;
 }
 
 export function RewardClaimsTable({
   data,
-  totalCount,
-  pageCount,
-  pageIndex,
-  pageSize,
   isLoading = false,
-  onPaginationChange,
-  onSearchChange,
-  onStatusChange,
+  onRefresh,
 }: RewardClaimsTableProps) {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [sorting, setSorting] = useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
-  const [rowSelection, setRowSelection] = useState({});
+  const [sorting, setSorting] = React.useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+    [],
+  );
+  const [columnVisibility, setColumnVisibility] =
+    React.useState<VisibilityState>({});
+  const [rowSelection, setRowSelection] = React.useState({});
 
   // Handle status change
   const handleStatusChange = async (claimId: string, newStatus: string) => {
@@ -105,10 +71,8 @@ export function RewardClaimsTable({
           description: `Claim status has been changed to ${newStatus}`,
         });
 
-        // Refresh the data if callback is provided
-        if (onStatusChange) {
-          onStatusChange(''); // Refresh all statuses
-        }
+        // Refresh the data
+        onRefresh?.();
       } else {
         toast({
           title: 'Error',
@@ -278,22 +242,10 @@ export function RewardClaimsTable({
     },
   ];
 
-  // Create table instance - we're using controlled pagination here
+  // Create table instance - using standard client-side pagination now
   const table = useReactTable({
     data,
     columns,
-    pageCount,
-    state: {
-      sorting,
-      columnFilters,
-      columnVisibility,
-      rowSelection,
-      pagination: {
-        pageIndex,
-        pageSize,
-      },
-    },
-    manualPagination: true, // Tell the table we're handling pagination
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
@@ -302,23 +254,13 @@ export function RewardClaimsTable({
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    state: {
+      sorting,
+      columnFilters,
+      columnVisibility,
+      rowSelection,
+    },
   });
-
-  // Handle search input change with debounce
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-    if (onSearchChange) {
-      // In real implementation, you might want to debounce this
-      onSearchChange(e.target.value);
-    }
-  };
-
-  // Handle pagination change
-  const handlePaginationChange = (page: number) => {
-    if (onPaginationChange) {
-      onPaginationChange(page, pageSize);
-    }
-  };
 
   // Show skeleton while loading
   if (isLoading) {
@@ -327,41 +269,6 @@ export function RewardClaimsTable({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <Input
-          placeholder="Search claims..."
-          value={searchQuery}
-          onChange={handleSearchChange}
-          className="max-w-sm"
-        />
-        <div className="ml-auto flex gap-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline">Filter Status</Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-[200px]">
-              <DropdownMenuLabel>Status</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => onStatusChange?.('')}>
-                All
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onStatusChange?.('Claimed')}>
-                Claimed
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onStatusChange?.('Fulfilled')}>
-                Fulfilled
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onStatusChange?.('Cancelled')}>
-                Cancelled
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onStatusChange?.('Pending')}>
-                Pending
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
-
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -381,74 +288,20 @@ export function RewardClaimsTable({
             ))}
           </TableHeader>
           <TableBody>
-            {data.length ? (
-              data.map((claim) => (
-                <TableRow key={claim.id}>
-                  <TableCell className="p-4">
-                    <Checkbox />
-                  </TableCell>
-                  <TableCell>
-                    {format(new Date(claim.claimDate), 'PPp')}
-                  </TableCell>
-                  <TableCell>{claim.member.name}</TableCell>
-                  <TableCell>
-                    {claim.reward.name}
-                    <span className="block text-xs text-muted-foreground">
-                      {claim.reward.pointsCost} points
-                    </span>
-                  </TableCell>
-                  <TableCell>{getStatusBadge(claim.status)}</TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                          <span className="sr-only">Open menu</span>
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuLabel className="text-xs">
-                          Change Status
-                        </DropdownMenuLabel>
-                        <DropdownMenuRadioGroup value={claim.status}>
-                          <DropdownMenuRadioItem
-                            value="Claimed"
-                            onClick={() =>
-                              handleStatusChange(claim.id, 'Claimed')
-                            }
-                          >
-                            Claimed
-                          </DropdownMenuRadioItem>
-                          <DropdownMenuRadioItem
-                            value="Fulfilled"
-                            onClick={() =>
-                              handleStatusChange(claim.id, 'Fulfilled')
-                            }
-                          >
-                            Fulfilled
-                          </DropdownMenuRadioItem>
-                          <DropdownMenuRadioItem
-                            value="Cancelled"
-                            onClick={() =>
-                              handleStatusChange(claim.id, 'Cancelled')
-                            }
-                          >
-                            Cancelled
-                          </DropdownMenuRadioItem>
-                          <DropdownMenuRadioItem
-                            value="Pending"
-                            onClick={() =>
-                              handleStatusChange(claim.id, 'Pending')
-                            }
-                          >
-                            Pending
-                          </DropdownMenuRadioItem>
-                        </DropdownMenuRadioGroup>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+            {table.getRowModel().rows?.length ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow
+                  key={row.id}
+                  data-state={row.getIsSelected() && 'selected'}
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
+                      )}
+                    </TableCell>
+                  ))}
                 </TableRow>
               ))
             ) : (
@@ -465,48 +318,8 @@ export function RewardClaimsTable({
         </Table>
       </div>
 
-      {/* Custom pagination control for server-side pagination */}
-      <div className="flex items-center justify-end space-x-2 py-4">
-        <div className="flex-1 text-sm text-muted-foreground">
-          Showing {pageIndex * pageSize + 1} to{' '}
-          {Math.min((pageIndex + 1) * pageSize, totalCount)} of {totalCount}{' '}
-          results
-        </div>
-        <div className="space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handlePaginationChange(0)}
-            disabled={pageIndex === 0}
-          >
-            First
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handlePaginationChange(pageIndex - 1)}
-            disabled={pageIndex === 0}
-          >
-            Previous
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handlePaginationChange(pageIndex + 1)}
-            disabled={pageIndex >= pageCount - 1}
-          >
-            Next
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handlePaginationChange(pageCount - 1)}
-            disabled={pageIndex >= pageCount - 1}
-          >
-            Last
-          </Button>
-        </div>
-      </div>
+      {/* Standard DataTablePagination component */}
+      <DataTablePagination table={table} />
     </div>
   );
 }
@@ -515,13 +328,6 @@ export function RewardClaimsTable({
 function RewardClaimsTableSkeleton() {
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <Skeleton className="h-10 w-[384px]" />
-        <div className="ml-auto">
-          <Skeleton className="h-10 w-[150px]" />
-        </div>
-      </div>
-
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -577,14 +383,14 @@ function RewardClaimsTableSkeleton() {
           </TableBody>
         </Table>
       </div>
-
-      <div className="flex items-center justify-end space-x-2 py-4">
-        <Skeleton className="h-5 w-[200px]" />
-        <div className="space-x-2">
-          <Skeleton className="h-8 w-16" />
-          <Skeleton className="h-8 w-16" />
-          <Skeleton className="h-8 w-16" />
-          <Skeleton className="h-8 w-16" />
+      <div className="mt-4">
+        <div className="flex items-center justify-between px-2">
+          <Skeleton className="h-5 w-[200px]" />
+          <div className="flex items-center space-x-6">
+            <Skeleton className="h-8 w-[120px]" />
+            <Skeleton className="h-8 w-[100px]" />
+            <Skeleton className="h-8 w-[120px]" />
+          </div>
         </div>
       </div>
     </div>
