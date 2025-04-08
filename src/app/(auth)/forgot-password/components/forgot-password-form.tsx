@@ -55,7 +55,6 @@ export function ForgotForm({ className, ...props }: ForgotFormProps) {
 
       setSuccess(true);
     } catch (err) {
-      console.error('Error sending password reset email:', err);
       setError('An unexpected error occurred. Please try again.');
     } finally {
       setIsLoading(false);

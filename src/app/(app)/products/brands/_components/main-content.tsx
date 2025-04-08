@@ -5,6 +5,7 @@ import { getAllBrandsWithCount } from '../action';
 import { BrandWithCount } from '@/lib/types/brand';
 import BrandPrimaryButton from './brand-primary-button';
 import { BrandTable } from './brand-table';
+import { toast } from '@/hooks/use-toast';
 
 export default function MainContent() {
   const [isLoading, setIsLoading] = useState(true);
@@ -28,7 +29,11 @@ export default function MainContent() {
         setFilteredBrands(brandData);
       }
     } catch (error) {
-      console.error('Error fetching brands:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch brands',
+        variant: 'destructive',
+      });
     } finally {
       setIsLoading(false);
     }
@@ -59,6 +64,14 @@ export default function MainContent() {
     setFilteredBrands(filtered);
   }, [brands, searchTerm, sortOrder]);
 
+  // Handle dialog reset on close
+  const handleDialogOpenChange = (open: boolean) => {
+    setIsDialogOpen(open);
+    if (!open) {
+      setSelectedBrand(null);
+    }
+  };
+
   // Handle edit brand
   const handleEdit = (brand: BrandWithCount) => {
     setSelectedBrand(brand);
@@ -81,7 +94,7 @@ export default function MainContent() {
         </div>
         <BrandPrimaryButton
           open={isDialogOpen}
-          onOpenChange={setIsDialogOpen}
+          onOpenChange={handleDialogOpenChange}
           initialData={selectedBrand || undefined}
           onSuccess={handleSuccess}
         />

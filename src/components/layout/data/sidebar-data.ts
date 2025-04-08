@@ -16,6 +16,7 @@ import {
   IconUsersGroup,
   IconGift,
   IconCubeSend,
+  IconImageInPicture,
 } from '@tabler/icons-react';
 import { Command } from 'lucide-react';
 import { type SidebarData } from '../types';
@@ -43,8 +44,8 @@ export const sidebarData: SidebarData = {
           icon: IconLayoutDashboard,
         },
         {
-          title: 'Orders',
-          url: '/orders',
+          title: 'Transactions',
+          url: '/transactions',
           icon: IconShoppingCart,
         },
         {
@@ -73,8 +74,8 @@ export const sidebarData: SidebarData = {
           icon: IconCategory,
         },
         {
-          title: 'Stock',
-          url: '/products/stock',
+          title: 'Inventory',
+          url: '/inventory',
           icon: IconPackage,
         },
         {
@@ -86,6 +87,11 @@ export const sidebarData: SidebarData = {
           title: 'Units',
           url: '/products/units',
           icon: IconPackage,
+        },
+        {
+          title: 'Product Images',
+          url: '/products/images',
+          icon: IconImageInPicture,
         },
       ],
     },
@@ -114,7 +120,7 @@ export const sidebarData: SidebarData = {
         },
         {
           title: 'Reward',
-          url: '/members/reward',
+          url: '/rewards',
           icon: IconGift,
         },
       ],
