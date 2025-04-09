@@ -221,10 +221,17 @@ model Discount {
   isActive         Boolean           @default(true) @map("is_active")
   createdAt        DateTime          @default(now()) @db.Timestamptz
   updatedAt        DateTime          @updatedAt @db.Timestamptz
-
+  discountRelations DiscountRelation[]
   @@map("discount")
 }
 
+model DiscountRelation {
+  discountId   String   @map("discount_id")
+  relationId   String   @map("relation_id")
+  discount    Discount @relation(fields: [discountId], references: [id])
+  @@id([discountId, relationId])
+  @@map("discount_relation")
+}
 
 
 model MemberTier {
