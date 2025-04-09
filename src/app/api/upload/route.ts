@@ -49,13 +49,12 @@ export async function POST(request: NextRequest) {
       resource_type: 'image',
     });
 
-    // Add f_auto and q_auto to the URL for automatic format and quality optimization
-    const optimizedUrl = uploadResult.secure_url.replace(
-      '/upload/',
-      '/upload/f_auto,q_auto/',
-    );
+    let optimizedUrl = uploadResult.secure_url;
+    if (optimizedUrl && optimizedUrl.includes('/upload/')) {
+      optimizedUrl = optimizedUrl.replace('/upload/', '/upload/f_auto,q_auto/');
+    }
 
-    // Return success with the optimized image URL
+    // Return success with the image URL
     return Response.json({
       success: true,
       url: optimizedUrl,
