@@ -17,7 +17,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { MoreHorizontal } from 'lucide-react';
 import { useState } from 'react';
-
+import { useRouter } from 'next/navigation';
 const DiscountTypeBagde = (value: string) => {
   if (value === 'member' || value === 'MEMBER') {
     return (
@@ -59,6 +59,7 @@ export function DiscountTable() {
   const [isLoading, setIsLoading] = React.useState(true);
   const [deleteDialog, setDeleteDialog] = useState(false);
   const [deleteData, setDeleteData] = useState<any>(null);
+  const { push, refresh } = useRouter();
   const handleOnDeleteClick = (data: any) => {
     setDeleteDialog(true);
     setDeleteData(data);
@@ -188,7 +189,8 @@ export function DiscountTable() {
                 <DropdownMenuItem
                   className="flex justify-between cursor-pointer"
                   onClick={() => {
-                    // Navigate to edit page or handle edit action
+                    push(`/discounts/${discount.id}/update`);
+                    refresh();
                   }}
                 >
                   Edit <IconEdit className="h-4 w-4" />

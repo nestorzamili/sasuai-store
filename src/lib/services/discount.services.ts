@@ -12,6 +12,9 @@ export const Discount = {
   async getById(id: string) {
     return await prisma.discount.findUnique({
       where: { id },
+      include: {
+        discountRelations: true,
+      },
     });
   },
 
@@ -22,6 +25,16 @@ export const Discount = {
   },
 
   async update(id: string, data: any) {
+    console.log('Updating discount with ID:', id, 'and data:', data);
+    const existingDiscount = await prisma.discount.findUnique({
+      where: { id },
+    });
+
+    if (!existingDiscount) {
+      throw new Error(`Discount with ID ${id} not found`);
+    }
+
+    // If it exists, proceed with the update
     return await prisma.discount.update({
       where: { id },
       data,

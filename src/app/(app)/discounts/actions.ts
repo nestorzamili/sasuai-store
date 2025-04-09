@@ -37,17 +37,21 @@ export const createDiscount = async (data: any) => {
   }
 };
 
-export const updateDiscount = async (id: string, data: any) => {
+export async function updateDiscount(id: string, data: any) {
   try {
-    const discount = await Discount.update(id, data);
-    return {
-      success: true,
-      data: discount,
-    };
+    const updatedDiscount = await Discount.update(id, data);
+    return { success: true, data: updatedDiscount };
   } catch (error) {
-    throw error;
+    console.error('Error updating discount:', error);
+    return {
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : 'Unknown error occurred while updating the discount',
+    };
   }
-};
+}
 
 export const deleteDiscount = async (id: string) => {
   try {

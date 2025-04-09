@@ -23,11 +23,13 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Label } from '@/components/ui/label';
 import { useState } from 'react';
 import { z } from 'zod';
-import { createDiscount } from '../actions';
+import { createDiscount, updateDiscount } from '../actions';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+import { DiscountInterface } from '@/lib/types/discount';
 const formSchema = z
   .object({
+    id: z.string().optional(),
     name: z.string().min(5, {
       message: 'Name must be at least 5 characters.',
     }),
@@ -65,7 +67,8 @@ const formSchema = z
   );
 interface FormType {
   type: 'create' | 'update';
-  initialValues?: z.infer<typeof formSchema>;
+  initialValues?: DiscountInterface;
+  id?: string;
 }
 async function onCreateDiscount(values: any) {
   try {
@@ -76,14 +79,36 @@ async function onCreateDiscount(values: any) {
     throw error;
   }
 }
-export function DiscountForm({ type, initialValues }: FormType) {
+async function onUpdateDiscount(id: string, values: any) {
+  try {
+    const discount = await updateDiscount(id, values);
+    console.log('Discount updated:', discount);
+    return discount;
+  } catch (error) {
+    console.error('Error updating discount:', error);
+    throw error;
+  }
+}
+export function DiscountForm({ type, initialValues, id }: FormType) {
   const { toast } = useToast();
   const { push, refresh } = useRouter();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues:
       type === 'update'
-        ? initialValues
+        ? {
+            name: initialValues?.name,
+            discountType: initialValues?.discountType,
+            valueType: initialValues?.valueType,
+            value: initialValues?.value,
+            startDate: initialValues?.startDate
+              ? new Date(initialValues.startDate)
+              : new Date(),
+            endDate: initialValues?.endDate
+              ? new Date(initialValues?.endDate)
+              : undefined,
+            minPurchase: initialValues?.minPurchase || 0,
+          }
         : {
             name: '',
             discountType: 'product',
@@ -112,6 +137,8 @@ export function DiscountForm({ type, initialValues }: FormType) {
               });
               form.reset();
               setMinPurchase(false);
+              push('/discounts');
+              refresh();
             }
           })
           .catch((error) => {
@@ -119,20 +146,40 @@ export function DiscountForm({ type, initialValues }: FormType) {
               title: 'Something get wrong',
               variant: 'destructive',
             });
-          })
-          .finally(() => {
-            push('/discounts');
-            refresh();
           });
       }
       if (type === 'update') {
         // Handle update logic here
+        await onUpdateDiscount(id || '', values)
+          .then((res) => {
+            if (res.success) {
+              toast({
+                title: 'Discount updated',
+                // description: `${res.data.name} has been updated. ${new Date(
+                //   res.data.updatedAt
+                // ).toLocaleDateString()}`,
+                variant: 'default',
+              });
+              form.reset();
+              setMinPurchase(false);
+              push('/discounts');
+              refresh();
+            }
+          })
+          .catch((error) => {
+            toast({
+              title: 'Something get wrong',
+              variant: 'destructive',
+            });
+          });
+
         console.log('Updating discount with values:', values);
       }
     } catch (error) {
       console.log(error);
     }
   };
+
   return (
     <>
       <Form {...form}>
