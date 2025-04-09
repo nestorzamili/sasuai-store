@@ -9,6 +9,10 @@ export interface DiscountInterface {
   startDate: Date;
   endDate?: Date;
   isActive?: boolean;
+  discountRelations: {
+    discountId: string;
+    relationId: string;
+  }[];
   createdAt?: Date;
   updatedAt?: Date;
 }
