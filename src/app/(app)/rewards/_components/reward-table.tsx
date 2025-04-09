@@ -36,15 +36,23 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { DataTablePagination } from '@/components/ui/data-table-pagination';
+import { CountdownTimer } from '@/components/countdown-timer';
 import { Skeleton } from '@/components/ui/skeleton';
-import { RewardDeleteDialog } from './reward-delete-dialog';
-import { Input } from '@/components/ui/input';
 import { format } from 'date-fns';
+import Image from 'next/image';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { IconX, IconPhoto } from '@tabler/icons-react';
 
 interface RewardTableProps {
   data: RewardWithClaimCount[];
   isLoading?: boolean;
   onEdit?: (reward: RewardWithClaimCount) => void;
+  onDelete: (reward: RewardWithClaimCount) => void;
   onRefresh?: () => void;
 }
 
@@ -52,13 +60,14 @@ export function RewardTable({
   data,
   isLoading = false,
   onEdit,
+  onDelete,
   onRefresh,
 }: RewardTableProps) {
   // State for deletion dialog
   const [selectedRewardForDelete, setSelectedRewardForDelete] =
     useState<RewardWithClaimCount | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   // Table state
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -99,6 +108,36 @@ export function RewardTable({
       ),
       enableSorting: false,
       enableHiding: false,
+    },
+
+    // Image column
+    {
+      id: 'image',
+      header: 'Image',
+      cell: ({ row }) => {
+        const reward = row.original;
+        if (reward.imageUrl) {
+          return (
+            <div
+              className="relative h-12 w-16 rounded overflow-hidden cursor-pointer"
+              onClick={() => setSelectedImage(reward.imageUrl)}
+            >
+              <Image
+                src={reward.imageUrl}
+                alt={reward.name}
+                fill
+                className="object-cover hover:opacity-80 transition-opacity"
+                sizes="64px"
+              />
+            </div>
+          );
+        }
+        return (
+          <div className="h-12 w-16 rounded bg-muted flex items-center justify-center">
+            <IconPhoto className="h-5 w-5 text-muted-foreground/60" />
+          </div>
+        );
+      },
     },
 
     // Name column
@@ -211,19 +250,24 @@ export function RewardTable({
 
         const isExpired = new Date(expiryDate) < new Date();
 
+        if (isExpired) {
+          return (
+            <div>
+              <Badge variant="destructive">
+                Expired:{' '}
+                {format(new Date(expiryDate), "MMM d, yyyy 'at' h:mm a")}
+              </Badge>
+            </div>
+          );
+        }
+
+        // Use CountdownTimer for active rewards
         return (
-          <div>
-            <Badge
-              variant={isExpired ? 'destructive' : 'outline'}
-              className={
-                isExpired
-                  ? ''
-                  : 'bg-yellow-100 text-yellow-800 border-yellow-300'
-              }
-            >
-              {isExpired ? 'Expired' : 'Expires'}:{' '}
-              {format(new Date(expiryDate), 'MMM d, yyyy')}
-            </Badge>
+          <div className="flex flex-col gap-1">
+            <CountdownTimer expiryDate={new Date(expiryDate)} />
+            <span className="text-xs text-muted-foreground">
+              {format(new Date(expiryDate), "MMM d, yyyy 'at' h:mm a")}
+            </span>
           </div>
         );
       },
@@ -266,7 +310,7 @@ export function RewardTable({
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="flex justify-between cursor-pointer text-destructive focus:text-destructive"
-                  onClick={() => handleDeleteClick(reward)}
+                  onClick={() => onDelete(reward)}
                 >
                   Delete <IconTrash className="h-4 w-4" />
                 </DropdownMenuItem>
@@ -276,13 +320,12 @@ export function RewardTable({
         );
       },
     },
-  ]; // Fixed the bracket closure here - it was missing the closing bracket
+  ];
 
   // Create table instance
   const table = useReactTable({
     data,
     columns,
-    onGlobalFilterChange: setSearchQuery,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
@@ -296,7 +339,6 @@ export function RewardTable({
       columnFilters,
       columnVisibility,
       rowSelection,
-      globalFilter: searchQuery,
     },
   });
 
@@ -307,16 +349,8 @@ export function RewardTable({
 
   return (
     <>
-      {/* Search input */}
+      {/* Table */}
       <div className="space-y-4">
-        <Input
-          placeholder="Search rewards..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="max-w-sm"
-        />
-
-        {/* Table */}
         <div className="rounded-md border">
           <Table>
             <TableHeader>
@@ -358,7 +392,7 @@ export function RewardTable({
                     colSpan={columns.length}
                     className="h-24 text-center"
                   >
-                    No results.
+                    No rewards found.
                   </TableCell>
                 </TableRow>
               )}
@@ -372,15 +406,39 @@ export function RewardTable({
         </div>
       </div>
 
-      {/* Delete dialog */}
-      {selectedRewardForDelete && (
-        <RewardDeleteDialog
-          open={isDeleteDialogOpen}
-          onOpenChange={setIsDeleteDialogOpen}
-          reward={selectedRewardForDelete}
-          onSuccess={onRefresh}
-        />
-      )}
+      {/* Image preview dialog */}
+      <Dialog
+        open={!!selectedImage}
+        onOpenChange={() => setSelectedImage(null)}
+      >
+        <DialogContent className="sm:max-w-3xl p-0 overflow-hidden">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Reward Image</DialogTitle>
+          </DialogHeader>
+          <div className="relative">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute top-2 right-2 z-10 rounded-full bg-background/50 hover:bg-background/80"
+              onClick={() => setSelectedImage(null)}
+            >
+              <IconX className="h-4 w-4" />
+            </Button>
+            {selectedImage && (
+              <div className="relative w-full aspect-video">
+                <Image
+                  src={selectedImage}
+                  alt="Reward image"
+                  fill
+                  className="object-contain"
+                  sizes="(max-width: 768px) 100vw, 800px"
+                  priority
+                />
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
@@ -389,9 +447,6 @@ export function RewardTable({
 function RewardTableSkeleton() {
   return (
     <div className="space-y-4">
-      <div>
-        <Skeleton className="h-10 w-[384px]" />
-      </div>
       <div className="rounded-md border">
         <Table>
           <TableHeader>

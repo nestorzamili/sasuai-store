@@ -13,6 +13,7 @@ const rewardSchema = z.object({
   stock: z.number().min(0, 'Stock cannot be negative'),
   isActive: z.boolean().optional(),
   description: z.string().optional().nullable(),
+  imageUrl: z.string().optional().nullable(),
   expiryDate: z.date().optional().nullable(),
 });
 
@@ -89,11 +90,20 @@ export async function createReward(data: {
   stock: number;
   isActive?: boolean;
   description?: string | null;
+  imageUrl?: string | null;
   expiryDate?: Date | null;
 }) {
   try {
     // Validate data
     const validatedData = rewardSchema.parse(data);
+
+    // Check if expiry date is in the past
+    if (validatedData.expiryDate && validatedData.expiryDate < new Date()) {
+      return {
+        success: false,
+        error: 'Expiry date cannot be in the past',
+      };
+    }
 
     // Create reward
     const reward = await RewardService.create({
@@ -102,6 +112,7 @@ export async function createReward(data: {
       stock: validatedData.stock,
       isActive: validatedData.isActive,
       description: validatedData.description || undefined,
+      imageUrl: validatedData.imageUrl || undefined,
       expiryDate: validatedData.expiryDate || undefined,
     });
 
@@ -139,6 +150,7 @@ export async function updateReward(
     stock?: number;
     isActive?: boolean;
     description?: string | null;
+    imageUrl?: string | null;
     expiryDate?: Date | null;
   },
 ) {
@@ -153,6 +165,7 @@ export async function updateReward(
       stock: validatedData.stock,
       isActive: validatedData.isActive,
       description: validatedData.description,
+      imageUrl: validatedData.imageUrl,
       expiryDate: validatedData.expiryDate,
     });
 
