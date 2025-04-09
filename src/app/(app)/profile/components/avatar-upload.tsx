@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import { CldUploadWidget } from 'next-cloudinary';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from '@/hooks/use-toast';
@@ -14,13 +13,13 @@ import {
   IconMaximize,
   IconX,
 } from '@tabler/icons-react';
-import { getImageUrl } from '@/utils/image';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import Image from 'next/image';
+import { ImageUploadDialog } from '@/components/image-upload-dialog';
 
 interface AvatarUploadProps {
   currentImage?: string | null;
@@ -36,7 +35,9 @@ export function AvatarUpload({
   const [isUploading, setIsUploading] = useState(false);
   const [image, setImage] = useState(currentImage || '');
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
 
+  // Update image when currentImage prop changes
   useEffect(() => {
     if (currentImage !== undefined) {
       setImage(currentImage || '');
@@ -53,7 +54,6 @@ export function AvatarUpload({
 
     if (lightboxOpen) {
       document.addEventListener('keydown', handleEscape);
-      // Prevent scrolling when lightbox is open
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
@@ -74,47 +74,19 @@ export function AvatarUpload({
       .substring(0, 2);
   }, []);
 
-  const handleUploadSuccess = useCallback(
-    async (result: any) => {
-      if (!result.info || result.event !== 'success') return;
-
-      try {
-        setIsUploading(true);
-
-        const publicId = result.info.public_id;
-        const imageUrl = getImageUrl(publicId);
-
-        setImage(imageUrl);
-        onImageChange(imageUrl);
-
-        toast({
-          title: 'Profile photo uploaded',
-          description:
-            'Your profile photo has been uploaded successfully. Please click Update Profile to save changes.',
-        });
-      } catch (error) {
-        toast({
-          title: 'Upload failed',
-          description:
-            'An unexpected error occurred while updating your profile photo',
-          variant: 'destructive',
-        });
-      } finally {
-        setIsUploading(false);
-      }
-    },
-    [onImageChange],
-  );
-
   const handleRemoveImage = useCallback(() => {
     setImage('');
     onImageChange('');
     toast({
       title: 'Profile photo removed',
-      description:
-        'Your profile photo has been removed. Click Update Profile to save changes.',
+      description: 'Your profile photo has been removed.',
     });
   }, [onImageChange]);
+
+  const handleImageUploaded = (imageUrl: string) => {
+    setImage(imageUrl);
+    onImageChange(imageUrl);
+  };
 
   const openLightbox = () => {
     if (image) {
@@ -150,48 +122,29 @@ export function AvatarUpload({
         </Avatar>
 
         <div className="absolute -bottom-3 -right-3 flex gap-2">
-          <CldUploadWidget
-            onSuccess={handleUploadSuccess}
-            signatureEndpoint="/api/cloudinary-signature"
-            options={{
-              maxFiles: 1,
-              resourceType: 'image',
-              clientAllowedFormats: ['png', 'jpeg', 'jpg', 'webp'],
-              maxFileSize: 5000000, // 5MB
-              multiple: false,
-              folder: 'sasuai-store/profiles',
-              cropping: true,
-              croppingAspectRatio: 1,
-              croppingShowDimensions: true,
-              croppingCoordinatesMode: 'custom',
-            }}
-          >
-            {({ open }) => (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="icon"
-                    onClick={() => open()}
-                    disabled={isUploading}
-                    className="h-9 w-9 rounded-full shadow hover:scale-105 transition-transform"
-                  >
-                    {isUploading ? (
-                      <IconLoader className="h-4 w-4 animate-spin" />
-                    ) : image ? (
-                      <IconEdit className="h-4 w-4" />
-                    ) : (
-                      <IconCamera className="h-4 w-4" />
-                    )}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">
-                  {image ? 'Change photo' : 'Upload photo'}
-                </TooltipContent>
-              </Tooltip>
-            )}
-          </CldUploadWidget>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="secondary"
+                size="icon"
+                onClick={() => setUploadDialogOpen(true)}
+                disabled={isUploading}
+                className="h-9 w-9 rounded-full shadow hover:scale-105 transition-transform"
+              >
+                {isUploading ? (
+                  <IconLoader className="h-4 w-4 animate-spin" />
+                ) : image ? (
+                  <IconEdit className="h-4 w-4" />
+                ) : (
+                  <IconCamera className="h-4 w-4" />
+                )}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              {image ? 'Change photo' : 'Upload photo'}
+            </TooltipContent>
+          </Tooltip>
 
           {image && (
             <Tooltip>
@@ -211,13 +164,6 @@ export function AvatarUpload({
           )}
         </div>
       </div>
-
-      {isUploading && (
-        <div className="flex items-center gap-2">
-          <IconLoader className="h-3 w-3 animate-spin text-muted-foreground" />
-          <p className="text-xs text-muted-foreground">Uploading...</p>
-        </div>
-      )}
 
       {/* Avatar Lightbox */}
       {lightboxOpen && image && (
@@ -251,6 +197,17 @@ export function AvatarUpload({
           </div>
         </div>
       )}
+
+      {/* Image Upload Dialog */}
+      <ImageUploadDialog
+        open={uploadDialogOpen}
+        onOpenChange={setUploadDialogOpen}
+        onImageUploaded={handleImageUploaded}
+        title="Upload Profile Photo"
+        description="Upload a profile photo. A square image is recommended for best results."
+        folder="sasuai-store/profiles"
+        aspectRatio={1}
+      />
     </div>
   );
 }

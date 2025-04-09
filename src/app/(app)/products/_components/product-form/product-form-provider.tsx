@@ -15,10 +15,11 @@ import {
   createProduct,
   getProductFormOptions,
   updateProduct,
+  getProductImages,
+  addProductImage,
 } from '../../action';
 import { ProductWithRelations, ProductImageWithUrl } from '@/lib/types/product';
 import { Category, Brand, Unit } from '@prisma/client';
-import { getProductImages } from '@/app/(app)/products/images/action';
 
 // Form schema for product
 const formSchema = z.object({
@@ -35,6 +36,14 @@ const formSchema = z.object({
 
 export type ProductFormValues = z.infer<typeof formSchema>;
 
+// Temporary image type that matches TempProductImage
+interface TempImage {
+  id: string;
+  imageUrl: string;
+  fullUrl: string; // Added to match TempProductImage
+  isPrimary: boolean;
+}
+
 interface ProductFormContextProps {
   isEditing: boolean;
   loading: boolean;
@@ -42,7 +51,11 @@ interface ProductFormContextProps {
   brands: Brand[];
   units: Unit[];
   images: ProductImageWithUrl[];
+  tempImages: TempImage[];
   setImages: (images: ProductImageWithUrl[]) => void;
+  addTempImage: (imageUrl: string) => void;
+  removeTempImage: (id: string) => void;
+  setTempPrimaryImage: (id: string) => void;
   primaryImageUrl: string | null;
   submitForm: () => void;
   cancelForm: () => void;
@@ -86,6 +99,7 @@ export function ProductFormProvider({
   const [brands, setBrands] = useState<Brand[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
   const [images, setImages] = useState<ProductImageWithUrl[]>([]);
+  const [tempImages, setTempImages] = useState<TempImage[]>([]);
 
   // Dialog state for creating new entities
   const [openCategoryCreate, setOpenCategoryCreate] = useState(false);
@@ -192,6 +206,77 @@ export function ProductFormProvider({
     }
   };
 
+  // New functions for managing temporary images - simplified
+  const addTempImage = (imageUrl: string) => {
+    const newImage: TempImage = {
+      id: `temp-${Date.now()}`,
+      imageUrl,
+      fullUrl: imageUrl, // Set fullUrl to match imageUrl for consistency
+      isPrimary: tempImages.length === 0, // First image is primary by default
+    };
+
+    setTempImages((prev) => {
+      if (newImage.isPrimary) {
+        return [...prev.map((img) => ({ ...img, isPrimary: false })), newImage];
+      }
+      return [...prev, newImage];
+    });
+  };
+
+  const removeTempImage = (id: string) => {
+    setTempImages((prev) => {
+      const filtered = prev.filter((img) => img.id !== id);
+
+      // If we removed the primary image and have other images, set the first one as primary
+      if (prev.find((img) => img.id === id)?.isPrimary && filtered.length > 0) {
+        filtered[0].isPrimary = true;
+      }
+
+      return filtered;
+    });
+  };
+
+  const setTempPrimaryImage = (id: string) => {
+    setTempImages((prev) =>
+      prev.map((img) => ({
+        ...img,
+        isPrimary: img.id === id,
+      })),
+    );
+  };
+
+  // Simplified function to save temporary images to a product
+  const saveTempImagesToProduct = async (productId: string) => {
+    if (tempImages.length === 0) return;
+
+    try {
+      // Sort images so primary is processed first
+      const sortedImages = [...tempImages].sort((a, b) =>
+        a.isPrimary ? -1 : b.isPrimary ? 1 : 0,
+      );
+
+      // Use Promise.all for parallel processing
+      await Promise.all(
+        sortedImages.map((image) =>
+          addProductImage({
+            productId,
+            imageUrl: image.imageUrl,
+            isPrimary: image.isPrimary,
+          }),
+        ),
+      );
+
+      setTempImages([]);
+    } catch (error) {
+      console.error('Failed to save temporary images:', error);
+      toast({
+        title: 'Warning',
+        description: 'Some images may not have been saved properly',
+        variant: 'destructive',
+      });
+    }
+  };
+
   // Get primary image URL
   const primaryImageUrl =
     images.find((img) => img.isPrimary)?.fullUrl || images[0]?.fullUrl || null;
@@ -201,28 +286,51 @@ export function ProductFormProvider({
     try {
       setLoading(true);
 
-      const result =
-        isEditing && initialData
-          ? await updateProduct(initialData.id, values)
-          : await createProduct(values);
+      if (isEditing && initialData) {
+        // Updating existing product
+        const result = await updateProduct(initialData.id, values);
 
-      if (result.success) {
-        toast({
-          title: isEditing ? 'Product updated' : 'Product created',
-          description: isEditing
-            ? 'Product has been updated successfully'
-            : 'New product has been created',
-        });
+        if (result.success) {
+          toast({
+            title: 'Product updated',
+            description: 'Product has been updated successfully',
+          });
 
-        methods.reset();
-        onSuccess?.();
-        onOpenChange?.(false);
+          methods.reset();
+          onSuccess?.();
+          onOpenChange?.(false);
+        } else {
+          toast({
+            title: 'Error',
+            description: result.error || 'Something went wrong',
+            variant: 'destructive',
+          });
+        }
       } else {
-        toast({
-          title: 'Error',
-          description: result.error || 'Something went wrong',
-          variant: 'destructive',
-        });
+        // Creating new product
+        const result = await createProduct(values);
+
+        if (result.success && result.data) {
+          // If we have temporary images, save them to the new product
+          const newProductId = result.data.id;
+          await saveTempImagesToProduct(newProductId);
+
+          toast({
+            title: 'Product created',
+            description: 'New product has been created',
+          });
+
+          methods.reset();
+          setTempImages([]); // Clear temp images after successful creation
+          onSuccess?.();
+          onOpenChange?.(false);
+        } else {
+          toast({
+            title: 'Error',
+            description: result.error || 'Something went wrong',
+            variant: 'destructive',
+          });
+        }
       }
     } catch (error) {
       toast({
@@ -254,7 +362,11 @@ export function ProductFormProvider({
     brands,
     units,
     images,
+    tempImages,
     setImages,
+    addTempImage,
+    removeTempImage,
+    setTempPrimaryImage,
     primaryImageUrl,
     submitForm,
     cancelForm,

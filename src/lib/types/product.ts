@@ -144,3 +144,11 @@ export type ProductBatchFormData = {
   quantity: number;
   buyPrice: number;
 };
+
+// Updated type for temporary images during product creation to match ProductImageWithUrl structure
+export type TempProductImage = {
+  id: string;
+  imageUrl: string;
+  fullUrl: string; // Add this to maintain consistency with ProductImageWithUrl
+  isPrimary: boolean;
+};

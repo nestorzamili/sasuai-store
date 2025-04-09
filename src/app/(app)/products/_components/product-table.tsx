@@ -63,6 +63,7 @@ interface ProductTableProps {
     isActive?: boolean;
     categoryId?: string;
     brandId?: string;
+    search?: string; // Add the search property
   };
 }
 
@@ -533,160 +534,149 @@ export function ProductTable({
 
   return (
     <>
-      {/* Search input */}
-      <div className="space-y-4">
-        <Input
-          placeholder="Search products by name, barcode..."
-          defaultValue={tableState.searchQuery}
-          onChange={handlers.onSearchChange}
-          className="max-w-sm"
-        />
-
-        {/* Table with loading state indicator */}
-        <div className="rounded-md border relative">
-          {tableState.isLoading && (
-            <div className="absolute inset-0 bg-background/50 flex items-center justify-center z-10">
-              <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full"></div>
-            </div>
-          )}
-          <Table>
-            <TableHeader>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
-                    </TableHead>
+      <div className="rounded-md border relative">
+        {tableState.isLoading && (
+          <div className="absolute inset-0 bg-background/50 flex items-center justify-center z-10">
+            <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full"></div>
+          </div>
+        )}
+        <Table>
+          <TableHeader>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
+                  <TableHead key={header.id}>
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
+                  </TableHead>
+                ))}
+              </TableRow>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {tableState.paginationData.products.length ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow
+                  key={row.id}
+                  data-state={row.getIsSelected() ? 'selected' : undefined}
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
+                      )}
+                    </TableCell>
                   ))}
                 </TableRow>
-              ))}
-            </TableHeader>
-            <TableBody>
-              {tableState.paginationData.products.length ? (
-                table.getRowModel().rows.map((row) => (
-                  <TableRow
-                    key={row.id}
-                    data-state={row.getIsSelected() ? 'selected' : undefined}
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext(),
-                        )}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell
-                    colSpan={columns.length}
-                    className="h-24 text-center"
-                  >
-                    No products found.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center"
+                >
+                  No products found.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      {/* Pagination controls */}
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-2">
+        <div className="text-sm text-muted-foreground">
+          {table.getFilteredSelectedRowModel().rows.length > 0 && (
+            <span className="mr-2">
+              {table.getFilteredSelectedRowModel().rows.length} of{' '}
+              {table.getFilteredRowModel().rows.length} row(s) selected.
+            </span>
+          )}
+          <span>Total: {tableState.paginationData.totalCount} products</span>
         </div>
 
-        {/* Pagination controls */}
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-2">
-          <div className="text-sm text-muted-foreground">
-            {table.getFilteredSelectedRowModel().rows.length > 0 && (
-              <span className="mr-2">
-                {table.getFilteredSelectedRowModel().rows.length} of{' '}
-                {table.getFilteredRowModel().rows.length} row(s) selected.
-              </span>
-            )}
-            <span>Total: {tableState.paginationData.totalCount} products</span>
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium">Rows per page</span>
+            <Select
+              value={`${tableState.paginationParams.pageSize}`}
+              onValueChange={(value) => {
+                handlers.setPageSize(Number(value));
+              }}
+            >
+              <SelectTrigger className="h-8 w-[70px]">
+                <SelectValue
+                  placeholder={tableState.paginationParams.pageSize}
+                />
+              </SelectTrigger>
+              <SelectContent side="top">
+                {[10, 20, 30, 40, 50].map((pageSize) => (
+                  <SelectItem key={pageSize} value={`${pageSize}`}>
+                    {pageSize}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">Rows per page</span>
-              <Select
-                value={`${tableState.paginationParams.pageSize}`}
-                onValueChange={(value) => {
-                  handlers.setPageSize(Number(value));
-                }}
-              >
-                <SelectTrigger className="h-8 w-[70px]">
-                  <SelectValue
-                    placeholder={tableState.paginationParams.pageSize}
-                  />
-                </SelectTrigger>
-                <SelectContent side="top">
-                  {[10, 20, 30, 40, 50].map((pageSize) => (
-                    <SelectItem key={pageSize} value={`${pageSize}`}>
-                      {pageSize}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          <div className="flex items-center gap-1">
+            <div className="flex w-[120px] items-center justify-center text-sm font-medium">
+              Page {tableState.paginationParams.page} of{' '}
+              {tableState.paginationData.totalPages || 1}
             </div>
 
-            <div className="flex items-center gap-1">
-              <div className="flex w-[120px] items-center justify-center text-sm font-medium">
-                Page {tableState.paginationParams.page} of{' '}
-                {tableState.paginationData.totalPages || 1}
-              </div>
+            <Button
+              variant="outline"
+              className="hidden h-8 w-8 p-0 lg:flex"
+              onClick={() => handlers.goToPage(0)}
+              disabled={tableState.paginationParams.page <= 1}
+            >
+              <span className="sr-only">Go to first page</span>
+              <DoubleArrowLeftIcon className="h-4 w-4" />
+            </Button>
 
-              <Button
-                variant="outline"
-                className="hidden h-8 w-8 p-0 lg:flex"
-                onClick={() => handlers.goToPage(0)}
-                disabled={tableState.paginationParams.page <= 1}
-              >
-                <span className="sr-only">Go to first page</span>
-                <DoubleArrowLeftIcon className="h-4 w-4" />
-              </Button>
+            <Button
+              variant="outline"
+              className="h-8 w-8 p-0"
+              onClick={handlers.previousPage}
+              disabled={tableState.paginationParams.page <= 1}
+            >
+              <span className="sr-only">Go to previous page</span>
+              <ChevronLeftIcon className="h-4 w-4" />
+            </Button>
 
-              <Button
-                variant="outline"
-                className="h-8 w-8 p-0"
-                onClick={handlers.previousPage}
-                disabled={tableState.paginationParams.page <= 1}
-              >
-                <span className="sr-only">Go to previous page</span>
-                <ChevronLeftIcon className="h-4 w-4" />
-              </Button>
+            <Button
+              variant="outline"
+              className="h-8 w-8 p-0"
+              onClick={handlers.nextPage}
+              disabled={
+                tableState.paginationParams.page >=
+                tableState.paginationData.totalPages
+              }
+            >
+              <span className="sr-only">Go to next page</span>
+              <ChevronRightIcon className="h-4 w-4" />
+            </Button>
 
-              <Button
-                variant="outline"
-                className="h-8 w-8 p-0"
-                onClick={handlers.nextPage}
-                disabled={
-                  tableState.paginationParams.page >=
-                  tableState.paginationData.totalPages
-                }
-              >
-                <span className="sr-only">Go to next page</span>
-                <ChevronRightIcon className="h-4 w-4" />
-              </Button>
-
-              <Button
-                variant="outline"
-                className="hidden h-8 w-8 p-0 lg:flex"
-                onClick={() =>
-                  handlers.goToPage(tableState.paginationData.totalPages - 1)
-                }
-                disabled={
-                  tableState.paginationParams.page >=
-                  tableState.paginationData.totalPages
-                }
-              >
-                <span className="sr-only">Go to last page</span>
-                <DoubleArrowRightIcon className="h-4 w-4" />
-              </Button>
-            </div>
+            <Button
+              variant="outline"
+              className="hidden h-8 w-8 p-0 lg:flex"
+              onClick={() =>
+                handlers.goToPage(tableState.paginationData.totalPages - 1)
+              }
+              disabled={
+                tableState.paginationParams.page >=
+                tableState.paginationData.totalPages
+              }
+            >
+              <span className="sr-only">Go to last page</span>
+              <DoubleArrowRightIcon className="h-4 w-4" />
+            </Button>
           </div>
         </div>
       </div>
