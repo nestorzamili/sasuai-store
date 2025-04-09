@@ -110,6 +110,30 @@ export function DiscountTable() {
     },
     {
       header: ({ column }) => {
+        return <SortingButtonTable column={column} label={'Relation'} />;
+      },
+      accessorKey: 'discountRelations',
+      cell: ({ row }) => {
+        const relations = row.getValue('discountRelations');
+        const count = Array.isArray(relations) ? relations.length : 0;
+        return (
+          <Badge variant="outline" className="cursor-pointer">
+            {count} Items
+          </Badge>
+        );
+      },
+    },
+    {
+      header: ({ column }) => {
+        return <SortingButtonTable column={column} label={'Start Date'} />;
+      },
+      accessorKey: 'startDate',
+      cell: ({ row }) => {
+        return new Date(row.getValue('startDate')).toLocaleDateString('Id-ID');
+      },
+    },
+    {
+      header: ({ column }) => {
         return <span className="">Days Left</span>;
       },
       accessorKey: 'daysLeft',
