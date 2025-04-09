@@ -16,7 +16,6 @@ import {
   IconUsersGroup,
   IconGift,
   IconCubeSend,
-  IconImageInPicture,
 } from '@tabler/icons-react';
 import { Command } from 'lucide-react';
 import { type SidebarData } from '../types';
@@ -87,11 +86,6 @@ export const sidebarData: SidebarData = {
           title: 'Units',
           url: '/products/units',
           icon: IconPackage,
-        },
-        {
-          title: 'Product Images',
-          url: '/products/images',
-          icon: IconImageInPicture,
         },
       ],
     },

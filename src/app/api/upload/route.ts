@@ -49,10 +49,16 @@ export async function POST(request: NextRequest) {
       resource_type: 'image',
     });
 
-    // Return success with the image URL
+    // Add f_auto and q_auto to the URL for automatic format and quality optimization
+    const optimizedUrl = uploadResult.secure_url.replace(
+      '/upload/',
+      '/upload/f_auto,q_auto/',
+    );
+
+    // Return success with the optimized image URL
     return Response.json({
       success: true,
-      url: uploadResult.secure_url,
+      url: optimizedUrl,
       publicId: uploadResult.public_id,
     });
   } catch (error: any) {

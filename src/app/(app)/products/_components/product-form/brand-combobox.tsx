@@ -81,14 +81,14 @@ export function BrandCombobox({ value, onChange }: BrandComboboxProps) {
               <CommandItem
                 value="none"
                 onSelect={() => {
-                  onChange('none');
+                  onChange('');
                   setOpen(false);
                 }}
               >
                 <IconCheck
                   className={cn(
                     'mr-2 h-4 w-4',
-                    value === 'none' ? 'opacity-100' : 'opacity-0',
+                    value === '' ? 'opacity-100' : 'opacity-0',
                   )}
                 />
                 None
