@@ -1,7 +1,11 @@
 import prisma from '@/lib/prisma';
 export const Discount = {
   async getAll() {
-    const discounts = await prisma.discount.findMany();
+    const discounts = await prisma.discount.findMany({
+      include: {
+        discountRelations: true,
+      },
+    });
     return discounts;
   },
 
