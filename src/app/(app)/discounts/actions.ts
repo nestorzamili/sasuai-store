@@ -1,6 +1,6 @@
 'use server';
 import { Discount } from '@/lib/services/discount.services';
-
+import { DiscountInterface } from '@/lib/types/discount';
 export const getAllDiscounts = async () => {
   try {
     const discount = await Discount.getAll();

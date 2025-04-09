@@ -67,7 +67,7 @@ export function DiscountTable() {
     { header: 'ID', accessorKey: 'id' },
     {
       header: ({ column }) => {
-        return <SortingButtonTable column={column} label={'Brand Name'} />;
+        return <SortingButtonTable column={column} label={'Discount Name'} />;
       },
       cell: ({ row }) => (
         <div className="font-medium">{row.getValue('name')}</div>

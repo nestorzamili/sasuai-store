@@ -1,5 +1,5 @@
 export interface DiscountInterface {
-  id: string;
+  id?: string;
   name: string;
   discountType: 'member' | 'product';
   valueType: 'percentage' | 'flat';
@@ -7,10 +7,8 @@ export interface DiscountInterface {
   type?: string;
   minPurchase?: number;
   startDate: Date;
-  endDate: Date;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-  onDelete?: () => void;
-  onEdit?: () => void;
+  endDate?: Date;
+  isActive?: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
