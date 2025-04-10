@@ -49,10 +49,15 @@ export async function POST(request: NextRequest) {
       resource_type: 'image',
     });
 
+    let optimizedUrl = uploadResult.secure_url;
+    if (optimizedUrl && optimizedUrl.includes('/upload/')) {
+      optimizedUrl = optimizedUrl.replace('/upload/', '/upload/f_auto,q_auto/');
+    }
+
     // Return success with the image URL
     return Response.json({
       success: true,
-      url: uploadResult.secure_url,
+      url: optimizedUrl,
       publicId: uploadResult.public_id,
     });
   } catch (error: any) {

@@ -198,6 +198,46 @@ export async function deleteProduct(id: string) {
 }
 
 /**
+ * Get product images for a specific product
+ */
+export async function getProductImages(productId: string) {
+  try {
+    const images = await ProductService.getProductImages(productId);
+
+    return {
+      success: true,
+      data: images,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: 'Failed to fetch product images',
+    };
+  }
+}
+
+/**
+ * Set primary image for a product
+ */
+export async function setPrimaryImage(imageId: string, productId: string) {
+  try {
+    await ProductService.setPrimaryImage(imageId, productId);
+
+    // Revalidate product detail
+    revalidatePath(`/products/${productId}`);
+
+    return {
+      success: true,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: 'Failed to set primary image',
+    };
+  }
+}
+
+/**
  * Add product image
  */
 export async function addProductImage(data: {

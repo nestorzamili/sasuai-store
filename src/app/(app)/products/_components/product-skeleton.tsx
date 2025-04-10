@@ -12,9 +12,6 @@ import {
 export const ProductTableSkeleton = React.memo(() => {
   return (
     <div className="space-y-4">
-      <div>
-        <Skeleton className="h-10 w-[384px]" />
-      </div>
       <div className="rounded-md border">
         <Table>
           <TableHeader>

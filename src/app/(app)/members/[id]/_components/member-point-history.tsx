@@ -28,6 +28,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { IconGift, IconCrown } from '@tabler/icons-react';
 import { toast } from '@/hooks/use-toast';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { formatRupiah } from '@/lib/currency';
 
 interface MemberPointHistoryProps {
   memberId: string;
@@ -72,12 +74,7 @@ export default function MemberPointHistory({
 
       fetchMemberTier();
     }
-  }, [points, tier, memberTier]);
-
-  // Format transaction ID to be shorter if needed
-  const formatTransactionId = (id: string) => {
-    return id.length > 8 ? id.substring(0, 8) + '...' : id;
-  };
+  }, []);
 
   // Handle manual points award
   const handleAddPoints = async () => {
@@ -130,7 +127,7 @@ export default function MemberPointHistory({
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Point History</CardTitle>
+        <CardTitle>Point History & Transactions</CardTitle>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button variant="secondary" size="sm" className="gap-1">
@@ -205,28 +202,47 @@ export default function MemberPointHistory({
             <TableHeader>
               <TableRow>
                 <TableHead>Date</TableHead>
-                <TableHead>Points Earned</TableHead>
+                <TableHead>Points</TableHead>
                 <TableHead>Source</TableHead>
+                <TableHead>Amount</TableHead>
+                <TableHead>Payment</TableHead>
                 <TableHead>Notes</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {points.map((point) => (
-                <TableRow key={point.id}>
-                  <TableCell>
-                    {format(new Date(point.dateEarned), 'MMM d, yyyy')}
-                  </TableCell>
-                  <TableCell className="font-medium">
-                    +{point.pointsEarned.toLocaleString()}
-                  </TableCell>
-                  <TableCell>
-                    {point.transaction.id.startsWith('manual')
-                      ? 'Manual award'
-                      : formatTransactionId(point.transaction.id)}
-                  </TableCell>
-                  <TableCell>{point.notes || '-'}</TableCell>
-                </TableRow>
-              ))}
+              {points.map((point) => {
+                const isManualAward = point.transaction.id.startsWith('manual');
+                const hasTransaction = !isManualAward && point.transaction;
+
+                return (
+                  <TableRow key={point.id}>
+                    <TableCell>
+                      {format(new Date(point.dateEarned), 'MMM d, yyyy')}
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      +{point.pointsEarned.toLocaleString()}
+                    </TableCell>
+                    <TableCell>
+                      {isManualAward ? 'Manual award' : 'Transaction'}
+                    </TableCell>
+                    <TableCell>
+                      {hasTransaction
+                        ? formatRupiah(point.transaction.finalAmount)
+                        : '-'}
+                    </TableCell>
+                    <TableCell>
+                      {hasTransaction ? (
+                        <Badge variant="outline" className="capitalize">
+                          {point.transaction.paymentMethod}
+                        </Badge>
+                      ) : (
+                        '-'
+                      )}
+                    </TableCell>
+                    <TableCell>{point.notes || '-'}</TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         ) : (

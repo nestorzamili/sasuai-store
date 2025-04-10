@@ -1,65 +1,27 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { getPaginatedProducts } from '../action';
+import { useState, useCallback } from 'react';
 import { ProductWithRelations } from '@/lib/types/product';
 import ProductPrimaryButton from './product-primary-button';
 import { ProductTable } from './product-table';
-import { useToast } from '@/hooks/use-toast';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { IconSearch, IconX } from '@tabler/icons-react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 export default function MainContent() {
   const [selectedProduct, setSelectedProduct] =
     useState<ProductWithRelations | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('all');
   const [refreshKey, setRefreshKey] = useState(Date.now());
-  const { toast } = useToast();
-
-  // Track tab counts for display
-  const [tabCounts, setTabCounts] = useState({
-    all: null as number | null,
-    active: null as number | null,
-    inactive: null as number | null,
-  });
-
-  // Load counts for tab headers
-  const loadTabCounts = useCallback(async () => {
-    try {
-      const [allResult, activeResult, inactiveResult] = await Promise.all([
-        getPaginatedProducts({ page: 1, pageSize: 1 }),
-        getPaginatedProducts({ page: 1, pageSize: 1, isActive: true }),
-        getPaginatedProducts({ page: 1, pageSize: 1, isActive: false }),
-      ]);
-
-      setTabCounts({
-        all:
-          allResult.success && allResult.data
-            ? allResult.data.totalCount
-            : null,
-        active:
-          activeResult.success && activeResult.data
-            ? activeResult.data.totalCount
-            : null,
-        inactive:
-          inactiveResult.success && inactiveResult.data
-            ? inactiveResult.data.totalCount
-            : null,
-      });
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to load tab counts',
-        variant: 'destructive',
-      });
-    }
-  }, []);
-
-  // Refresh tables and tab counts
-  const refreshData = useCallback(() => {
-    setRefreshKey(Date.now());
-    loadTabCounts();
-  }, [loadTabCounts]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
 
   // Handle dialog open state change
   const handleDialogOpenChange = useCallback((open: boolean) => {
@@ -77,43 +39,29 @@ export default function MainContent() {
   const handleSuccess = useCallback(() => {
     setIsDialogOpen(false);
     setSelectedProduct(null);
-    refreshData();
-  }, [refreshData]);
+    setRefreshKey(Date.now());
+  }, []);
 
-  // Load tab counts on initial render
-  useEffect(() => {
-    loadTabCounts();
-  }, [loadTabCounts]);
+  // Clear search
+  const handleClearSearch = () => {
+    setSearchQuery('');
+  };
 
-  // Prepare tab content with conditional rendering optimization
-  const renderTabContent = (
-    tabValue: string,
-    isActive: boolean | undefined = undefined,
-  ) => (
-    <TabsContent value={tabValue} className="space-y-4">
-      {activeTab === tabValue && (
-        <ProductTable
-          key={`${tabValue}-${refreshKey}`}
-          onEdit={handleEdit}
-          initialData={
-            isActive !== undefined
-              ? {
-                  products: [],
-                  totalCount:
-                    tabCounts[tabValue as keyof typeof tabCounts] || 0,
-                  totalPages: 0,
-                  currentPage: 1,
-                }
-              : undefined
-          }
-          filterParams={isActive !== undefined ? { isActive } : undefined}
-        />
-      )}
-    </TabsContent>
-  );
+  // Parse status filter to boolean for the API
+  const getStatusBooleanFilter = (): boolean | undefined => {
+    switch (statusFilter) {
+      case 'active':
+        return true;
+      case 'inactive':
+        return false;
+      default:
+        return undefined;
+    }
+  };
 
   return (
     <div className="space-y-6">
+      {/* Header with title and add button */}
       <div className="flex items-center justify-between flex-wrap gap-x-4">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Manage Products</h2>
@@ -129,29 +77,51 @@ export default function MainContent() {
         />
       </div>
 
-      <Tabs
-        defaultValue="all"
-        className="space-y-4"
-        onValueChange={setActiveTab}
-      >
-        <TabsList>
-          {Object.entries({
-            all: 'All Products',
-            active: 'Active',
-            inactive: 'Inactive',
-          }).map(([value, label]) => (
-            <TabsTrigger key={value} value={value}>
-              {label}{' '}
-              {tabCounts[value as keyof typeof tabCounts] !== null &&
-                `(${tabCounts[value as keyof typeof tabCounts]})`}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+      {/* Search and Filters */}
+      <div className="flex flex-col sm:flex-row gap-4 justify-between">
+        {/* Search Input */}
+        <div className="relative w-full max-w-sm">
+          <IconSearch className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground/70" />
+          <Input
+            placeholder="Search products..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9 pr-10"
+          />
+          {searchQuery && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="absolute right-0 top-0 h-9 px-2.5"
+              onClick={handleClearSearch}
+            >
+              <IconX className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
 
-        {renderTabContent('all')}
-        {renderTabContent('active', true)}
-        {renderTabContent('inactive', false)}
-      </Tabs>
+        {/* Status Filter - Simplified without counts */}
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-[160px]">
+            <SelectValue placeholder="Filter by status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Products</SelectItem>
+            <SelectItem value="active">Active</SelectItem>
+            <SelectItem value="inactive">Inactive</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Product table */}
+      <ProductTable
+        key={`products-${refreshKey}-${statusFilter}-${searchQuery}`}
+        onEdit={handleEdit}
+        filterParams={{
+          isActive: getStatusBooleanFilter(),
+          search: searchQuery,
+        }}
+      />
     </div>
   );
 }
