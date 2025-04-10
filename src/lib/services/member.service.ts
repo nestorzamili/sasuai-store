@@ -203,6 +203,7 @@ export class MemberService {
               discountAmount: 0,
               finalAmount: 0,
               paymentMethod: 'Manual Point Award',
+              memberId,
             },
           });
         }
