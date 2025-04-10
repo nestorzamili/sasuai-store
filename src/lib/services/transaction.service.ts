@@ -4,6 +4,8 @@ import {
   TransactionPaginationParams,
 } from '../types/transaction';
 import { Prisma } from '@prisma/client';
+import { calculateMemberPoints } from './setting.service';
+import { MemberService } from './member.service';
 
 export class TransactionService {
   /**
@@ -73,9 +75,9 @@ export class TransactionService {
    * Create a new transaction
    */
   static async create(data: CreateTransactionData) {
-    // Create the transaction in a transaction scope to ensure atomicity
-    return prisma.$transaction(async (tx) => {
-      // Create the transaction
+    // Start a transaction
+    return await prisma.$transaction(async (tx) => {
+      // Create the transaction record
       const transaction = await tx.transaction.create({
         data: {
           cashierId: data.cashierId,
@@ -84,99 +86,90 @@ export class TransactionService {
           discountAmount: data.discountAmount,
           finalAmount: data.finalAmount,
           paymentMethod: data.paymentMethod,
+          items: {
+            create: data.items.map((item) => ({
+              batchId: item.batchId,
+              quantity: item.quantity,
+              unitId: item.unitId,
+              pricePerUnit: item.pricePerUnit,
+              subtotal: item.subtotal,
+            })),
+          },
+        },
+        include: {
+          items: true,
         },
       });
 
-      // Create transaction items
-      for (const item of data.items) {
-        // Create transaction item
-        await tx.transactionItem.create({
-          data: {
-            transactionId: transaction.id,
-            batchId: item.batchId,
-            quantity: item.quantity,
-            unitId: item.unitId,
-            pricePerUnit: item.pricePerUnit,
-            discountId: item.discountId || null,
-            subtotal: item.subtotal,
-          },
+      // Process member points if member is provided
+      if (data.memberId) {
+        // Get the member
+        const member = await tx.member.findUnique({
+          where: { id: data.memberId },
+          include: { tier: true },
         });
 
-        // Update batch remaining quantity
+        if (member) {
+          // Calculate points based on settings and tier multiplier
+          const pointsEarned = await calculateMemberPoints(
+            data.finalAmount,
+            member,
+          );
+
+          if (pointsEarned > 0) {
+            // Award points and create point history
+            await tx.memberPoint.create({
+              data: {
+                memberId: data.memberId,
+                transactionId: transaction.id,
+                pointsEarned,
+                dateEarned: new Date(),
+                notes: `Points from transaction ${transaction.id}`,
+              },
+            });
+
+            // Update member's total points
+            await tx.member.update({
+              where: { id: data.memberId },
+              data: {
+                totalPoints: { increment: pointsEarned },
+                totalPointsEarned: { increment: pointsEarned },
+              },
+            });
+          }
+        }
+      }
+
+      // Update product inventory for each item
+      for (const item of data.items) {
+        // Get the current batch
+        const batch = await tx.productBatch.findUnique({
+          where: { id: item.batchId },
+        });
+
+        if (!batch) {
+          throw new Error(`Batch with ID ${item.batchId} not found`);
+        }
+
+        // Update the batch's remaining quantity
         await tx.productBatch.update({
           where: { id: item.batchId },
           data: {
-            remainingQuantity: {
-              decrement: item.quantity,
-            },
+            remainingQuantity: { decrement: item.quantity },
           },
         });
 
-        // Get the product ID from the batch
-        const batch = await tx.productBatch.findUnique({
-          where: { id: item.batchId },
-          select: { productId: true },
-        });
-
-        if (batch) {
-          // Update product current stock
-          await tx.product.update({
-            where: { id: batch.productId },
-            data: {
-              currentStock: {
-                decrement: item.quantity,
-              },
-            },
-          });
-        }
-      }
-
-      // If there's a member, calculate and add points
-      if (data.memberId) {
-        const pointsEarned = Math.floor(data.finalAmount / 1000); // Example: 1 point per 1000 currency units
-
-        if (pointsEarned > 0) {
-          // Create member point record
-          await tx.memberPoint.create({
-            data: {
-              memberId: data.memberId,
-              transactionId: transaction.id,
-              pointsEarned,
-              dateEarned: new Date(),
-            },
-          });
-
-          // Update member's total points
-          await tx.member.update({
-            where: { id: data.memberId },
-            data: {
-              totalPoints: {
-                increment: pointsEarned,
-              },
-            },
-          });
-        }
-      }
-
-      // Return the transaction with related data
-      return tx.transaction.findUnique({
-        where: { id: transaction.id },
-        include: {
-          cashier: true,
-          member: true,
-          items: {
-            include: {
-              batch: {
-                include: {
-                  product: true,
-                },
-              },
-              unit: true,
-            },
+        // Update the product's current stock
+        await tx.product.update({
+          where: { id: batch.productId },
+          data: {
+            currentStock: { decrement: item.quantity },
           },
-          memberPoints: true,
-        },
-      });
+        });
+      }
+
+      // Return the created transaction
+      return transaction;
     });
   }
 

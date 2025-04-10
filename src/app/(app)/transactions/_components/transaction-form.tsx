@@ -13,7 +13,6 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
 import { createTransaction } from '../action';
 import { useToast } from '@/hooks/use-toast';
 import { TransactionWithRelations } from '@/lib/types/transaction';
@@ -39,7 +38,7 @@ import { AvailableProductBatch } from '@/lib/types/product-batch';
 import { useAuth } from '@/context/auth-context';
 import { MemberSearch } from './member-search';
 import { MemberWithTier } from '@/lib/types/member';
-import { calculateMemberPoints } from './transaction-helpers';
+import { calculatePotentialPoints } from '../../members/action';
 
 // This is a simplified schema - in a real application, this would be more complex
 const formSchema = z.object({
@@ -70,6 +69,7 @@ export function TransactionForm({
     null,
   );
   const [estimatedPoints, setEstimatedPoints] = useState(0);
+  const [calculatingPoints, setCalculatingPoints] = useState(false);
   const { toast } = useToast();
 
   // Get current user from auth context
@@ -101,14 +101,35 @@ export function TransactionForm({
     },
   });
 
-  // Calculate estimated points when total or selected member changes
+  // Calculate estimated points when total or selected member changes using server action
   useEffect(() => {
-    if (selectedMember && totals.finalTotal > 0) {
-      const points = calculateMemberPoints(totals.finalTotal, selectedMember);
-      setEstimatedPoints(points);
-    } else {
-      setEstimatedPoints(0);
-    }
+    const fetchEstimatedPoints = async () => {
+      if (selectedMember && totals.finalTotal > 0) {
+        setCalculatingPoints(true);
+        try {
+          const result = await calculatePotentialPoints(
+            selectedMember.id,
+            totals.finalTotal,
+          );
+
+          if (result.success && typeof result.data === 'number') {
+            setEstimatedPoints(result.data);
+          } else {
+            setEstimatedPoints(0);
+            console.error('Failed to calculate points:', result.error);
+          }
+        } catch (error) {
+          console.error('Error calculating points:', error);
+          setEstimatedPoints(0);
+        } finally {
+          setCalculatingPoints(false);
+        }
+      } else {
+        setEstimatedPoints(0);
+      }
+    };
+
+    fetchEstimatedPoints();
   }, [selectedMember, totals.finalTotal]);
 
   // Update member ID in form when selected member changes
@@ -535,9 +556,15 @@ export function TransactionForm({
                         <span className="text-muted-foreground">
                           Will earn:
                         </span>
-                        <span className="font-medium ml-1 text-primary">
-                          {estimatedPoints} points
-                        </span>
+                        {calculatingPoints ? (
+                          <span className="font-medium ml-1 text-primary animate-pulse">
+                            Calculating...
+                          </span>
+                        ) : (
+                          <span className="font-medium ml-1 text-primary">
+                            {estimatedPoints} points
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
