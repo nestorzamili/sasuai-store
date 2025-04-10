@@ -72,7 +72,7 @@ export default function MemberPointHistory({
 
       fetchMemberTier();
     }
-  }, [points, tier, memberTier]);
+  }, []);
 
   // Format transaction ID to be shorter if needed
   const formatTransactionId = (id: string) => {
