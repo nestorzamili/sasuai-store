@@ -8,6 +8,7 @@ import { MemberTable } from './member-table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
 import TiersContent from './tiers-content';
+import PointRulesContent from './point-rules-content';
 
 export default function MainContent() {
   const [isLoading, setIsLoading] = useState(true);
@@ -177,6 +178,7 @@ export default function MainContent() {
         <TabsList>
           <TabsTrigger value="members">Members</TabsTrigger>
           <TabsTrigger value="tiers">Membership Tiers</TabsTrigger>
+          <TabsTrigger value="pointRules">Point Rules</TabsTrigger>
         </TabsList>
         <TabsContent value="members" className="mt-6">
           <MemberTable
@@ -198,6 +200,9 @@ export default function MainContent() {
             onSuccess={handleSuccess}
             isLoading={isLoading}
           />
+        </TabsContent>
+        <TabsContent value="pointRules" className="mt-6">
+          <PointRulesContent />
         </TabsContent>
       </Tabs>
     </div>
