@@ -1,5 +1,6 @@
 import prisma from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
+import { calculateMemberPoints } from './setting.service';
 
 export class MemberService {
   /**
@@ -392,29 +393,20 @@ export class MemberService {
 
   /**
    * Calculate potential points for a transaction
-   * This is useful for showing how many points a member would earn for a transaction
    */
   static async calculatePotentialPoints(
     memberId: string,
     transactionAmount: number,
-  ) {
-    const member = await prisma.member.findUnique({
-      where: { id: memberId },
-      include: {
-        tier: true,
-      },
-    });
+  ): Promise<number> {
+    const member = await this.getById(memberId);
 
-    if (!member || !member.tier) {
-      // Default calculation if no member or tier
-      return Math.floor(transactionAmount / 1000);
+    if (!member) {
+      throw new Error('Member not found');
     }
 
-    // Calculate points based on the multiplier from the member's tier
-    const basePoints = Math.floor(transactionAmount / 1000);
-    const multipliedPoints = Math.floor(basePoints * member.tier.multiplier);
-
-    return multipliedPoints;
+    // Use the settings-based point calculation
+    const points = await calculateMemberPoints(transactionAmount, member);
+    return points;
   }
 
   /**
