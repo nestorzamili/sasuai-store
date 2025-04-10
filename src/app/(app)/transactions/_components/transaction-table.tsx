@@ -41,7 +41,7 @@ import { Input } from '@/components/ui/input';
 import { formatRupiah } from '@/lib/currency';
 import { getPaginatedTransactions, getTransaction } from '../action';
 import { debounce } from '@/lib/common/debounce-effect';
-import { formatDate, formatDateTime } from '@/lib/date';
+import { formatDate } from '@/lib/date';
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -57,8 +57,6 @@ import {
 } from '@/components/ui/select';
 import { IconPrinter, IconTrash, IconEye } from '@tabler/icons-react';
 import { toast } from '@/hooks/use-toast';
-import { formatMemberInfo } from './transaction-helpers';
-import { MemberTierBadge } from '../../members/_components/member-tier-badge';
 
 interface TransactionTableProps {
   initialData?: PaginatedTransactionResponse;
