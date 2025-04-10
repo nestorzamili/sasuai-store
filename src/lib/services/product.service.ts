@@ -477,4 +477,45 @@ export class ProductService {
       currentPage: page,
     };
   }
+
+  /**
+   * Get product images for a specific product
+   * Returns images with fullUrl property for frontend display
+   */
+  static async getProductImages(productId: string) {
+    const images = await prisma.productImage.findMany({
+      where: { productId },
+      orderBy: [{ isPrimary: 'desc' }, { createdAt: 'asc' }],
+    });
+
+    // Format the images to include the full URL with f_auto,q_auto parameters
+    return images.map((image) => ({
+      ...image,
+      fullUrl: image.imageUrl.includes('cloudinary.com')
+        ? image.imageUrl.replace('/upload/', '/upload/f_auto,q_auto/')
+        : image.imageUrl,
+    }));
+  }
+
+  /**
+   * Set primary product image
+   */
+  static async setPrimaryImage(imageId: string, productId: string) {
+    // First unset any existing primary image
+    await prisma.productImage.updateMany({
+      where: {
+        productId,
+        isPrimary: true,
+      },
+      data: {
+        isPrimary: false,
+      },
+    });
+
+    // Then set the new primary image
+    return prisma.productImage.update({
+      where: { id: imageId },
+      data: { isPrimary: true },
+    });
+  }
 }

@@ -14,7 +14,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import MemberProfile from './_components/member-profile';
 import MemberPointHistory from './_components/member-point-history';
 import MemberRewardHistory from './_components/member-reward-history';
-import MemberTransactions from './_components/member-transactions';
 import { Button } from '@/components/ui/button';
 import { IconArrowLeft } from '@tabler/icons-react';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -102,7 +101,6 @@ export default function MemberDetailsPage() {
               <TabsList>
                 <TabsTrigger value="points">Point History</TabsTrigger>
                 <TabsTrigger value="rewards">Reward Claims</TabsTrigger>
-                <TabsTrigger value="transactions">Transactions</TabsTrigger>
               </TabsList>
               <TabsContent value="points">
                 <MemberPointHistory
@@ -115,12 +113,6 @@ export default function MemberDetailsPage() {
                 <MemberRewardHistory
                   memberId={member.id}
                   claims={member.rewardClaims}
-                />
-              </TabsContent>
-              <TabsContent value="transactions">
-                <MemberTransactions
-                  memberId={member.id}
-                  transactions={member.transactions}
                 />
               </TabsContent>
             </Tabs>
@@ -173,7 +165,6 @@ function MemberDetailSkeleton() {
       {/* Tabs skeleton */}
       <div>
         <div className="border-b flex">
-          <Skeleton className="h-10 w-24 mx-1" />
           <Skeleton className="h-10 w-24 mx-1" />
           <Skeleton className="h-10 w-24 mx-1" />
         </div>

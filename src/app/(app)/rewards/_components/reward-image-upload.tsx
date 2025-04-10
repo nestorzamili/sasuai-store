@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
 import {
@@ -11,7 +11,6 @@ import {
   IconLoader,
   IconMaximize,
   IconX,
-  IconUpload,
 } from '@tabler/icons-react';
 import {
   Tooltip,
@@ -20,13 +19,7 @@ import {
 } from '@/components/ui/tooltip';
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
+import { ImageUploadDialog } from '@/components/image-upload-dialog';
 
 interface RewardImageUploadProps {
   currentImage?: string | null;
@@ -43,9 +36,6 @@ export function RewardImageUpload({
   const [image, setImage] = useState(currentImage || '');
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Update image when currentImage prop changes
   useEffect(() => {
@@ -53,20 +43,6 @@ export function RewardImageUpload({
       setImage(currentImage || '');
     }
   }, [currentImage]);
-
-  // Create object URL for the selected file preview
-  useEffect(() => {
-    if (!selectedFile) {
-      setPreviewUrl(null);
-      return;
-    }
-
-    const objectUrl = URL.createObjectURL(selectedFile);
-    setPreviewUrl(objectUrl);
-
-    // Cleanup function to revoke the object URL
-    return () => URL.revokeObjectURL(objectUrl);
-  }, [selectedFile]);
 
   // Close lightbox with ESC key
   useEffect(() => {
@@ -89,120 +65,6 @@ export function RewardImageUpload({
     };
   }, [lightboxOpen]);
 
-  // Upload the selected file to the server
-  const uploadSelectedFile = async () => {
-    if (!selectedFile) return;
-
-    try {
-      setIsUploading(true);
-
-      // Create form data for the upload
-      const formData = new FormData();
-      formData.append('file', selectedFile);
-      formData.append('folder', 'sasuai-store/rewards');
-
-      // Send to our API endpoint
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Upload failed');
-      }
-
-      const result = await response.json();
-
-      // Update image state and call onChange callback
-      setImage(result.url);
-      onImageChange(result.url);
-
-      setUploadDialogOpen(false);
-      setSelectedFile(null);
-
-      toast({
-        title: 'Image uploaded',
-        description: 'Your image has been uploaded successfully.',
-      });
-    } catch (error: any) {
-      toast({
-        title: 'Upload failed',
-        description:
-          error.message || 'An error occurred while uploading the image.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
-  // Handle file selection
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      toast({
-        title: 'File too large',
-        description: 'Image must be less than 5MB in size.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    // Validate file type
-    const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
-    if (!validTypes.includes(file.type)) {
-      toast({
-        title: 'Invalid file type',
-        description: 'Please select a JPEG, PNG, or WebP image.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setSelectedFile(file);
-  };
-
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-  };
-
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      const file = e.dataTransfer.files[0];
-
-      // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        toast({
-          title: 'File too large',
-          description: 'Image must be less than 5MB in size.',
-          variant: 'destructive',
-        });
-        return;
-      }
-
-      // Validate file type
-      const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
-      if (!validTypes.includes(file.type)) {
-        toast({
-          title: 'Invalid file type',
-          description: 'Please select a JPEG, PNG, or WebP image.',
-          variant: 'destructive',
-        });
-        return;
-      }
-
-      setSelectedFile(file);
-    }
-  };
-
   const handleRemoveImage = useCallback(() => {
     setImage('');
     onImageChange('');
@@ -211,6 +73,21 @@ export function RewardImageUpload({
       description: 'The reward image has been removed.',
     });
   }, [onImageChange]);
+
+  const handleImageUploaded = (imageUrl: string) => {
+    setIsUploading(true);
+
+    // Update state and trigger the callback
+    setImage(imageUrl);
+    onImageChange(imageUrl);
+
+    setIsUploading(false);
+
+    toast({
+      title: 'Image uploaded',
+      description: 'Your image has been uploaded successfully.',
+    });
+  };
 
   const openLightbox = (e: React.MouseEvent) => {
     if (image) {
@@ -346,89 +223,16 @@ export function RewardImageUpload({
         </div>
       )}
 
-      {/* File Upload Dialog */}
-      <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Upload Image</DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            <p className="text-muted-foreground">
-              Upload an image for your reward. Recommended aspect ratio is 16:9.
-            </p>
-
-            {/* File Input */}
-            <input
-              type="file"
-              ref={fileInputRef}
-              className="hidden"
-              accept="image/jpeg,image/png,image/webp,image/jpg"
-              onChange={handleFileChange}
-            />
-
-            {/* Drop Zone */}
-            <div
-              className={`border-2 border-dashed rounded-md ${
-                previewUrl ? 'border-primary' : 'border-muted'
-              } p-4 transition-colors`}
-              onClick={() => fileInputRef.current?.click()}
-              onDragOver={handleDragOver}
-              onDrop={handleDrop}
-            >
-              {previewUrl ? (
-                <div className="relative w-full h-48">
-                  <Image
-                    src={previewUrl}
-                    alt="Preview"
-                    fill
-                    className="object-contain"
-                  />
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-8 text-center">
-                  <IconUpload className="h-10 w-10 mb-2 text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground mb-1">
-                    Drag and drop an image, or click to browse
-                  </p>
-                  <p className="text-xs text-muted-foreground/70">
-                    Supports: JPG, PNG, WebP (max 5MB)
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {selectedFile && (
-              <p className="text-sm">
-                Selected: {selectedFile.name} (
-                {(selectedFile.size / 1024).toFixed(1)} KB)
-              </p>
-            )}
-          </div>
-
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setUploadDialogOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={uploadSelectedFile}
-              disabled={!selectedFile || isUploading}
-            >
-              {isUploading ? (
-                <>
-                  <IconLoader className="h-4 w-4 animate-spin mr-2" />
-                  Uploading...
-                </>
-              ) : (
-                'Upload Image'
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Image Upload Dialog */}
+      <ImageUploadDialog
+        open={uploadDialogOpen}
+        onOpenChange={setUploadDialogOpen}
+        onImageUploaded={handleImageUploaded}
+        title="Upload Reward Image"
+        description="Upload an image for your reward. Recommended aspect ratio is 16:9."
+        folder="sasuai-store/rewards"
+        aspectRatio={16 / 9}
+      />
     </div>
   );
 }
