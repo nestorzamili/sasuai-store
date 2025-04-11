@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/hooks/use-toast';
-import { IconPlus } from '@tabler/icons-react';
+import { IconPlus, IconRefresh, IconInfoCircle } from '@tabler/icons-react';
 import { ProductBatchFormInitialData } from '@/lib/types/product-batch';
 import { Product } from '@prisma/client';
 import { createBatch, updateBatch } from '../action';
@@ -33,6 +33,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
@@ -56,10 +62,25 @@ const formSchema = z.object({
     .positive('Initial quantity must be positive'),
   buyPrice: z.coerce.number().int().min(0, 'Buy price cannot be negative'),
   unitId: z.string().min(1, 'Unit is required'),
-  supplierId: z.string().nullable().optional(), // Changed to accept null as well
+  supplierId: z.string().nullable().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
+
+// Define tooltip content for form fields
+const TOOLTIPS = {
+  product: "Select the product you're adding inventory for",
+  batchCode:
+    'Unique code to identify this batch. Auto-generated based on product name and date',
+  expiryDate:
+    'The date when this product batch expires. Important for inventory management',
+  initialQuantity:
+    "The number of items in this batch. This will increase the product's total stock",
+  buyPrice:
+    'The purchase price for the ENTIRE batch, not per unit. Used to calculate profit margins',
+  unit: 'The unit of measurement for this product (e.g., pieces, boxes)',
+  supplier: 'The supplier who provided this batch (optional)',
+};
 
 interface BatchFormDialogProps {
   open?: boolean;
@@ -70,6 +91,85 @@ interface BatchFormDialogProps {
   suppliers: SupplierWithCount[];
   onSuccess?: () => void;
 }
+
+// Helper function to create label with tooltip (moved outside component)
+const LabelWithTooltip = ({
+  label,
+  tooltipContent,
+}: {
+  label: string;
+  tooltipContent: string;
+}) => (
+  <div className="flex items-center gap-1.5">
+    <span>{label}</span>
+    <TooltipProvider>
+      <Tooltip delayDuration={300}>
+        <TooltipTrigger type="button" className="cursor-help">
+          <IconInfoCircle
+            size={15}
+            className="text-muted-foreground hover:text-foreground transition-colors"
+          />
+        </TooltipTrigger>
+        <TooltipContent sideOffset={5} className="max-w-[260px] text-sm">
+          {tooltipContent}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  </div>
+);
+
+// Reusable FormField component for ComboBox
+const ComboBoxFormField = ({
+  name,
+  label,
+  tooltip,
+  options,
+  control,
+  disabled = false,
+  placeholder,
+  emptyMessage,
+  helperText,
+  transform,
+}: {
+  name: keyof FormValues;
+  label: string;
+  tooltip: string;
+  options: ComboBoxOption[];
+  control: any;
+  disabled?: boolean;
+  placeholder: string;
+  emptyMessage: string;
+  helperText?: string;
+  transform?: (value: string) => string | null;
+}) => (
+  <FormField
+    control={control}
+    name={name}
+    render={({ field }) => (
+      <FormItem>
+        <FormLabel>
+          <LabelWithTooltip label={label} tooltipContent={tooltip} />
+        </FormLabel>
+        <FormControl>
+          <ComboBox
+            options={options}
+            value={field.value || ''}
+            onChange={(value) =>
+              field.onChange(transform ? transform(value) : value)
+            }
+            placeholder={placeholder}
+            disabled={disabled}
+            emptyMessage={emptyMessage}
+          />
+        </FormControl>
+        {helperText && (
+          <p className="text-sm text-muted-foreground">{helperText}</p>
+        )}
+        <FormMessage />
+      </FormItem>
+    )}
+  />
+);
 
 export default function BatchFormDialog({
   open,
@@ -83,53 +183,95 @@ export default function BatchFormDialog({
   const [loading, setLoading] = useState(false);
   const isEditing = Boolean(initialData?.id);
 
+  // Generate a batch code based on the selected product
+  const generateBatchCode = (productId: string) => {
+    if (!productId) return '';
+
+    const product = products.find((p) => p.id === productId);
+    if (!product) return '';
+
+    const prefix = product.name
+      .split(' ')
+      .map((word) => word[0])
+      .join('')
+      .toUpperCase()
+      .substring(0, 3);
+
+    const dateStr = format(new Date(), 'yyyyMMdd');
+    const randomSuffix = Math.floor(Math.random() * 900 + 100);
+
+    return `${prefix}-${dateStr}-${randomSuffix}`;
+  };
+
   // Convert data arrays to ComboBox options
-  const productOptions: ComboBoxOption[] = useMemo(() => {
-    return products.map((product) => ({
-      value: product.id,
-      label: product.name,
-    }));
-  }, [products]);
+  const productOptions = useMemo(
+    () =>
+      products.map((product) => ({
+        value: product.id,
+        label: product.name,
+      })),
+    [products],
+  );
 
-  const unitOptions: ComboBoxOption[] = useMemo(() => {
-    return units.map((unit) => ({
-      value: unit.id,
-      label: `${unit.name} (${unit.symbol})`,
-    }));
-  }, [units]);
+  const unitOptions = useMemo(
+    () =>
+      units.map((unit) => ({
+        value: unit.id,
+        label: `${unit.name} (${unit.symbol})`,
+      })),
+    [units],
+  );
 
-  const supplierOptions: ComboBoxOption[] = useMemo(() => {
-    // Include a "None" option
-    const options: ComboBoxOption[] = [{ value: 'none', label: 'None' }];
-
-    // Add all suppliers
-    suppliers.forEach((supplier) => {
-      options.push({
+  const supplierOptions = useMemo(
+    () => [
+      { value: 'none', label: 'None' },
+      ...suppliers.map((supplier) => ({
         value: supplier.id,
         label: supplier.name,
-      });
-    });
+      })),
+    ],
+    [suppliers],
+  );
 
-    return options;
-  }, [suppliers]);
+  // Default form values
+  const defaultValues = {
+    productId: '',
+    batchCode: '',
+    expiryDate: addMonths(new Date(), 6),
+    initialQuantity: 0,
+    buyPrice: 0,
+    unitId: '',
+    supplierId: null,
+  };
 
   // Initialize the form
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      productId: initialData?.productId || '',
-      batchCode: initialData?.batchCode || '',
-      expiryDate: initialData?.expiryDate
-        ? new Date(initialData.expiryDate)
-        : addMonths(new Date(), 6),
-      initialQuantity: initialData?.initialQuantity || 0,
-      buyPrice: initialData?.buyPrice || 0,
-      unitId: initialData?.unitId || '',
-      supplierId: initialData?.supplierId || null, // Changed to null instead of undefined
-    },
+    defaultValues: initialData
+      ? {
+          productId: initialData.productId || '',
+          batchCode: initialData.batchCode || '',
+          expiryDate: initialData.expiryDate
+            ? new Date(initialData.expiryDate)
+            : addMonths(new Date(), 6),
+          initialQuantity: initialData.initialQuantity || 0,
+          buyPrice: initialData.buyPrice || 0,
+          unitId: initialData.unitId || '',
+          supplierId: initialData.supplierId || null,
+        }
+      : defaultValues,
   });
 
-  // Update form when initialData changes
+  // Regenerate batch code
+  const regenerateBatchCode = () => {
+    const productId = form.getValues('productId');
+    if (productId) {
+      const newBatchCode = generateBatchCode(productId);
+      form.setValue('batchCode', newBatchCode);
+    }
+  };
+
+  // Update form when initialData changes or product changes
   useEffect(() => {
     if (initialData) {
       form.reset({
@@ -141,31 +283,33 @@ export default function BatchFormDialog({
         initialQuantity: initialData.initialQuantity || 0,
         buyPrice: initialData.buyPrice || 0,
         unitId: initialData.unitId || '',
-        supplierId: initialData.supplierId || null, // Changed to null
+        supplierId: initialData.supplierId || null,
       });
     } else {
-      form.reset({
-        productId: '',
-        batchCode: '',
-        expiryDate: addMonths(new Date(), 6),
-        initialQuantity: 0,
-        buyPrice: 0,
-        unitId: '',
-        supplierId: null, // Changed to null
-      });
+      form.reset(defaultValues);
     }
   }, [form, initialData]);
 
-  // Auto-select unit based on product
+  // Handle product selection
   useEffect(() => {
     const productId = form.getValues('productId');
-    if (productId) {
-      const product = products.find((p) => p.id === productId);
-      if (product) {
-        form.setValue('unitId', product.unitId);
-      }
+    if (!productId) return;
+
+    const product = products.find((p) => p.id === productId);
+    if (!product) return;
+
+    // Auto-select unit based on product
+    form.setValue('unitId', product.unitId);
+
+    // Generate batch code for new batches
+    if (
+      !isEditing &&
+      (!form.getValues('batchCode') || form.getValues('batchCode') === '')
+    ) {
+      const newBatchCode = generateBatchCode(productId);
+      form.setValue('batchCode', newBatchCode);
     }
-  }, [form.watch('productId'), products, form]);
+  }, [form.watch('productId'), products, form, isEditing]);
 
   // Handle form submission
   const onSubmit = async (values: FormValues) => {
@@ -242,38 +386,56 @@ export default function BatchFormDialog({
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             {/* Product selection (only for new batches) */}
             {!isEditing && (
-              <FormField
-                control={form.control}
+              <ComboBoxFormField
                 name="productId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Product</FormLabel>
-                    <FormControl>
-                      <ComboBox
-                        options={productOptions}
-                        value={field.value}
-                        onChange={field.onChange}
-                        placeholder="Select a product"
-                        disabled={isEditing}
-                        emptyMessage="No products found"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                label="Product"
+                tooltip={TOOLTIPS.product}
+                options={productOptions}
+                control={form.control}
+                disabled={isEditing}
+                placeholder="Select a product"
+                emptyMessage="No products found"
               />
             )}
 
-            {/* Batch Code */}
+            {/* Batch Code - with automatic generation */}
             <FormField
               control={form.control}
               name="batchCode"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Batch Code</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter batch code" {...field} />
-                  </FormControl>
+                  <FormLabel>
+                    <LabelWithTooltip
+                      label="Batch Code"
+                      tooltipContent={TOOLTIPS.batchCode}
+                    />
+                  </FormLabel>
+                  <div className="flex gap-2">
+                    <FormControl>
+                      <Input
+                        placeholder="Auto-generated batch code"
+                        {...field}
+                        className="flex-grow"
+                      />
+                    </FormControl>
+                    {!isEditing && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={regenerateBatchCode}
+                        className="flex-shrink-0"
+                        title="Generate new batch code"
+                      >
+                        <IconRefresh size={16} />
+                      </Button>
+                    )}
+                  </div>
+                  {!isEditing && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Batch code is auto-generated but can be edited if needed
+                    </p>
+                  )}
                   <FormMessage />
                 </FormItem>
               )}
@@ -285,7 +447,12 @@ export default function BatchFormDialog({
               name="expiryDate"
               render={({ field }) => (
                 <FormItem className="flex flex-col">
-                  <FormLabel>Expiry Date</FormLabel>
+                  <FormLabel>
+                    <LabelWithTooltip
+                      label="Expiry Date"
+                      tooltipContent={TOOLTIPS.expiryDate}
+                    />
+                  </FormLabel>
                   <Popover>
                     <PopoverTrigger asChild>
                       <FormControl>
@@ -314,9 +481,10 @@ export default function BatchFormDialog({
                         mode="single"
                         selected={field.value}
                         onSelect={(date) => {
-                          field.onChange(date);
-                          // Auto-close the popover when a date is selected
-                          document.body.click();
+                          if (date) {
+                            field.onChange(date);
+                            document.body.click(); // Close popover
+                          }
                         }}
                         disabled={(date) => date < new Date()}
                         initialFocus
@@ -336,7 +504,12 @@ export default function BatchFormDialog({
                 name="initialQuantity"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Initial Quantity</FormLabel>
+                    <FormLabel>
+                      <LabelWithTooltip
+                        label="Initial Quantity"
+                        tooltipContent={TOOLTIPS.initialQuantity}
+                      />
+                    </FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -359,7 +532,12 @@ export default function BatchFormDialog({
               name="buyPrice"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Buy Price (IDR)</FormLabel>
+                  <FormLabel>
+                    <LabelWithTooltip
+                      label="Buy Price (IDR)"
+                      tooltipContent={TOOLTIPS.buyPrice}
+                    />
+                  </FormLabel>
                   <FormControl>
                     <Input
                       type="number"
@@ -370,6 +548,9 @@ export default function BatchFormDialog({
                       }
                     />
                   </FormControl>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Total purchase price for the entire batch, not per unit
+                  </p>
                   <FormMessage />
                 </FormItem>
               )}
@@ -377,56 +558,35 @@ export default function BatchFormDialog({
 
             {/* Unit (only for new batches) */}
             {!isEditing && (
-              <FormField
-                control={form.control}
+              <ComboBoxFormField
                 name="unitId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Unit</FormLabel>
-                    <FormControl>
-                      <ComboBox
-                        options={unitOptions}
-                        value={field.value}
-                        onChange={field.onChange}
-                        placeholder="Select a unit"
-                        disabled={isEditing || !!selectedProduct}
-                        emptyMessage="No units found"
-                      />
-                    </FormControl>
-                    {selectedProduct && (
-                      <p className="text-sm text-muted-foreground">
-                        Unit is automatically selected based on the product.
-                      </p>
-                    )}
-                    <FormMessage />
-                  </FormItem>
-                )}
+                label="Unit"
+                tooltip={TOOLTIPS.unit}
+                options={unitOptions}
+                control={form.control}
+                disabled={isEditing || !!selectedProduct}
+                placeholder="Select a unit"
+                emptyMessage="No units found"
+                helperText={
+                  selectedProduct
+                    ? 'Unit is automatically selected based on the product.'
+                    : undefined
+                }
               />
             )}
 
             {/* Supplier (only for new batches) */}
             {!isEditing && (
-              <FormField
-                control={form.control}
+              <ComboBoxFormField
                 name="supplierId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Supplier (optional)</FormLabel>
-                    <FormControl>
-                      <ComboBox
-                        options={supplierOptions}
-                        value={field.value || 'none'}
-                        onChange={(value) =>
-                          field.onChange(value === 'none' ? null : value)
-                        }
-                        placeholder="Select a supplier (optional)"
-                        disabled={isEditing}
-                        emptyMessage="No suppliers found"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                label="Supplier (optional)"
+                tooltip={TOOLTIPS.supplier}
+                options={supplierOptions}
+                control={form.control}
+                disabled={isEditing}
+                placeholder="Select a supplier (optional)"
+                emptyMessage="No suppliers found"
+                transform={(value) => (value === 'none' ? null : value)}
               />
             )}
 
@@ -439,11 +599,13 @@ export default function BatchFormDialog({
                 Cancel
               </Button>
               <Button type="submit" disabled={loading}>
-                {loading ? (
-                  <>{isEditing ? 'Updating...' : 'Creating...'}</>
-                ) : (
-                  <>{isEditing ? 'Update Batch' : 'Create Batch'}</>
-                )}
+                {loading
+                  ? isEditing
+                    ? 'Updating...'
+                    : 'Creating...'
+                  : isEditing
+                  ? 'Update Batch'
+                  : 'Create Batch'}
               </Button>
             </DialogFooter>
           </form>

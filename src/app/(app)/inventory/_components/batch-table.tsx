@@ -45,7 +45,8 @@ import { Input } from '@/components/ui/input';
 import { ProductBatchWithProduct } from '@/lib/types/product-batch';
 import { BatchDeleteDialog } from './batch-delete-dialog';
 import { BatchDetailDialog } from './batch-detail-dialog';
-import { format } from 'date-fns';
+import { formatDate } from '@/lib/date';
+import { formatRupiah } from '@/lib/currency';
 
 interface BatchTableProps {
   data: ProductBatchWithProduct[];
@@ -145,14 +146,13 @@ export function BatchTable({
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-          className="w-full justify-center"
         >
           Batch Code
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       ),
       cell: ({ row }) => (
-        <div className="text-center">{row.getValue('batchCode')}</div>
+        <div className="ml-4">{row.getValue('batchCode')}</div>
       ),
     },
 
@@ -173,9 +173,9 @@ export function BatchTable({
         const expired = isExpired(expiryDate);
 
         return (
-          <div className="flex items-center">
+          <div className="flex ml-4">
             <div className={expired ? 'text-destructive font-medium' : ''}>
-              {format(expiryDate, 'dd MMMM yyyy')}
+              {formatDate(expiryDate)}
             </div>
             {expired && (
               <Badge variant="destructive" className="ml-2">
@@ -194,7 +194,6 @@ export function BatchTable({
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-          className="w-full justify-center"
         >
           Remaining Qty
           <ArrowUpDown className="ml-2 h-4 w-4" />
@@ -202,7 +201,7 @@ export function BatchTable({
       ),
       cell: ({ row }) => {
         const quantity = row.getValue('remainingQuantity') as number;
-        return <div className="text-center">{quantity.toLocaleString()}</div>;
+        return <div className="ml-4">{quantity.toLocaleString()}</div>;
       },
     },
 
@@ -213,22 +212,14 @@ export function BatchTable({
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-          className="w-full justify-center"
         >
           Buy Price
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       ),
       cell: ({ row }) => {
-        const price = row.getValue('buyPrice') as number;
-        // Format price as currency
-        const formatted = new Intl.NumberFormat('id-ID', {
-          style: 'currency',
-          currency: 'IDR',
-          minimumFractionDigits: 0,
-        }).format(price);
-
-        return <div className="text-center font-medium">{formatted}</div>;
+        const buyPrice = row.getValue('buyPrice') as number;
+        return <div className="ml-4 font-medium">{formatRupiah(buyPrice)}</div>;
       },
     },
 
