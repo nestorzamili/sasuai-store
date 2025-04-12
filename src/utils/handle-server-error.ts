@@ -1,11 +1,8 @@
-import { AxiosError } from 'axios'
-import { toast } from '@/hooks/use-toast'
+import { AxiosError } from 'axios';
+import { toast } from '@/hooks/use-toast';
 
 export function handleServerError(error: unknown) {
-  // eslint-disable-next-line no-console
-  console.log(error)
-
-  let errMsg = 'Something went wrong!'
+  let errMsg = 'Something went wrong!';
 
   if (
     error &&
@@ -13,12 +10,12 @@ export function handleServerError(error: unknown) {
     'status' in error &&
     Number(error.status) === 204
   ) {
-    errMsg = 'Content not found.'
+    errMsg = 'Content not found.';
   }
 
   if (error instanceof AxiosError) {
-    errMsg = error.response?.data.title
+    errMsg = error.response?.data.title;
   }
 
-  toast({ variant: 'destructive', title: errMsg })
+  toast({ variant: 'destructive', title: errMsg });
 }

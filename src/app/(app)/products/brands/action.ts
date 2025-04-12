@@ -22,7 +22,6 @@ export async function getAllBrandsWithCount() {
       data: brands,
     };
   } catch (error) {
-    console.error('Failed to fetch brands:', error);
     return {
       success: false,
       error: 'Failed to fetch brands',
@@ -42,7 +41,6 @@ export async function getAllBrands() {
       data: brands,
     };
   } catch (error) {
-    console.error('Failed to fetch brands:', error);
     return {
       success: false,
       error: 'Failed to fetch brands',
@@ -69,7 +67,6 @@ export async function getBrand(id: string) {
       data: brand,
     };
   } catch (error) {
-    console.error(`Failed to fetch brand ${id}:`, error);
     return {
       success: false,
       error: 'Failed to fetch brand',
@@ -98,8 +95,6 @@ export async function createBrand(data: { name: string }) {
       data: brand,
     };
   } catch (error) {
-    console.error('Failed to create brand:', error);
-
     if (error instanceof z.ZodError) {
       return {
         success: false,
@@ -136,8 +131,6 @@ export async function updateBrand(id: string, data: { name?: string }) {
       data: brand,
     };
   } catch (error) {
-    console.error(`Failed to update brand ${id}:`, error);
-
     if (error instanceof z.ZodError) {
       return {
         success: false,
@@ -178,7 +171,6 @@ export async function deleteBrand(id: string) {
       success: true,
     };
   } catch (error) {
-    console.error(`Failed to delete brand ${id}:`, error);
     return {
       success: false,
       error: 'Failed to delete brand',

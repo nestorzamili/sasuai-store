@@ -23,7 +23,6 @@ export async function getAllUnitsWithCounts() {
       data: units,
     };
   } catch (error) {
-    console.error('Failed to fetch units:', error);
     return {
       success: false,
       error: 'Failed to fetch units',
@@ -43,7 +42,6 @@ export async function getAllUnits() {
       data: units,
     };
   } catch (error) {
-    console.error('Failed to fetch units:', error);
     return {
       success: false,
       error: 'Failed to fetch units',
@@ -70,7 +68,6 @@ export async function getUnit(id: string) {
       data: unit,
     };
   } catch (error) {
-    console.error(`Failed to fetch unit ${id}:`, error);
     return {
       success: false,
       error: 'Failed to fetch unit',
@@ -92,16 +89,14 @@ export async function createUnit(data: { name: string; symbol: string }) {
       symbol: validatedData.symbol,
     });
 
-    // Revalidate units page
-    revalidatePath('/units');
+    // Revalidate units path
+    revalidatePath('/products/units');
 
     return {
       success: true,
       data: unit,
     };
   } catch (error) {
-    console.error('Failed to create unit:', error);
-
     if (error instanceof z.ZodError) {
       return {
         success: false,
@@ -134,16 +129,14 @@ export async function updateUnit(
       symbol: validatedData.symbol,
     });
 
-    // Revalidate units page
-    revalidatePath('/units');
+    // Revalidate units path
+    revalidatePath('/products/units');
 
     return {
       success: true,
       data: unit,
     };
   } catch (error) {
-    console.error(`Failed to update unit ${id}:`, error);
-
     if (error instanceof z.ZodError) {
       return {
         success: false,
@@ -170,22 +163,20 @@ export async function deleteUnit(id: string) {
     if (isInUse) {
       return {
         success: false,
-        error:
-          'Cannot delete unit that is in use by products, stock, or transactions',
+        error: 'Cannot delete a unit that is in use by products', // Updated error message
       };
     }
 
     // Delete unit
     await UnitService.delete(id);
 
-    // Revalidate units page
-    revalidatePath('/units');
+    // Revalidate units path
+    revalidatePath('/products/units');
 
     return {
       success: true,
     };
   } catch (error) {
-    console.error(`Failed to delete unit ${id}:`, error);
     return {
       success: false,
       error: 'Failed to delete unit',

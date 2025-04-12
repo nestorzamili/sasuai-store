@@ -1,4 +1,4 @@
-import { Unit } from '@prisma/client';
+import { Unit, UnitConversion } from '@prisma/client';
 
 /**
  * Count metrics for unit relationships
@@ -17,4 +17,12 @@ export interface UnitCount {
  */
 export interface UnitWithCounts extends Unit {
   _count?: UnitCount;
+}
+
+/**
+ * Unit conversion with related units
+ */
+export interface UnitConversionWithUnits extends UnitConversion {
+  fromUnit: Unit;
+  toUnit: Unit;
 }

@@ -24,6 +24,7 @@ import {
 } from '@/components/ui/card';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
+import { AvatarUpload } from './avatar-upload';
 
 const profileFormSchema = z.object({
   name: z
@@ -104,13 +105,40 @@ export default function ProfileForm() {
     setIsUpdating(true);
 
     try {
-      // Update user profile with username
-      await authClient.updateUser({
-        name: data.name,
-        username: data.username,
-        image: data.image,
-      });
+      const hasImageChanged = data.image !== userProfile?.image;
+      const hasNameChanged = data.name !== userProfile?.name;
+      const hasUsernameChanged = data.username !== userProfile?.username;
 
+      // Only update fields that have changed to avoid conflicts
+      const updateData: any = {};
+
+      // Add fields that have changed
+      if (hasNameChanged) updateData.name = data.name;
+      if (hasUsernameChanged && data.username !== '')
+        updateData.username = data.username;
+
+      // Update name and username only if they've changed
+      if (Object.keys(updateData).length > 0) {
+        await authClient.updateUser(updateData);
+      }
+
+      // Handle image separately to avoid username conflicts
+      if (hasImageChanged) {
+        try {
+          await authClient.updateUser({
+            image: data.image || null, // Send null explicitly when removing image
+          });
+        } catch (imageError) {
+          toast({
+            title: 'Profile Updated',
+            description:
+              'Profile updated but there was an issue with the profile picture.',
+            variant: 'default',
+          });
+        }
+      }
+
+      // Handle email change
       if (data.email !== userProfile?.email) {
         await handleEmailChange(data.email);
       } else {
@@ -206,6 +234,11 @@ export default function ProfileForm() {
     }
   };
 
+  const handleImageChange = (imageUrl: string) => {
+    form.setValue('image', imageUrl);
+    form.trigger('image');
+  };
+
   if (isAuthLoading) {
     return (
       <div className="flex justify-center items-center min-h-[200px]">
@@ -215,107 +248,122 @@ export default function ProfileForm() {
   }
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="overflow-hidden">
+      <CardHeader className="bg-muted/50">
         <CardTitle>Profile Information</CardTitle>
         <CardDescription>Update your personal information</CardDescription>
       </CardHeader>
       <CardContent>
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(handleProfileUpdate)}
-            className="space-y-6"
-          >
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="John Doe" {...field} />
-                  </FormControl>
-                  <FormDescription>
-                    Your name as displayed on your profile
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
+        <div className="grid md:grid-cols-[1fr_3fr] gap-8 pt-6">
+          {/* Avatar upload section */}
+          <div className="flex flex-col items-center space-y-4">
+            <AvatarUpload
+              currentImage={userProfile?.image || ''}
+              name={userProfile?.name || ''}
+              onImageChange={handleImageChange}
             />
+            <p className="text-sm text-muted-foreground text-center px-2">
+              Upload a profile picture to personalize your account
+            </p>
+          </div>
 
-            <FormField
-              control={form.control}
-              name="username"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Username</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="johndoe"
-                      {...field}
-                      value={field.value || ''}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Your unique username for signing in
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          {/* Profile form section */}
+          <div>
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(handleProfileUpdate)}
+                className="space-y-6"
+              >
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Full Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="John Doe" {...field} />
+                      </FormControl>
+                      <FormDescription>
+                        Your name as displayed on your profile
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="email"
-                      placeholder="your-email@example.com"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    This is your verified email address
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                <div className="grid md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="username"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Username</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="username"
+                            {...field}
+                            value={field.value || ''}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Your unique username for signing in
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-            <FormField
-              control={form.control}
-              name="image"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Profile Photo URL</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="https://example.com/avatar.jpg"
-                      {...field}
-                      value={field.value || ''}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    URL for your profile photo or avatar
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="email"
+                            placeholder="your-email@example.com"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          This is your verified email address
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
-            <Button
-              type="submit"
-              disabled={
-                isUpdating || !hasFormChanges || !form.formState.isValid
-              }
-            >
-              {isUpdating ? 'Updating...' : 'Update Profile'}
-            </Button>
-          </form>
-        </Form>
+                <FormField
+                  control={form.control}
+                  name="image"
+                  render={({ field }) => (
+                    <FormItem className="hidden">
+                      <Input
+                        type="hidden"
+                        {...field}
+                        value={field.value || ''}
+                      />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="pt-2 flex justify-end">
+                  <Button
+                    type="submit"
+                    disabled={
+                      isUpdating || !hasFormChanges || !form.formState.isValid
+                    }
+                  >
+                    {isUpdating ? 'Updating...' : 'Update Profile'}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </div>
+        </div>
       </CardContent>
     </Card>
   );

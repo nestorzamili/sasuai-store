@@ -6,6 +6,7 @@ import { ProfileDropdown } from '@/components/profile-dropdown';
 import { Search } from '@/components/search';
 import { ThemeSwitch } from '@/components/theme-switch';
 import MainContent from './_components/main-content';
+import { Toaster } from '@/components/ui/toaster';
 
 export default function UnitsPage() {
   return (
@@ -20,6 +21,7 @@ export default function UnitsPage() {
       <Main>
         <MainContent />
       </Main>
+      <Toaster />
     </>
   );
 }
