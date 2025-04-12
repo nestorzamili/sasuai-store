@@ -207,6 +207,7 @@ model DiscountRelation {
   discount    Discount @relation(fields: [discountId], references: [id])
   @@id([discountId, relationId])
   @@map("discount_relation")
+  @@unique([discountId, relationId])
 }
 
 

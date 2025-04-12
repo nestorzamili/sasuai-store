@@ -27,6 +27,7 @@ import { createDiscount, updateDiscount } from '../actions';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { DiscountInterface } from '@/lib/types/discount';
+import { DiscountRelationDialog } from './discount-relation-dialog';
 const formSchema = z
   .object({
     id: z.string().optional(),
@@ -441,11 +442,11 @@ export function DiscountForm({ type, initialValues, id }: FormType) {
                 render={({ field }) => (
                   <FormItem className="mt-4">
                     <FormLabel>Add your relation</FormLabel>
-                    <FormControl className="flex gap-2">
-                      <Button variant={'outline'} type="button">
-                        Open Relation
-                      </Button>
-                    </FormControl>
+                    <DiscountRelationDialog
+                      type={form.watch('discountType')}
+                      actionType="add"
+                    />
+                    {/* <FormControl className="gap-2"></FormControl> */}
                     <FormDescription>
                       Specify which items or members this discount applies to.
                       For product discounts, enter the product ID; for member

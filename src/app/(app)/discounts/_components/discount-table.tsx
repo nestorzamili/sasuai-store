@@ -18,6 +18,8 @@ import { Button } from '@/components/ui/button';
 import { MoreHorizontal } from 'lucide-react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useFetch } from '@/hooks/use-fetch';
+
 const DiscountTypeBagde = (value: string) => {
   if (value === 'member' || value === 'MEMBER') {
     return (
@@ -55,10 +57,10 @@ const Value = ({ valueType, value }: { valueType: string; value: any }) => {
   return <span>{value}</span>;
 };
 export function DiscountTable() {
-  const [data, setData] = React.useState<DiscountInterface[]>([]);
-  const [isLoading, setIsLoading] = React.useState(true);
+  // const [isLoading, setIsLoading] = React.useState(true);
   const [deleteDialog, setDeleteDialog] = useState(false);
   const [deleteData, setDeleteData] = useState<any>(null);
+
   const { push, refresh } = useRouter();
   const handleOnDeleteClick = (data: any) => {
     setDeleteDialog(true);
@@ -214,35 +216,64 @@ export function DiscountTable() {
       },
     },
   ];
-  const getDiscount = async () => {
-    setIsLoading(true);
+  const fetchDiscountData = async () => {
     try {
-      const response = await getAllDiscounts();
+      const response = await getAllDiscounts({
+        page: options.pagination.pageIndex + 1,
+        limit: options.pagination.pageSize,
+        sortBy: options.sortBy,
+      });
       const formattedData = response.data.map((discount: any) => ({
         ...discount,
         type: discount.type || null,
       }));
-      setData(formattedData);
+
+      return {
+        data: formattedData,
+        totalRows: response.meta.rowsCount,
+      };
     } catch (error) {
-      console.error('Failed to fetch discounts:', error);
-    } finally {
-      setIsLoading(false);
+      console.log(error);
     }
+    // Return a default value instead of implicitly returning undefined
+    return {
+      data: [],
+      totalRows: 0,
+    };
+  };
+  const { data, isLoading, options, setPage, setLimit, setSortBy, totalRows } =
+    useFetch({
+      fetchData: fetchDiscountData,
+    });
+  const handlePaginationChange = (newPagination: {
+    pageIndex: number;
+    pageSize: number;
+  }) => {
+    setPage(newPagination.pageIndex);
+    setLimit(newPagination.pageSize);
   };
 
-  React.useEffect(() => {
-    getDiscount();
-  }, []);
+  const handleSortingChange = (newSorting: any) => {
+    setSortBy(newSorting);
+  };
 
   return (
     <div>
-      <TableLayout data={data} columns={columns} isLoading={isLoading} />
+      <TableLayout
+        data={data || []}
+        columns={columns}
+        isLoading={isLoading}
+        pagination={options.pagination}
+        handlePaginationChange={handlePaginationChange}
+        handleSortingChange={handleSortingChange}
+        totalRows={totalRows}
+      />
       {deleteDialog && (
         <DeleteDialog
           isOpen={deleteDialog}
           data={deleteData}
           onClose={() => setDeleteDialog(false)}
-          onRefresh={getDiscount}
+          onRefresh={() => {}}
         />
       )}
     </div>

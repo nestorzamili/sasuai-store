@@ -1,12 +1,17 @@
 'use server';
-import { Discount } from '@/lib/services/discount.services';
-import { DiscountInterface } from '@/lib/types/discount';
-export const getAllDiscounts = async () => {
+import { Discount, DiscountRelation } from '@/lib/services/discount.services';
+import { DiscountRelationInterface } from '@/lib/types/discount';
+import { ProductService } from '@/lib/services/product.service';
+import { MemberService } from '@/lib/services/member.service';
+import { options } from '@/lib/types/table';
+
+export const getAllDiscounts = async (options?: options) => {
   try {
-    const discount = await Discount.getAll();
+    const discount = await Discount.getAll(options);
     return {
       success: true,
-      data: discount,
+      data: discount.data,
+      meta: discount.meta,
     };
   } catch (error) {
     throw error;
@@ -62,5 +67,53 @@ export const deleteDiscount = async (id: string) => {
     };
   } catch (error) {
     throw error;
+  }
+};
+export const createDiscountRelation = async (
+  data: DiscountRelationInterface
+) => {
+  try {
+    const discountRelation = await DiscountRelation.create(data);
+    return {
+      success: true,
+      data: discountRelation,
+    };
+  } catch (error) {
+    throw error;
+  }
+};
+export const getDiscountRelationByDiscountId = async (discountId: string) => {
+  try {
+    const discountRelation = await DiscountRelation.getByDiscountId(discountId);
+    return {
+      success: true,
+      data: discountRelation,
+    };
+  } catch (error) {
+    throw error;
+  }
+};
+export const deleteDiscountRelation = async (id: string) => {};
+export const getRelation = async ({ type }: { type: string }) => {
+  if (type === 'product') {
+    try {
+      const products = await ProductService.getAll();
+      return {
+        success: true,
+        data: products,
+      };
+    } catch (error) {
+      console.error('Error fetching products:', error);
+    }
+  } else {
+    try {
+      const members = await MemberService.getAll();
+      return {
+        success: true,
+        data: members,
+      };
+    } catch (error) {
+      console.error('Error fetching members:', error);
+    }
   }
 };

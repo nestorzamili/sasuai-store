@@ -4,7 +4,6 @@ import { DiscountTable } from './discount-table';
 import { Button } from '@/components/ui/button';
 import { IconPlus } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
-
 export default function DiscountsMainContent() {
   const router = useRouter();
 
