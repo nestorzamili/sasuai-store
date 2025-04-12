@@ -136,7 +136,6 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
         });
       }
     } catch (err) {
-      console.error('Registration error:', err);
       setAuthState({
         message: 'An unexpected error occurred. Please try again.',
         isSuccess: false,

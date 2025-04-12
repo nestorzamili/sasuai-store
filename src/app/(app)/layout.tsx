@@ -1,7 +1,6 @@
 import Cookies from 'js-cookie';
 import { SearchProvider } from '@/context/search-context';
 import { SidebarProvider } from '@/components/ui/sidebar';
-import SkipToMain from '@/components/skip-to-main';
 import { AppSidebar } from '@/components/layout/app-sidebar';
 import { cn } from '@/lib/utils';
 import { StrictMode } from 'react';
@@ -27,7 +26,6 @@ export default async function AppLayout({
         <AuthProvider>
           <SearchProvider>
             <SidebarProvider defaultOpen={defaultOpen}>
-              <SkipToMain />
               <AppSidebar />
               <div
                 id="content"

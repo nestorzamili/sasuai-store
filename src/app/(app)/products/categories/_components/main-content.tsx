@@ -18,12 +18,10 @@ export default function MainContent() {
     try {
       const { data, success } = await getAllCategoriesWithCount();
       if (success) {
-        // Cast the data to the correct type
         const categoryData = (data as CategoryWithCount[]) || [];
         setCategories(categoryData);
       }
     } catch (error) {
-      console.error('Error fetching categories:', error);
     } finally {
       setIsLoading(false);
     }
@@ -32,6 +30,14 @@ export default function MainContent() {
   useEffect(() => {
     fetchCategories();
   }, []);
+
+  // Handle dialog reset on close
+  const handleDialogOpenChange = (open: boolean) => {
+    setIsDialogOpen(open);
+    if (!open) {
+      setSelectedCategory(null);
+    }
+  };
 
   // Handle edit category
   const handleEdit = (category: CategoryWithCount) => {
@@ -59,7 +65,7 @@ export default function MainContent() {
         </div>
         <CategoryPrimaryButton
           open={isDialogOpen}
-          onOpenChange={setIsDialogOpen}
+          onOpenChange={handleDialogOpenChange}
           initialData={selectedCategory || undefined}
           onSuccess={handleSuccess}
         />

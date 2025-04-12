@@ -110,7 +110,6 @@ export default function UnitFormDialog({
         });
       }
     } catch (error) {
-      console.error('Error submitting form:', error);
       toast({
         title: 'Error',
         description: 'An unexpected error occurred',

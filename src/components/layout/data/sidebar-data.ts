@@ -43,8 +43,8 @@ export const sidebarData: SidebarData = {
           icon: IconLayoutDashboard,
         },
         {
-          title: 'Orders',
-          url: '/orders',
+          title: 'Transactions',
+          url: '/transactions',
           icon: IconShoppingCart,
         },
         {
@@ -73,8 +73,8 @@ export const sidebarData: SidebarData = {
           icon: IconCategory,
         },
         {
-          title: 'Stock',
-          url: '/products/stock',
+          title: 'Inventory',
+          url: '/inventory',
           icon: IconPackage,
         },
         {
@@ -114,7 +114,7 @@ export const sidebarData: SidebarData = {
         },
         {
           title: 'Reward',
-          url: '/members/reward',
+          url: '/rewards',
           icon: IconGift,
         },
       ],

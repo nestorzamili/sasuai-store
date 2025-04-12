@@ -16,7 +16,6 @@ export const auth = betterAuth({
   }),
 
   plugins: [
-    nextCookies(),
     admin(),
     openAPI(),
     username({
@@ -29,6 +28,7 @@ export const auth = betterAuth({
         return true;
       },
     }),
+    nextCookies(),
   ],
 
   session: {
@@ -49,7 +49,6 @@ export const auth = betterAuth({
           html: getPasswordResetEmailTemplate(url, user.name),
         });
       } catch (error) {
-        console.error('Error sending password reset email:', error);
         throw error;
       }
     },
@@ -66,7 +65,6 @@ export const auth = betterAuth({
           html: getVerificationEmailTemplate(url, user.name),
         });
       } catch (error) {
-        console.error('Error sending verification email:', error);
         throw error;
       }
     },
@@ -86,10 +84,16 @@ export const auth = betterAuth({
             html: getEmailChangeTemplate(url, user.name, newEmail),
           });
         } catch (error) {
-          console.error('Error sending email change verification:', error);
           throw error;
         }
       },
+    },
+  },
+
+  advanced: {
+    ipAddress: {
+      ipAddressHeaders: ['x-client-ip', 'x-forwarded-for'],
+      disableIpTracking: false,
     },
   },
 });
