@@ -16,3 +16,12 @@ export interface DiscountInterface {
   createdAt?: Date;
   updatedAt?: Date;
 }
+export interface DiscountRelationInterface {
+  relationId: string;
+  discountId: string;
+}
+export interface DiscountRelationGetDataInterface {
+  id: string;
+  name: string;
+  category: string;
+}

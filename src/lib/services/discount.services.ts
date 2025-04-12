@@ -1,12 +1,25 @@
 import prisma from '@/lib/prisma';
+import { buildQueryOptions } from '../common/query-options';
+import { options } from '@/lib/types/table';
 export const Discount = {
-  async getAll() {
+  async getAll(queryOptions?: options) {
+    const options = buildQueryOptions(queryOptions);
+    console.log(options, 'options');
     const discounts = await prisma.discount.findMany({
       include: {
         discountRelations: true,
       },
+      ...options,
     });
-    return discounts;
+
+    const count = await prisma.discount.count();
+    return {
+      data: discounts,
+      meta: {
+        ...options,
+        rowsCount: count,
+      },
+    };
   },
 
   async getById(id: string) {
@@ -44,6 +57,22 @@ export const Discount = {
   async delete(id: string) {
     return await prisma.discount.delete({
       where: { id },
+    });
+  },
+};
+export const DiscountRelation = {
+  async getAll() {
+    return await prisma.discountRelation.findMany();
+  },
+  async create(data: any) {
+    return await prisma.discountRelation.create({
+      data,
+    });
+  },
+
+  async getByDiscountId(discountId: string) {
+    return await prisma.discountRelation.findMany({
+      where: { discountId },
     });
   },
 };
