@@ -13,20 +13,22 @@ import { IconPlus, IconEdit } from '@tabler/icons-react';
 import { ProductTable } from '../../products/_components/product-table';
 import { useEffect } from 'react';
 import { DiscountProductRelation } from './discount-product-relation';
+
 interface DiscountRelationDialogProps {
-  type: 'member' | 'product';
-  actionType: 'add' | 'edit' | 'delete';
+  type?: 'member' | 'product';
+  actionType?: 'add' | 'edit' | 'delete';
 }
+
 export const DiscountRelationDialog = ({
-  type,
-  actionType,
+  type = 'product',
+  actionType = 'add',
 }: DiscountRelationDialogProps) => {
   return (
     <Dialog>
       <DialogTrigger asChild className="w-full">
         <Button variant="outline">
-          Open Relation
-          <IconPlus />
+          {actionType === 'add' ? 'Add' : 'Edit'} Relation
+          {actionType === 'add' ? <IconPlus /> : <IconEdit />}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-screen">
