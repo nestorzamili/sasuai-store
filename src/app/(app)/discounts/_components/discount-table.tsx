@@ -124,6 +124,7 @@ export function DiscountTable() {
 
   const handleSortingChange = (newSorting: any) => {
     setSortBy(newSorting);
+    console.log(newSorting);
   };
 
   const handleSearchChange = (search: string) => {
