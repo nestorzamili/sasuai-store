@@ -124,12 +124,16 @@ export function useFetch<T>(fetchOptions: FetchOptions<T>) {
   const setSortBy = useCallback((newSortBy: SortByOptions[]) => {
     if (!newSortBy?.length) return;
 
+    // Create a local variable for the new sort values
+    const newSort = {
+      id: newSortBy[0]?.id || 'id',
+      desc: newSortBy[0]?.desc || false,
+    };
+
+    // Update state with the new sort values
     setOptions((prev) => ({
       ...prev,
-      sortBy: {
-        id: newSortBy[0]?.id || prev.sortBy.id,
-        desc: newSortBy[0]?.desc || prev.sortBy.desc,
-      },
+      sortBy: newSort,
     }));
   }, []);
 

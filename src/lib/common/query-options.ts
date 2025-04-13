@@ -4,7 +4,7 @@ export function buildQueryOptions(options?: options) {
   const {
     limit = 10,
     page = 1,
-    sortBy = { id: 'id', desc: false },
+    sortBy = { id: 'id', desc: true },
     columnFilter = ['id'],
     search = '',
   } = options ?? {};
@@ -15,7 +15,6 @@ export function buildQueryOptions(options?: options) {
 
   // Sorting
   const orderBy = { [sortBy.id]: sortBy.desc ? 'desc' : 'asc' };
-
   // Search filtering
   const where = search
     ? {

@@ -28,7 +28,6 @@ interface TableProps {
   columns: ColumnDef<any>[];
   isLoading?: boolean;
   columnFilters?: ColumnFiltersState;
-  sorting?: SortingState;
   pagination?: PaginationState;
   setColumnFilters?: (columnFilters: ColumnFiltersState) => void;
   handlePaginationChange?: (pagination: PaginationState) => void;
@@ -42,7 +41,6 @@ export function TableLayout({
   columns,
   isLoading = false,
   pagination,
-  sorting,
   columnFilters,
   handleSearchChange,
   handlePaginationChange,
@@ -51,6 +49,7 @@ export function TableLayout({
   totalRows = 1,
 }: TableProps) {
   const [searchValue, setSearchValue] = useState<string>('');
+  const [sorting, setSorting] = useState<SortingState>([]);
   const searchTimeout = useRef<NodeJS.Timeout | null>(null);
 
   // Use a ref to prevent the effect from running on initial render
@@ -107,6 +106,31 @@ export function TableLayout({
       if (handleSortingChange) {
         const newSorting =
           typeof updater === 'function' ? updater(sorting || []) : updater;
+
+        // Check if we're toggling the same column
+        if (sorting.length > 0 && newSorting.length > 0) {
+          const currentSort = sorting[0];
+          const newSort = newSorting[0];
+
+          // If same column, toggle between asc, desc, and none
+          if (currentSort.id === newSort.id) {
+            // If currently ascending, switch to descending
+            if (currentSort.desc === false) {
+              setSorting([{ id: currentSort.id, desc: true }]);
+              handleSortingChange([{ id: currentSort.id, desc: true }]);
+              return;
+            }
+            // If currently descending, remove sorting
+            else if (currentSort.desc === true) {
+              setSorting([]);
+              handleSortingChange([]);
+              return;
+            }
+          }
+        }
+
+        // Set the new sorting (for new column or initial sort)
+        setSorting(newSorting);
         handleSortingChange(newSorting);
       }
     },
