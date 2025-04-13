@@ -4,13 +4,14 @@ import { options } from '@/lib/types/table';
 export const Discount = {
   async getAll(queryOptions?: options) {
     const options = buildQueryOptions(queryOptions);
-    console.log(options, 'options');
     const discounts = await prisma.discount.findMany({
       include: {
         discountRelations: true,
       },
       ...options,
     });
+    console.log('Query options:', options);
+    console.log('Query options:', options.where?.OR);
 
     const count = await prisma.discount.count();
     return {

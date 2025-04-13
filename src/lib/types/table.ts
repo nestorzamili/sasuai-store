@@ -7,6 +7,7 @@ export interface options {
     desc: boolean;
   };
   sortOrder?: string;
+  columnFilter?: string[];
   setLimit?: (limit: number) => void;
   setPage?: (page: number) => void;
   setSearch?: (search: string) => void;

@@ -4,7 +4,6 @@ import { getAllDiscounts } from '../actions';
 import * as React from 'react';
 import { ColumnDef } from '@tanstack/react-table';
 import { DeleteDialog } from './discount-delete-dialog';
-
 import { SortingButtonTable } from '@/components/addon-table-component';
 import { Badge } from '@/components/ui/badge';
 import { IconEdit, IconTrash } from '@tabler/icons-react';
@@ -56,16 +55,86 @@ const Value = ({ valueType, value }: { valueType: string; value: any }) => {
   }
   return <span>{value}</span>;
 };
+
 export function DiscountTable() {
-  // const [isLoading, setIsLoading] = React.useState(true);
   const [deleteDialog, setDeleteDialog] = useState(false);
   const [deleteData, setDeleteData] = useState<any>(null);
+  const [searchValue, setSearchValue] = useState<string>('');
 
-  const { push, refresh } = useRouter();
+  const { push, refresh: refreshRoute } = useRouter();
+
   const handleOnDeleteClick = (data: any) => {
     setDeleteDialog(true);
     setDeleteData(data);
   };
+
+  const fetchDiscountData = async (options: any) => {
+    try {
+      const response = await getAllDiscounts({
+        page: options.page + 1,
+        limit: options.limit,
+        sortBy: options.sortBy,
+        search: options.search,
+        columnFilter: ['name', 'valueType'],
+      });
+
+      const formattedData = response.data.map((discount: any) => ({
+        ...discount,
+        type: discount.type || null,
+      }));
+
+      return {
+        data: formattedData,
+        totalRows: response.meta.rowsCount,
+      };
+    } catch (error) {
+      console.log(error);
+      return {
+        data: [],
+        totalRows: 0,
+      };
+    }
+  };
+
+  const {
+    data,
+    isLoading,
+    options,
+    setPage,
+    setLimit,
+    setSortBy,
+    setSearch,
+    totalRows,
+    refresh,
+  } = useFetch({
+    fetchData: fetchDiscountData,
+    initialPageIndex: 0,
+    initialPageSize: 10,
+    initialSortField: 'id',
+    initialSortDirection: false,
+  });
+
+  const handlePaginationChange = (newPagination: {
+    pageIndex: number;
+    pageSize: number;
+  }) => {
+    setPage(newPagination.pageIndex);
+    setLimit(newPagination.pageSize);
+  };
+
+  const handleSortingChange = (newSorting: any) => {
+    setSortBy(newSorting);
+  };
+
+  const handleSearchChange = (search: string) => {
+    setSearchValue(search);
+    setSearch(search);
+  };
+
+  const handleRefreshAfterDelete = () => {
+    refresh();
+  };
+
   const columns: ColumnDef<DiscountInterface>[] = [
     { header: 'ID', accessorKey: 'id' },
     {
@@ -192,7 +261,7 @@ export function DiscountTable() {
                   className="flex justify-between cursor-pointer"
                   onClick={() => {
                     push(`/discounts/${discount.id}/update`);
-                    refresh();
+                    refreshRoute();
                   }}
                 >
                   Edit <IconEdit className="h-4 w-4" />
@@ -216,46 +285,6 @@ export function DiscountTable() {
       },
     },
   ];
-  const fetchDiscountData = async () => {
-    try {
-      const response = await getAllDiscounts({
-        page: options.pagination.pageIndex + 1,
-        limit: options.pagination.pageSize,
-        sortBy: options.sortBy,
-      });
-      const formattedData = response.data.map((discount: any) => ({
-        ...discount,
-        type: discount.type || null,
-      }));
-
-      return {
-        data: formattedData,
-        totalRows: response.meta.rowsCount,
-      };
-    } catch (error) {
-      console.log(error);
-    }
-    // Return a default value instead of implicitly returning undefined
-    return {
-      data: [],
-      totalRows: 0,
-    };
-  };
-  const { data, isLoading, options, setPage, setLimit, setSortBy, totalRows } =
-    useFetch({
-      fetchData: fetchDiscountData,
-    });
-  const handlePaginationChange = (newPagination: {
-    pageIndex: number;
-    pageSize: number;
-  }) => {
-    setPage(newPagination.pageIndex);
-    setLimit(newPagination.pageSize);
-  };
-
-  const handleSortingChange = (newSorting: any) => {
-    setSortBy(newSorting);
-  };
 
   return (
     <div>
@@ -266,6 +295,7 @@ export function DiscountTable() {
         pagination={options.pagination}
         handlePaginationChange={handlePaginationChange}
         handleSortingChange={handleSortingChange}
+        handleSearchChange={handleSearchChange}
         totalRows={totalRows}
       />
       {deleteDialog && (
@@ -273,7 +303,7 @@ export function DiscountTable() {
           isOpen={deleteDialog}
           data={deleteData}
           onClose={() => setDeleteDialog(false)}
-          onRefresh={() => {}}
+          onRefresh={handleRefreshAfterDelete}
         />
       )}
     </div>
