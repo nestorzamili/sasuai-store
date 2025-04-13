@@ -15,18 +15,37 @@ export function buildQueryOptions(options?: options) {
 
   // Sorting
   const orderBy = { [sortBy.id]: sortBy.desc ? 'desc' : 'asc' };
-  // Search filtering
+
+  // Search filtering with support for relations
   const where = search
     ? {
-        OR: columnFilter.map((id) => ({
-          [id]: {
-            contains: search,
-            mode: 'insensitive',
-          },
-        })),
+        OR: columnFilter.map((column) => {
+          // Check if it's a relation field (contains dots)
+          if (column.includes('.')) {
+            const parts = column.split('.');
+            const relation = parts[0];
+            const field = parts[1];
+
+            return {
+              [relation]: {
+                [field]: {
+                  contains: search,
+                  mode: 'insensitive',
+                },
+              },
+            };
+          }
+
+          // Regular field (no relation)
+          return {
+            [column]: {
+              contains: search,
+              mode: 'insensitive',
+            },
+          };
+        }),
       }
     : undefined;
-
   // Return query options
   return {
     ...(where && { where }),
