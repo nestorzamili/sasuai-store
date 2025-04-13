@@ -8,20 +8,30 @@ export function buildQueryOptions(options?: options) {
       id: 'id',
       desc: false,
     },
+    columnFilter = ['id'],
     search,
   } = options || {};
   const skip = (page - 1) * limit;
   const take = limit;
-  // Build orderBy object if sortBy is provided
-  // const orderBy = sortBy ? { [sortBy]: sortOrder } : undefined;
+
   const orderBy = {
     [sortBy.id]: sortBy.desc ? 'desc' : 'asc',
   };
   // Build where clause if search is provided
-  const where = [];
+  let where = undefined;
+  if (search && search !== '') {
+    where = columnFilter.map((id) => {
+      return {
+        [id]: {
+          contains: search,
+          mode: 'insensitive',
+        },
+      };
+    });
+  }
 
   return {
-    // where,
+    ...(where && { where: { OR: where } }),
     orderBy,
     skip,
     take,

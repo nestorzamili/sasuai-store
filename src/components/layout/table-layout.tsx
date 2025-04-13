@@ -5,11 +5,8 @@ import {
   ColumnFiltersState,
   PaginationState,
   SortingState,
-  VisibilityState,
   flexRender,
   getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table';
@@ -24,6 +21,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { useState, useEffect, useRef } from 'react';
 
 interface TableProps {
   data: any[];
@@ -35,6 +33,7 @@ interface TableProps {
   setColumnFilters?: (columnFilters: ColumnFiltersState) => void;
   handlePaginationChange?: (pagination: PaginationState) => void;
   handleSortingChange?: (sorting: SortingState) => void;
+  handleSearchChange?: (search: string) => void;
   totalRows?: number;
 }
 
@@ -45,15 +44,51 @@ export function TableLayout({
   pagination,
   sorting,
   columnFilters,
+  handleSearchChange,
   handlePaginationChange,
   handleSortingChange,
   setColumnFilters,
   totalRows = 1,
 }: TableProps) {
+  const [searchValue, setSearchValue] = useState<string>('');
+  const searchTimeout = useRef<NodeJS.Timeout | null>(null);
+
+  // Use a ref to prevent the effect from running on initial render
+  const isInitialMount = useRef(true);
+
+  // Handle search input changes with debounce
+  useEffect(() => {
+    // Skip the first render
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+
+    if (!handleSearchChange) return;
+
+    // Clear any existing timeout
+    if (searchTimeout.current) {
+      clearTimeout(searchTimeout.current);
+    }
+
+    // Set a new timeout for debouncing
+    searchTimeout.current = setTimeout(() => {
+      handleSearchChange(searchValue);
+    }, 500);
+
+    // Cleanup function
+    return () => {
+      if (searchTimeout.current) {
+        clearTimeout(searchTimeout.current);
+      }
+    };
+  }, [searchValue]);
+
   const table = useReactTable({
     data,
     columns,
     rowCount: totalRows,
+    // Enable manual control when handlers are provided
     manualSorting: Boolean(handleSortingChange),
     manualPagination: Boolean(handlePaginationChange),
     manualFiltering: Boolean(setColumnFilters),
@@ -95,17 +130,15 @@ export function TableLayout({
       columnFilters: columnFilters || [],
     },
   });
+
   return (
     <div className="w-full">
       <div className="flex items-center py-4">
         <Input
-          placeholder="Filter by name..."
-          value={(table.getColumn('name')?.getFilterValue() as string) ?? ''}
-          onChange={(event) => {
-            table.getColumn('name')?.setFilterValue(event.target.value);
-          }}
+          placeholder="Search..."
+          value={searchValue}
+          onChange={(e) => setSearchValue(e.target.value)}
           className="max-w-sm"
-          disabled={isLoading}
         />
       </div>
       <div className="rounded-md border">
@@ -128,6 +161,7 @@ export function TableLayout({
           </TableHeader>
           <TableBody>
             {isLoading ? (
+              // Loading skeleton
               Array(5)
                 .fill(0)
                 .map((_, rowIndex) => (
@@ -140,6 +174,7 @@ export function TableLayout({
                   </TableRow>
                 ))
             ) : table.getRowModel().rows?.length ? (
+              // Table data rows
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
@@ -156,6 +191,7 @@ export function TableLayout({
                 </TableRow>
               ))
             ) : (
+              // Empty state
               <TableRow className="hover:bg-transparent">
                 <TableCell
                   colSpan={columns.length}
