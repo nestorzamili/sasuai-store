@@ -24,19 +24,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-
-// Mock action to create unit
-const createUnit = async (data: { name: string; symbol: string }) => {
-  // Return a mock successful response
-  return {
-    success: true,
-    data: {
-      id: `temp-${new Date().getTime()}`,
-      name: data.name,
-      symbol: data.symbol,
-    },
-  };
-};
+import { createUnit } from '../../units/action';
 
 const formSchema = z.object({
   name: z.string().min(1, 'Unit name is required'),
@@ -49,7 +37,7 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 export function CreateUnitDialog() {
-  const { openUnitCreate, setOpenUnitCreate } = useProductForm();
+  const { openUnitCreate, setOpenUnitCreate, fetchUnits } = useProductForm();
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
@@ -73,10 +61,13 @@ export function CreateUnitDialog() {
         });
         form.reset();
         setOpenUnitCreate(false);
+
+        // Fetch updated units list
+        await fetchUnits();
       } else {
         toast({
           title: 'Error',
-          description: 'Failed to create unit',
+          description: result.error || 'Failed to create unit',
           variant: 'destructive',
         });
       }
