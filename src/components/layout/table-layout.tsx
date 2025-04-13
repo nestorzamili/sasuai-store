@@ -10,7 +10,8 @@ import {
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-
+import { Loader2 } from 'lucide-react';
+import { ArrowUp, ArrowDown } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { DataTablePagination } from '@/components/ui/data-table-pagination';
 import {
@@ -49,6 +50,7 @@ export function TableLayout({
   totalRows = 1,
 }: TableProps) {
   const [searchValue, setSearchValue] = useState<string>('');
+  const [isSearching, setIsSearching] = useState<boolean>(false);
   const [sorting, setSorting] = useState<SortingState>([]);
   const searchTimeout = useRef<NodeJS.Timeout | null>(null);
 
@@ -70,9 +72,13 @@ export function TableLayout({
       clearTimeout(searchTimeout.current);
     }
 
+    // Show the loading indicator
+    setIsSearching(true);
+
     // Set a new timeout for debouncing
     searchTimeout.current = setTimeout(() => {
       handleSearchChange(searchValue);
+      setIsSearching(false);
     }, 500);
 
     // Cleanup function
@@ -155,15 +161,52 @@ export function TableLayout({
     },
   });
 
+  const SortingButtonTable = ({
+    column,
+    label,
+  }: {
+    column: any;
+    label: string;
+  }) => {
+    const handleClick = () => {
+      column.toggleSorting(column.getIsSorted() === 'asc');
+    };
+
+    return (
+      <button
+        onClick={handleClick}
+        disabled={isLoading}
+        className="group flex items-center justify-between text-left text-xs font-bold uppercase tracking-wide text-muted-foreground hover:text-foreground transition-colors"
+      >
+        <span>{label}</span>
+        <div className="flex items-center">
+          {column.getIsSorted() === 'asc' ? (
+            <ArrowUp className="h-3.5 w-3.5" />
+          ) : column.getIsSorted() === 'desc' ? (
+            <ArrowDown className="h-3.5 w-3.5" />
+          ) : (
+            <div className="h-3.5 w-3.5 opacity-0 group-hover:opacity-40"></div>
+          )}
+        </div>
+      </button>
+    );
+  };
   return (
     <div className="w-full">
       <div className="flex items-center py-4">
-        <Input
-          placeholder="Search..."
-          value={searchValue}
-          onChange={(e) => setSearchValue(e.target.value)}
-          className="max-w-sm"
-        />
+        <div className="relative max-w-sm w-full">
+          <Input
+            placeholder="Search..."
+            value={searchValue}
+            onChange={(e) => setSearchValue(e.target.value)}
+            className="w-full pr-8"
+          />
+          {isSearching && (
+            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            </div>
+          )}
+        </div>
       </div>
       <div className="rounded-md border">
         <Table>
@@ -172,38 +215,41 @@ export function TableLayout({
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
                   <TableHead key={header.id}>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
+                    <SortingButtonTable
+                      label={
+                        header.isPlaceholder
+                          ? ''
+                          : (flexRender(
+                              header.column.columnDef.header,
+                              header.getContext()
+                            ) as string)
+                      }
+                      column={header.column}
+                    />
                   </TableHead>
                 ))}
               </TableRow>
             ))}
           </TableHeader>
-          <TableBody>
+          <TableBody className="text-xs">
             {isLoading ? (
-              // Loading skeleton
-              Array(5)
-                .fill(0)
-                .map((_, rowIndex) => (
-                  <TableRow key={`skeleton-row-${rowIndex}`}>
-                    {columns.map((_, cellIndex) => (
-                      <TableCell key={`skeleton-cell-${rowIndex}-${cellIndex}`}>
-                        <div className="h-6 w-full animate-pulse rounded bg-muted"></div>
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
-            ) : table.getRowModel().rows?.length ? (
-              // Table data rows
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && 'selected'}
+              // Loading state
+              <TableRow className="hover:bg-transparent">
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-32 text-center"
                 >
+                  <div className="flex flex-col items-center justify-center gap-2 py-4">
+                    <Loader2 className="h-8 w-8 animate-spin" />
+                    <p className="text-sm text-muted-foreground">
+                      Loading data...
+                    </p>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : table.getRowModel().rows.length ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow key={row.id}>
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
                       {flexRender(

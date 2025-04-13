@@ -37,7 +37,7 @@ const DiscountTypeBagde = (value: string) => {
 const isActive = (value: string) => {
   if (value) {
     return (
-      <Badge className="cursor-pointer bg-green-500 text-white uppercase">
+      <Badge className="cursor-pointer bg-green-300 text-white uppercase hover:bg-green-500">
         Active
       </Badge>
     );
@@ -124,7 +124,6 @@ export function DiscountTable() {
 
   const handleSortingChange = (newSorting: any) => {
     setSortBy(newSorting);
-    console.log(newSorting);
   };
 
   const handleSearchChange = (search: string) => {
@@ -139,9 +138,7 @@ export function DiscountTable() {
   const columns: ColumnDef<DiscountInterface>[] = [
     { header: 'ID', accessorKey: 'id' },
     {
-      header: ({ column }) => {
-        return <SortingButtonTable column={column} label={'Discount Name'} />;
-      },
+      header: 'Name',
       cell: ({ row }) => (
         <div className="font-medium">{row.getValue('name')}</div>
       ),
@@ -150,27 +147,21 @@ export function DiscountTable() {
       enableColumnFilter: true,
     },
     {
-      header: ({ column }) => {
-        return <SortingButtonTable column={column} label={'Discount Type'} />;
-      },
+      header: 'Type',
       accessorKey: 'discountType',
       cell: ({ row }) => {
         return DiscountTypeBagde(row.getValue('discountType'));
       },
     },
     {
-      header: ({ column }) => {
-        return <SortingButtonTable column={column} label={'Value Type'} />;
-      },
+      header: 'valueType',
       accessorKey: 'valueType',
       cell: ({ row }) => {
         return <span className="uppercase">{row.getValue('valueType')}</span>;
       },
     },
     {
-      header: ({ column }) => {
-        return <SortingButtonTable column={column} label={'Value'} />;
-      },
+      header: 'Value',
       accessorKey: 'value',
       cell: ({ row }) => {
         return (
@@ -182,9 +173,7 @@ export function DiscountTable() {
       },
     },
     {
-      header: ({ column }) => {
-        return <SortingButtonTable column={column} label={'Relation'} />;
-      },
+      header: 'Discount Relations',
       accessorKey: 'discountRelations',
       cell: ({ row }) => {
         const relations = row.getValue('discountRelations');
@@ -197,18 +186,14 @@ export function DiscountTable() {
       },
     },
     {
-      header: ({ column }) => {
-        return <SortingButtonTable column={column} label={'Start Date'} />;
-      },
+      header: 'Start Date',
       accessorKey: 'startDate',
       cell: ({ row }) => {
         return new Date(row.getValue('startDate')).toLocaleDateString('Id-ID');
       },
     },
     {
-      header: ({ column }) => {
-        return <span className="">Days Left</span>;
-      },
+      header: 'Days Left',
       accessorKey: 'daysLeft',
       cell: ({ row }) => {
         let endDate = new Date(row.getValue('endDate'));
@@ -226,9 +211,7 @@ export function DiscountTable() {
       },
     },
     {
-      header: ({ column }) => {
-        return <SortingButtonTable column={column} label={'Status'} />;
-      },
+      header: 'Status',
       accessorKey: 'isActive',
       cell: ({ row }) => {
         return isActive(row.getValue('isActive'));
@@ -236,9 +219,7 @@ export function DiscountTable() {
     },
 
     {
-      header: ({ column }) => {
-        return <SortingButtonTable column={column} label={'End Date'} />;
-      },
+      header: 'End Date',
       accessorKey: 'endDate',
       cell: ({ row }) => {
         return new Date(row.getValue('endDate')).toLocaleDateString('Id-ID');
