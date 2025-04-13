@@ -75,7 +75,7 @@ export function DiscountTable() {
         limit: options.limit,
         sortBy: options.sortBy,
         search: options.search,
-        columnFilter: ['name', 'valueType'],
+        columnFilter: ['name', 'valueType', 'discountType'],
       });
 
       const formattedData = response.data.map((discount: any) => ({
@@ -279,6 +279,7 @@ export function DiscountTable() {
         handleSortingChange={handleSortingChange}
         handleSearchChange={handleSearchChange}
         totalRows={totalRows}
+        enableSelection={true}
       />
       {deleteDialog && (
         <DeleteDialog
