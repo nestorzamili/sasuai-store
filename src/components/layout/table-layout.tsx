@@ -23,6 +23,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useState, useEffect, useRef } from 'react';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface TableProps {
   data: any[];
@@ -30,11 +31,14 @@ interface TableProps {
   isLoading?: boolean;
   columnFilters?: ColumnFiltersState;
   pagination?: PaginationState;
+  enableSelection?: boolean | false;
   setColumnFilters?: (columnFilters: ColumnFiltersState) => void;
   handlePaginationChange?: (pagination: PaginationState) => void;
   handleSortingChange?: (sorting: SortingState) => void;
   handleSearchChange?: (search: string) => void;
   totalRows?: number;
+  uniqueIdField?: string; // Add this to identify which field to use as the unique ID
+  onSelectionChange?: (selectedIds: Record<string, boolean>) => void; // Add this to handle selection changes
 }
 
 export function TableLayout({
@@ -43,23 +47,26 @@ export function TableLayout({
   isLoading = false,
   pagination,
   columnFilters,
+  enableSelection = false,
   handleSearchChange,
   handlePaginationChange,
   handleSortingChange,
   setColumnFilters,
   totalRows = 1,
+  uniqueIdField = 'id', // Default to 'id' if not provided
+  onSelectionChange,
 }: TableProps) {
   const [searchValue, setSearchValue] = useState<string>('');
   const [isSearching, setIsSearching] = useState<boolean>(false);
   const [sorting, setSorting] = useState<SortingState>([]);
+  const [rowSelection, setRowSelection] = React.useState<
+    Record<string, boolean>
+  >({});
   const searchTimeout = useRef<NodeJS.Timeout | null>(null);
 
-  // Use a ref to prevent the effect from running on initial render
   const isInitialMount = useRef(true);
 
-  // Handle search input changes with debounce
   useEffect(() => {
-    // Skip the first render
     if (isInitialMount.current) {
       isInitialMount.current = false;
       return;
@@ -67,21 +74,17 @@ export function TableLayout({
 
     if (!handleSearchChange) return;
 
-    // Clear any existing timeout
     if (searchTimeout.current) {
       clearTimeout(searchTimeout.current);
     }
 
-    // Show the loading indicator
     setIsSearching(true);
 
-    // Set a new timeout for debouncing
     searchTimeout.current = setTimeout(() => {
       handleSearchChange(searchValue);
       setIsSearching(false);
     }, 500);
 
-    // Cleanup function
     return () => {
       if (searchTimeout.current) {
         clearTimeout(searchTimeout.current);
@@ -89,15 +92,20 @@ export function TableLayout({
     };
   }, [searchValue]);
 
+  useEffect(() => {
+    if (onSelectionChange) {
+      onSelectionChange(rowSelection);
+    }
+  }, [rowSelection, onSelectionChange]);
+
   const table = useReactTable({
     data,
     columns,
     rowCount: totalRows,
-    // Enable manual control when handlers are provided
     manualSorting: Boolean(handleSortingChange),
     manualPagination: Boolean(handlePaginationChange),
     manualFiltering: Boolean(setColumnFilters),
-
+    enableRowSelection: enableSelection,
     onPaginationChange: (updater) => {
       if (handlePaginationChange) {
         const newPagination =
@@ -113,21 +121,16 @@ export function TableLayout({
         const newSorting =
           typeof updater === 'function' ? updater(sorting || []) : updater;
 
-        // Check if we're toggling the same column
         if (sorting.length > 0 && newSorting.length > 0) {
           const currentSort = sorting[0];
           const newSort = newSorting[0];
 
-          // If same column, toggle between asc, desc, and none
           if (currentSort.id === newSort.id) {
-            // If currently ascending, switch to descending
             if (currentSort.desc === false) {
               setSorting([{ id: currentSort.id, desc: true }]);
               handleSortingChange([{ id: currentSort.id, desc: true }]);
               return;
-            }
-            // If currently descending, remove sorting
-            else if (currentSort.desc === true) {
+            } else if (currentSort.desc === true) {
               setSorting([]);
               handleSortingChange([]);
               return;
@@ -135,7 +138,6 @@ export function TableLayout({
           }
         }
 
-        // Set the new sorting (for new column or initial sort)
         setSorting(newSorting);
         handleSortingChange(newSorting);
       }
@@ -150,7 +152,6 @@ export function TableLayout({
         setColumnFilters(newFilters);
       }
     },
-
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
 
@@ -158,9 +159,10 @@ export function TableLayout({
       pagination: pagination || { pageIndex: 0, pageSize: 10 },
       sorting: sorting || [],
       columnFilters: columnFilters || [],
+      rowSelection: rowSelection,
     },
+    onRowSelectionChange: setRowSelection,
   });
-
   const SortingButtonTable = ({
     column,
     label,
@@ -191,9 +193,71 @@ export function TableLayout({
       </button>
     );
   };
+
+  const onSelectedRows = (item: any) => {
+    const uniqueId = String(item[uniqueIdField]);
+    setRowSelection((prev) => {
+      // Create a copy of the previous state
+      const newSelection = { ...prev };
+
+      // If the row is already selected, remove it from selection
+      if (newSelection[uniqueId]) {
+        delete newSelection[uniqueId];
+      } else {
+        // Otherwise, add it to selection
+        newSelection[uniqueId] = true;
+      }
+
+      return newSelection;
+    });
+  };
+
+  // Add a handler for selecting/deselecting all rows on the current page
+  const handleSelectAllRows = (checked: boolean) => {
+    setRowSelection((prev) => {
+      // Start with the current selection
+      const newSelection = { ...prev };
+
+      // Get all rows currently displayed on the page
+      const currentPageRows = table.getRowModel().rows;
+
+      // For each row on the current page
+      currentPageRows.forEach((row) => {
+        const rowData = row.original;
+        const uniqueId = String(rowData[uniqueIdField]);
+
+        if (checked) {
+          // If checked, add all rows to selection
+          newSelection[uniqueId] = true;
+        } else {
+          // If unchecked, remove all rows from selection
+          if (uniqueId in newSelection) {
+            delete newSelection[uniqueId];
+          }
+        }
+      });
+
+      return newSelection;
+    });
+  };
+
+  // Function to check if all rows on the current page are selected
+  const areAllCurrentRowsSelected = () => {
+    const currentPageRows = table.getRowModel().rows;
+
+    // If no rows, return false
+    if (currentPageRows.length === 0) return false;
+
+    // Check if all rows on the current page are selected
+    return currentPageRows.every((row) => {
+      const uniqueId = String(row.original[uniqueIdField]);
+      return !!rowSelection[uniqueId];
+    });
+  };
+
   return (
     <div className="w-full">
-      <div className="flex items-center py-4">
+      <div className="flex items-center py-4 justify-between">
         <div className="relative max-w-sm w-full">
           <Input
             placeholder="Search..."
@@ -207,12 +271,43 @@ export function TableLayout({
             </div>
           )}
         </div>
+        <div className="flex items-center gap-2">
+          {Object.keys(rowSelection).length > 0 && (
+            <>
+              <span className="text-sm text-muted-foreground">
+                <span className="font-medium text-primary">
+                  {Object.keys(rowSelection).length}
+                </span>{' '}
+                selected
+              </span>
+              <button
+                onClick={() => setRowSelection({})}
+                className="text-sm text-destructive hover:underline"
+                title="Clear selection"
+              >
+                Clear
+              </button>
+            </>
+          )}
+        </div>
       </div>
       <div className="rounded-md border">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
+                {enableSelection && (
+                  <TableHead className="w-10">
+                    <Checkbox
+                      checked={areAllCurrentRowsSelected()}
+                      onCheckedChange={(checked) =>
+                        handleSelectAllRows(!!checked)
+                      }
+                      aria-label="Select all rows"
+                      className="ml-2"
+                    />
+                  </TableHead>
+                )}
                 {headerGroup.headers.map((header) => (
                   <TableHead key={header.id}>
                     <SortingButtonTable
@@ -233,10 +328,11 @@ export function TableLayout({
           </TableHeader>
           <TableBody className="text-xs">
             {isLoading ? (
-              // Loading state
               <TableRow className="hover:bg-transparent">
                 <TableCell
-                  colSpan={columns.length}
+                  colSpan={
+                    enableSelection ? columns.length + 1 : columns.length
+                  }
                   className="h-32 text-center"
                 >
                   <div className="flex flex-col items-center justify-center gap-2 py-4">
@@ -248,23 +344,39 @@ export function TableLayout({
                 </TableCell>
               </TableRow>
             ) : table.getRowModel().rows.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
+              table.getRowModel().rows.map((row) => {
+                const rowData = row.original;
+                const uniqueId = String(rowData[uniqueIdField]);
+
+                return (
+                  <TableRow key={uniqueId}>
+                    {enableSelection && (
+                      <TableCell className="w-10">
+                        <Checkbox
+                          checked={!!rowSelection[uniqueId]}
+                          onCheckedChange={() => onSelectedRows(rowData)}
+                          aria-label={`Select row ${uniqueId}`}
+                          className="ml-2"
+                        />
+                      </TableCell>
+                    )}
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                );
+              })
             ) : (
-              // Empty state
               <TableRow className="hover:bg-transparent">
                 <TableCell
-                  colSpan={columns.length}
+                  colSpan={
+                    enableSelection ? columns.length + 1 : columns.length
+                  }
                   className="h-32 text-center"
                 >
                   <div className="flex flex-col items-center justify-center gap-2 py-4">
