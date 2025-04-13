@@ -4,34 +4,33 @@ export function buildQueryOptions(options?: options) {
   const {
     limit = 10,
     page = 1,
-    sortBy = {
-      id: 'id',
-      desc: false,
-    },
+    sortBy = { id: 'id', desc: false },
     columnFilter = ['id'],
-    search,
-  } = options || {};
+    search = '',
+  } = options ?? {};
+
+  // Pagination
   const skip = (page - 1) * limit;
   const take = limit;
 
-  const orderBy = {
-    [sortBy.id]: sortBy.desc ? 'desc' : 'asc',
-  };
-  // Build where clause if search is provided
-  let where = undefined;
-  if (search && search !== '') {
-    where = columnFilter.map((id) => {
-      return {
-        [id]: {
-          contains: search,
-          mode: 'insensitive',
-        },
-      };
-    });
-  }
+  // Sorting
+  const orderBy = { [sortBy.id]: sortBy.desc ? 'desc' : 'asc' };
 
+  // Search filtering
+  const where = search
+    ? {
+        OR: columnFilter.map((id) => ({
+          [id]: {
+            contains: search,
+            mode: 'insensitive',
+          },
+        })),
+      }
+    : undefined;
+
+  // Return query options
   return {
-    ...(where && { where: { OR: where } }),
+    ...(where && { where }),
     orderBy,
     skip,
     take,
