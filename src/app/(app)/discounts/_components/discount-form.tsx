@@ -86,7 +86,6 @@ async function onCreateDiscount(values: any) {
 async function onUpdateDiscount(id: string, values: any) {
   try {
     const discount = await updateDiscount(id, values);
-    console.log('Discount updated:', discount);
     return discount;
   } catch (error) {
     console.error('Error updating discount:', error);
@@ -177,8 +176,6 @@ export function DiscountForm({ type, initialValues, id }: FormType) {
               variant: 'destructive',
             });
           });
-
-        console.log('Updating discount with values:', values);
       }
     } catch (error) {
       console.log(error);

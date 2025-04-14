@@ -207,7 +207,7 @@ model Discount {
 model DiscountRelation {
   discountId   String   @map("discount_id")
   relationId   String   @map("relation_id")
-  discount    Discount @relation(fields: [discountId], references: [id])
+  discount    Discount @relation(fields: [discountId], references: [id], onDelete: Cascade)
   @@id([discountId])
   @@map("discount_relation")
   @@unique([discountId])
@@ -216,16 +216,16 @@ model DiscountRelation {
 model DiscountRelationProduct{
   discountId String @map("discount_id")
   productId String @map("product_id")
-  discount  Discount @relation(fields: [discountId], references: [id])
-  product Product @relation(fields: [productId], references: [id])
+discount  Discount @relation(fields: [discountId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id],onDelete: Cascade)
   @@map("discount_relation_product")
   @@id([discountId, productId])
 }
 model DiscountRelationMember{
   discountId String @map("discount_id")
   memberId String @map("product_id")
-  discount  Discount @relation(fields: [discountId], references: [id])
-  member Member @relation(fields: [memberId], references: [id])
+  discount  Discount @relation(fields: [discountId], references: [id],onDelete: Cascade)
+  member Member @relation(fields: [memberId], references: [id],onDelete: Cascade)
   @@map("discount_relation_member")
   @@id([discountId, memberId])
 }
