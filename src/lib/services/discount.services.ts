@@ -10,6 +10,8 @@ export const Discount = {
       prisma.discount.findMany({
         include: {
           discountRelations: true,
+          discountMembers: true,
+          discountProducts: true,
         },
         ...options,
       }),

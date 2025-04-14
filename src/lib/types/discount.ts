@@ -13,8 +13,8 @@ export interface DiscountInterface {
     discountId: string;
     relationId: string;
   }[];
-  discountRelationsProduct?: [];
-  discountRelationsMember?: [];
+  discountProducts?: [];
+  discountMembers?: [];
   createdAt?: Date;
   updatedAt?: Date;
 }
