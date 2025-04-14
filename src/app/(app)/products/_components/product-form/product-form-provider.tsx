@@ -67,6 +67,9 @@ interface ProductFormContextProps {
   setOpenUnitCreate: (open: boolean) => void;
   productId: string | undefined;
   fetchProductImages: (productId: string) => Promise<void>;
+  fetchUnits: () => Promise<void>;
+  fetchBrands: () => Promise<void>;
+  fetchCategories: () => Promise<void>; // Add this new function
 }
 
 export const ProductFormContext = createContext<ProductFormContextProps | null>(
@@ -156,6 +159,54 @@ export function ProductFormProvider({
     }
     fetchOptions();
   }, []);
+
+  // Create a function to fetch units
+  const fetchUnits = async () => {
+    try {
+      const result = await getProductFormOptions();
+      if (result.success && result.data) {
+        setUnits(result.data.units || []);
+      }
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch units',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  // Create a function to fetch brands
+  const fetchBrands = async () => {
+    try {
+      const result = await getProductFormOptions();
+      if (result.success && result.data) {
+        setBrands(result.data.brands || []);
+      }
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch brands',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  // Create a function to fetch categories
+  const fetchCategories = async () => {
+    try {
+      const result = await getProductFormOptions();
+      if (result.success && result.data) {
+        setCategories(result.data.categories || []);
+      }
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch categories',
+        variant: 'destructive',
+      });
+    }
+  };
 
   // Update form when initialData changes
   useEffect(() => {
@@ -378,6 +429,9 @@ export function ProductFormProvider({
     setOpenUnitCreate,
     productId,
     fetchProductImages,
+    fetchUnits,
+    fetchBrands,
+    fetchCategories, // Add the function to the context
   };
 
   return (

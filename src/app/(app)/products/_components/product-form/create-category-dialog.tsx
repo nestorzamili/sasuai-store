@@ -25,20 +25,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-
-// Mock action to create category
-// In a real app, this would come from your server actions
-const createCategory = async (data: { name: string; description?: string }) => {
-  // Return a mock successful response
-  return {
-    success: true,
-    data: {
-      id: `temp-${new Date().getTime()}`,
-      name: data.name,
-      description: data.description,
-    },
-  };
-};
+import { createCategory } from '../../categories/action';
 
 const formSchema = z.object({
   name: z.string().min(1, 'Category name is required'),
@@ -48,7 +35,8 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 export function CreateCategoryDialog() {
-  const { openCategoryCreate, setOpenCategoryCreate } = useProductForm();
+  const { openCategoryCreate, setOpenCategoryCreate, fetchCategories } =
+    useProductForm();
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
@@ -72,10 +60,13 @@ export function CreateCategoryDialog() {
         });
         form.reset();
         setOpenCategoryCreate(false);
+
+        // Fetch updated categories list
+        await fetchCategories();
       } else {
         toast({
           title: 'Error',
-          description: 'Failed to create category',
+          description: result.error || 'Failed to create category',
           variant: 'destructive',
         });
       }
