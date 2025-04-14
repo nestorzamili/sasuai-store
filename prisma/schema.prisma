@@ -145,6 +145,7 @@ model Product {
   isActive     Boolean        @default(true) @map("is_active")
   images       ProductImage[]
   batches      ProductBatch[]
+  discountRelationProduct DiscountRelationProduct[]
   createdAt    DateTime       @default(now()) @db.Timestamptz
   updatedAt    DateTime       @updatedAt @db.Timestamptz
 
@@ -198,6 +199,8 @@ model Discount {
   createdAt        DateTime          @default(now()) @db.Timestamptz
   updatedAt        DateTime          @updatedAt @db.Timestamptz
   discountRelations DiscountRelation[]
+  discountProducts   DiscountRelationProduct[]
+  discountMembers   DiscountRelationMember[]
   @@map("discount")
 }
 
@@ -205,9 +208,26 @@ model DiscountRelation {
   discountId   String   @map("discount_id")
   relationId   String   @map("relation_id")
   discount    Discount @relation(fields: [discountId], references: [id])
-  @@id([discountId, relationId])
+  @@id([discountId])
   @@map("discount_relation")
-  @@unique([discountId, relationId])
+  @@unique([discountId])
+}
+
+model DiscountRelationProduct{
+  discountId String @map("discount_id")
+  productId String @map("product_id")
+  discount  Discount @relation(fields: [discountId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+  @@map("discount_relation_product")
+  @@unique([discountId, productId])
+}
+model DiscountRelationMember{
+  discountId String @map("discount_id")
+  memberId String @map("product_id")
+  discount  Discount @relation(fields: [discountId], references: [id])
+  member Member @relation(fields: [memberId], references: [id])
+  @@map("discount_relation_member")
+  @@unique([discountId, memberId])
 }
 
 
@@ -236,6 +256,7 @@ model Member {
   memberPoints      MemberPoint[]
   rewardClaims      RewardClaim[]
   transactions      Transaction[]
+  discountRelationsMember DiscountRelationMember[]
   createdAt         DateTime      @default(now()) @db.Timestamptz
   updatedAt         DateTime      @updatedAt @db.Timestamptz
 
