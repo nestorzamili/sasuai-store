@@ -2,7 +2,15 @@ import { useFetch } from '@/hooks/use-fetch';
 import { ColumnDef } from '@tanstack/react-table';
 import { TableLayout } from '@/components/layout/table-layout';
 import { optimalizeGetMember } from '../../members/action';
-export function DiscountRelationMember() {
+import { useEffect, useState } from 'react';
+interface RelationReturn {
+  relationOnChange: (data: any) => void;
+  initialSelectedRows?: any;
+}
+export function DiscountRelationMember({
+  relationOnChange,
+  initialSelectedRows,
+}: RelationReturn) {
   const fetchMember = async (options: any) => {
     try {
       const response = await optimalizeGetMember({
@@ -78,7 +86,14 @@ export function DiscountRelationMember() {
   const handleSearchChange = (search: string) => {
     setSearch(search);
   };
+  const [selectionData, setSelectionData] = useState([]);
+  const handleRelationOnchange = (data: any) => {
+    setSelectionData(data);
+  };
 
+  useEffect(() => {
+    relationOnChange(selectionData);
+  }, [selectionData]);
   return (
     <>
       <TableLayout
@@ -91,6 +106,8 @@ export function DiscountRelationMember() {
         handleSearchChange={handleSearchChange}
         totalRows={totalRows}
         enableSelection={true}
+        onSelectionChange={handleRelationOnchange}
+        initialSelectedRows={initialSelectedRows || []}
       />
     </>
   );

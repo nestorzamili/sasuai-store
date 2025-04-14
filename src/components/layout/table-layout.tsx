@@ -39,6 +39,7 @@ interface TableProps {
   totalRows?: number;
   uniqueIdField?: string; // Add this to identify which field to use as the unique ID
   onSelectionChange?: (selectedIds: Record<string, boolean>) => void; // Add this to handle selection changes
+  initialSelectedRows?: Record<string, boolean>; // Add this to set initially selected rows
 }
 
 export function TableLayout({
@@ -55,13 +56,13 @@ export function TableLayout({
   totalRows = 1,
   uniqueIdField = 'id', // Default to 'id' if not provided
   onSelectionChange,
+  initialSelectedRows = {}, // Default to empty object if not provided
 }: TableProps) {
   const [searchValue, setSearchValue] = useState<string>('');
   const [isSearching, setIsSearching] = useState<boolean>(false);
   const [sorting, setSorting] = useState<SortingState>([]);
-  const [rowSelection, setRowSelection] = React.useState<
-    Record<string, boolean>
-  >({});
+  const [rowSelection, setRowSelection] =
+    React.useState<Record<string, boolean>>(initialSelectedRows);
   const searchTimeout = useRef<NodeJS.Timeout | null>(null);
 
   const isInitialMount = useRef(true);

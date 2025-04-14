@@ -21,13 +21,16 @@ import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Label } from '@/components/ui/label';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { z } from 'zod';
 import { createDiscount, updateDiscount } from '../actions';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { DiscountInterface } from '@/lib/types/discount';
 import { DiscountRelationDialog } from './discount-relation-dialog';
+import useDialogState from '@/hooks/use-dialog-state';
+import { ConfirmDialog } from '@/components/confirm-dialog';
+
 const formSchema = z
   .object({
     id: z.string().optional(),
@@ -45,7 +48,7 @@ const formSchema = z
       })
       .default('percentage'),
     value: z.number(),
-    // relation_id: z.string().optional(),
+    relation: z.array(z.string()).optional(),
     minPurchase: z.number().optional(),
     startDate: z
       .date()
@@ -93,6 +96,7 @@ async function onUpdateDiscount(id: string, values: any) {
 export function DiscountForm({ type, initialValues, id }: FormType) {
   const { toast } = useToast();
   const { push, refresh } = useRouter();
+  const [open, setOpen] = useDialogState();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues:
@@ -117,7 +121,7 @@ export function DiscountForm({ type, initialValues, id }: FormType) {
             value: 0,
             startDate: new Date(),
             endDate: undefined,
-            // relation_id: 'none',
+            relation: [],
             minPurchase: 0,
           },
   });
@@ -131,9 +135,9 @@ export function DiscountForm({ type, initialValues, id }: FormType) {
             if (res.success) {
               toast({
                 title: 'Discount created',
-                description: `${res.data.name} has been created. ${new Date(
-                  res.data.createdAt
-                ).toLocaleDateString()}`,
+                // description: `${res.data.name} has been created. ${new Date(
+                //   res.data.createdAt
+                // ).toLocaleDateString()}`,
                 variant: 'default',
               });
               form.reset();
@@ -180,6 +184,24 @@ export function DiscountForm({ type, initialValues, id }: FormType) {
       console.log(error);
     }
   };
+  const relationToArray = (relation: any) => {
+    const arr = Object.keys(relation);
+    form.setValue('relation', arr);
+  };
+  const arrayToObject = (relation: string[] | undefined) => {
+    if (!relation) return {};
+    return relation.reduce<Record<string, boolean>>((obj, key) => {
+      obj[key] = true;
+      return obj;
+    }, {});
+  };
+  useEffect(() => {
+    // check state
+    const relation = form.watch('relation');
+    if (relation && relation.length > 0) {
+      form.setValue('relation', []);
+    }
+  }, [form.watch('discountType')]);
 
   return (
     <>
@@ -442,11 +464,39 @@ export function DiscountForm({ type, initialValues, id }: FormType) {
                 render={({ field }) => (
                   <FormItem className="mt-4">
                     <FormLabel>Add your relation</FormLabel>
+                    {(form.watch('relation') || []).length > 0 && (
+                      <div className="mt-2 p-4 border rounded-md bg-slate-50">
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <p className="font-medium">Relations</p>
+                            <p className="text-sm text-muted-foreground">
+                              {form.watch('relation')?.length}{' '}
+                              {form.watch('discountType') === 'product'
+                                ? 'products'
+                                : 'members'}{' '}
+                              selected
+                            </p>
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              form.setValue('relation', []);
+                            }}
+                          >
+                            Clear
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                     <DiscountRelationDialog
                       type={form.watch('discountType')}
                       actionType="add"
+                      onStateSave={(data) => {
+                        relationToArray(data);
+                      }}
+                      initialValues={arrayToObject(form.watch('relation'))}
                     />
-                    {/* <FormControl className="gap-2"></FormControl> */}
                     <FormDescription>
                       Specify which items or members this discount applies to.
                       For product discounts, enter the product ID; for member
