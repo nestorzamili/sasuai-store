@@ -1,6 +1,7 @@
 import prisma from '@/lib/prisma';
 import { buildQueryOptions } from '../common/query-options';
 import { options } from '@/lib/types/table';
+import { error } from 'console';
 export const Discount = {
   async getAll(queryOptions?: options) {
     const options = buildQueryOptions(queryOptions);
@@ -38,7 +39,9 @@ export const Discount = {
   async create(data: any) {
     const { relation, ...discountData } = data;
     console.log('Creating discount with data:', data);
-    // console.log('Relation:', relation);
+    console.log('Diskon Data', discountData);
+    console.log('Relation:', relation);
+
     return await prisma.$transaction(async (prisma) => {
       // Step 1: Create the discount entry
       const createdDiscount = await prisma.discount.create({
@@ -46,23 +49,26 @@ export const Discount = {
       });
 
       // Step 2: Handle relations (if provided)
-      if (relation?.length) {
-        const relationData = relation.map((relation: any) => ({
-          discountId: createdDiscount.id,
-          ...relation, // This assumes the relation object contains `productId` or `memberId`
-        }));
-
-        if (discountData.discountType === 'product') {
+      if (relation && relation.length > 0) {
+        const dataRelation = relation.map((item: any) => {
+          return {
+            ...(createdDiscount.discountType === 'product'
+              ? { productId: item }
+              : { memberId: item }),
+            discountId: createdDiscount.id,
+          };
+        });
+        if (createdDiscount.discountType === 'product') {
           await prisma.discountRelationProduct.createMany({
-            data: relationData,
+            data: dataRelation,
           });
-        } else if (discountData.discountType === 'member') {
+        }
+        if (createdDiscount.discountType === 'member') {
           await prisma.discountRelationMember.createMany({
-            data: relationData,
+            data: dataRelation,
           });
         }
       }
-
       return createdDiscount;
     });
   },
