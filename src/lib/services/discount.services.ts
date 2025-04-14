@@ -36,8 +36,34 @@ export const Discount = {
   },
 
   async create(data: any) {
-    return await prisma.discount.create({
-      data,
+    const { relation, ...discountData } = data;
+    console.log('Creating discount with data:', data);
+    // console.log('Relation:', relation);
+    return await prisma.$transaction(async (prisma) => {
+      // Step 1: Create the discount entry
+      const createdDiscount = await prisma.discount.create({
+        data: discountData,
+      });
+
+      // Step 2: Handle relations (if provided)
+      if (relation?.length) {
+        const relationData = relation.map((relation: any) => ({
+          discountId: createdDiscount.id,
+          ...relation, // This assumes the relation object contains `productId` or `memberId`
+        }));
+
+        if (discountData.discountType === 'product') {
+          await prisma.discountRelationProduct.createMany({
+            data: relationData,
+          });
+        } else if (discountData.discountType === 'member') {
+          await prisma.discountRelationMember.createMany({
+            data: relationData,
+          });
+        }
+      }
+
+      return createdDiscount;
     });
   },
 

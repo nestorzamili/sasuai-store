@@ -2,8 +2,15 @@ import { useFetch } from '@/hooks/use-fetch';
 import { ColumnDef } from '@tanstack/react-table';
 import { optimalizeGetProduct } from '../../products/action';
 import { TableLayout } from '@/components/layout/table-layout';
-
-export function DiscountRelationProduct() {
+import { useEffect, useState } from 'react';
+interface RelationReturn {
+  relationOnChange: (data: any) => void;
+  initialSelectedRows?: any;
+}
+export function DiscountRelationProduct({
+  relationOnChange,
+  initialSelectedRows,
+}: RelationReturn) {
   const fetchProduct = async (options: any) => {
     try {
       const response = await optimalizeGetProduct({
@@ -26,7 +33,6 @@ export function DiscountRelationProduct() {
       };
     }
   };
-
   const {
     data,
     isLoading,
@@ -84,7 +90,14 @@ export function DiscountRelationProduct() {
   const handleSearchChange = (search: string) => {
     setSearch(search);
   };
+  const [selectionData, setSelectionData] = useState([]);
+  const handleRelationOnchange = (data: any) => {
+    setSelectionData(data);
+  };
 
+  useEffect(() => {
+    relationOnChange(selectionData);
+  }, [selectionData]);
   return (
     <>
       <TableLayout
@@ -97,6 +110,9 @@ export function DiscountRelationProduct() {
         handleSearchChange={handleSearchChange}
         totalRows={totalRows}
         enableSelection={true}
+        onSelectionChange={handleRelationOnchange}
+        uniqueIdField="barcode"
+        initialSelectedRows={initialSelectedRows || []}
       />
     </>
   );

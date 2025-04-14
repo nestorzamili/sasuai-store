@@ -6,21 +6,32 @@ import {
   DialogTitle,
   DialogTrigger,
   DialogFooter,
+  DialogClose,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { IconPlus, IconEdit } from '@tabler/icons-react';
 import { DiscountRelationProduct } from './discount-product-relation';
 import { DiscountRelationMember } from './discount-member-relation';
-
+import { useEffect, useState } from 'react';
 interface DiscountRelationDialogProps {
   type: 'member' | 'product';
   actionType?: 'add' | 'edit' | 'delete';
+  initialValues: any;
+  onStateSave?: (data: any[]) => void;
 }
 
 export const DiscountRelationDialog = ({
   type = 'product',
   actionType = 'add',
+  initialValues,
+  onStateSave,
 }: DiscountRelationDialogProps) => {
+  const [relationData, setRelationData] = useState(initialValues || []);
+  const onSaveClick = () => {
+    if (onStateSave) {
+      onStateSave(relationData);
+    }
+  };
   return (
     <Dialog>
       <DialogTrigger asChild className="w-full">
@@ -42,13 +53,23 @@ export const DiscountRelationDialog = ({
         </DialogHeader>
         <div className="flex items-center space-x-2">
           {type === 'product' ? (
-            <DiscountRelationProduct />
+            <DiscountRelationProduct
+              relationOnChange={(data) => setRelationData(data)}
+              initialSelectedRows={type === 'product' ? initialValues : []}
+            />
           ) : (
-            <DiscountRelationMember />
+            <DiscountRelationMember
+              relationOnChange={(data) => setRelationData(data)}
+              initialSelectedRows={type === 'member' ? initialValues : []}
+            />
           )}
         </div>
         <DialogFooter>
-          <Button variant={'default'}>Save</Button>
+          <DialogClose>
+            <Button variant={'default'} type="button" onClick={onSaveClick}>
+              Save
+            </Button>
+          </DialogClose>
         </DialogFooter>
       </DialogContent>
     </Dialog>
