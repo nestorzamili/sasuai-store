@@ -11,6 +11,7 @@ export function DiscountRelationProduct({
   relationOnChange,
   initialSelectedRows,
 }: RelationReturn) {
+  console.log('dari product', initialSelectedRows);
   const fetchProduct = async (options: any) => {
     try {
       const response = await optimalizeGetProduct({

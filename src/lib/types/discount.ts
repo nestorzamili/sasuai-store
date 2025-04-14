@@ -13,8 +13,15 @@ export interface DiscountInterface {
     discountId: string;
     relationId: string;
   }[];
-  discountProducts?: [];
-  discountMembers?: [];
+  discountProducts?: {
+    discountId: string;
+    productId: string;
+  }[];
+  // Ubah definisi ini juga
+  discountMembers?: {
+    discountId: string;
+    memberId: string;
+  }[];
   createdAt?: Date;
   updatedAt?: Date;
 }

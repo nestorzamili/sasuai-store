@@ -34,16 +34,14 @@ export const Discount = {
       where: { id },
       include: {
         discountRelations: true,
+        discountMembers: true,
+        discountProducts: true,
       },
     });
   },
 
   async create(data: any) {
     const { relation, ...discountData } = data;
-    console.log('Creating discount with data:', data);
-    console.log('Diskon Data', discountData);
-    console.log('Relation:', relation);
-
     return await prisma.$transaction(async (prisma) => {
       // Step 1: Create the discount entry
       const createdDiscount = await prisma.discount.create({
@@ -76,7 +74,8 @@ export const Discount = {
   },
 
   async update(id: string, data: any) {
-    console.log('Updating discount with ID:', id, 'and data:', data);
+    const { relation, ...discountData } = data;
+
     const existingDiscount = await prisma.discount.findUnique({
       where: { id },
     });
@@ -85,10 +84,109 @@ export const Discount = {
       throw new Error(`Discount with ID ${id} not found`);
     }
 
-    // If it exists, proceed with the update
-    return await prisma.discount.update({
-      where: { id },
-      data,
+    return await prisma.$transaction(async (tx) => {
+      // Handle case where empty relation array is provided (delete all relations)
+      if (relation && relation.length === 0) {
+        if (existingDiscount.discountType === 'product') {
+          // Delete all product relations for this discount
+          await tx.discountRelationProduct.deleteMany({
+            where: { discountId: id },
+          });
+        } else if (existingDiscount.discountType === 'member') {
+          // Delete all member relations for this discount
+          await tx.discountRelationMember.deleteMany({
+            where: { discountId: id },
+          });
+        }
+      } else if (relation && relation.length > 0) {
+        if (data.discountType === 'product') {
+          // Get existing product relations for this discount
+          const existingRelations = await tx.discountRelationProduct.findMany({
+            where: { discountId: id },
+          });
+
+          // Extract existing product IDs for easy comparison
+          const existingProductIds = existingRelations.map(
+            (rel) => rel.productId
+          );
+
+          // Find new relations to add
+          const newRelations = relation.filter(
+            (productId: string) => !existingProductIds.includes(productId)
+          );
+
+          // Find relations to delete (items in existing but not in new relation list)
+          const relationsToDelete = existingProductIds.filter(
+            (productId: string) => !relation.includes(productId)
+          );
+
+          // Add new relations
+          if (newRelations.length > 0) {
+            await tx.discountRelationProduct.createMany({
+              data: newRelations.map((productId: string) => ({
+                productId,
+                discountId: id,
+              })),
+            });
+          }
+
+          // Delete relations that are no longer needed
+          if (relationsToDelete.length > 0) {
+            await tx.discountRelationProduct.deleteMany({
+              where: {
+                discountId: id,
+                productId: { in: relationsToDelete },
+              },
+            });
+          }
+        } else if (data.discountType === 'member') {
+          // Get existing member relations for this discount
+          const existingRelations = await tx.discountRelationMember.findMany({
+            where: { discountId: id },
+          });
+
+          // Extract existing member IDs for easy comparison
+          const existingMemberIds = existingRelations.map(
+            (rel) => rel.memberId
+          );
+
+          // Find new relations to add
+          const newRelations = relation.filter(
+            (memberId: string) => !existingMemberIds.includes(memberId)
+          );
+
+          // Find relations to delete (items in existing but not in new relation list)
+          const relationsToDelete = existingMemberIds.filter(
+            (memberId: string) => !relation.includes(memberId)
+          );
+
+          // Add new relations
+          if (newRelations.length > 0) {
+            await tx.discountRelationMember.createMany({
+              data: newRelations.map((memberId: string) => ({
+                memberId,
+                discountId: id,
+              })),
+            });
+          }
+
+          // Delete relations that are no longer needed
+          if (relationsToDelete.length > 0) {
+            await tx.discountRelationMember.deleteMany({
+              where: {
+                discountId: id,
+                memberId: { in: relationsToDelete },
+              },
+            });
+          }
+        }
+      }
+
+      // Update the discount itself
+      return await tx.discount.update({
+        where: { id },
+        data: discountData,
+      });
     });
   },
 
