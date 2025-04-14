@@ -55,6 +55,11 @@ export function DiscountRelationProduct({
   });
   const columns: ColumnDef<any>[] = [
     {
+      accessorKey: 'id',
+      header: 'id',
+      cell: (info) => info.getValue(),
+    },
+    {
       accessorKey: 'barcode',
       header: 'Barcode',
       cell: (info) => info.getValue(),
@@ -111,7 +116,6 @@ export function DiscountRelationProduct({
         totalRows={totalRows}
         enableSelection={true}
         onSelectionChange={handleRelationOnchange}
-        uniqueIdField="barcode"
         initialSelectedRows={initialSelectedRows || []}
       />
     </>

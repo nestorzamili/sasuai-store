@@ -463,7 +463,7 @@ export function DiscountForm({ type, initialValues, id }: FormType) {
                 name="relation_button"
                 render={({ field }) => (
                   <FormItem className="mt-4">
-                    <FormLabel>Add your relation</FormLabel>
+                    <FormLabel>Manage relation</FormLabel>
                     {(form.watch('relation') || []).length > 0 && (
                       <div className="mt-2 p-4 border rounded-md bg-slate-50">
                         <div className="flex justify-between items-center">

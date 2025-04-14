@@ -219,7 +219,7 @@ model DiscountRelationProduct{
   discount  Discount @relation(fields: [discountId], references: [id])
   product Product @relation(fields: [productId], references: [id])
   @@map("discount_relation_product")
-  @@unique([discountId, productId])
+  @@id([discountId, productId])
 }
 model DiscountRelationMember{
   discountId String @map("discount_id")
@@ -227,7 +227,7 @@ model DiscountRelationMember{
   discount  Discount @relation(fields: [discountId], references: [id])
   member Member @relation(fields: [memberId], references: [id])
   @@map("discount_relation_member")
-  @@unique([discountId, memberId])
+  @@id([discountId, memberId])
 }
 
 
