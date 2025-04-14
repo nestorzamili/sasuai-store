@@ -13,6 +13,7 @@ import { IconPlus, IconEdit } from '@tabler/icons-react';
 import { DiscountRelationProduct } from './discount-product-relation';
 import { DiscountRelationMember } from './discount-member-relation';
 import { useEffect, useState } from 'react';
+import useDialogState from '@/hooks/use-dialog-state';
 interface DiscountRelationDialogProps {
   type: 'member' | 'product';
   actionType?: 'add' | 'edit' | 'delete';
@@ -27,14 +28,26 @@ export const DiscountRelationDialog = ({
   onStateSave,
 }: DiscountRelationDialogProps) => {
   const [relationData, setRelationData] = useState(initialValues || []);
-  const onSaveClick = () => {
+  const [open, setOpen] = useDialogState();
+  const [isSaving, setIsSaving] = useState(false);
+  const onSaveClick = async () => {
     if (onStateSave) {
-      onStateSave(relationData);
+      setIsSaving(true);
+      setTimeout(() => {
+        onStateSave(relationData);
+        setIsSaving(false);
+        setOpen(false);
+      }, 1000);
     }
   };
+
+  const handleOpenChange = (value: boolean) => {
+    setOpen(Boolean(value));
+  };
+
   return (
-    <Dialog>
-      <DialogTrigger asChild className="w-full">
+    <Dialog open={Boolean(open)} onOpenChange={handleOpenChange}>
+      <DialogTrigger asChild className="w-full ml-2">
         <Button variant="outline">
           {actionType === 'add' ? 'Add' : 'Edit'} Relation
           {actionType === 'add' ? <IconPlus /> : <IconEdit />}
@@ -65,11 +78,14 @@ export const DiscountRelationDialog = ({
           )}
         </div>
         <DialogFooter>
-          <DialogClose>
-            <Button variant={'default'} type="button" onClick={onSaveClick}>
-              Save
-            </Button>
-          </DialogClose>
+          <Button
+            variant={'default'}
+            type="button"
+            onClick={onSaveClick}
+            disabled={isSaving}
+          >
+            {isSaving ? 'Saving...' : 'Save'}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

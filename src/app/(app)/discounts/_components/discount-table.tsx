@@ -134,7 +134,6 @@ export function DiscountTable() {
   const handleRefreshAfterDelete = () => {
     refresh();
   };
-  console.log(data);
   const columns: ColumnDef<DiscountInterface>[] = [
     { header: 'ID', accessorKey: 'id' },
     {
@@ -174,15 +173,12 @@ export function DiscountTable() {
     },
     {
       header: 'Discount Relations',
-      // accessorFn: (row) =>
-      //   row.discountType === 'product' ? 'discountProduct' : 'discountMember',
-      accessorKey: 'discountRelation',
+      accessorKey: 'discountRelations',
       cell: (info) => {
         const rowValue =
           info.row.getValue('discountType') === 'product'
             ? info.row.original.discountProducts
             : info.row.original.discountMembers;
-        console.log(rowValue);
         const count = Array.isArray(rowValue) ? rowValue.length : 0;
         return (
           <Badge variant="outline" className="cursor-pointer">
@@ -276,7 +272,6 @@ export function DiscountTable() {
       },
     },
   ];
-  console.log(data);
   return (
     <div>
       <TableLayout
