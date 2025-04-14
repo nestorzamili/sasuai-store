@@ -5,6 +5,7 @@ import { ProductService } from '@/lib/services/product.service';
 import { CategoryService } from '@/lib/services/category.service';
 import { BrandService } from '@/lib/services/brand.service';
 import { UnitService } from '@/lib/services/unit.service';
+import { options } from '@/lib/types/table';
 import { z } from 'zod';
 
 // Product schema for validation
@@ -143,7 +144,7 @@ export async function updateProduct(
     skuCode?: string | null;
     barcode?: string | null;
     isActive?: boolean;
-  },
+  }
 ) {
   try {
     // Validate data
@@ -409,5 +410,18 @@ export async function getPaginatedProducts(params: {
       success: false,
       error: 'Failed to fetch paginated products',
     };
+  }
+}
+
+export async function optimalizeGetProduct(options?: options) {
+  try {
+    const discount = await ProductService.getAllOptimized(options);
+    return {
+      success: true,
+      data: discount.data,
+      meta: discount.meta,
+    };
+  } catch (error) {
+    throw error;
   }
 }

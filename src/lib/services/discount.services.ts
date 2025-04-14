@@ -4,7 +4,6 @@ import { options } from '@/lib/types/table';
 export const Discount = {
   async getAll(queryOptions?: options) {
     const options = buildQueryOptions(queryOptions);
-
     // Run both queries in parallel for better performance
     const [discounts, count] = await Promise.all([
       prisma.discount.findMany({

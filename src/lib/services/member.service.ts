@@ -1,7 +1,8 @@
 import prisma from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
 import { calculateMemberPoints } from './setting.service';
-
+import { options } from '@/lib/types/table';
+import { buildQueryOptions } from '../common/query-options';
 export class MemberService {
   /**
    * Get all members
@@ -16,7 +17,27 @@ export class MemberService {
       },
     });
   }
+  // optimalize get member
 
+  static async getAllOptimalize(queryOptions?: options) {
+    const options = buildQueryOptions(queryOptions);
+    const [member, count] = await Promise.all([
+      prisma.member.findMany({
+        include: {
+          tier: true,
+        },
+        ...options,
+      }),
+      prisma.member.count(),
+    ]);
+    return {
+      data: member,
+      meta: {
+        ...options,
+        rowsCount: count,
+      },
+    };
+  }
   /**
    * Get a member by ID
    */
@@ -105,7 +126,7 @@ export class MemberService {
       email?: string;
       phone?: string;
       tierId?: string;
-    },
+    }
   ) {
     return prisma.member.update({
       where: { id },
@@ -184,7 +205,7 @@ export class MemberService {
     transactionId: string,
     points: number,
     notes?: string,
-    cashierId?: string,
+    cashierId?: string
   ) {
     return prisma.$transaction(async (tx) => {
       const isManualAward = notes !== undefined;
@@ -396,7 +417,7 @@ export class MemberService {
    */
   static async calculatePotentialPoints(
     memberId: string,
-    transactionAmount: number,
+    transactionAmount: number
   ): Promise<number> {
     const member = await this.getById(memberId);
 
@@ -442,7 +463,7 @@ export class MemberService {
       name?: string;
       minPoints?: number;
       multiplier?: number;
-    },
+    }
   ) {
     return prisma.memberTier.update({
       where: { id },
@@ -461,7 +482,7 @@ export class MemberService {
 
     if (membersUsingTier > 0) {
       throw new Error(
-        `Cannot delete tier: ${membersUsingTier} members are using this tier`,
+        `Cannot delete tier: ${membersUsingTier} members are using this tier`
       );
     }
 
