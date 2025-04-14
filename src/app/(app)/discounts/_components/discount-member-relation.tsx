@@ -1,21 +1,20 @@
 import { useFetch } from '@/hooks/use-fetch';
 import { ColumnDef } from '@tanstack/react-table';
-import { optimalizeGetProduct } from '../../products/action';
 import { TableLayout } from '@/components/layout/table-layout';
-
-export function DiscountRelationProduct() {
-  const fetchProduct = async (options: any) => {
+import { optimalizeGetMember } from '../../members/action';
+export function DiscountRelationMember() {
+  const fetchMember = async (options: any) => {
     try {
-      const response = await optimalizeGetProduct({
+      const response = await optimalizeGetMember({
         page: options.page + 1,
         limit: options.limit,
         sortBy: options.sortBy,
         search: options.search,
-        columnFilter: ['name', 'barcode', 'category.name', 'brand.name'],
+        columnFilter: ['name', 'phone', 'id'],
       });
       return {
         data: response.data,
-        totalRows: response.meta.rowsCount,
+        totalRows: 0,
       };
     } catch (error) {
       console.log('error', error);
@@ -38,7 +37,7 @@ export function DiscountRelationProduct() {
     totalRows,
     refresh,
   } = useFetch({
-    fetchData: fetchProduct,
+    fetchData: fetchMember,
     options: {
       page: 0,
       limit: 10,
@@ -49,24 +48,19 @@ export function DiscountRelationProduct() {
   });
   const columns: ColumnDef<any>[] = [
     {
-      accessorKey: 'barcode',
-      header: 'Barcode',
+      accessorKey: 'id',
+      header: 'Membership ID',
       cell: (info) => info.getValue(),
     },
     {
       accessorKey: 'name',
-      header: 'Product',
+      header: 'Name',
       cell: (info) => info.getValue(),
     },
     {
-      accessorKey: 'Category',
-      header: 'category',
-      cell: (info) => info.row.original.category.name,
-    },
-    {
-      accessorKey: 'Brand',
-      header: 'brand',
-      cell: (info) => info.row.original.brand.name,
+      accessorKey: 'phone',
+      header: 'Phone',
+      cell: (info) => info.getValue(),
     },
   ];
   const handlePaginationChange = (newPagination: {
