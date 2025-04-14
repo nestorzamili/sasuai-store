@@ -29,8 +29,6 @@ import { useRouter } from 'next/navigation';
 import { DiscountInterface } from '@/lib/types/discount';
 import { DiscountRelationDialog } from './discount-relation-dialog';
 import useDialogState from '@/hooks/use-dialog-state';
-import { ConfirmDialog } from '@/components/confirm-dialog';
-
 const formSchema = z
   .object({
     id: z.string().optional(),
@@ -192,13 +190,37 @@ export function DiscountForm({ type, initialValues, id }: FormType) {
       return obj;
     }, {});
   };
+  const discountType = form.watch('discountType');
+  useEffect(() => {
+    if (initialValues) {
+      if (discountType === 'product' && initialValues.discountProducts) {
+        const productIds = initialValues.discountProducts.map(
+          (item) => item.productId
+        );
+        form.setValue('relation', productIds);
+      } else if (discountType === 'member' && initialValues.discountMembers) {
+        // Extract memberId from each item in discountMembers array
+        const memberIds = initialValues.discountMembers.map(
+          (item) => item.memberId
+        );
+        form.setValue('relation', memberIds);
+      }
+    }
+  }, []);
   useEffect(() => {
     // check state
+    if (type === 'update') {
+      // When discount type changes in update mode, clear relations
+      if (discountType !== initialValues?.discountType) {
+        form.setValue('relation', []);
+      }
+      return;
+    }
     const relation = form.watch('relation');
     if (relation && relation.length > 0) {
       form.setValue('relation', []);
     }
-  }, [form.watch('discountType')]);
+  }, [discountType]);
 
   return (
     <>

@@ -25,6 +25,8 @@ export default function UpdateDiscount() {
           startDate: response.data?.startDate || new Date(),
           endDate: response.data?.endDate || new Date(),
           discountRelations: response.data?.discountRelations || [],
+          discountProducts: response.data?.discountProducts || [],
+          discountMembers: response.data?.discountMembers || [],
         };
 
         setDiscountData(formated);
