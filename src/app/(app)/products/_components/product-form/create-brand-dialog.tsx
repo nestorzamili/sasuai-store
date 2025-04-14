@@ -24,18 +24,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-
-// Mock action to create brand
-const createBrand = async (data: { name: string }) => {
-  // Return a mock successful response
-  return {
-    success: true,
-    data: {
-      id: `temp-${new Date().getTime()}`,
-      name: data.name,
-    },
-  };
-};
+import { createBrand } from '../../brands/action';
 
 const formSchema = z.object({
   name: z.string().min(1, 'Brand name is required'),
@@ -44,7 +33,7 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 export function CreateBrandDialog() {
-  const { openBrandCreate, setOpenBrandCreate } = useProductForm();
+  const { openBrandCreate, setOpenBrandCreate, fetchBrands } = useProductForm();
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
@@ -67,10 +56,13 @@ export function CreateBrandDialog() {
         });
         form.reset();
         setOpenBrandCreate(false);
+
+        // Fetch updated brands list
+        await fetchBrands();
       } else {
         toast({
           title: 'Error',
-          description: 'Failed to create brand',
+          description: result.error || 'Failed to create brand',
           variant: 'destructive',
         });
       }
