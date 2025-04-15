@@ -11,10 +11,24 @@ export class SupplierService {
   }
 
   /**
-   * Get all suppliers with stock-in count
+   * Get all suppliers with stock-in count, paginated, sorted, filtered
    */
-  static async getAllWithStockInCount() {
+  static async getAllSuppliersWithCount({
+    where,
+    orderBy,
+    skip,
+    take,
+  }: {
+    where?: any;
+    orderBy?: any;
+    skip?: number;
+    take?: number;
+  }) {
     return prisma.supplier.findMany({
+      where,
+      orderBy,
+      skip,
+      take,
       include: {
         _count: {
           select: {
@@ -22,8 +36,14 @@ export class SupplierService {
           },
         },
       },
-      orderBy: { name: 'asc' },
     });
+  }
+
+  /**
+   * Count suppliers with where clause (for pagination)
+   */
+  static async countWithWhere(where?: any) {
+    return prisma.supplier.count({ where });
   }
 
   /**
