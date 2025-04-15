@@ -1,21 +1,9 @@
 'use client';
 import * as React from 'react';
 import { useState } from 'react';
-import {
-  ColumnDef,
-  ColumnFiltersState,
-  SortingState,
-  VisibilityState,
-  flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
-} from '@tanstack/react-table';
-import { ArrowUpDown, MoreHorizontal } from 'lucide-react';
+import { ColumnDef } from '@tanstack/react-table';
+import { MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import { IconTrash, IconEdit, IconEye } from '@tabler/icons-react';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -26,116 +14,90 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { DataTablePagination } from '@/components/ui/data-table-pagination';
-import { Skeleton } from '@/components/ui/skeleton';
+import { TableLayout } from '@/components/layout/table-layout';
 import { SupplierDeleteDialog } from './supplier-delete-dialog';
 import { SupplierDetailDialog } from './supplier-detail-dialog';
-import { Input } from '@/components/ui/input';
 import { SupplierWithCount } from '@/lib/types/supplier';
-import { useRouter } from 'next/navigation';
+import { useFetch } from '@/hooks/use-fetch';
+import { getAllSuppliersWithCount } from '../action';
 
 interface SupplierTableProps {
-  data: SupplierWithCount[];
-  isLoading?: boolean;
   onEdit?: (supplier: SupplierWithCount) => void;
   onRefresh?: () => void;
 }
 
-export function SupplierTable({
-  data,
-  isLoading = false,
-  onEdit,
-  onRefresh,
-}: SupplierTableProps) {
-  const router = useRouter();
-  // State for deletion dialog
-  const [selectedSupplierForDelete, setSelectedSupplierForDelete] =
-    useState<SupplierWithCount | null>(null);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-
-  // New state for detail dialog
-  const [selectedSupplierId, setSelectedSupplierId] = useState<string | null>(
-    null,
-  );
-  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
-
-  // Table state
-  const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    [],
-  );
-  const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({});
-  const [rowSelection, setRowSelection] = React.useState({});
-
-  // Handlers
-  const handleDeleteClick = (supplier: SupplierWithCount) => {
-    setSelectedSupplierForDelete(supplier);
-    setIsDeleteDialogOpen(true);
+export function SupplierTable({ onEdit, onRefresh }: SupplierTableProps) {
+  const fetchSuppliers = async (options: any) => {
+    const response = await getAllSuppliersWithCount({
+      page: options.page + 1,
+      limit: options.limit,
+      sortBy: options.sortBy,
+      search: options.search,
+      columnFilter: ['name', 'contact'],
+    });
+    return {
+      data: response.data || [],
+      totalRows: response.totalRows || 0,
+    };
   };
 
-  // Handle view details
-  const handleViewDetails = (supplier: SupplierWithCount) => {
-    setSelectedSupplierId(supplier.id);
-    setIsDetailDialogOpen(true);
+  const {
+    data,
+    isLoading,
+    options,
+    setPage,
+    setLimit,
+    setSortBy,
+    setSearch,
+    totalRows,
+    refresh,
+  } = useFetch<SupplierWithCount[]>({
+    fetchData: fetchSuppliers,
+    initialPageIndex: 0,
+    initialPageSize: 10,
+    initialSortField: 'name',
+    initialSortDirection: false,
+  });
+
+  const handlePaginationChange = (newPagination: {
+    pageIndex: number;
+    pageSize: number;
+  }) => {
+    setPage(newPagination.pageIndex);
+    setLimit(newPagination.pageSize);
   };
 
-  // Define columns
+  const handleSortingChange = (newSorting: any) => {
+    setSortBy(newSorting);
+  };
+
+  const handleSearchChange = (newSearch: string) => {
+    setSearch(newSearch);
+  };
+
+  const [deleteDialog, setDeleteDialog] = useState(false);
+  const [detailDialog, setDetailDialog] = useState(false);
+  const [detailId, setDetailId] = useState<string | null>(null);
+  const [deleteData, setDeleteData] = useState<SupplierWithCount | null>(null);
+
+  // Handle successful operations
+  const handleOperationSuccess = () => {
+    refresh();
+    onRefresh?.();
+  };
+
   const columns: ColumnDef<SupplierWithCount>[] = [
-    // Selection column
     {
-      id: 'select',
-      header: ({ table }) => (
-        <Checkbox
-          checked={
-            table.getIsAllPageRowsSelected() ||
-            (table.getIsSomePageRowsSelected() && 'indeterminate')
-          }
-          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-          aria-label="Select all"
-        />
-      ),
-      cell: ({ row }) => (
-        <Checkbox
-          checked={row.getIsSelected()}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label="Select row"
-        />
-      ),
-      enableSorting: false,
-      enableHiding: false,
-    },
-
-    // Name column
-    {
+      header: 'Name',
       accessorKey: 'name',
-      header: ({ column }) => (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-        >
-          Supplier Name
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      ),
       cell: ({ row }) => (
         <div className="font-medium">{row.getValue('name')}</div>
       ),
+      enableSorting: true,
     },
-
-    // Contact column
     {
-      accessorKey: 'contact',
       header: 'Contact',
+      accessorKey: 'contact',
       cell: ({ row }) => {
         const contact = row.getValue('contact') as string;
         return (
@@ -151,22 +113,18 @@ export function SupplierTable({
         );
       },
     },
-
-    // Stock-ins count column
     {
-      id: 'stockInsCount',
       header: 'Stock-Ins Count',
+      accessorKey: '_count.stockIns',
       cell: ({ row }) => (
         <Badge variant="outline" className="text-xs">
           {row.original._count?.stockIns || 0} stock-ins
         </Badge>
       ),
     },
-
-    // Actions column
     {
       id: 'actions',
-      header: 'Actions',
+      header: '',
       cell: ({ row }) => {
         const supplier = row.original;
         return (
@@ -183,7 +141,10 @@ export function SupplierTable({
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   className="flex justify-between cursor-pointer"
-                  onClick={() => handleViewDetails(supplier)}
+                  onClick={() => {
+                    setDetailId(supplier.id);
+                    setDetailDialog(true);
+                  }}
                 >
                   View Details <IconEye className="h-4 w-4" />
                 </DropdownMenuItem>
@@ -195,7 +156,10 @@ export function SupplierTable({
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="flex justify-between cursor-pointer text-destructive focus:text-destructive"
-                  onClick={() => handleDeleteClick(supplier)}
+                  onClick={() => {
+                    setDeleteData(supplier);
+                    setDeleteDialog(true);
+                  }}
                 >
                   Delete <IconTrash className="h-4 w-4" />
                 </DropdownMenuItem>
@@ -207,183 +171,34 @@ export function SupplierTable({
     },
   ];
 
-  // Create table instance
-  const table = useReactTable({
-    data,
-    columns,
-    onGlobalFilterChange: setSearchQuery,
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange: setRowSelection,
-    state: {
-      sorting,
-      columnFilters,
-      columnVisibility,
-      rowSelection,
-      globalFilter: searchQuery,
-    },
-  });
-
-  // Show skeleton while loading
-  if (isLoading) {
-    return <SupplierTableSkeleton />;
-  }
-
   return (
     <>
-      {/* Search input */}
-      <div className="space-y-4">
-        <Input
-          placeholder="Search suppliers..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="max-w-sm"
-        />
-
-        {/* Table */}
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
-                    </TableHead>
-                  ))}
-                </TableRow>
-              ))}
-            </TableHeader>
-            <TableBody>
-              {table.getRowModel().rows?.length ? (
-                table.getRowModel().rows.map((row) => (
-                  <TableRow
-                    key={row.id}
-                    data-state={row.getIsSelected() && 'selected'}
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext(),
-                        )}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell
-                    colSpan={columns.length}
-                    className="h-24 text-center"
-                  >
-                    No results.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
-
-        {/* Pagination */}
-        <div className="mt-4">
-          <DataTablePagination table={table} />
-        </div>
-      </div>
-
-      {/* Delete dialog */}
-      {selectedSupplierForDelete && (
+      <TableLayout
+        data={data || []}
+        columns={columns}
+        isLoading={isLoading}
+        pagination={options.pagination}
+        handlePaginationChange={handlePaginationChange}
+        handleSortingChange={handleSortingChange}
+        handleSearchChange={handleSearchChange}
+        totalRows={totalRows}
+        enableSelection={true}
+      />
+      {deleteDialog && deleteData && (
         <SupplierDeleteDialog
-          open={isDeleteDialogOpen}
-          onOpenChange={setIsDeleteDialogOpen}
-          supplier={selectedSupplierForDelete}
-          onSuccess={onRefresh}
+          open={deleteDialog}
+          onOpenChange={setDeleteDialog}
+          supplier={deleteData}
+          onSuccess={handleOperationSuccess}
         />
       )}
-
-      {/* Details dialog */}
-      <SupplierDetailDialog
-        open={isDetailDialogOpen}
-        onOpenChange={setIsDetailDialogOpen}
-        supplierId={selectedSupplierId}
-      />
+      {detailDialog && (
+        <SupplierDetailDialog
+          open={detailDialog}
+          onOpenChange={setDetailDialog}
+          supplierId={detailId}
+        />
+      )}
     </>
-  );
-}
-
-// Skeleton component for loading state
-function SupplierTableSkeleton() {
-  return (
-    <div className="space-y-4">
-      <div>
-        <Skeleton className="h-10 w-[384px]" />
-      </div>
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[40px]">
-                <Skeleton className="h-6 w-6" />
-              </TableHead>
-              <TableHead>
-                <Skeleton className="h-7 w-24" />
-              </TableHead>
-              <TableHead>
-                <Skeleton className="h-7 w-40" />
-              </TableHead>
-              <TableHead>
-                <Skeleton className="h-7 w-28" />
-              </TableHead>
-              <TableHead className="w-[80px]">
-                <Skeleton className="h-7 w-16" />
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {Array.from({ length: 5 }).map((_, index) => (
-              <TableRow key={index}>
-                <TableCell>
-                  <Skeleton className="h-5 w-5" />
-                </TableCell>
-                <TableCell>
-                  <Skeleton className="h-5 w-full max-w-[180px]" />
-                </TableCell>
-                <TableCell>
-                  <Skeleton className="h-5 w-full max-w-[300px]" />
-                </TableCell>
-                <TableCell>
-                  <Skeleton className="h-6 w-20" />
-                </TableCell>
-                <TableCell>
-                  <div className="flex justify-end">
-                    <Skeleton className="h-8 w-8" />
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-      <div className="mt-4">
-        <div className="flex items-center justify-between px-2">
-          <Skeleton className="h-5 w-[200px]" />
-          <div className="flex items-center space-x-6">
-            <Skeleton className="h-8 w-[120px]" />
-            <Skeleton className="h-8 w-[100px]" />
-            <Skeleton className="h-8 w-[120px]" />
-          </div>
-        </div>
-      </div>
-    </div>
   );
 }
