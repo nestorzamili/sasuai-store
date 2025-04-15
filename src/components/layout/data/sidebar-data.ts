@@ -15,7 +15,6 @@ import {
   IconListCheck,
   IconUsersGroup,
   IconGift,
-  IconCubeSend,
 } from '@tabler/icons-react';
 import { Command } from 'lucide-react';
 import { type SidebarData } from '../types';
@@ -46,11 +45,6 @@ export const sidebarData: SidebarData = {
           title: 'Transactions',
           url: '/transactions',
           icon: IconShoppingCart,
-        },
-        {
-          title: 'Task',
-          url: '/tasks',
-          icon: IconCubeSend,
         },
         {
           title: 'Suppliers',

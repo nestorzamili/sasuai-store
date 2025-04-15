@@ -2,11 +2,6 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { Header } from '@/components/layout/header';
-import { Main } from '@/components/layout/main';
-import { ProfileDropdown } from '@/components/profile-dropdown';
-import { ThemeSwitch } from '@/components/theme-switch';
-import { Toaster } from '@/components/ui/toaster';
 import { toast } from '@/hooks/use-toast';
 import { getMember } from '../action';
 import { MemberWithRelations } from '@/lib/types/member';
@@ -75,61 +70,53 @@ export default function MemberDetailsPage() {
 
   return (
     <>
-      <Header fixed>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="gap-2"
-          onClick={() => router.push('/members')}
-        >
-          <IconArrowLeft size={16} />
-          Back to Members
-        </Button>
-        <div className="ml-auto flex items-center space-x-4">
-          <ThemeSwitch />
-          <ProfileDropdown />
-        </div>
-      </Header>
-      <Main>
-        {isLoading ? (
-          <MemberDetailSkeleton />
-        ) : member ? (
-          <div className="space-y-6">
-            <MemberProfile member={member} onUpdate={fetchMember} />
+      <Button
+        variant="ghost"
+        size="sm"
+        className="gap-2"
+        onClick={() => router.push('/members')}
+      >
+        <IconArrowLeft size={16} />
+        Back to Members
+      </Button>
 
-            <Tabs defaultValue="points" className="w-full">
-              <TabsList>
-                <TabsTrigger value="points">Point History</TabsTrigger>
-                <TabsTrigger value="rewards">Reward Claims</TabsTrigger>
-              </TabsList>
-              <TabsContent value="points">
-                <MemberPointHistory
-                  memberId={member.id}
-                  points={member.memberPoints}
-                  memberTier={member.tier}
-                />
-              </TabsContent>
-              <TabsContent value="rewards">
-                <MemberRewardHistory
-                  memberId={member.id}
-                  claims={member.rewardClaims}
-                />
-              </TabsContent>
-            </Tabs>
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center py-10">
-            <h2 className="text-xl font-semibold">Member not found</h2>
-            <p className="text-muted-foreground mb-4">
-              The requested member could not be found
-            </p>
-            <Button onClick={() => router.push('/members')}>
-              Return to Members List
-            </Button>
-          </div>
-        )}
-      </Main>
-      <Toaster />
+      {isLoading ? (
+        <MemberDetailSkeleton />
+      ) : member ? (
+        <div className="space-y-6 mt-2">
+          <MemberProfile member={member} onUpdate={fetchMember} />
+
+          <Tabs defaultValue="points" className="w-full">
+            <TabsList>
+              <TabsTrigger value="points">Point History</TabsTrigger>
+              <TabsTrigger value="rewards">Reward Claims</TabsTrigger>
+            </TabsList>
+            <TabsContent value="points">
+              <MemberPointHistory
+                memberId={member.id}
+                points={member.memberPoints}
+                memberTier={member.tier}
+              />
+            </TabsContent>
+            <TabsContent value="rewards">
+              <MemberRewardHistory
+                memberId={member.id}
+                claims={member.rewardClaims}
+              />
+            </TabsContent>
+          </Tabs>
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center py-10">
+          <h2 className="text-xl font-semibold">Member not found</h2>
+          <p className="text-muted-foreground mb-4">
+            The requested member could not be found
+          </p>
+          <Button onClick={() => router.push('/members')}>
+            Return to Members List
+          </Button>
+        </div>
+      )}
     </>
   );
 }

@@ -107,6 +107,7 @@ export function TableLayout({
     manualPagination: Boolean(handlePaginationChange),
     manualFiltering: Boolean(setColumnFilters),
     enableRowSelection: enableSelection,
+    getRowId: (row) => String(row[uniqueIdField]),
     onPaginationChange: (updater) => {
       if (handlePaginationChange) {
         const newPagination =
@@ -195,67 +196,6 @@ export function TableLayout({
     );
   };
 
-  const onSelectedRows = (item: any) => {
-    const uniqueId = String(item[uniqueIdField]);
-    setRowSelection((prev) => {
-      // Create a copy of the previous state
-      const newSelection = { ...prev };
-
-      // If the row is already selected, remove it from selection
-      if (newSelection[uniqueId]) {
-        delete newSelection[uniqueId];
-      } else {
-        // Otherwise, add it to selection
-        newSelection[uniqueId] = true;
-      }
-
-      return newSelection;
-    });
-  };
-
-  // Add a handler for selecting/deselecting all rows on the current page
-  const handleSelectAllRows = (checked: boolean) => {
-    setRowSelection((prev) => {
-      // Start with the current selection
-      const newSelection = { ...prev };
-
-      // Get all rows currently displayed on the page
-      const currentPageRows = table.getRowModel().rows;
-
-      // For each row on the current page
-      currentPageRows.forEach((row) => {
-        const rowData = row.original;
-        const uniqueId = String(rowData[uniqueIdField]);
-
-        if (checked) {
-          // If checked, add all rows to selection
-          newSelection[uniqueId] = true;
-        } else {
-          // If unchecked, remove all rows from selection
-          if (uniqueId in newSelection) {
-            delete newSelection[uniqueId];
-          }
-        }
-      });
-
-      return newSelection;
-    });
-  };
-
-  // Function to check if all rows on the current page are selected
-  const areAllCurrentRowsSelected = () => {
-    const currentPageRows = table.getRowModel().rows;
-
-    // If no rows, return false
-    if (currentPageRows.length === 0) return false;
-
-    // Check if all rows on the current page are selected
-    return currentPageRows.every((row) => {
-      const uniqueId = String(row.original[uniqueIdField]);
-      return !!rowSelection[uniqueId];
-    });
-  };
-
   return (
     <div className="w-full">
       <div className="flex items-center py-4 justify-between">
@@ -273,23 +213,18 @@ export function TableLayout({
           )}
         </div>
         <div className="flex items-center gap-2">
-          {Object.keys(rowSelection).length > 0 && (
-            <>
-              <span className="text-sm text-muted-foreground">
-                <span className="font-medium text-primary">
-                  {Object.keys(rowSelection).length}
-                </span>{' '}
-                selected
-              </span>
-              <button
-                onClick={() => setRowSelection({})}
-                className="text-sm text-destructive hover:underline"
-                title="Clear selection"
-              >
-                Clear
-              </button>
-            </>
-          )}
+          {enableSelection &&
+            table.getFilteredSelectedRowModel().rows.length > 0 && (
+              <>
+                <button
+                  onClick={() => setRowSelection({})}
+                  className="text-sm text-destructive hover:underline"
+                  title="Clear selection"
+                >
+                  Clear
+                </button>
+              </>
+            )}
         </div>
       </div>
       <div className="rounded-md border">
@@ -300,11 +235,11 @@ export function TableLayout({
                 {enableSelection && (
                   <TableHead className="w-10">
                     <Checkbox
-                      checked={areAllCurrentRowsSelected()}
-                      onCheckedChange={(checked) =>
-                        handleSelectAllRows(!!checked)
+                      checked={table.getIsAllPageRowsSelected()}
+                      onCheckedChange={(value) =>
+                        table.toggleAllPageRowsSelected(!!value)
                       }
-                      aria-label="Select all rows"
+                      aria-label="Select all rows on current page"
                       className="ml-2"
                     />
                   </TableHead>
@@ -317,7 +252,7 @@ export function TableLayout({
                           ? ''
                           : (flexRender(
                               header.column.columnDef.header,
-                              header.getContext()
+                              header.getContext(),
                             ) as string)
                       }
                       column={header.column}
@@ -345,33 +280,31 @@ export function TableLayout({
                 </TableCell>
               </TableRow>
             ) : table.getRowModel().rows.length ? (
-              table.getRowModel().rows.map((row) => {
-                const rowData = row.original;
-                const uniqueId = String(rowData[uniqueIdField]);
-
-                return (
-                  <TableRow key={uniqueId}>
-                    {enableSelection && (
-                      <TableCell className="w-10">
-                        <Checkbox
-                          checked={!!rowSelection[uniqueId]}
-                          onCheckedChange={() => onSelectedRows(rowData)}
-                          aria-label={`Select row ${uniqueId}`}
-                          className="ml-2"
-                        />
-                      </TableCell>
-                    )}
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                );
-              })
+              table.getRowModel().rows.map((row) => (
+                <TableRow
+                  key={row.id}
+                  data-state={row.getIsSelected() && 'selected'}
+                >
+                  {enableSelection && (
+                    <TableCell className="w-10">
+                      <Checkbox
+                        checked={row.getIsSelected()}
+                        onCheckedChange={(value) => row.toggleSelected(!!value)}
+                        aria-label={`Select row ${row.id}`}
+                        className="ml-2"
+                      />
+                    </TableCell>
+                  )}
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
+                      )}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
             ) : (
               <TableRow className="hover:bg-transparent">
                 <TableCell
