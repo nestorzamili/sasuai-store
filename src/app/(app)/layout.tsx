@@ -36,7 +36,7 @@ export default async function AppLayout({
                   'transition-[width] ease-linear duration-200',
                   'h-svh flex flex-col',
                   'group-data-[scroll-locked=1]/body:h-full',
-                  'group-data-[scroll-locked=1]/body:has-[main.fixed-main]:h-svh',
+                  'group-data-[scroll-locked=1]/body:has-[main.fixed-main]:h-svh'
                 )}
               >
                 {children}
