@@ -11,21 +11,61 @@ const supplierSchema = z.object({
 });
 
 /**
- * Get all suppliers with stock-in count
+ * Get all suppliers with stock-in count, support pagination/sort/search/filter
  */
-export async function getAllSuppliersWithCount() {
+export async function getAllSuppliersWithCount(options?: {
+  page?: number;
+  limit?: number;
+  sortBy?: { id: string; desc: boolean };
+  search?: string;
+  columnFilter?: string[];
+}) {
   try {
-    // Get suppliers with stock-in counts
-    const suppliers = await SupplierService.getAllWithStockInCount();
+    // Default values
+    const page = options?.page ?? 1;
+    const limit = options?.limit ?? 10;
+    const sortBy = options?.sortBy ?? { id: 'name', desc: false };
+    const search = options?.search ?? '';
+    const columnFilter = options?.columnFilter ?? ['name', 'contact'];
+
+    // Build where clause for search
+    let where: any = {};
+    if (search && columnFilter.length > 0) {
+      where.OR = columnFilter.map((col) => ({
+        [col]: { contains: search, mode: 'insensitive' },
+      }));
+    }
+
+    // Build orderBy
+    let orderBy: any = {};
+    if (sortBy && sortBy.id) {
+      orderBy[sortBy.id] = sortBy.desc ? 'desc' : 'asc';
+    } else {
+      orderBy = { name: 'asc' };
+    }
+
+    // Count total rows
+    const totalRows = await SupplierService.countWithWhere(where);
+
+    // Query data with pagination
+    const suppliers = await SupplierService.getAllSuppliersWithCount({
+      where,
+      orderBy,
+      skip: (page - 1) * limit,
+      take: limit,
+    });
 
     return {
       success: true,
       data: suppliers,
+      totalRows,
     };
   } catch (error) {
     return {
       success: false,
       error: 'Failed to fetch suppliers',
+      data: [],
+      totalRows: 0,
     };
   }
 }
