@@ -5,7 +5,7 @@ import { MemberService } from '@/lib/services/member.service';
 import { z } from 'zod';
 import { headers } from 'next/headers';
 import { auth } from '@/lib/auth';
-
+import { options } from '@/lib/types/table';
 // Member schema for validation
 const memberSchema = z.object({
   name: z.string().min(1, 'Member name is required'),
@@ -42,7 +42,22 @@ export async function getAllMembers() {
     };
   }
 }
-
+// Optimalize get member
+export async function optimalizeGetMember(options?: options) {
+  try {
+    const members = await MemberService.getAllOptimalize(options);
+    return {
+      success: true,
+      data: members.data,
+      meta: members.meta,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: 'Failed to fetch members',
+    };
+  }
+}
 /**
  * Get a member by ID with full details
  */
@@ -123,7 +138,7 @@ export async function updateMember(
     email?: string | null;
     phone?: string | null;
     tierId?: string | null;
-  },
+  }
 ) {
   try {
     // Validate data
@@ -247,7 +262,7 @@ export async function getMemberPointHistory(memberId: string) {
 export async function awardPointsToMember(
   memberId: string,
   points: number,
-  notes?: string,
+  notes?: string
 ) {
   try {
     if (points <= 0) {
@@ -271,7 +286,7 @@ export async function awardPointsToMember(
       manualTransactionId,
       points,
       pointNotes,
-      userId,
+      userId
     );
 
     // Revalidate member paths
@@ -357,12 +372,12 @@ export async function getMemberRewardClaimHistory(memberId: string) {
  */
 export async function calculatePotentialPoints(
   memberId: string,
-  transactionAmount: number,
+  transactionAmount: number
 ) {
   try {
     const points = await MemberService.calculatePotentialPoints(
       memberId,
-      transactionAmount,
+      transactionAmount
     );
 
     return {
@@ -451,7 +466,7 @@ export async function updateMemberTier(
     name?: string;
     minPoints?: number;
     multiplier?: number;
-  },
+  }
 ) {
   try {
     // Validate data

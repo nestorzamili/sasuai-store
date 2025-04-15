@@ -1,5 +1,6 @@
 import prisma from '@/lib/prisma';
-
+import { options } from '@/lib/types/table';
+import { buildQueryOptions } from '../common/query-options';
 export class ProductService {
   /**
    * Get all products
@@ -14,6 +15,32 @@ export class ProductService {
       },
       orderBy: { name: 'asc' },
     });
+  }
+  // Optimalize getAll
+  static async getAllOptimized(queryOptions?: options) {
+    const options = buildQueryOptions(queryOptions);
+    const [products, count] = await Promise.all([
+      prisma.product.findMany({
+        include: {
+          category: true,
+          brand: true,
+          unit: true,
+          images: {
+            where: { isPrimary: true },
+            take: 1,
+          },
+        },
+        ...options,
+      }),
+      prisma.product.count(),
+    ]);
+    return {
+      data: products,
+      meta: {
+        ...options,
+        rowsCount: count,
+      },
+    };
   }
 
   /**
@@ -165,7 +192,7 @@ export class ProductService {
       skuCode?: string | null;
       barcode?: string | null;
       isActive?: boolean;
-    },
+    }
   ) {
     return prisma.product.update({
       where: { id },
@@ -312,7 +339,7 @@ export class ProductService {
       batchCode?: string;
       expiryDate?: Date;
       buyPrice?: number;
-    },
+    }
   ) {
     return prisma.productBatch.update({
       where: { id },

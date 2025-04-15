@@ -145,6 +145,7 @@ model Product {
   isActive     Boolean        @default(true) @map("is_active")
   images       ProductImage[]
   batches      ProductBatch[]
+  discountRelationProduct DiscountRelationProduct[]
   createdAt    DateTime       @default(now()) @db.Timestamptz
   updatedAt    DateTime       @updatedAt @db.Timestamptz
 
@@ -186,20 +187,49 @@ model ProductImage {
 // ==============================
 
 model Discount {
-  id           String   @id @default(uuid())
-  name         String
-  discountType String   @map("discount_type")
-  valueType    String   @map("value_type")
-  value        Int      @map("value")
-  minPurchase  Int?     @map("min_purchase")
-  startDate    DateTime @map("start_date") @db.Timestamptz
-  endDate      DateTime @map("end_date") @db.Timestamptz
-  isActive     Boolean  @default(true) @map("is_active")
-  createdAt    DateTime @default(now()) @db.Timestamptz
-  updatedAt    DateTime @updatedAt @db.Timestamptz
-
+  id               String            @id @default(uuid())
+  name             String
+  discountType     String            @map("discount_type")   
+  valueType        String            @map("value_type")
+  value            Int               @map("value")
+  minPurchase      Int?              @map("min_purchase")
+  startDate        DateTime          @map("start_date") @db.Timestamptz
+  endDate          DateTime          @map("end_date") @db.Timestamptz
+  isActive         Boolean           @default(true) @map("is_active")
+  createdAt        DateTime          @default(now()) @db.Timestamptz
+  updatedAt        DateTime          @updatedAt @db.Timestamptz
+  discountRelations DiscountRelation[]
+  discountProducts   DiscountRelationProduct[]
+  discountMembers   DiscountRelationMember[]
   @@map("discount")
 }
+
+model DiscountRelation {
+  discountId   String   @map("discount_id")
+  relationId   String   @map("relation_id")
+  discount    Discount @relation(fields: [discountId], references: [id], onDelete: Cascade)
+  @@id([discountId])
+  @@map("discount_relation")
+  @@unique([discountId])
+}
+
+model DiscountRelationProduct{
+  discountId String @map("discount_id")
+  productId String @map("product_id")
+discount  Discount @relation(fields: [discountId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id],onDelete: Cascade)
+  @@map("discount_relation_product")
+  @@id([discountId, productId])
+}
+model DiscountRelationMember{
+  discountId String @map("discount_id")
+  memberId String @map("product_id")
+  discount  Discount @relation(fields: [discountId], references: [id],onDelete: Cascade)
+  member Member @relation(fields: [memberId], references: [id],onDelete: Cascade)
+  @@map("discount_relation_member")
+  @@id([discountId, memberId])
+}
+
 
 model MemberTier {
   id         String   @id @default(uuid())
@@ -226,6 +256,7 @@ model Member {
   memberPoints      MemberPoint[]
   rewardClaims      RewardClaim[]
   transactions      Transaction[]
+  discountRelationsMember DiscountRelationMember[]
   createdAt         DateTime      @default(now()) @db.Timestamptz
   updatedAt         DateTime      @updatedAt @db.Timestamptz
 
