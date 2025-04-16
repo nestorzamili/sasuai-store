@@ -11,21 +11,61 @@ const unitSchema = z.object({
 });
 
 /**
- * Get all units with relation counts
+ * Get all units with relation counts, support pagination/sort/search/filter
  */
-export async function getAllUnitsWithCounts() {
+export async function getAllUnitsWithCounts(options?: {
+  page?: number;
+  limit?: number;
+  sortBy?: { id: string; desc: boolean };
+  search?: string;
+  columnFilter?: string[];
+}) {
   try {
-    // Get units with relation counts
-    const units = await UnitService.getAllWithRelationCounts();
+    // Default values
+    const page = options?.page ?? 1;
+    const limit = options?.limit ?? 10;
+    const sortBy = options?.sortBy ?? { id: 'name', desc: false };
+    const search = options?.search ?? '';
+    const columnFilter = options?.columnFilter ?? ['name', 'symbol'];
+
+    // Build where clause for search
+    let where: any = {};
+    if (search && columnFilter.length > 0) {
+      where.OR = columnFilter.map((col) => ({
+        [col]: { contains: search, mode: 'insensitive' },
+      }));
+    }
+
+    // Build orderBy
+    let orderBy: any = {};
+    if (sortBy && sortBy.id) {
+      orderBy[sortBy.id] = sortBy.desc ? 'desc' : 'asc';
+    } else {
+      orderBy = { name: 'asc' };
+    }
+
+    // Count total rows
+    const totalRows = await UnitService.countWithWhere(where);
+
+    // Query data with pagination
+    const units = await UnitService.getAllUnitsWithCounts({
+      where,
+      orderBy,
+      skip: (page - 1) * limit,
+      take: limit,
+    });
 
     return {
       success: true,
       data: units,
+      totalRows,
     };
   } catch (error) {
     return {
       success: false,
       error: 'Failed to fetch units',
+      data: [],
+      totalRows: 0,
     };
   }
 }

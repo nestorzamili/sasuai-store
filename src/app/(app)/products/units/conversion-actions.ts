@@ -31,6 +31,74 @@ export async function getAllConversions() {
 }
 
 /**
+ * Get all unit conversions with pagination, sorting and filtering
+ */
+export async function getAllConversionsWithOptions(options?: {
+  page?: number;
+  limit?: number;
+  sortBy?: { id: string; desc: boolean };
+  search?: string;
+  columnFilter?: string[];
+}) {
+  try {
+    // Default values
+    const page = options?.page ?? 1;
+    const limit = options?.limit ?? 10;
+    const sortBy = options?.sortBy ?? { id: 'fromUnit.name', desc: false };
+    const search = options?.search ?? '';
+
+    // Build where clause for search
+    let where: any = {};
+    if (search) {
+      where.OR = [
+        { fromUnit: { name: { contains: search, mode: 'insensitive' } } },
+        { fromUnit: { symbol: { contains: search, mode: 'insensitive' } } },
+        { toUnit: { name: { contains: search, mode: 'insensitive' } } },
+        { toUnit: { symbol: { contains: search, mode: 'insensitive' } } },
+      ];
+    }
+
+    // Build orderBy
+    let orderBy: any = {};
+    if (sortBy && sortBy.id) {
+      if (sortBy.id === 'fromUnit') {
+        orderBy = { fromUnit: { name: sortBy.desc ? 'desc' : 'asc' } };
+      } else if (sortBy.id === 'toUnit') {
+        orderBy = { toUnit: { name: sortBy.desc ? 'desc' : 'asc' } };
+      } else {
+        orderBy[sortBy.id] = sortBy.desc ? 'desc' : 'asc';
+      }
+    } else {
+      orderBy = { fromUnit: { name: 'asc' } };
+    }
+
+    // Count total rows
+    const totalRows = await UnitService.countConversionsWithWhere(where);
+
+    // Query data with pagination
+    const conversions = await UnitService.getAllConversionsWithOptions({
+      where,
+      orderBy,
+      skip: (page - 1) * limit,
+      take: limit,
+    });
+
+    return {
+      success: true,
+      data: conversions,
+      totalRows,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: 'Failed to fetch unit conversions',
+      data: [],
+      totalRows: 0,
+    };
+  }
+}
+
+/**
  * Get conversions for a specific unit
  */
 export async function getConversionsForUnit(unitId: string) {
