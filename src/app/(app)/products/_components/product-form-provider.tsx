@@ -17,7 +17,7 @@ import {
   updateProduct,
   getProductImages,
   addProductImage,
-} from '../../action';
+} from '../action';
 import { ProductWithRelations, ProductImageWithUrl } from '@/lib/types/product';
 import { Category, Brand, Unit } from '@prisma/client';
 
@@ -36,11 +36,11 @@ const formSchema = z.object({
 
 export type ProductFormValues = z.infer<typeof formSchema>;
 
-// Temporary image type that matches TempProductImage
+// Simplified temporary image type
 interface TempImage {
   id: string;
   imageUrl: string;
-  fullUrl: string; // Added to match TempProductImage
+  fullUrl: string;
   isPrimary: boolean;
 }
 
@@ -67,9 +67,7 @@ interface ProductFormContextProps {
   setOpenUnitCreate: (open: boolean) => void;
   productId: string | undefined;
   fetchProductImages: (productId: string) => Promise<void>;
-  fetchUnits: () => Promise<void>;
-  fetchBrands: () => Promise<void>;
-  fetchCategories: () => Promise<void>; // Add this new function
+  fetchOptions: () => Promise<void>;
 }
 
 export const ProductFormContext = createContext<ProductFormContextProps | null>(
@@ -129,84 +127,28 @@ export function ProductFormProvider({
     },
   });
 
-  // Fetch form options (categories, brands, units)
-  useEffect(() => {
-    async function fetchOptions() {
-      try {
-        const result = await getProductFormOptions();
-        if (result.success && result.data) {
-          setCategories(result.data.categories || []);
-          setBrands(result.data.brands || []);
-          // Handle potential missing units property safely
-          if (result.data.units) {
-            setUnits(result.data.units);
-          } else {
-            // Provide some default units if none are returned from the API
-            setUnits([
-              { id: 'pcs', name: 'Piece', symbol: 'pcs' },
-              { id: 'kg', name: 'Kilogram', symbol: 'kg' },
-              { id: 'l', name: 'Liter', symbol: 'L' },
-            ] as Unit[]);
-          }
-        }
-      } catch (error) {
-        toast({
-          title: 'Error fetching form options',
-          description: 'Failed to load categories, brands, or units',
-          variant: 'destructive',
-        });
-      }
-    }
-    fetchOptions();
-  }, []);
-
-  // Create a function to fetch units
-  const fetchUnits = async () => {
+  // Consolidated function to fetch all options (categories, brands, units)
+  const fetchOptions = async () => {
     try {
       const result = await getProductFormOptions();
       if (result.success && result.data) {
+        setCategories(result.data.categories || []);
+        setBrands(result.data.brands || []);
         setUnits(result.data.units || []);
       }
     } catch (error) {
       toast({
         title: 'Error',
-        description: 'Failed to fetch units',
+        description: 'Failed to fetch form options',
         variant: 'destructive',
       });
     }
   };
 
-  // Create a function to fetch brands
-  const fetchBrands = async () => {
-    try {
-      const result = await getProductFormOptions();
-      if (result.success && result.data) {
-        setBrands(result.data.brands || []);
-      }
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to fetch brands',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  // Create a function to fetch categories
-  const fetchCategories = async () => {
-    try {
-      const result = await getProductFormOptions();
-      if (result.success && result.data) {
-        setCategories(result.data.categories || []);
-      }
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to fetch categories',
-        variant: 'destructive',
-      });
-    }
-  };
+  // Fetch options on initialization
+  useEffect(() => {
+    fetchOptions();
+  }, []);
 
   // Update form when initialData changes
   useEffect(() => {
@@ -257,12 +199,12 @@ export function ProductFormProvider({
     }
   };
 
-  // New functions for managing temporary images - simplified
+  // Management of temporary images
   const addTempImage = (imageUrl: string) => {
     const newImage: TempImage = {
       id: `temp-${Date.now()}`,
       imageUrl,
-      fullUrl: imageUrl, // Set fullUrl to match imageUrl for consistency
+      fullUrl: imageUrl,
       isPrimary: tempImages.length === 0, // First image is primary by default
     };
 
@@ -277,22 +219,17 @@ export function ProductFormProvider({
   const removeTempImage = (id: string) => {
     setTempImages((prev) => {
       const filtered = prev.filter((img) => img.id !== id);
-
       // If we removed the primary image and have other images, set the first one as primary
       if (prev.find((img) => img.id === id)?.isPrimary && filtered.length > 0) {
         filtered[0].isPrimary = true;
       }
-
       return filtered;
     });
   };
 
   const setTempPrimaryImage = (id: string) => {
     setTempImages((prev) =>
-      prev.map((img) => ({
-        ...img,
-        isPrimary: img.id === id,
-      })),
+      prev.map((img) => ({ ...img, isPrimary: img.id === id })),
     );
   };
 
@@ -330,7 +267,11 @@ export function ProductFormProvider({
 
   // Get primary image URL
   const primaryImageUrl =
-    images.find((img) => img.isPrimary)?.fullUrl || images[0]?.fullUrl || null;
+    images.find((img) => img.isPrimary)?.fullUrl ||
+    images[0]?.fullUrl ||
+    tempImages.find((img) => img.isPrimary)?.fullUrl ||
+    tempImages[0]?.fullUrl ||
+    null;
 
   // Handle form submission
   const onSubmit = async (values: ProductFormValues) => {
@@ -372,7 +313,7 @@ export function ProductFormProvider({
           });
 
           methods.reset();
-          setTempImages([]); // Clear temp images after successful creation
+          setTempImages([]);
           onSuccess?.();
           onOpenChange?.(false);
         } else {
@@ -429,9 +370,7 @@ export function ProductFormProvider({
     setOpenUnitCreate,
     productId,
     fetchProductImages,
-    fetchUnits,
-    fetchBrands,
-    fetchCategories, // Add the function to the context
+    fetchOptions,
   };
 
   return (

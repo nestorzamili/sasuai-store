@@ -95,10 +95,20 @@ export function ProductDetailsSection() {
                 <Input
                   type="number"
                   placeholder="0"
-                  {...field}
+                  value={field.value === 0 ? '' : field.value}
+                  onFocus={(e) => {
+                    if (e.target.value === '0') {
+                      e.target.value = '';
+                    }
+                  }}
+                  onBlur={(e) => {
+                    if (e.target.value === '') {
+                      field.onChange(0);
+                    }
+                  }}
                   onChange={(e) => {
-                    const value = e.target.valueAsNumber;
-                    field.onChange(Number.isNaN(value) ? 0 : value);
+                    const value = e.target.value;
+                    field.onChange(value === '' ? 0 : Number(value));
                   }}
                 />
               </FormControl>
