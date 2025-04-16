@@ -262,7 +262,7 @@ export function TableLayout({
               </TableRow>
             ))}
           </TableHeader>
-          <TableBody className="text-xs">
+          <TableBody className="text-md">
             {isLoading ? (
               <TableRow className="hover:bg-transparent">
                 <TableCell
