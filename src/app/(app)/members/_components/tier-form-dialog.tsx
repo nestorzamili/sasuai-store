@@ -178,6 +178,7 @@ export default function TierFormDialog({
                       onBlur={(e) => {
                         if (e.target.value === '') {
                           e.target.value = '0';
+                          field.onChange(0);
                         }
                       }}
                       onChange={(e) => {
