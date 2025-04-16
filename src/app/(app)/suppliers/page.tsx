@@ -33,9 +33,15 @@ export default function SuppliersPage() {
   };
 
   return (
-    <div className="flex flex-col gap-4 p-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Suppliers</h1>
+    <div className="space-y-1">
+      <div className="flex items-center justify-between flex-wrap gap-x-4">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight">Supplier</h2>
+          <p className="text-muted-foreground">
+            Manage your suppliers here. You can add, edit, or delete suppliers
+            as needed.
+          </p>
+        </div>
         <SupplierFormDialog
           open={formDialogOpen}
           onOpenChange={handleDialogOpenChange}
