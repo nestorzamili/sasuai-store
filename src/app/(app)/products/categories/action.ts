@@ -11,21 +11,61 @@ const categorySchema = z.object({
 });
 
 /**
- * Get all categories with product count
+ * Get all categories with product count, support pagination/sort/search/filter
  */
-export async function getAllCategoriesWithCount() {
+export async function getAllCategoriesWithCount(options?: {
+  page?: number;
+  limit?: number;
+  sortBy?: { id: string; desc: boolean };
+  search?: string;
+  columnFilter?: string[];
+}) {
   try {
-    // Get categories with product counts
-    const categories = await CategoryService.getAllWithProductCount();
+    // Default values
+    const page = options?.page ?? 1;
+    const limit = options?.limit ?? 10;
+    const sortBy = options?.sortBy ?? { id: 'name', desc: false };
+    const search = options?.search ?? '';
+    const columnFilter = options?.columnFilter ?? ['name', 'description'];
+
+    // Build where clause for search
+    let where: any = {};
+    if (search && columnFilter.length > 0) {
+      where.OR = columnFilter.map((col) => ({
+        [col]: { contains: search, mode: 'insensitive' },
+      }));
+    }
+
+    // Build orderBy
+    let orderBy: any = {};
+    if (sortBy && sortBy.id) {
+      orderBy[sortBy.id] = sortBy.desc ? 'desc' : 'asc';
+    } else {
+      orderBy = { name: 'asc' };
+    }
+
+    // Count total rows
+    const totalRows = await CategoryService.countWithWhere(where);
+
+    // Query data with pagination
+    const categories = await CategoryService.getAllCategoriesWithCount({
+      where,
+      orderBy,
+      skip: (page - 1) * limit,
+      take: limit,
+    });
 
     return {
       success: true,
       data: categories,
+      totalRows,
     };
   } catch (error) {
     return {
       success: false,
       error: 'Failed to fetch categories',
+      data: [],
+      totalRows: 0,
     };
   }
 }
