@@ -31,6 +31,42 @@ export const CategoryService = {
   },
 
   /**
+   * Get all categories with product count, paginated, sorted, filtered
+   */
+  async getAllCategoriesWithCount({
+    where,
+    orderBy,
+    skip,
+    take,
+  }: {
+    where?: any;
+    orderBy?: any;
+    skip?: number;
+    take?: number;
+  }) {
+    return await prisma.category.findMany({
+      where,
+      orderBy,
+      skip,
+      take,
+      include: {
+        _count: {
+          select: {
+            products: true,
+          },
+        },
+      },
+    });
+  },
+
+  /**
+   * Count categories with where clause (for pagination)
+   */
+  async countWithWhere(where?: any) {
+    return await prisma.category.count({ where });
+  },
+
+  /**
    * Get category by ID
    */
   async getById(id: string) {
