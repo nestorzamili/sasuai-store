@@ -27,6 +27,47 @@ export class UnitService {
   }
 
   /**
+   * Get all units with relation counts, paginated, sorted, filtered
+   */
+  static async getAllUnitsWithCounts({
+    where,
+    orderBy,
+    skip,
+    take,
+  }: {
+    where?: any;
+    orderBy?: any;
+    skip?: number;
+    take?: number;
+  }) {
+    return prisma.unit.findMany({
+      where,
+      orderBy,
+      skip,
+      take,
+      include: {
+        _count: {
+          select: {
+            products: true,
+            stockIns: true,
+            stockOuts: true,
+            transactionItems: true,
+            fromUnitConversions: true,
+            toUnitConversions: true,
+          },
+        },
+      },
+    });
+  }
+
+  /**
+   * Count units with where clause (for pagination)
+   */
+  static async countWithWhere(where?: any) {
+    return prisma.unit.count({ where });
+  }
+
+  /**
    * Get a unit by ID
    */
   static async getById(id: string) {
@@ -102,6 +143,39 @@ export class UnitService {
       },
       orderBy: { fromUnit: { name: 'asc' } },
     });
+  }
+
+  /**
+   * Get all unit conversions with pagination, sorting, and filtering
+   */
+  static async getAllConversionsWithOptions({
+    where,
+    orderBy,
+    skip,
+    take,
+  }: {
+    where?: any;
+    orderBy?: any;
+    skip?: number;
+    take?: number;
+  }) {
+    return prisma.unitConversion.findMany({
+      where,
+      orderBy,
+      skip,
+      take,
+      include: {
+        fromUnit: true,
+        toUnit: true,
+      },
+    });
+  }
+
+  /**
+   * Count conversions with where clause (for pagination)
+   */
+  static async countConversionsWithWhere(where?: any) {
+    return prisma.unitConversion.count({ where });
   }
 
   /**

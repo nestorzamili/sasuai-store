@@ -1,21 +1,9 @@
 'use client';
 import * as React from 'react';
 import { useState } from 'react';
-import {
-  ColumnDef,
-  ColumnFiltersState,
-  SortingState,
-  VisibilityState,
-  flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
-} from '@tanstack/react-table';
-import { ArrowUpDown, MoreHorizontal } from 'lucide-react';
+import { ColumnDef } from '@tanstack/react-table';
+import { MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import { IconTrash, IconEdit } from '@tabler/icons-react';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -27,46 +15,73 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { UnitWithCounts } from '@/lib/types/unit';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { DataTablePagination } from '@/components/ui/data-table-pagination';
-import { Skeleton } from '@/components/ui/skeleton';
+import { TableLayout } from '@/components/layout/table-layout';
 import { UnitDeleteDialog } from './unit-delete-dialog';
-import { Input } from '@/components/ui/input';
+import { useFetch } from '@/hooks/use-fetch';
+import { getAllUnitsWithCounts } from '../action';
 
 interface UnitTableProps {
-  data: UnitWithCounts[];
-  isLoading?: boolean;
   onEdit?: (unit: UnitWithCounts) => void;
   onRefresh?: () => void;
 }
 
-export function UnitTable({
-  data,
-  isLoading = false,
-  onEdit,
-  onRefresh,
-}: UnitTableProps) {
-  // State for deletion dialog
-  const [selectedUnitForDelete, setSelectedUnitForDelete] =
-    useState<UnitWithCounts | null>(null);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+export function UnitTable({ onEdit, onRefresh }: UnitTableProps) {
+  const fetchUnits = async (options: any) => {
+    const response = await getAllUnitsWithCounts({
+      page: options.page + 1,
+      limit: options.limit,
+      sortBy: options.sortBy,
+      search: options.search,
+      columnFilter: ['name', 'symbol'],
+    });
+    return {
+      data: response.data || [],
+      totalRows: response.totalRows || 0,
+    };
+  };
 
-  // Table state
-  const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    [],
-  );
-  const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({});
-  const [rowSelection, setRowSelection] = React.useState({});
+  const {
+    data,
+    isLoading,
+    options,
+    setPage,
+    setLimit,
+    setSortBy,
+    setSearch,
+    totalRows,
+    refresh,
+  } = useFetch<UnitWithCounts[]>({
+    fetchData: fetchUnits,
+    initialPageIndex: 0,
+    initialPageSize: 10,
+    initialSortField: 'name',
+    initialSortDirection: false,
+  });
+
+  const handlePaginationChange = (newPagination: {
+    pageIndex: number;
+    pageSize: number;
+  }) => {
+    setPage(newPagination.pageIndex);
+    setLimit(newPagination.pageSize);
+  };
+
+  const handleSortingChange = (newSorting: any) => {
+    setSortBy(newSorting);
+  };
+
+  const handleSearchChange = (newSearch: string) => {
+    setSearch(newSearch);
+  };
+
+  const [deleteDialog, setDeleteDialog] = useState(false);
+  const [deleteData, setDeleteData] = useState<UnitWithCounts | null>(null);
+
+  // Handle successful operations
+  const handleOperationSuccess = () => {
+    refresh();
+    onRefresh?.();
+  };
 
   // Calculate if a unit is in use
   const isUnitInUse = (unit: UnitWithCounts): boolean => {
@@ -78,68 +93,26 @@ export function UnitTable({
     );
   };
 
-  // Handlers
-  const handleDeleteClick = (unit: UnitWithCounts) => {
-    setSelectedUnitForDelete(unit);
-    setIsDeleteDialogOpen(true);
-  };
-
-  // Define columns
   const columns: ColumnDef<UnitWithCounts>[] = [
-    // Selection column
     {
-      id: 'select',
-      header: ({ table }) => (
-        <Checkbox
-          checked={
-            table.getIsAllPageRowsSelected() ||
-            (table.getIsSomePageRowsSelected() && 'indeterminate')
-          }
-          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-          aria-label="Select all"
-        />
-      ),
-      cell: ({ row }) => (
-        <Checkbox
-          checked={row.getIsSelected()}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label="Select row"
-        />
-      ),
-      enableSorting: false,
-      enableHiding: false,
-    },
-
-    // Name column
-    {
+      header: 'Name',
       accessorKey: 'name',
-      header: ({ column }) => (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-        >
-          Unit Name
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      ),
       cell: ({ row }) => (
         <div className="font-medium">{row.getValue('name')}</div>
       ),
+      enableSorting: true,
     },
-
-    // Symbol column
     {
-      accessorKey: 'symbol',
       header: 'Symbol',
+      accessorKey: 'symbol',
       cell: ({ row }) => (
         <div className="font-mono">{row.getValue('symbol')}</div>
       ),
+      enableSorting: true,
     },
-
-    // Usage column
     {
-      id: 'usage',
       header: 'Usage',
+      id: 'usage',
       cell: ({ row }) => {
         const unit = row.original;
         const counts = unit._count || {};
@@ -182,11 +155,9 @@ export function UnitTable({
         );
       },
     },
-
-    // Conversions column
     {
-      id: 'conversions',
       header: 'Conversions',
+      id: 'conversions',
       cell: ({ row }) => {
         const unit = row.original;
         const counts = unit._count || {};
@@ -201,11 +172,9 @@ export function UnitTable({
         );
       },
     },
-
-    // Actions column
     {
       id: 'actions',
-      header: 'Actions',
+      header: '',
       cell: ({ row }) => {
         const unit = row.original;
         return (
@@ -228,7 +197,10 @@ export function UnitTable({
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="flex justify-between cursor-pointer text-destructive focus:text-destructive"
-                  onClick={() => handleDeleteClick(unit)}
+                  onClick={() => {
+                    setDeleteData(unit);
+                    setDeleteDialog(true);
+                  }}
                   disabled={isUnitInUse(unit)}
                 >
                   Delete <IconTrash className="h-4 w-4" />
@@ -241,182 +213,27 @@ export function UnitTable({
     },
   ];
 
-  // Create table instance
-  const table = useReactTable({
-    data,
-    columns,
-    onGlobalFilterChange: setSearchQuery,
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange: setRowSelection,
-    state: {
-      sorting,
-      columnFilters,
-      columnVisibility,
-      rowSelection,
-      globalFilter: searchQuery,
-    },
-  });
-
-  // Show skeleton while loading
-  if (isLoading) {
-    return <UnitTableSkeleton />;
-  }
-
   return (
     <>
-      {/* Search input */}
-      <div className="space-y-4">
-        <Input
-          placeholder="Search units..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="max-w-sm"
-        />
-
-        {/* Table */}
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
-                    </TableHead>
-                  ))}
-                </TableRow>
-              ))}
-            </TableHeader>
-            <TableBody>
-              {table.getRowModel().rows?.length ? (
-                table.getRowModel().rows.map((row) => (
-                  <TableRow
-                    key={row.id}
-                    data-state={row.getIsSelected() && 'selected'}
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext(),
-                        )}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell
-                    colSpan={columns.length}
-                    className="h-24 text-center"
-                  >
-                    No results.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
-
-        {/* Pagination */}
-        <div className="mt-4">
-          <DataTablePagination table={table} />
-        </div>
-      </div>
-
-      {/* Delete dialog */}
-      {selectedUnitForDelete && (
+      <TableLayout
+        data={data || []}
+        columns={columns}
+        isLoading={isLoading}
+        pagination={options.pagination}
+        handlePaginationChange={handlePaginationChange}
+        handleSortingChange={handleSortingChange}
+        handleSearchChange={handleSearchChange}
+        totalRows={totalRows}
+        enableSelection={true}
+      />
+      {deleteDialog && deleteData && (
         <UnitDeleteDialog
-          open={isDeleteDialogOpen}
-          onOpenChange={setIsDeleteDialogOpen}
-          unit={selectedUnitForDelete}
-          onSuccess={onRefresh}
+          open={deleteDialog}
+          onOpenChange={setDeleteDialog}
+          unit={deleteData}
+          onSuccess={handleOperationSuccess}
         />
       )}
     </>
-  );
-}
-
-// Skeleton component for loading state
-function UnitTableSkeleton() {
-  return (
-    <div className="space-y-4">
-      <div>
-        <Skeleton className="h-10 w-[384px]" />
-      </div>
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[40px]">
-                <Skeleton className="h-6 w-6" />
-              </TableHead>
-              <TableHead>
-                <Skeleton className="h-7 w-24" />
-              </TableHead>
-              <TableHead>
-                <Skeleton className="h-7 w-16" />
-              </TableHead>
-              <TableHead>
-                <Skeleton className="h-7 w-40" />
-              </TableHead>
-              <TableHead>
-                <Skeleton className="h-7 w-28" />
-              </TableHead>
-              <TableHead className="w-[80px]">
-                <Skeleton className="h-7 w-16" />
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {Array.from({ length: 5 }).map((_, index) => (
-              <TableRow key={index}>
-                <TableCell>
-                  <Skeleton className="h-5 w-5" />
-                </TableCell>
-                <TableCell>
-                  <Skeleton className="h-5 w-full max-w-[180px]" />
-                </TableCell>
-                <TableCell>
-                  <Skeleton className="h-5 w-16" />
-                </TableCell>
-                <TableCell>
-                  <Skeleton className="h-5 w-full max-w-[200px]" />
-                </TableCell>
-                <TableCell>
-                  <Skeleton className="h-6 w-20" />
-                </TableCell>
-                <TableCell>
-                  <div className="flex justify-end">
-                    <Skeleton className="h-8 w-8" />
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-      <div className="mt-4">
-        <div className="flex items-center justify-between px-2">
-          <Skeleton className="h-5 w-[200px]" />
-          <div className="flex items-center space-x-6">
-            <Skeleton className="h-8 w-[120px]" />
-            <Skeleton className="h-8 w-[100px]" />
-            <Skeleton className="h-8 w-[120px]" />
-          </div>
-        </div>
-      </div>
-    </div>
   );
 }
