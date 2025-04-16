@@ -166,7 +166,26 @@ export default function TierFormDialog({
                 <FormItem>
                   <FormLabel>Minimum Points</FormLabel>
                   <FormControl>
-                    <Input type="number" placeholder="0" {...field} />
+                    <Input
+                      type="number"
+                      placeholder="Enter minimum points"
+                      value={field.value === 0 ? '' : field.value}
+                      onFocus={(e) => {
+                        if (e.target.value === '0') {
+                          e.target.value = '';
+                        }
+                      }}
+                      onBlur={(e) => {
+                        if (e.target.value === '') {
+                          e.target.value = '0';
+                        }
+                      }}
+                      onChange={(e) => {
+                        const value =
+                          e.target.value === '' ? 0 : Number(e.target.value);
+                        field.onChange(value);
+                      }}
+                    />
                   </FormControl>
                   <FormDescription>
                     Minimum points required to reach this tier

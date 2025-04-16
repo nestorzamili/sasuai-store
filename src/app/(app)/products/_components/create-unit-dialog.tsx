@@ -24,16 +24,20 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { createBrand } from '../../brands/action';
+import { createUnit } from '../units/action';
 
 const formSchema = z.object({
-  name: z.string().min(1, 'Brand name is required'),
+  name: z.string().min(1, 'Unit name is required'),
+  symbol: z
+    .string()
+    .min(1, 'Unit symbol is required')
+    .max(5, 'Symbol should be short'),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
-export function CreateBrandDialog() {
-  const { openBrandCreate, setOpenBrandCreate, fetchBrands } = useProductForm();
+export function CreateUnitDialog() {
+  const { openUnitCreate, setOpenUnitCreate, fetchOptions } = useProductForm();
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
@@ -41,28 +45,29 @@ export function CreateBrandDialog() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: '',
+      symbol: '',
     },
   });
 
   const onSubmit = async (values: FormValues) => {
     try {
       setLoading(true);
-      const result = await createBrand(values);
+      const result = await createUnit(values);
 
       if (result.success) {
         toast({
-          title: 'Brand created',
-          description: 'New brand has been created successfully',
+          title: 'Unit created',
+          description: 'New unit has been created successfully',
         });
         form.reset();
-        setOpenBrandCreate(false);
+        setOpenUnitCreate(false);
 
-        // Fetch updated brands list
-        await fetchBrands();
+        // Fetch updated units list
+        await fetchOptions();
       } else {
         toast({
           title: 'Error',
-          description: result.error || 'Failed to create brand',
+          description: result.error || 'Failed to create unit',
           variant: 'destructive',
         });
       }
@@ -78,12 +83,12 @@ export function CreateBrandDialog() {
   };
 
   return (
-    <Dialog open={openBrandCreate} onOpenChange={setOpenBrandCreate}>
+    <Dialog open={openUnitCreate} onOpenChange={setOpenUnitCreate}>
       <DialogContent className="sm:max-w-[400px]">
         <DialogHeader>
-          <DialogTitle>Create Brand</DialogTitle>
+          <DialogTitle>Create Unit</DialogTitle>
           <DialogDescription>
-            Add a new brand to your product catalog
+            Add a new unit for measuring products
           </DialogDescription>
         </DialogHeader>
 
@@ -94,9 +99,26 @@ export function CreateBrandDialog() {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Brand Name</FormLabel>
+                  <FormLabel>Unit Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter brand name" {...field} />
+                    <Input
+                      placeholder="e.g., Kilogram, Liter, Piece"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="symbol"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Unit Symbol</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., kg, L, pc" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -107,12 +129,12 @@ export function CreateBrandDialog() {
               <Button
                 variant="outline"
                 type="button"
-                onClick={() => setOpenBrandCreate(false)}
+                onClick={() => setOpenUnitCreate(false)}
               >
                 Cancel
               </Button>
               <Button type="submit" disabled={loading}>
-                {loading ? 'Creating...' : 'Create Brand'}
+                {loading ? 'Creating...' : 'Create Unit'}
               </Button>
             </DialogFooter>
           </form>
