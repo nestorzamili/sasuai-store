@@ -2,7 +2,7 @@
 import * as React from 'react';
 import { useState } from 'react';
 import { ColumnDef } from '@tanstack/react-table';
-import { ArrowRight, ArrowUpDown, MoreHorizontal } from 'lucide-react';
+import { MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { IconTrash, IconEdit } from '@tabler/icons-react';
 import {
@@ -27,7 +27,6 @@ interface UnitConversionTableProps {
 }
 
 export function UnitConversionTable({
-  units,
   isLoading: initialLoading = false,
   onEdit,
   onRefresh,
@@ -94,19 +93,11 @@ export function UnitConversionTable({
     // From Unit column
     {
       accessorKey: 'fromUnit',
-      header: ({ column }) => (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-        >
-          From Unit
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      ),
+      header: 'From Unit',
       cell: ({ row }) => {
         const fromUnit = row.original.fromUnit;
         return (
-          <div className="font-medium ml-4">
+          <div className="font-medium">
             {fromUnit.name} ({fromUnit.symbol})
           </div>
         );
@@ -116,19 +107,11 @@ export function UnitConversionTable({
     // To Unit column
     {
       accessorKey: 'toUnit',
-      header: ({ column }) => (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-        >
-          To Unit
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      ),
+      header: 'To Unit',
       cell: ({ row }) => {
         const toUnit = row.original.toUnit;
         return (
-          <div className="font-medium ml-4">
+          <div className="font-medium">
             {toUnit.name} ({toUnit.symbol})
           </div>
         );
@@ -138,24 +121,16 @@ export function UnitConversionTable({
     // Factor column
     {
       accessorKey: 'conversionFactor',
-      header: ({ column }) => (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-        >
-          Factor
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      ),
+      header: 'Factor',
       cell: ({ row }) => (
-        <div className="font-medium ml-4">{row.original.conversionFactor}</div>
+        <div className="font-medium">{row.original.conversionFactor}</div>
       ),
     },
 
     // Explanation column
     {
       id: 'explanation',
-      header: () => <div>Explanation</div>, // Non-sortable header without buttons
+      header: 'Explanation',
       cell: ({ row }) => {
         const conversion = row.original;
         return (
@@ -166,13 +141,13 @@ export function UnitConversionTable({
           </div>
         );
       },
-      enableSorting: false, // Prevent sortable column which adds buttons
+      enableSorting: false,
     },
 
     // Actions column
     {
       id: 'actions',
-      header: () => <div></div>, // Empty header without buttons
+      header: '',
       cell: ({ row }) => {
         const conversion = row.original;
         return (
@@ -207,7 +182,7 @@ export function UnitConversionTable({
           </div>
         );
       },
-      enableSorting: false, // Prevent sortable column which adds buttons
+      enableSorting: false,
     },
   ];
 
