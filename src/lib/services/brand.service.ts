@@ -11,10 +11,24 @@ export class BrandService {
   }
 
   /**
-   * Get all brands with product count
+   * Get all brands with product count, paginated, sorted, filtered
    */
-  static async getAllWithProductCount() {
+  static async getAllBrandsWithCount({
+    where,
+    orderBy,
+    skip,
+    take,
+  }: {
+    where?: any;
+    orderBy?: any;
+    skip?: number;
+    take?: number;
+  }) {
     return prisma.brand.findMany({
+      where,
+      orderBy,
+      skip,
+      take,
       include: {
         _count: {
           select: {
@@ -22,8 +36,14 @@ export class BrandService {
           },
         },
       },
-      orderBy: { name: 'asc' },
     });
+  }
+
+  /**
+   * Count brands with where clause (for pagination)
+   */
+  static async countWithWhere(where?: any) {
+    return prisma.brand.count({ where });
   }
 
   /**
