@@ -25,7 +25,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { createCategory } from '../../categories/action';
+import { createCategory } from '../categories/action';
 
 const formSchema = z.object({
   name: z.string().min(1, 'Category name is required'),
@@ -35,7 +35,7 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 export function CreateCategoryDialog() {
-  const { openCategoryCreate, setOpenCategoryCreate, fetchCategories } =
+  const { openCategoryCreate, setOpenCategoryCreate, fetchOptions } =
     useProductForm();
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -62,7 +62,7 @@ export function CreateCategoryDialog() {
         setOpenCategoryCreate(false);
 
         // Fetch updated categories list
-        await fetchCategories();
+        await fetchOptions();
       } else {
         toast({
           title: 'Error',

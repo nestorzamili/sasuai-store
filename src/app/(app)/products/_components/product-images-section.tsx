@@ -27,7 +27,7 @@ import {
   addProductImage,
   deleteProductImage,
   setPrimaryImage,
-} from '../../action';
+} from '../action';
 import { ProductImageWithUrl, TempProductImage } from '@/lib/types/product';
 
 export function ProductImagesSection() {
