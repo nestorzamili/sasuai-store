@@ -113,7 +113,7 @@ export class TransactionService {
           // Calculate points based on settings and tier multiplier
           const pointsEarned = await calculateMemberPoints(
             data.finalAmount,
-            member,
+            member
           );
 
           if (pointsEarned > 0) {
@@ -449,7 +449,7 @@ export class TransactionService {
           quantity: item._sum?.quantity || 0,
           revenue: item._sum?.subtotal || 0,
         };
-      }),
+      })
     );
 
     return {
