@@ -1,6 +1,6 @@
 'use client';
 
-import ProductFormDialog from './product-form';
+import ProductFormDialog from '.';
 import { ProductWithRelations } from '@/lib/types/product';
 
 // Define props type

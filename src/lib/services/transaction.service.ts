@@ -129,13 +129,40 @@ export class TransactionService {
             });
 
             // Update member's total points
-            await tx.member.update({
+            const updatedMember = await tx.member.update({
               where: { id: data.memberId },
               data: {
                 totalPoints: { increment: pointsEarned },
                 totalPointsEarned: { increment: pointsEarned },
               },
+              include: {
+                tier: true,
+              },
             });
+
+            // Check if member is eligible for a higher tier
+            const eligibleTier = await tx.memberTier.findFirst({
+              where: {
+                minPoints: { lte: updatedMember.totalPointsEarned },
+              },
+              orderBy: {
+                minPoints: 'desc',
+              },
+            });
+
+            // Update member tier if eligible for a higher one
+            if (
+              eligibleTier &&
+              (!updatedMember.tierId ||
+                eligibleTier.id !== updatedMember.tierId)
+            ) {
+              await tx.member.update({
+                where: { id: data.memberId },
+                data: {
+                  tierId: eligibleTier.id,
+                },
+              });
+            }
           }
         }
       }
@@ -484,24 +511,61 @@ export class TransactionService {
       }
 
       // If there are member points, remove them
-      if (transaction.memberPoints.length > 0) {
+      if (transaction.memberPoints.length > 0 && transaction.memberId) {
+        let totalPointsDeducted = 0;
+
+        // Get member before changes
+        const memberBefore = await tx.member.findUnique({
+          where: { id: transaction.memberId },
+          include: { tier: true },
+        });
+
+        // Calculate total points to deduct and delete point records
         for (const point of transaction.memberPoints) {
+          totalPointsDeducted += point.pointsEarned;
+
           // Delete the member point record
           await tx.memberPoint.delete({
             where: { id: point.id },
           });
+        }
 
-          // Update member's total points
-          if (transaction.memberId) {
-            await tx.member.update({
-              where: { id: transaction.memberId },
-              data: {
-                totalPoints: {
-                  decrement: point.pointsEarned,
-                },
-              },
-            });
-          }
+        // Update member's total points in a single operation
+        const updatedMember = await tx.member.update({
+          where: { id: transaction.memberId },
+          data: {
+            totalPoints: { decrement: totalPointsDeducted },
+            totalPointsEarned: { decrement: totalPointsDeducted },
+          },
+          include: { tier: true },
+        });
+
+        // Get ALL tiers
+        const allTiers = await tx.memberTier.findMany({
+          orderBy: { minPoints: 'asc' },
+        });
+
+        // Sort tiers by minPoints in descending order
+        const sortedTiers = [...allTiers].sort(
+          (a, b) => b.minPoints - a.minPoints,
+        );
+
+        // Find the appropriate tier based on current points
+        let eligibleTier = sortedTiers.find(
+          (tier) => updatedMember.totalPointsEarned >= tier.minPoints,
+        );
+
+        // If no eligible tier found (rare case), use the lowest tier
+        if (!eligibleTier && allTiers.length > 0) {
+          eligibleTier = allTiers[0]; // Lowest tier
+        }
+
+        // Update member tier if eligible tier is different from current tier
+        if (eligibleTier && eligibleTier.id !== updatedMember.tierId) {
+          await tx.member.update({
+            where: { id: transaction.memberId },
+            data: { tierId: eligibleTier.id },
+          });
         }
       }
 

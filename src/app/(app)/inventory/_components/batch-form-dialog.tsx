@@ -514,10 +514,21 @@ export default function BatchFormDialog({
                       <Input
                         type="number"
                         placeholder="Enter initial quantity"
-                        {...field}
-                        onChange={(e) =>
-                          field.onChange(parseInt(e.target.value, 10) || 0)
-                        }
+                        value={field.value === 0 ? '' : field.value}
+                        onFocus={(e) => {
+                          if (e.target.value === '0') {
+                            e.target.value = '';
+                          }
+                        }}
+                        onBlur={(e) => {
+                          if (e.target.value === '') {
+                            field.onChange(0);
+                          }
+                        }}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          field.onChange(value === '' ? 0 : Number(value));
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -542,10 +553,21 @@ export default function BatchFormDialog({
                     <Input
                       type="number"
                       placeholder="Enter buy price"
-                      {...field}
-                      onChange={(e) =>
-                        field.onChange(parseInt(e.target.value, 10) || 0)
-                      }
+                      value={field.value === 0 ? '' : field.value}
+                      onFocus={(e) => {
+                        if (e.target.value === '0') {
+                          e.target.value = '';
+                        }
+                      }}
+                      onBlur={(e) => {
+                        if (e.target.value === '') {
+                          field.onChange(0);
+                        }
+                      }}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        field.onChange(value === '' ? 0 : Number(value));
+                      }}
                     />
                   </FormControl>
                   <p className="text-xs text-muted-foreground mt-1">
