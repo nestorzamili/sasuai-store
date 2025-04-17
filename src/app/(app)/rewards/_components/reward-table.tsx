@@ -1,22 +1,15 @@
 'use client';
 import * as React from 'react';
 import { useState } from 'react';
-import {
-  ColumnDef,
-  ColumnFiltersState,
-  SortingState,
-  VisibilityState,
-  flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
-} from '@tanstack/react-table';
-import { ArrowUpDown, MoreHorizontal } from 'lucide-react';
+import { ColumnDef } from '@tanstack/react-table';
+import { MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { IconTrash, IconEdit, IconTrophy } from '@tabler/icons-react';
+import {
+  IconTrash,
+  IconEdit,
+  IconTrophy,
+  IconPhoto,
+} from '@tabler/icons-react';
 import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
@@ -27,89 +20,126 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { RewardWithClaimCount } from '@/lib/types/reward';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { DataTablePagination } from '@/components/ui/data-table-pagination';
 import { CountdownTimer } from '@/components/countdown-timer';
-import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 import Image from 'next/image';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { IconX, IconPhoto } from '@tabler/icons-react';
+import { useFetch } from '@/hooks/use-fetch';
+import { getAllRewardsWithClaimCount } from '../actions';
+import { TableLayout } from '@/components/layout/table-layout';
+import { ImagePreviewDialog } from '@/components/image-preview-dialog';
 
 interface RewardTableProps {
-  data: RewardWithClaimCount[];
+  data?: RewardWithClaimCount[];
   isLoading?: boolean;
   onEdit?: (reward: RewardWithClaimCount) => void;
   onDelete: (reward: RewardWithClaimCount) => void;
   onRefresh?: () => void;
 }
 
-export function RewardTable({
-  data,
-  isLoading = false,
-  onEdit,
-  onDelete,
-  onRefresh,
-}: RewardTableProps) {
-  // State for deletion dialog
-  const [selectedRewardForDelete, setSelectedRewardForDelete] =
-    useState<RewardWithClaimCount | null>(null);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+export function RewardTable({ onEdit, onDelete, onRefresh }: RewardTableProps) {
+  // State for image preview dialog
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
-  // Table state
-  const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    [],
-  );
-  const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({});
-  const [rowSelection, setRowSelection] = React.useState({});
+  // Use the useFetch hook to handle data fetching, pagination, and sorting
+  const fetchRewards = async (options: any) => {
+    const response = await getAllRewardsWithClaimCount();
 
-  // Handlers
-  const handleDeleteClick = (reward: RewardWithClaimCount) => {
-    setSelectedRewardForDelete(reward);
-    setIsDeleteDialogOpen(true);
+    if (response.success && response.data) {
+      const rewards = response.data as RewardWithClaimCount[];
+
+      // Apply filtering if search term is provided
+      let filteredData = rewards;
+      if (options.search) {
+        const searchLower = options.search.toLowerCase();
+        filteredData = rewards.filter(
+          (reward) =>
+            reward.name.toLowerCase().includes(searchLower) ||
+            (reward.description &&
+              reward.description.toLowerCase().includes(searchLower)),
+        );
+      }
+
+      // Apply sorting if needed
+      if (options.sortBy?.id) {
+        const { id, desc } = options.sortBy;
+        filteredData.sort((a: any, b: any) => {
+          // Handle null values to avoid comparison errors
+          if (a[id] === null) return desc ? -1 : 1;
+          if (b[id] === null) return desc ? 1 : -1;
+
+          // For strings, use localeCompare
+          if (typeof a[id] === 'string') {
+            return desc
+              ? b[id].localeCompare(a[id])
+              : a[id].localeCompare(b[id]);
+          }
+
+          // For numbers and other types
+          if (a[id] < b[id]) return desc ? 1 : -1;
+          if (a[id] > b[id]) return desc ? -1 : 1;
+          return 0;
+        });
+      }
+
+      // Apply pagination
+      const start = options.page * options.limit;
+      const end = start + options.limit;
+      const paginatedData = filteredData.slice(start, end);
+
+      return {
+        data: paginatedData,
+        totalRows: filteredData.length,
+      };
+    }
+
+    return { data: [], totalRows: 0 };
+  };
+
+  const {
+    data,
+    isLoading,
+    options,
+    setPage,
+    setLimit,
+    setSortBy,
+    setSearch,
+    totalRows,
+    refresh,
+  } = useFetch<RewardWithClaimCount[]>({
+    fetchData: fetchRewards,
+    initialPageIndex: 0,
+    initialPageSize: 10,
+    initialSortField: 'name',
+    initialSortDirection: false,
+  });
+
+  // Handle pagination change
+  const handlePaginationChange = (newPagination: {
+    pageIndex: number;
+    pageSize: number;
+  }) => {
+    setPage(newPagination.pageIndex);
+    setLimit(newPagination.pageSize);
+  };
+
+  // Handle sorting change
+  const handleSortingChange = (newSorting: any) => {
+    setSortBy(newSorting);
+  };
+
+  // Handle search change
+  const handleSearchChange = (newSearch: string) => {
+    setSearch(newSearch);
+  };
+
+  // Handle successful operations
+  const handleOperationSuccess = () => {
+    refresh();
+    onRefresh?.();
   };
 
   // Define columns
   const columns: ColumnDef<RewardWithClaimCount>[] = [
-    // Selection column
-    {
-      id: 'select',
-      header: ({ table }) => (
-        <Checkbox
-          checked={
-            table.getIsAllPageRowsSelected() ||
-            (table.getIsSomePageRowsSelected() && 'indeterminate')
-          }
-          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-          aria-label="Select all"
-        />
-      ),
-      cell: ({ row }) => (
-        <Checkbox
-          checked={row.getIsSelected()}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label="Select row"
-        />
-      ),
-      enableSorting: false,
-      enableHiding: false,
-    },
-
     // Image column
     {
       id: 'image',
@@ -143,58 +173,34 @@ export function RewardTable({
     // Name column
     {
       accessorKey: 'name',
-      header: ({ column }) => (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-        >
-          Reward Name
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      ),
+      header: 'Reward Name',
       cell: ({ row }) => (
         <div className="flex items-center">
           <IconTrophy className="mr-2 h-4 w-4 text-yellow-500" />
           <div className="font-medium">{row.getValue('name')}</div>
         </div>
       ),
+      enableSorting: true,
     },
 
     // Points cost column
     {
       accessorKey: 'pointsCost',
-      header: ({ column }) => (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-        >
-          Points Cost
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      ),
+      header: 'Points Cost',
       cell: ({ row }) => (
-        <div className="font-medium ml-4">
-          {row.getValue('pointsCost')} points
-        </div>
+        <div className="font-medium">{row.getValue('pointsCost')} points</div>
       ),
+      enableSorting: true,
     },
 
     // Stock column
     {
       accessorKey: 'stock',
-      header: ({ column }) => (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-        >
-          Stock
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      ),
+      header: 'Stock',
       cell: ({ row }) => {
         const stock = row.getValue('stock') as number;
         return (
-          <div className="font-medium ml-4">
+          <div className="font-medium">
             {stock === 0 ? (
               <Badge variant="destructive">Out of Stock</Badge>
             ) : stock < 10 ? (
@@ -210,6 +216,7 @@ export function RewardTable({
           </div>
         );
       },
+      enableSorting: true,
     },
 
     // Active status column
@@ -227,20 +234,14 @@ export function RewardTable({
           </Badge>
         );
       },
+      enableSorting: true,
     },
 
     // Expiry date column
     {
       accessorKey: 'expiryDate',
-      header: ({ column }) => (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-        >
-          Expiry
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      ),
+      header: 'Expiry',
+      maxSize: 180, // Limit the maximum width
       cell: ({ row }) => {
         const expiryDate = row.original.expiryDate;
         if (!expiryDate)
@@ -252,21 +253,21 @@ export function RewardTable({
 
         if (isExpired) {
           return (
-            <div>
-              <Badge variant="destructive">
-                Expired:{' '}
-                {format(new Date(expiryDate), "MMM d, yyyy 'at' h:mm a")}
-              </Badge>
-            </div>
+            <Badge variant="destructive" className="whitespace-nowrap text-xs">
+              Expired
+            </Badge>
           );
         }
 
-        // Use CountdownTimer for active rewards
+        // Use CountdownTimer for active rewards with more compact display
         return (
           <div className="flex flex-col gap-1">
             <CountdownTimer expiryDate={new Date(expiryDate)} />
-            <span className="text-xs text-muted-foreground">
-              {format(new Date(expiryDate), "MMM d, yyyy 'at' h:mm a")}
+            <span
+              className="text-xs text-muted-foreground truncate max-w-[150px]"
+              title={format(new Date(expiryDate), "MMM d, yyyy 'at' h:mm a")}
+            >
+              {format(new Date(expiryDate), 'MMM d, yyyy')}
             </span>
           </div>
         );
@@ -287,7 +288,7 @@ export function RewardTable({
     // Actions column
     {
       id: 'actions',
-      header: 'Actions',
+      header: '',
       cell: ({ row }) => {
         const reward = row.original;
         return (
@@ -322,199 +323,27 @@ export function RewardTable({
     },
   ];
 
-  // Create table instance
-  const table = useReactTable({
-    data,
-    columns,
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange: setRowSelection,
-    state: {
-      sorting,
-      columnFilters,
-      columnVisibility,
-      rowSelection,
-    },
-  });
-
-  // Show skeleton while loading
-  if (isLoading) {
-    return <RewardTableSkeleton />;
-  }
-
   return (
     <>
-      {/* Table */}
-      <div className="space-y-4">
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
-                    </TableHead>
-                  ))}
-                </TableRow>
-              ))}
-            </TableHeader>
-            <TableBody>
-              {table.getRowModel().rows?.length ? (
-                table.getRowModel().rows.map((row) => (
-                  <TableRow
-                    key={row.id}
-                    data-state={row.getIsSelected() && 'selected'}
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext(),
-                        )}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell
-                    colSpan={columns.length}
-                    className="h-24 text-center"
-                  >
-                    No rewards found.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
-
-        {/* Pagination */}
-        <div className="mt-4">
-          <DataTablePagination table={table} />
-        </div>
-      </div>
+      <TableLayout
+        data={data || []}
+        columns={columns}
+        isLoading={isLoading}
+        pagination={options.pagination}
+        handlePaginationChange={handlePaginationChange}
+        handleSortingChange={handleSortingChange}
+        handleSearchChange={handleSearchChange}
+        totalRows={totalRows}
+        enableSelection={true}
+      />
 
       {/* Image preview dialog */}
-      <Dialog
+      <ImagePreviewDialog
         open={!!selectedImage}
-        onOpenChange={() => setSelectedImage(null)}
-      >
-        <DialogContent className="sm:max-w-3xl p-0 overflow-hidden">
-          <DialogHeader className="sr-only">
-            <DialogTitle>Reward Image</DialogTitle>
-          </DialogHeader>
-          <div className="relative">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute top-2 right-2 z-10 rounded-full bg-background/50 hover:bg-background/80"
-              onClick={() => setSelectedImage(null)}
-            >
-              <IconX className="h-4 w-4" />
-            </Button>
-            {selectedImage && (
-              <div className="relative w-full aspect-video">
-                <Image
-                  src={selectedImage}
-                  alt="Reward image"
-                  fill
-                  className="object-contain"
-                  sizes="(max-width: 768px) 100vw, 800px"
-                  priority
-                />
-              </div>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+        onOpenChange={(open) => !open && setSelectedImage(null)}
+        imageUrl={selectedImage}
+        altText="Reward image"
+      />
     </>
-  );
-}
-
-// Skeleton component for loading state
-function RewardTableSkeleton() {
-  return (
-    <div className="space-y-4">
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[40px]">
-                <Skeleton className="h-6 w-6" />
-              </TableHead>
-              <TableHead>
-                <Skeleton className="h-7 w-24" />
-              </TableHead>
-              <TableHead>
-                <Skeleton className="h-7 w-24" />
-              </TableHead>
-              <TableHead>
-                <Skeleton className="h-7 w-20" />
-              </TableHead>
-              <TableHead>
-                <Skeleton className="h-7 w-20" />
-              </TableHead>
-              <TableHead>
-                <Skeleton className="h-7 w-20" />
-              </TableHead>
-              <TableHead className="w-[80px]">
-                <Skeleton className="h-7 w-16" />
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {Array.from({ length: 5 }).map((_, index) => (
-              <TableRow key={index}>
-                <TableCell>
-                  <Skeleton className="h-5 w-5" />
-                </TableCell>
-                <TableCell>
-                  <Skeleton className="h-5 w-full max-w-[180px]" />
-                </TableCell>
-                <TableCell>
-                  <Skeleton className="h-5 w-24" />
-                </TableCell>
-                <TableCell>
-                  <Skeleton className="h-6 w-20" />
-                </TableCell>
-                <TableCell>
-                  <Skeleton className="h-6 w-20" />
-                </TableCell>
-                <TableCell>
-                  <Skeleton className="h-6 w-20" />
-                </TableCell>
-                <TableCell>
-                  <div className="flex justify-end">
-                    <Skeleton className="h-8 w-8" />
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-      <div className="mt-4">
-        <div className="flex items-center justify-between px-2">
-          <Skeleton className="h-5 w-[200px]" />
-          <div className="flex items-center space-x-6">
-            <Skeleton className="h-8 w-[120px]" />
-            <Skeleton className="h-8 w-[100px]" />
-            <Skeleton className="h-8 w-[120px]" />
-          </div>
-        </div>
-      </div>
-    </div>
   );
 }

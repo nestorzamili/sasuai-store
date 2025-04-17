@@ -58,6 +58,7 @@ interface RewardFormDialogProps {
   onOpenChange?: (open: boolean) => void;
   initialData?: RewardWithClaimCount;
   onSuccess?: () => void;
+  showTrigger?: boolean; // New prop to control trigger visibility
 }
 
 export default function RewardFormDialog({
@@ -65,6 +66,7 @@ export default function RewardFormDialog({
   onOpenChange,
   initialData,
   onSuccess,
+  showTrigger = false, // Default to false to hide the trigger
 }: RewardFormDialogProps) {
   const [loading, setLoading] = useState(false);
   const isEditing = Boolean(initialData?.id);
@@ -185,11 +187,13 @@ export default function RewardFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogTrigger asChild>
-        <Button variant="default" className="space-x-1">
-          <span>Create</span> <IconPlus size={18} />
-        </Button>
-      </DialogTrigger>
+      {showTrigger && (
+        <DialogTrigger asChild>
+          <Button variant="default" className="space-x-1">
+            <span>Create</span> <IconPlus size={18} />
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-[850px] p-0 gap-0 max-h-[90vh] flex flex-col">
         <DialogHeader className="p-6 pb-2">
           <DialogTitle>
