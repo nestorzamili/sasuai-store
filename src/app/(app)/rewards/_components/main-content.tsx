@@ -1,7 +1,12 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { getAllRewardsWithClaimCount } from '../actions';
+import {
+  getAllRewardsWithClaimCount,
+  claimRewardForMember,
+  searchMembers,
+  getMemberAvailableRewards,
+} from '../actions';
 import { RewardWithClaimCount } from '@/lib/types/reward';
 import RewardPrimaryButton from './reward-primary-button';
 import { RewardTable } from './reward-table';
@@ -15,9 +20,27 @@ import {
   IconList,
   IconSearch,
   IconX,
+  IconGift,
 } from '@tabler/icons-react';
 import { RewardGrid } from './reward-grid';
 import { RewardDeleteDialog } from './reward-delete-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
+import { ComboBox, ComboBoxOption } from '@/components/ui/combobox';
 
 export default function MainContent() {
   const [isLoading, setIsLoading] = useState(true);
@@ -34,6 +57,15 @@ export default function MainContent() {
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('grid');
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
+  // Claim reward states
+  const [isClaimDialogOpen, setIsClaimDialogOpen] = useState(false);
+  const [selectedMemberId, setSelectedMemberId] = useState('');
+  const [availableRewards, setAvailableRewards] = useState<any[]>([]);
+  const [selectedRewardId, setSelectedRewardId] = useState('');
+  const [isClaimLoading, setIsClaimLoading] = useState(false);
+  const [memberOptions, setMemberOptions] = useState<ComboBoxOption[]>([]);
+  const [isSearchingMembers, setIsSearchingMembers] = useState(false);
+
   const fetchRewards = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -41,7 +73,6 @@ export default function MainContent() {
       if (success) {
         const rewardData = (data as RewardWithClaimCount[]) || [];
 
-        // Additional check for expired rewards on client side
         const now = new Date();
         const processedRewards = rewardData.map((reward) => {
           if (
@@ -49,7 +80,6 @@ export default function MainContent() {
             new Date(reward.expiryDate) < now &&
             reward.isActive
           ) {
-            // Mark as inactive in the UI immediately if expired
             return { ...reward, isActive: false };
           }
           return reward;
@@ -74,7 +104,6 @@ export default function MainContent() {
   }, [fetchRewards]);
 
   useEffect(() => {
-    // Filter and sort rewards when searchTerm or sortOrder changes
     let filtered = [...rewards];
 
     if (searchTerm) {
@@ -98,7 +127,6 @@ export default function MainContent() {
     setFilteredRewards(filtered);
   }, [rewards, searchTerm, sortOrder]);
 
-  // Handle dialog reset on close
   const handleDialogOpenChange = (open: boolean) => {
     setIsDialogOpen(open);
     if (!open) {
@@ -106,19 +134,16 @@ export default function MainContent() {
     }
   };
 
-  // Handle edit reward
   const handleEdit = (reward: RewardWithClaimCount) => {
     setSelectedReward(reward);
     setIsDialogOpen(true);
   };
 
-  // Handle delete reward
   const handleDelete = (reward: RewardWithClaimCount) => {
     setSelectedReward(reward);
     setIsDeleteDialogOpen(true);
   };
 
-  // Handle reward operation success
   const handleSuccess = () => {
     setIsDialogOpen(false);
     setIsDeleteDialogOpen(false);
@@ -126,14 +151,158 @@ export default function MainContent() {
     fetchRewards();
   };
 
-  // Handle search input change
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
   };
 
-  // Clear search
   const handleClearSearch = () => {
     setSearchTerm('');
+  };
+
+  const fetchAvailableRewards = useCallback(async (memberId: string) => {
+    if (!memberId) return;
+
+    setIsClaimLoading(true);
+    setAvailableRewards([]);
+
+    try {
+      const result = await getMemberAvailableRewards(memberId);
+
+      if (result.success && result.data) {
+        setAvailableRewards(result.data);
+
+        if (result.data.length === 0) {
+          toast({
+            title: 'No rewards available',
+            description: 'This member has no rewards available to claim',
+            variant: 'default',
+          });
+        }
+      } else {
+        toast({
+          title: 'Error',
+          description: result.error || 'Failed to fetch available rewards',
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching available rewards:', error);
+      toast({
+        title: 'Error',
+        description: 'An unexpected error occurred while fetching rewards',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsClaimLoading(false);
+    }
+  }, []);
+
+  const searchMembersForComboBox = useCallback(async (query: string) => {
+    if (query.length < 2) {
+      setMemberOptions([]);
+      return;
+    }
+
+    setIsSearchingMembers(true);
+    try {
+      const { success, data } = await searchMembers({
+        query,
+        page: 1,
+        limit: 10,
+      });
+
+      if (success && data && data.members) {
+        const options: ComboBoxOption[] = data.members.map((member) => ({
+          value: member.id,
+          label: `${member.name} ${
+            member.email
+              ? `(${member.email})`
+              : member.phone
+              ? `(${member.phone})`
+              : ''
+          }`,
+          data: member,
+        }));
+        setMemberOptions(options);
+      }
+    } catch (error) {
+      console.error('Error searching members:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to search members',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSearchingMembers(false);
+    }
+  }, []);
+
+  const handleMemberChange = useCallback(
+    (memberId: string) => {
+      setSelectedMemberId(memberId);
+      setSelectedRewardId('');
+
+      if (memberId) {
+        fetchAvailableRewards(memberId);
+      } else {
+        setAvailableRewards([]);
+      }
+    },
+    [fetchAvailableRewards],
+  );
+
+  const handleOpenClaimDialog = useCallback(() => {
+    setIsClaimDialogOpen(true);
+    setMemberOptions([]);
+    setSelectedMemberId('');
+    setSelectedRewardId('');
+    setAvailableRewards([]);
+  }, []);
+
+  const handleClaimReward = async () => {
+    if (!selectedMemberId || !selectedRewardId) {
+      toast({
+        title: 'Invalid selection',
+        description: 'Please select both a member and a reward',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsClaimLoading(true);
+    try {
+      const result = await claimRewardForMember(
+        selectedMemberId,
+        selectedRewardId,
+      );
+
+      if (result.success) {
+        toast({
+          title: 'Reward claimed',
+          description: 'The reward has been successfully claimed',
+        });
+        setIsClaimDialogOpen(false);
+        setSelectedMemberId('');
+        setSelectedRewardId('');
+        setAvailableRewards([]);
+        fetchRewards();
+      } else {
+        toast({
+          title: 'Error',
+          description: result.error || 'Failed to claim reward',
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      console.error('Error claiming reward:', error);
+      toast({
+        title: 'Error',
+        description: 'An unexpected error occurred',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsClaimLoading(false);
+    }
   };
 
   return (
@@ -145,14 +314,24 @@ export default function MainContent() {
             Create and manage membership rewards.
           </p>
         </div>
-        {activeTab === 'rewards' && (
-          <RewardPrimaryButton
-            open={isDialogOpen}
-            onOpenChange={handleDialogOpenChange}
-            initialData={selectedReward || undefined}
-            onSuccess={handleSuccess}
-          />
-        )}
+        <div className="flex gap-2">
+          {activeTab === 'rewards' && (
+            <RewardPrimaryButton
+              open={isDialogOpen}
+              onOpenChange={handleDialogOpenChange}
+              initialData={selectedReward || undefined}
+              onSuccess={handleSuccess}
+            />
+          )}
+          <Button
+            variant="outline"
+            onClick={handleOpenClaimDialog}
+            className="gap-1"
+          >
+            <IconGift size={16} />
+            Claim Reward
+          </Button>
+        </div>
       </div>
 
       <Tabs
@@ -238,6 +417,92 @@ export default function MainContent() {
           onSuccess={handleSuccess}
         />
       )}
+
+      <Dialog open={isClaimDialogOpen} onOpenChange={setIsClaimDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Claim Reward for Member</DialogTitle>
+            <DialogDescription>
+              Search for a member and select a reward to claim.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="member">Search Member</Label>
+                <ComboBox
+                  options={memberOptions}
+                  value={selectedMemberId}
+                  onChange={handleMemberChange}
+                  placeholder="Search for a member..."
+                  emptyMessage="No members found. Try a different search."
+                  loadingState={isSearchingMembers}
+                  customSearchFunction={searchMembersForComboBox}
+                  customEmptyComponent={
+                    memberOptions.length === 0 && !isSearchingMembers ? (
+                      <div className="p-2 text-sm text-muted-foreground text-center">
+                        Type at least 2 characters to search for members
+                      </div>
+                    ) : undefined
+                  }
+                />
+              </div>
+
+              {selectedMemberId && (
+                <div className="space-y-2">
+                  <Label htmlFor="reward">Select Reward</Label>
+                  {isClaimLoading ? (
+                    <div className="flex items-center justify-center p-2">
+                      <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent text-primary rounded-full mr-2" />
+                      <p className="text-sm">Loading available rewards...</p>
+                    </div>
+                  ) : availableRewards.length > 0 ? (
+                    <Select
+                      value={selectedRewardId}
+                      onValueChange={setSelectedRewardId}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a reward" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableRewards.map((reward) => (
+                          <SelectItem key={reward.id} value={reward.id}>
+                            {reward.name} ({reward.pointsCost} points)
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      No rewards available for this member to claim. Either they
+                      don't have enough points or there are no active rewards.
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsClaimDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleClaimReward}
+              disabled={
+                isClaimLoading ||
+                !selectedMemberId ||
+                !selectedRewardId ||
+                availableRewards.length === 0
+              }
+            >
+              {isClaimLoading ? 'Processing...' : 'Claim Reward'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
