@@ -368,6 +368,7 @@ model Transaction {
   discountAmount Int               @map("discount_amount")
   finalAmount    Int               @map("final_amount")
   paymentMethod  String            @map("payment_method")
+  discountMemberId String?      @map("discount_member_id")
   items          TransactionItem[]
   memberPoints   MemberPoint[]
   createdAt      DateTime          @default(now()) @db.Timestamptz

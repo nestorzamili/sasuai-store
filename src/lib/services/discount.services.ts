@@ -1,7 +1,6 @@
 import prisma from '@/lib/prisma';
 import { buildQueryOptions } from '../common/query-options';
 import { options } from '@/lib/types/table';
-import { error } from 'console';
 export const Discount = {
   async getAll(queryOptions?: options) {
     const options = buildQueryOptions(queryOptions);
@@ -193,6 +192,14 @@ export const Discount = {
   async delete(id: string) {
     return await prisma.discount.delete({
       where: { id },
+    });
+  },
+  async setDiscountExpired(id: string) {
+    return await prisma.discount.update({
+      where: { id },
+      data: {
+        isActive: false,
+      },
     });
   },
 };
