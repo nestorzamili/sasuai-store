@@ -1,9 +1,11 @@
-'use client';
-
 import { Card } from '@/components/ui/card';
 import AuthLayout from '../auth-layout';
 import { SignUpForm } from './components/sign-up-form';
 import Link from 'next/link';
+
+export const metadata = {
+  title: 'Sign Up',
+};
 
 export default function SignUp() {
   return (

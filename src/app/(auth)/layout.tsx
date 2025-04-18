@@ -1,9 +1,8 @@
-// src/app/(auth)/layout.tsx
 import { ThemeProvider } from '@/context/theme-context';
 
 export const metadata = {
   title: {
-    template: '%s | Sasuai Auth',
+    template: '%s | Sasuai Store',
     default: 'Authentication - Sasuai Store',
   },
 };
