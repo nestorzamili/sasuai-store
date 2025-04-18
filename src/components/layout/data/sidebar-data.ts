@@ -102,11 +102,6 @@ export const sidebarData: SidebarData = {
           icon: IconUsersGroup,
         },
         {
-          title: 'Plans',
-          url: '/members/plans',
-          icon: IconListCheck,
-        },
-        {
           title: 'Reward',
           url: '/rewards',
           icon: IconGift,
