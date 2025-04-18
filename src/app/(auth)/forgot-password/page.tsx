@@ -1,9 +1,11 @@
-'use client';
-
 import { Card } from '@/components/ui/card';
 import AuthLayout from '../auth-layout';
 import { ForgotForm } from './components/forgot-password-form';
 import Link from 'next/link';
+
+export const metadata = {
+  title: 'Forgot Password',
+};
 
 export default function ForgotPassword() {
   return (
