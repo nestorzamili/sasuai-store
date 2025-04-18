@@ -198,7 +198,7 @@ export function TableLayout({
 
   return (
     <div className="w-full">
-      <div className="flex items-center py-4 justify-between">
+      <div className="flex items-center py-2 justify-between">
         <div className="relative max-w-sm w-full">
           <Input
             placeholder="Search..."
