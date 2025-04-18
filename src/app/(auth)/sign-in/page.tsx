@@ -1,8 +1,12 @@
-'use client';
 import { Card } from '@/components/ui/card';
 import AuthLayout from '../auth-layout';
 import { UserAuthForm } from './components/user-auth-form';
 import { Suspense } from 'react';
+
+export const metadata = {
+  title: 'Sign In',
+};
+
 export default function SignIn() {
   return (
     <AuthLayout>

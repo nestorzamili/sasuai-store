@@ -4,81 +4,74 @@ import { Coffee } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { useSidebar } from '@/components/ui/sidebar';
+import { useMemo } from 'react';
 
-export function Footer() {
-  const currentYear = new Date().getFullYear();
-  const { state: sidebarState = 'expanded' } = useSidebar?.() || {};
+type GitHubLinkProps = {
+  username: string;
+  displayName: string;
+};
+
+const GitHubLink = ({ username, displayName }: GitHubLinkProps) => (
+  <Link
+    href={`https://github.com/${username}`}
+    target="_blank"
+    rel="noopener noreferrer"
+    className="font-medium hover:underline mx-1"
+    aria-label={`GitHub profile of ${displayName}`}
+  >
+    {displayName}
+  </Link>
+);
+
+type BaseFooterProps = {
+  isCollapsed?: boolean;
+  showFullCoffeeText?: boolean;
+};
+
+const BaseFooter = ({
+  isCollapsed = false,
+  showFullCoffeeText = true,
+}: BaseFooterProps) => {
+  const currentYear = useMemo(() => new Date().getFullYear(), []);
 
   return (
     <footer
       className={cn(
         'border-t py-2 w-full mt-auto',
-        sidebarState === 'collapsed' ? 'px-2' : 'px-4',
+        isCollapsed ? 'px-2' : 'px-4',
       )}
     >
       <div
         className={cn(
           'flex flex-col items-center gap-1 text-xs',
-          sidebarState === 'collapsed' ? 'text-center' : '',
+          isCollapsed ? 'text-center' : '',
         )}
       >
         <p className="flex flex-wrap justify-center items-center">
           © {currentYear}{' '}
-          <Link
-            href="https://github.com/nestorzamili"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-medium hover:underline mx-1"
-          >
-            samunu
-          </Link>
-          <Link
-            href="https://github.com/ibobdb"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-medium hover:underline mx-1"
-          >
-            ibobdb
-          </Link>
+          <GitHubLink username="nestorzamili" displayName="samunu" />
+          <GitHubLink username="ibobdb" displayName="ibobdb" />
         </p>
-        <p className="flex items-center">
+        <p className="flex items-center" aria-label="Made with coffee">
           Made with <Coffee size={14} className="mx-1" />
-          {sidebarState === 'expanded' && 'coffee'}
+          {showFullCoffeeText && 'coffee'}
         </p>
       </div>
     </footer>
+  );
+};
+
+export function Footer() {
+  const { state: sidebarState = 'expanded' } = useSidebar?.() || {};
+
+  return (
+    <BaseFooter
+      isCollapsed={sidebarState === 'collapsed'}
+      showFullCoffeeText={sidebarState === 'expanded'}
+    />
   );
 }
 
 export function StandaloneFooter() {
-  const currentYear = new Date().getFullYear();
-
-  return (
-    <footer className="border-t py-2 w-full mt-auto px-4">
-      <div className="flex flex-col items-center gap-1 text-xs">
-        <p className="flex flex-wrap justify-center items-center">
-          © {currentYear}{' '}
-          <Link
-            href="https://github.com/nestorzamili"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-medium hover:underline mx-1"
-          >
-            samunu
-          </Link>
-          <Link
-            href="https://github.com/ibobdb"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-medium hover:underline mx-1"
-          >
-            ibobdb
-          </Link>
-        </p>
-        <p className="flex items-center">
-          Made with <Coffee size={14} className="mx-1" /> coffee
-        </p>
-      </div>
-    </footer>
-  );
+  return <BaseFooter showFullCoffeeText={true} />;
 }
