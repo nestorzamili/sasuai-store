@@ -138,7 +138,7 @@ export async function updateMember(
     email?: string | null;
     phone?: string | null;
     tierId?: string | null;
-  }
+  },
 ) {
   try {
     // Validate data
@@ -262,7 +262,7 @@ export async function getMemberPointHistory(memberId: string) {
 export async function awardPointsToMember(
   memberId: string,
   points: number,
-  notes?: string
+  notes?: string,
 ) {
   try {
     if (points <= 0) {
@@ -286,7 +286,7 @@ export async function awardPointsToMember(
       manualTransactionId,
       points,
       pointNotes,
-      userId
+      userId,
     );
 
     // Revalidate member paths
@@ -301,49 +301,6 @@ export async function awardPointsToMember(
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to award points',
-    };
-  }
-}
-
-/**
- * Get available rewards for a member
- */
-export async function getMemberAvailableRewards(memberId: string) {
-  try {
-    const rewards = await MemberService.getAvailableRewards(memberId);
-
-    return {
-      success: true,
-      data: rewards,
-    };
-  } catch (error: any) {
-    return {
-      success: false,
-      error: error.message || 'Failed to fetch available rewards',
-    };
-  }
-}
-
-/**
- * Claim a reward for a member
- */
-export async function claimRewardForMember(memberId: string, rewardId: string) {
-  try {
-    const claim = await MemberService.claimReward(memberId, rewardId);
-
-    // Revalidate paths
-    revalidatePath('/members');
-    revalidatePath(`/members/${memberId}`);
-    revalidatePath('/rewards');
-
-    return {
-      success: true,
-      data: claim,
-    };
-  } catch (error: any) {
-    return {
-      success: false,
-      error: error.message || 'Failed to claim reward',
     };
   }
 }
@@ -372,12 +329,12 @@ export async function getMemberRewardClaimHistory(memberId: string) {
  */
 export async function calculatePotentialPoints(
   memberId: string,
-  transactionAmount: number
+  transactionAmount: number,
 ) {
   try {
     const points = await MemberService.calculatePotentialPoints(
       memberId,
-      transactionAmount
+      transactionAmount,
     );
 
     return {
@@ -466,7 +423,7 @@ export async function updateMemberTier(
     name?: string;
     minPoints?: number;
     multiplier?: number;
-  }
+  },
 ) {
   try {
     // Validate data
