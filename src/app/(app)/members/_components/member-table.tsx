@@ -23,6 +23,7 @@ import {
   IconUser,
   IconMail,
   IconPhone,
+  IconGift,
 } from '@tabler/icons-react';
 import { MemberTierBadge } from './member-tier-badge';
 import {
@@ -60,6 +61,7 @@ interface MemberTableProps {
   currentPage?: number;
   totalPages?: number;
   totalItems?: number;
+  onAwardPoints: (member: MemberWithTier) => void;
 }
 
 export function MemberTable({
@@ -69,6 +71,7 @@ export function MemberTable({
   onRefresh,
   onSearch,
   totalPages = 1,
+  onAwardPoints,
 }: MemberTableProps) {
   const router = useRouter();
   // State for deletion dialog
@@ -327,6 +330,12 @@ export function MemberTable({
                   onClick={() => onEdit?.(member)}
                 >
                   Edit <IconEdit className="h-4 w-4" />
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="flex justify-between cursor-pointer"
+                  onClick={() => onAwardPoints(member)}
+                >
+                  Award Points <IconGift className="h-4 w-4" />
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="flex justify-between cursor-pointer text-destructive focus:text-destructive"

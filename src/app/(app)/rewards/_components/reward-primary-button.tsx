@@ -1,30 +1,18 @@
 'use client';
 
-import RewardFormDialog from './reward-form-dialog';
-import { RewardWithClaimCount } from '@/lib/types/reward';
+import { Button } from '@/components/ui/button';
+import { IconPlus } from '@tabler/icons-react';
 
-// Define props type
 interface RewardPrimaryButtonProps {
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
-  initialData?: RewardWithClaimCount;
-  onSuccess?: () => void;
+  onClick: () => void;
 }
 
 export default function RewardPrimaryButton({
-  open,
-  onOpenChange,
-  initialData,
-  onSuccess,
+  onClick,
 }: RewardPrimaryButtonProps) {
   return (
-    <div className="flex gap-2">
-      <RewardFormDialog
-        open={open}
-        onOpenChange={onOpenChange}
-        initialData={initialData}
-        onSuccess={onSuccess}
-      />
-    </div>
+    <Button variant="default" className="space-x-1" onClick={onClick}>
+      <span>Create</span> <IconPlus size={18} />
+    </Button>
   );
 }
