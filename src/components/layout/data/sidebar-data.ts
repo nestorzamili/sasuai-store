@@ -46,15 +46,10 @@ export const sidebarData: SidebarData = {
           url: '/transactions',
           icon: IconShoppingCart,
         },
-        {
-          title: 'Suppliers',
-          url: '/suppliers',
-          icon: IconTruck,
-        },
       ],
     },
     {
-      title: 'Product Management',
+      title: 'Inventory Management',
       items: [
         {
           title: 'Products',
@@ -67,11 +62,6 @@ export const sidebarData: SidebarData = {
           icon: IconCategory,
         },
         {
-          title: 'Inventory',
-          url: '/inventory',
-          icon: IconPackage,
-        },
-        {
           title: 'Brands',
           url: '/products/brands',
           icon: IconBuildingStore,
@@ -81,35 +71,45 @@ export const sidebarData: SidebarData = {
           url: '/products/units',
           icon: IconPackage,
         },
+        {
+          title: 'Inventory',
+          url: '/inventory',
+          icon: IconPackage,
+        },
       ],
     },
     {
-      title: 'Discount Management',
+      title: 'Supply Chain',
+      items: [
+        {
+          title: 'Suppliers',
+          url: '/suppliers',
+          icon: IconTruck,
+        },
+      ],
+    },
+    {
+      title: 'Marketing',
       items: [
         {
           title: 'Discounts',
           url: '/discounts',
           icon: IconDiscount,
         },
-      ],
-    },
-    {
-      title: 'Member Management',
-      items: [
         {
           title: 'Members',
           url: '/members',
           icon: IconUsersGroup,
         },
         {
-          title: 'Reward',
+          title: 'Rewards',
           url: '/rewards',
           icon: IconGift,
         },
       ],
     },
     {
-      title: 'User Management',
+      title: 'Administration',
       items: [
         {
           title: 'Users',
@@ -119,7 +119,7 @@ export const sidebarData: SidebarData = {
       ],
     },
     {
-      title: 'Partner Platform',
+      title: 'Integrations',
       items: [
         {
           title: 'Blastify',
@@ -129,7 +129,7 @@ export const sidebarData: SidebarData = {
       ],
     },
     {
-      title: 'Other',
+      title: 'Support',
       items: [
         {
           title: 'Help Center',
