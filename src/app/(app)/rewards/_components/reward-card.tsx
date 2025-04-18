@@ -18,13 +18,7 @@ import { format } from 'date-fns';
 import Image from 'next/image';
 import { CountdownTimer } from '@/components/countdown-timer';
 import { useState } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { IconX } from '@tabler/icons-react';
+import { ImagePreviewDialog } from '@/components/image-preview-dialog';
 
 interface RewardCardProps {
   reward: RewardWithClaimCount;
@@ -62,8 +56,12 @@ export function RewardCard({ reward, onEdit, onDelete }: RewardCardProps) {
 
   return (
     <>
-      <Card className={`overflow-hidden ${isUnavailable ? 'opacity-70' : ''}`}>
-        <div className="absolute top-0 left-0 w-full h-1 bg-primary"></div>
+      <Card
+        className={`overflow-hidden relative ${
+          isUnavailable ? 'opacity-70' : ''
+        }`}
+      >
+        <div className="absolute top-0 left-0 right-0 w-full h-1 bg-primary z-10"></div>
 
         {/* Add image if available */}
         {reward.imageUrl && (
@@ -143,33 +141,12 @@ export function RewardCard({ reward, onEdit, onDelete }: RewardCardProps) {
       </Card>
 
       {/* Image Dialog */}
-      <Dialog open={imageDialogOpen} onOpenChange={setImageDialogOpen}>
-        <DialogContent className="sm:max-w-3xl p-0 overflow-hidden">
-          <DialogHeader className="sr-only">
-            <DialogTitle>{reward.name} Image</DialogTitle>
-          </DialogHeader>
-          <div className="relative">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute top-2 right-2 z-10 rounded-full bg-background/50 hover:bg-background/80"
-              onClick={() => setImageDialogOpen(false)}
-            >
-              <IconX className="h-4 w-4" />
-            </Button>
-            <div className="relative w-full aspect-video">
-              <Image
-                src={reward.imageUrl!}
-                alt={reward.name}
-                fill
-                className="object-contain"
-                sizes="(max-width: 768px) 100vw, 800px"
-                priority
-              />
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <ImagePreviewDialog
+        open={imageDialogOpen}
+        onOpenChange={setImageDialogOpen}
+        imageUrl={reward.imageUrl}
+        altText={reward.name}
+      />
     </>
   );
 }
