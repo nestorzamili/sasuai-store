@@ -1,4 +1,5 @@
 'use client';
+import React from 'react';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -49,16 +50,16 @@ export function BreadCrumb() {
               .join('/');
 
           return (
-            <>
-              <BreadcrumbSeparator key={`separator-${index}`} />
-              <BreadcrumbItem key={segment.href}>
+            <React.Fragment key={`breadcrumb-segment-${index}`}>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
                 {isLast ? (
                   <BreadcrumbPage>{segment.title}</BreadcrumbPage>
                 ) : (
                   <BreadcrumbLink href={href}>{segment.title}</BreadcrumbLink>
                 )}
               </BreadcrumbItem>
-            </>
+            </React.Fragment>
           );
         })}
       </BreadcrumbList>
