@@ -556,9 +556,25 @@ export class ProductService {
         isActive: true,
       },
       include: {
-        category: true,
-        brand: true,
-        unit: true,
+        batches: {
+          where: {
+            remainingQuantity: { gt: 0 },
+          },
+          orderBy: {
+            expiryDate: 'asc',
+          },
+          take: 1,
+        },
+        discountRelationProduct: {
+          where: {
+            discount: {
+              isActive: true,
+            },
+          },
+          include: {
+            discount: true,
+          },
+        },
       },
       orderBy: { name: 'asc' },
       take: options?.take || 10,

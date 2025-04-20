@@ -30,7 +30,7 @@ interface ProductSelectionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onProductSelect: (
-    product: AvailableProductBatch & { quantity: number },
+    product: AvailableProductBatch & { quantity: number }
   ) => void;
 }
 
@@ -119,7 +119,7 @@ export function ProductSelectionDialog({
   const filteredBatches = batches.filter(
     (batch) =>
       batch.product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      batch.batchCode.toLowerCase().includes(searchQuery.toLowerCase()),
+      batch.batchCode.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -204,7 +204,7 @@ export function ProductSelectionDialog({
                             onClick={() =>
                               handleQuantityChange(
                                 batch.id,
-                                (quantities[batch.id] || 1) - 1,
+                                (quantities[batch.id] || 1) - 1
                               )
                             }
                             disabled={quantities[batch.id] <= 1}
@@ -221,7 +221,7 @@ export function ProductSelectionDialog({
                             onClick={() =>
                               handleQuantityChange(
                                 batch.id,
-                                (quantities[batch.id] || 1) + 1,
+                                (quantities[batch.id] || 1) + 1
                               )
                             }
                             disabled={
