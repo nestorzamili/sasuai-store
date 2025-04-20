@@ -230,7 +230,12 @@ export function TableLayout({
             )}
         </div>
       </div>
-      <div className="rounded-md border">
+      <div className="rounded-md border relative">
+        {isLoading && (
+          <div className="absolute inset-0 bg-background/50 flex items-center justify-center z-10">
+            <Loader2 className="h-6 w-6 animate-spin" />
+          </div>
+        )}
         <Table className="">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -265,12 +270,7 @@ export function TableLayout({
               </TableRow>
             ))}
           </TableHeader>
-          <TableBody className="text-md" aria-disabled={isLoading}>
-            {isLoading && (
-              <div className="absolute inset-0 bg-background/50 flex items-center justify-center z-10">
-                <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full"></div>
-              </div>
-            )}
+          <TableBody className="text-md">
             {table.getRowModel().rows.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
