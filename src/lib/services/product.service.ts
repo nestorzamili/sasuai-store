@@ -545,4 +545,39 @@ export class ProductService {
       data: { isPrimary: true },
     });
   }
+  // Function get products for order
+  static async getProductFiltered(options?: { search?: string; take: 10 }) {
+    return prisma.product.findMany({
+      where: {
+        OR: [
+          { name: { contains: options?.search, mode: 'insensitive' } },
+          { barcode: { contains: options?.search, mode: 'insensitive' } },
+        ],
+        isActive: true,
+      },
+      include: {
+        batches: {
+          where: {
+            remainingQuantity: { gt: 0 },
+          },
+          orderBy: {
+            expiryDate: 'asc',
+          },
+          take: 1,
+        },
+        discountRelationProduct: {
+          where: {
+            discount: {
+              isActive: true,
+            },
+          },
+          include: {
+            discount: true,
+          },
+        },
+      },
+      orderBy: { name: 'asc' },
+      take: options?.take || 10,
+    });
+  }
 }

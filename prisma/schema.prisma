@@ -365,9 +365,12 @@ model Transaction {
   member         Member?           @relation(fields: [memberId], references: [id])
   memberId       String?           @map("member_id")
   totalAmount    Int               @map("total_amount")
-  discountAmount Int               @map("discount_amount")
   finalAmount    Int               @map("final_amount")
   paymentMethod  String            @map("payment_method")
+  discountMemberId String?         @map("discount_member_id")
+  discountValueType String?        @map("discount_value_type")
+  discountValue Int?               @map("discount_value")
+  discountAmount Int?               @map("discount_amount")
   items          TransactionItem[]
   memberPoints   MemberPoint[]
   createdAt      DateTime          @default(now()) @db.Timestamptz
@@ -387,6 +390,9 @@ model TransactionItem {
   unitId        String       @map("unit_id")
   pricePerUnit  Int          @map("price_per_unit")
   discountId    String?      @map("discount_id")
+  discountValueType String?  @map("discount_value_type")
+  discountValue Int?         @map("discount_value")
+  discountAmount Int?        @map("discount_amount")
   subtotal      Int
   createdAt     DateTime     @default(now()) @db.Timestamptz
   updatedAt     DateTime     @updatedAt @db.Timestamptz

@@ -24,3 +24,34 @@ export function responseFormatter<T>(
     },
   };
 }
+export interface ErrorResponse {
+  success: false;
+  message: string;
+  error?: {
+    code?: string | number;
+    details?: unknown;
+  };
+}
+
+export function errorHandling(
+  options: {
+    message?: string;
+    code?: string | number;
+    details?: unknown;
+  } = {}
+): ErrorResponse {
+  return {
+    success: false,
+    message:
+      options.message || 'An error occurred while processing your request.',
+    error:
+      options.code || options.details
+        ? {
+            ...(options.code ? { code: options.code } : {}),
+            ...(options.details !== undefined
+              ? { details: options.details }
+              : {}),
+          }
+        : undefined,
+  };
+}
