@@ -11,7 +11,7 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 import { Loader2 } from 'lucide-react';
-import { ArrowUp, ArrowDown } from 'lucide-react';
+import { ArrowUp, ArrowDown, XCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { DataTablePagination } from '@/components/ui/data-table-pagination';
 import {
@@ -198,7 +198,7 @@ export function TableLayout({
 
   return (
     <div className="w-full">
-      <div className="flex items-center py-4 justify-between">
+      <div className="flex items-center py-2 justify-between">
         <div className="relative max-w-sm w-full">
           <Input
             placeholder="Search..."
@@ -206,9 +206,12 @@ export function TableLayout({
             onChange={(e) => setSearchValue(e.target.value)}
             className="w-full pr-8"
           />
-          {isSearching && (
-            <div className="absolute right-3 top-1/2 -translate-y-1/2">
-              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+          {searchValue.length > 0 && (
+            <div
+              className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer"
+              onClick={() => setSearchValue('')}
+            >
+              <XCircle className="h-4 w-4 text-muted-foreground" />
             </div>
           )}
         </div>
@@ -228,7 +231,7 @@ export function TableLayout({
         </div>
       </div>
       <div className="rounded-md border">
-        <Table>
+        <Table className="">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
@@ -252,7 +255,7 @@ export function TableLayout({
                           ? ''
                           : (flexRender(
                               header.column.columnDef.header,
-                              header.getContext(),
+                              header.getContext()
                             ) as string)
                       }
                       column={header.column}
@@ -262,24 +265,13 @@ export function TableLayout({
               </TableRow>
             ))}
           </TableHeader>
-          <TableBody className="text-md">
-            {isLoading ? (
-              <TableRow className="hover:bg-transparent">
-                <TableCell
-                  colSpan={
-                    enableSelection ? columns.length + 1 : columns.length
-                  }
-                  className="h-32 text-center"
-                >
-                  <div className="flex flex-col items-center justify-center gap-2 py-4">
-                    <Loader2 className="h-8 w-8 animate-spin" />
-                    <p className="text-sm text-muted-foreground">
-                      Loading data...
-                    </p>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ) : table.getRowModel().rows.length ? (
+          <TableBody className="text-md" aria-disabled={isLoading}>
+            {isLoading && (
+              <div className="absolute inset-0 bg-background/50 flex items-center justify-center z-10">
+                <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full"></div>
+              </div>
+            )}
+            {table.getRowModel().rows.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
@@ -299,7 +291,7 @@ export function TableLayout({
                     <TableCell key={cell.id}>
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext(),
+                        cell.getContext()
                       )}
                     </TableCell>
                   ))}

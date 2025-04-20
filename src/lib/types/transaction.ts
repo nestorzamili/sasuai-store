@@ -59,15 +59,21 @@ export type CreateTransactionData = {
   cashierId: string;
   memberId?: string | null;
   totalAmount: number;
-  discountAmount: number;
   finalAmount: number;
   paymentMethod: string;
+  discountMemberId?: string | null;
+  discountValueType?: 'percentage' | 'fixed';
+  discountValue?: number;
+  discountAmount?: number;
   items: {
     batchId: string;
     quantity: number;
     unitId: string;
     pricePerUnit: number;
     discountId?: string | null;
+    discountValueType?: 'percentage' | 'fixed';
+    discountValue?: number;
+    discountAmount?: number;
     subtotal: number;
   }[];
 };
@@ -133,3 +139,21 @@ export type TransactionSummary = {
     revenue: number;
   }[];
 };
+export type validationTransaction = {
+  memberId?: string | null;
+  paymentMethod: string;
+  discountMemberId?: string | null;
+  cashAmount?: number;
+  items: {
+    batchId: string;
+    quantity: number;
+    unitId: string;
+    discountId?: string | null;
+  }[];
+};
+export type validationDiscountMember = {
+  memberId?: string | null;
+  discountMemberId?: string | null;
+  subAmount: number;
+};
+export type SubTransaction = {};

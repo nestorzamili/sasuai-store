@@ -13,6 +13,7 @@ import { ProfileDropdown } from '@/components/profile-dropdown';
 import { Search } from '@/components/search';
 import { ThemeSwitch } from '@/components/theme-switch';
 import { Toaster } from '@/components/ui/toaster';
+import { BreadCrumb } from '@/components/breadcrumb';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const defaultOpen = Cookies.get('sidebar:state') !== 'false';
@@ -33,7 +34,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   'transition-[width] ease-linear duration-200',
                   'h-svh flex flex-col',
                   'group-data-[scroll-locked=1]/body:h-full',
-                  'group-data-[scroll-locked=1]/body:has-[main.fixed-main]:h-svh',
+                  'group-data-[scroll-locked=1]/body:has-[main.fixed-main]:h-svh'
                 )}
               >
                 <Header fixed>
@@ -43,7 +44,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     <ProfileDropdown />
                   </div>
                 </Header>
-                <Main>{children}</Main>
+                <Main>
+                  <BreadCrumb />
+                  {children}
+                </Main>
                 <Toaster />
               </div>
             </SidebarProvider>

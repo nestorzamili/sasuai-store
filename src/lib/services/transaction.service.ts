@@ -2,6 +2,7 @@ import prisma from '@/lib/prisma';
 import {
   CreateTransactionData,
   TransactionPaginationParams,
+  validationTransaction,
 } from '../types/transaction';
 import { Prisma } from '@prisma/client';
 import { calculateMemberPoints } from './setting.service';
@@ -74,8 +75,118 @@ export class TransactionService {
   /**
    * Create a new transaction
    */
+  /**
+   * Creates a new transaction with optional discount calculation for members
+   * and updates related records including inventory and member points.
+   *
+   * @param data - Transaction creation data
+   * @param data.cashierId - ID of the cashier processing the transaction
+   * @param data.memberId - Optional ID of the member making the purchase
+   * @param data.totalAmount - Total amount before any discounts
+   * @param data.finalAmount - Final amount after discounts
+   * @param data.paymentMethod - Method of payment used
+   * @param data.items - Array of items in the transaction
+   * @param data.items[].batchId - ID of the product batch
+   * @param data.items[].quantity - Quantity purchased
+   * @param data.items[].unitId - Unit of measurement ID
+   * @param data.items[].pricePerUnit - Price per unit
+   * @param data.items[].subtotal - Subtotal for this item
+   *
+   * @returns The created transaction with included items
+   *
+   * @throws Error If any batch is not found or other database operations fail
+   *
+   * @remarks
+   * This method:
+   * 1. Checks if the member is eligible for a discount
+   * 2. Creates the transaction record with its items
+   * 3. Awards points to the member if applicable
+   * 4. Updates the member's tier if they qualify for a higher one
+   * 5. Updates product inventory for all purchased items
+   *
+   * @debug
+   * - Currently contains debugging code with console.log(data, sample, discount)
+   * - Has a temporary block with Error throwing: 'Transaction creation is not implemented yet'
+   * - Remove these debug elements before production deployment
+   */
   static async create(data: CreateTransactionData) {
-    // Start a transaction
+    // const isMemberValid = data.memberId && (await this.isMember(data.memberId));
+    // const isDiscountAvailable =
+    //   data.discountMemberId &&
+    //   (await this.isDiscountValid(data.discountMemberId));
+
+    // const calculateDiscount = ({
+    //   type,
+    //   value,
+    //   amount,
+    // }: {
+    //   type: 'percentage' | 'flat';
+    //   value: number;
+    //   amount: number;
+    // }) => {
+    //   if (type === 'percentage') {
+    //     const discountAmount = (value / 100) * amount;
+    //     return {
+    //       discountAmount,
+    //       finalAmount: amount - discountAmount,
+    //     };
+    //   } else if (type === 'flat') {
+    //     return {
+    //       discountAmount: value,
+    //       finalAmount: amount - value,
+    //     };
+    //   }
+    //   return {
+    //     discountAmount: 0,
+    //     finalAmount: amount,
+    //   };
+    // };
+
+    // // Calculate total amount from items
+    // const totalAmount = data.items.reduce((sum, item) => {
+    //   const subtotalValue =
+    //     typeof item.subtotal === 'string'
+    //       ? parseInt(item.subtotal) || 0
+    //       : item.subtotal || 0;
+    //   return sum + subtotalValue;
+    // }, 0);
+
+    // // Calculate discount if available
+    // const discountCalc = isDiscountAvailable
+    //   ? calculateDiscount({
+    //       type: isDiscountAvailable.discountValueType as 'percentage' | 'flat',
+    //       value: isDiscountAvailable.discountValue || 0,
+    //       amount: totalAmount,
+    //     })
+    //   : { discountAmount: 0, finalAmount: totalAmount };
+
+    // const results = {
+    //   cashierId: data.cashierId,
+    //   memberId: isMemberValid || null,
+    //   totalAmount: totalAmount,
+    //   discountMemberId: isDiscountAvailable
+    //     ? isDiscountAvailable.discountId || null
+    //     : null,
+    //   discountValueType: isDiscountAvailable
+    //     ? isDiscountAvailable.discountValueType || 'percentage'
+    //     : 'percentage',
+    //   discountValue: isDiscountAvailable
+    //     ? isDiscountAvailable.discountValue || 0
+    //     : 0,
+    //   discountAmount: discountCalc.discountAmount,
+    //   finalAmount: discountCalc.finalAmount,
+    //   paymentMethod: data.paymentMethod,
+    //   items: {
+    //     create: data.items.map((item) => ({
+    //       batchId: item.batchId,
+    //       quantity: item.quantity,
+    //       unitId: item.unitId,
+    //       pricePerUnit: item.pricePerUnit,
+    //       subtotal: item.subtotal,
+    //     })),
+    //   },
+    // };
+    // return results;
     return await prisma.$transaction(async (tx) => {
       // Create the transaction record
       const transaction = await tx.transaction.create({
@@ -83,7 +194,7 @@ export class TransactionService {
           cashierId: data.cashierId,
           memberId: data.memberId || null,
           totalAmount: data.totalAmount,
-          discountAmount: data.discountAmount,
+          discountAmount: 0,
           finalAmount: data.finalAmount,
           paymentMethod: data.paymentMethod,
           items: {
@@ -113,7 +224,7 @@ export class TransactionService {
           // Calculate points based on settings and tier multiplier
           const pointsEarned = await calculateMemberPoints(
             data.finalAmount,
-            member,
+            member
           );
 
           if (pointsEarned > 0) {
@@ -449,7 +560,7 @@ export class TransactionService {
           quantity: item._sum?.quantity || 0,
           revenue: item._sum?.subtotal || 0,
         };
-      }),
+      })
     );
 
     return {
@@ -547,12 +658,12 @@ export class TransactionService {
 
         // Sort tiers by minPoints in descending order
         const sortedTiers = [...allTiers].sort(
-          (a, b) => b.minPoints - a.minPoints,
+          (a, b) => b.minPoints - a.minPoints
         );
 
         // Find the appropriate tier based on current points
         let eligibleTier = sortedTiers.find(
-          (tier) => updatedMember.totalPointsEarned >= tier.minPoints,
+          (tier) => updatedMember.totalPointsEarned >= tier.minPoints
         );
 
         // If no eligible tier found (rare case), use the lowest tier
@@ -653,5 +764,156 @@ export class TransactionService {
       availableQuantity: batch.remainingQuantity,
       unit: batch.product.unit, // Use the unit from the product
     }));
+  }
+
+  /**
+   * Check if a discount is available for a member or product
+   * @param params Object containing discount check parameters
+   * @param params.memberId Optional member ID to check for member-specific discounts
+   * @param params.productId Optional product ID to check for product-specific discounts
+   * @param params.subAmount Optional subtotal amount for minimum purchase checks
+   * @returns Discount availability information and applicable discounts
+   */
+  static async checkIsReadyForDiscount({
+    memberId,
+    productId,
+    subAmount,
+  }: {
+    memberId?: string | null;
+    productId?: string | null;
+    subAmount: number | null;
+  }) {
+    // Base query for discount
+    let whereQuery: any = {
+      isActive: true,
+    };
+
+    // If neither memberId nor productId is provided, return no discount available
+    if (!memberId && !productId) {
+      return {
+        isDiscountAvailable: false,
+        discount: null,
+      };
+    }
+
+    // Configure where query based on whether we're checking for member or product discount
+    if (memberId) {
+      whereQuery.discountMembers = {
+        some: {
+          memberId: memberId,
+        },
+      };
+    } else if (productId) {
+      whereQuery.discountRelationProduct = {
+        some: {
+          productId: productId,
+        },
+      };
+    }
+
+    // Fetch applicable discounts
+    const discounts = await prisma.discount.findMany({
+      where: whereQuery,
+    });
+
+    // Check if there are any discounts available
+    if (!discounts || discounts.length === 0) {
+      return {
+        isDiscountAvailable: false,
+        discount: null,
+      };
+    }
+
+    // Filter discounts based on minimum purchase amount if applicable
+    const applicableDiscounts = discounts.filter(
+      (discount) =>
+        !discount.minPurchase ||
+        (subAmount !== null &&
+          subAmount !== undefined &&
+          subAmount >= discount.minPurchase)
+    );
+
+    // Get the best discount (highest value)
+    const bestDiscounts = applicableDiscounts
+      .map((discount) => {
+        let calculatedValue = 0;
+
+        if (discount.valueType === 'percentage' && subAmount) {
+          calculatedValue = (discount.value / 100) * subAmount;
+        } else if (discount.valueType === 'flat') {
+          calculatedValue = discount.value;
+        }
+
+        return {
+          ...discount,
+          calculatedValue,
+        };
+      })
+      .sort((a, b) => b.calculatedValue - a.calculatedValue);
+
+    return {
+      isDiscountAvailable: applicableDiscounts.length > 0,
+      allDiscountTotal: discounts.length || 0,
+      availableDiscountTotal: applicableDiscounts.length || 0,
+      discount: applicableDiscounts.map((discount) => ({
+        discountId: discount.id,
+        discountName: discount.name,
+        discountValueType: discount.valueType,
+        discountValue: discount.value,
+        minPurchase: discount.minPurchase,
+      })),
+      bestDiscount: bestDiscounts.length > 0 ? bestDiscounts[0] : null,
+    };
+  }
+
+  /**
+   * Calculate discount amount based on type and value
+   * @param type Discount type: 'percentage' or 'flat'
+   * @param value Discount value
+   * @param amount Total amount to apply discount to (required for percentage)
+   */
+  static calculateDiscount({
+    type,
+    value,
+    amount,
+  }: {
+    type: 'percentage' | 'flat';
+    value: number;
+    amount?: number;
+  }) {
+    if (type === 'percentage' && amount !== undefined) {
+      return (value / 100) * amount;
+    } else if (type === 'flat') {
+      return value;
+    }
+    return 0;
+  }
+  static async isMember(id: string) {
+    try {
+      const member = await prisma.member.findUnique({
+        where: { id },
+      });
+      return member?.id;
+    } catch (error) {
+      throw new Error(`Member with ID ${id} not found`);
+    }
+  }
+  static async isDiscountValid(id: string) {
+    try {
+      const discount = await prisma.discount.findFirst({
+        where: {
+          id: id,
+          isActive: true,
+        },
+      });
+      return {
+        discountId: discount?.id,
+        discountValue: discount?.value,
+        discountValueType: discount?.valueType,
+      };
+    } catch (error) {
+      console.error('Error checking discount:', error);
+      return {};
+    }
   }
 }
