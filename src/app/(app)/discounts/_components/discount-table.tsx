@@ -210,7 +210,7 @@ export function DiscountTable() {
             variant={daysLeft < 0 ? 'destructive' : 'outline'}
             className="cursor-pointer uppercase"
           >
-            {daysLeft} days
+            {daysLeft < 0 ? 0 : daysLeft} days
           </Badge>
         );
       },
