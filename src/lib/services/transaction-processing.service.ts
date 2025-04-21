@@ -358,8 +358,6 @@ export class TransactionProcessingService {
         };
       });
       const transactionData = validatedTransactionResult.data;
-      // console.log(transactionData, 'transactionData');
-      // console.log(items, 'items');
       // return;
       return await prisma.$transaction(async (tx) => {
         try {
