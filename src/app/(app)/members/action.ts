@@ -90,6 +90,8 @@ export async function getMember(id: string) {
 export async function createMember(data: {
   name: string;
   email?: string | null;
+  cardId: string | null;
+  address?: string | null; // Fixed spelling from "addres" to "address"
   phone?: string | null;
   tierId?: string | null;
 }) {
@@ -101,6 +103,8 @@ export async function createMember(data: {
     const member = await MemberService.create({
       name: validatedData.name,
       email: validatedData.email || undefined,
+      cardId: data.cardId || '', // Use data.cardId since it's not in the schema
+      address: data.address || undefined, // Use data.address since it's not in the schema
       phone: validatedData.phone || undefined,
       tierId: validatedData.tierId || undefined,
     });
@@ -136,9 +140,11 @@ export async function updateMember(
   data: {
     name?: string;
     email?: string | null;
+    cardId?: string | null;
+    address?: string | null;
     phone?: string | null;
     tierId?: string | null;
-  },
+  }
 ) {
   try {
     // Validate data
@@ -148,6 +154,8 @@ export async function updateMember(
     const serviceData = {
       name: validatedData.name,
       email: validatedData.email === null ? undefined : validatedData.email,
+      cardId: data.cardId === null ? undefined : data.cardId,
+      address: data.address === null ? undefined : data.address,
       phone: validatedData.phone === null ? undefined : validatedData.phone,
       tierId: validatedData.tierId === null ? undefined : validatedData.tierId,
     };
@@ -262,7 +270,7 @@ export async function getMemberPointHistory(memberId: string) {
 export async function awardPointsToMember(
   memberId: string,
   points: number,
-  notes?: string,
+  notes?: string
 ) {
   try {
     if (points <= 0) {
@@ -286,7 +294,7 @@ export async function awardPointsToMember(
       manualTransactionId,
       points,
       pointNotes,
-      userId,
+      userId
     );
 
     // Revalidate member paths
@@ -329,12 +337,12 @@ export async function getMemberRewardClaimHistory(memberId: string) {
  */
 export async function calculatePotentialPoints(
   memberId: string,
-  transactionAmount: number,
+  transactionAmount: number
 ) {
   try {
     const points = await MemberService.calculatePotentialPoints(
       memberId,
-      transactionAmount,
+      transactionAmount
     );
 
     return {
@@ -423,7 +431,7 @@ export async function updateMemberTier(
     name?: string;
     minPoints?: number;
     multiplier?: number;
-  },
+  }
 ) {
   try {
     // Validate data
