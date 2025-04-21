@@ -138,7 +138,8 @@ model Product {
   description  String?
   unit         Unit           @relation(fields: [unitId], references: [id])
   unitId       String         @map("unit_id")
-  price        Int
+  cost         Int            @default(0)
+  price        Int            @default(0)
   currentStock Int            @default(0) @map("current_stock")
   skuCode      String?        @map("sku_code")
   barcode      String?
@@ -389,6 +390,7 @@ model TransactionItem {
   unit          Unit         @relation(fields: [unitId], references: [id])
   unitId        String       @map("unit_id")
   pricePerUnit  Int          @map("price_per_unit")
+  cost          Int          @map("cost")
   discountId    String?      @map("discount_id")
   discountValueType String?  @map("discount_value_type")
   discountValue Int?         @map("discount_value")
