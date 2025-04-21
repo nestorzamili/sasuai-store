@@ -246,9 +246,11 @@ model MemberTier {
 
 model Member {
   id                String        @id @default(uuid())
+  cardId            String        @map("card_id")
   name              String
   email             String?
   phone             String?
+  address           String?
   tier              MemberTier?   @relation(fields: [tierId], references: [id])
   tierId            String?       @map("tier_id")
   totalPoints       Int           @default(0) @map("total_points")
