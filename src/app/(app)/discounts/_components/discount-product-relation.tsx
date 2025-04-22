@@ -11,7 +11,6 @@ export function DiscountRelationProduct({
   relationOnChange,
   initialSelectedRows,
 }: RelationReturn) {
-  console.log('dari product', initialSelectedRows);
   const fetchProduct = async (options: any) => {
     try {
       const response = await optimalizeGetProduct({
@@ -73,12 +72,12 @@ export function DiscountRelationProduct({
     {
       accessorKey: 'Category',
       header: 'category',
-      cell: (info) => info.row.original.category.name,
+      cell: (info) => info.row.original?.category?.name,
     },
     {
       accessorKey: 'Brand',
       header: 'brand',
-      cell: (info) => info.row.original.brand.name,
+      cell: (info) => info.row.original?.brand?.name,
     },
   ];
   const handlePaginationChange = (newPagination: {

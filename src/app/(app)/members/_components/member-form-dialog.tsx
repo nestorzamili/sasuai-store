@@ -37,8 +37,10 @@ import { createMember, updateMember } from '../action';
 
 // Define the form schema
 const formSchema = z.object({
+  cardId: z.string().nonempty('Card ID is required'),
   name: z.string().min(1, 'Member name is required'),
   email: z.string().email('Invalid email format').optional().nullable(),
+  address: z.string().optional().nullable(),
   phone: z.string().optional().nullable(),
   tierId: z.string().optional().nullable(),
 });
@@ -78,14 +80,18 @@ export default function MemberFormDialog({
   useEffect(() => {
     if (initialData) {
       form.reset({
+        cardId: initialData.cardId || '',
         name: initialData.name || '',
         email: initialData.email || null,
+        address: initialData.address || null,
         phone: initialData.phone || null,
         tierId: initialData.tierId || null,
       });
     } else {
       form.reset({
         name: '',
+        cardId: '',
+        address: null,
         email: null,
         phone: null,
         tierId: null,
@@ -102,6 +108,8 @@ export default function MemberFormDialog({
         isEditing && initialData
           ? await updateMember(initialData.id, {
               name: values.name,
+              cardId: values.cardId,
+              address: values.address,
               email: values.email,
               phone: values.phone,
               tierId: values.tierId,
@@ -109,6 +117,8 @@ export default function MemberFormDialog({
           : await createMember({
               name: values.name,
               email: values.email,
+              cardId: values.cardId,
+              address: values.address,
               phone: values.phone,
               tierId: values.tierId,
             });
@@ -155,6 +165,19 @@ export default function MemberFormDialog({
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <FormField
+            control={form.control}
+            name="cardId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Card ID</FormLabel>
+                <FormControl>
+                  <Input placeholder="Scan card" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
           <FormField
             control={form.control}
             name="name"
@@ -206,7 +229,23 @@ export default function MemberFormDialog({
               )}
             />
           </div>
-
+          <FormField
+            control={form.control}
+            name="address"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Address</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="Address"
+                    {...field}
+                    value={field.value || ''}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
           <FormField
             control={form.control}
             name="tierId"

@@ -14,6 +14,7 @@ interface TransactionData {
     productId: string;
     quantity: number;
     unitId: string;
+    cost: number;
     pricePerUnit: number;
     subtotal: number;
     batchId: string; // Added batchId field
@@ -130,6 +131,7 @@ export class TransactionProcessingService {
         batchId: validBatch.id,
         unitId: product.unitId,
         basicPrice: product.price,
+        buyPrice: validBatch.buyPrice,
         quantity: cartItem.quantity,
         discount: value
           ? {
@@ -299,7 +301,6 @@ export class TransactionProcessingService {
         quantity: item.quantity,
         selectedDiscountId: null, // Can be enhanced to accept discountId if needed
       }));
-
       const validatedCartResult = await this.validationCart(cartItems);
       if (!validatedCartResult.success) {
         return {
@@ -347,6 +348,7 @@ export class TransactionProcessingService {
           productId: item.productId,
           batchId: item.batchId,
           unitId: item.unitId,
+          cost: item.buyPrice,
           quantity: item.quantity,
           discountId: item.discount?.id || null,
           discountValue: item.discount?.value || null,
@@ -356,7 +358,7 @@ export class TransactionProcessingService {
         };
       });
       const transactionData = validatedTransactionResult.data;
-
+      // return;
       return await prisma.$transaction(async (tx) => {
         try {
           const transaction = await tx.transaction.create({
@@ -375,8 +377,11 @@ export class TransactionProcessingService {
                   batchId: item.batchId,
                   quantity: item.quantity,
                   unitId: item.unitId,
+                  cost: item.cost,
                   pricePerUnit: item.basicPrice,
                   discountId: item.discountId,
+                  discountValue: item.discountValue || null,
+                  discountValueType: item.discountValueType || null,
                   subtotal: item.subtotal,
                 })),
               },
