@@ -83,6 +83,8 @@ export class MemberService {
   static async create(data: {
     name: string;
     email?: string;
+    address?: string;
+    cardId: string;
     phone?: string;
     tierId?: string;
   }) {
@@ -106,6 +108,8 @@ export class MemberService {
         data: {
           name: data.name,
           email: data.email,
+          address: data.address,
+          cardId: data.cardId,
           phone: data.phone,
           tierId: tierToAssign,
           totalPoints: 0,
@@ -128,6 +132,8 @@ export class MemberService {
     id: string,
     data: {
       name?: string;
+      address?: string;
+      cardId?: string;
       email?: string;
       phone?: string;
       tierId?: string;

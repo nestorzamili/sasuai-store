@@ -416,6 +416,7 @@ export async function getPaginatedProducts(params: {
 export async function optimalizeGetProduct(options?: options) {
   try {
     const discount = await ProductService.getAllOptimized(options);
+
     return {
       success: true,
       data: discount.data,
