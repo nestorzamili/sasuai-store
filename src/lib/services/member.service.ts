@@ -137,7 +137,7 @@ export class MemberService {
       email?: string;
       phone?: string;
       tierId?: string;
-    }
+    },
   ) {
     return prisma.member.update({
       where: { id },
@@ -182,6 +182,7 @@ export class MemberService {
         { name: { contains: query, mode: 'insensitive' } },
         { email: { contains: query, mode: 'insensitive' } },
         { phone: { contains: query, mode: 'insensitive' } },
+        { cardId: { contains: query, mode: 'insensitive' } },
       ];
     }
 
@@ -217,7 +218,7 @@ export class MemberService {
     transactionId: string,
     points: number,
     notes?: string,
-    cashierId?: string
+    cashierId?: string,
   ) {
     return prisma.$transaction(async (tx) => {
       const isManualAward = notes !== undefined;
@@ -429,7 +430,7 @@ export class MemberService {
    */
   static async calculatePotentialPoints(
     memberId: string,
-    transactionAmount: number
+    transactionAmount: number,
   ): Promise<number> {
     const member = await this.getById(memberId);
 
@@ -475,7 +476,7 @@ export class MemberService {
       name?: string;
       minPoints?: number;
       multiplier?: number;
-    }
+    },
   ) {
     return prisma.memberTier.update({
       where: { id },
@@ -494,7 +495,7 @@ export class MemberService {
 
     if (membersUsingTier > 0) {
       throw new Error(
-        `Cannot delete tier: ${membersUsingTier} members are using this tier`
+        `Cannot delete tier: ${membersUsingTier} members are using this tier`,
       );
     }
 
