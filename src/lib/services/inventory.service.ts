@@ -1,5 +1,6 @@
 import prisma from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
+import { buildQueryOptions } from '../common/query-options';
 
 export class ProductBatchService {
   /**
@@ -22,7 +23,26 @@ export class ProductBatchService {
       ],
     });
   }
+  static async getAllOptimalize(queryOptions?: any) {
+    const options = buildQueryOptions(queryOptions);
+    const [batch, count] = await Promise.all([
+      prisma.productBatch.findMany({
+        include: {
+          product: true,
+        },
+        ...options,
+      }),
+      prisma.productBatch.count(),
+    ]);
 
+    return {
+      data: batch,
+      meta: {
+        ...options,
+        rowsCount: count,
+      },
+    };
+  }
   /**
    * Get all product batches for a specific product
    */
@@ -30,7 +50,7 @@ export class ProductBatchService {
     productId: string,
     options?: {
       includeStockMovements?: boolean;
-    },
+    }
   ) {
     return prisma.productBatch.findMany({
       where: { productId },
@@ -55,7 +75,7 @@ export class ProductBatchService {
       includeProduct?: boolean;
       includeStockMovements?: boolean;
       includeProductDetails?: boolean;
-    },
+    }
   ) {
     return prisma.productBatch.findUnique({
       where: { id },
@@ -111,7 +131,7 @@ export class ProductBatchService {
     options?: {
       includeProduct?: boolean;
       includeStockMovements?: boolean;
-    },
+    }
   ) {
     return prisma.productBatch.findFirst({
       where: { batchCode },
@@ -184,7 +204,7 @@ export class ProductBatchService {
       batchCode?: string;
       expiryDate?: Date;
       buyPrice?: number;
-    },
+    }
   ) {
     return prisma.productBatch.update({
       where: { id },
@@ -199,7 +219,7 @@ export class ProductBatchService {
     id: string,
     adjustment: number,
     reason: string,
-    unitId: string,
+    unitId: string
   ) {
     return prisma.$transaction(async (tx) => {
       // Get the current batch
@@ -293,7 +313,7 @@ export class ProductBatchService {
 
     if (!canDelete) {
       throw new Error(
-        'Cannot delete batch with existing stock movements or transactions',
+        'Cannot delete batch with existing stock movements or transactions'
       );
     }
 
@@ -401,10 +421,10 @@ export class ProductBatchService {
     const totalBatches = batches.length;
     const totalQuantity = batches.reduce(
       (sum, batch) => sum + batch.remainingQuantity,
-      0,
+      0
     );
     const expiredBatches = batches.filter(
-      (batch) => batch.expiryDate < today,
+      (batch) => batch.expiryDate < today
     ).length;
     const expiredQuantity = batches
       .filter((batch) => batch.expiryDate < today)

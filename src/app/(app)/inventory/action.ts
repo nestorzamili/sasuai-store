@@ -62,7 +62,21 @@ export async function getAllBatches() {
     };
   }
 }
-
+export async function getAllBatchesOptimalized(options?: any) {
+  try {
+    const batch = await ProductBatchService.getAllOptimalize(options);
+    return {
+      success: true,
+      data: batch.data,
+      meta: batch.meta,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: 'Failed to fetch batch',
+    };
+  }
+}
 /**
  * Get all batches for a specific product
  */
@@ -202,7 +216,7 @@ export async function updateBatch(
     batchCode?: string;
     expiryDate?: Date;
     buyPrice?: number;
-  },
+  }
 ) {
   try {
     // Validate data
@@ -243,7 +257,7 @@ export async function adjustBatchQuantity(
     adjustment: number;
     reason: string;
     unitId: string;
-  },
+  }
 ) {
   try {
     // Validate data
@@ -254,7 +268,7 @@ export async function adjustBatchQuantity(
       id,
       validatedData.adjustment,
       validatedData.reason,
-      validatedData.unitId,
+      validatedData.unitId
     );
 
     // Revalidate inventory paths
