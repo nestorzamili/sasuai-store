@@ -46,7 +46,6 @@ export async function getAllMembers() {
 export async function optimalizeGetMember(options?: options) {
   try {
     const members = await MemberService.getAllOptimalize(options);
-    console.log('members dari action', members);
     return {
       success: true,
       data: members.data,
