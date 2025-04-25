@@ -108,7 +108,7 @@ export class MemberService {
       const member = await tx.member.create({
         data: {
           name: data.name,
-          email: data.email,
+          email: data.email || null,
           address: data.address,
           cardId: data.cardId,
           phone: data.phone,

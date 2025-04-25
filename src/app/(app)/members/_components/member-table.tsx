@@ -68,8 +68,6 @@ export function MemberTable({ onEdit, onAwardPoints }: MemberTableProps) {
   const viewMemberDetails = (member: MemberWithTier) => {
     router.push(`/members/${member.id}`);
   };
-  // Search state
-  const [searchValue, setSearchValue] = useState('');
   // Define columns
   const columns: ColumnDef<MemberWithTier>[] = [
     {
@@ -254,12 +252,7 @@ export function MemberTable({ onEdit, onAwardPoints }: MemberTableProps) {
   };
 
   const handleSearchChange = (search: string) => {
-    setSearchValue(search);
     setSearch(search);
-  };
-
-  const handleRefreshAfterDelete = () => {
-    refresh();
   };
   return (
     <>
