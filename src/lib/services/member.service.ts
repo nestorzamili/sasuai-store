@@ -30,6 +30,7 @@ export class MemberService {
       }),
       prisma.member.count(),
     ]);
+
     return {
       data: member,
       meta: {

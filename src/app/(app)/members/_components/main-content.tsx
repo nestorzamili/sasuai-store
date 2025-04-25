@@ -40,7 +40,7 @@ export default function MainContent() {
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<MemberWithTier | null>(
-    null,
+    null
   );
   const [activeTab, setActiveTab] = useState('members');
   const [tiers, setTiers] = useState<
@@ -57,7 +57,7 @@ export default function MainContent() {
   // Award points state
   const [isAwardPointsOpen, setIsAwardPointsOpen] = useState(false);
   const [memberForPoints, setMemberForPoints] = useState<MemberWithTier | null>(
-    null,
+    null
   );
   const [pointsToAdd, setPointsToAdd] = useState(0);
   const [pointNotes, setPointNotes] = useState('');
@@ -68,7 +68,7 @@ export default function MainContent() {
     limit = pageSize,
     query = searchQuery,
     sort = sortBy,
-    direction = sortDirection,
+    direction = sortDirection
   ) => {
     setIsLoading(true);
     try {
@@ -209,7 +209,7 @@ export default function MainContent() {
       const result = await awardPointsToMember(
         memberForPoints.id,
         pointsToAdd,
-        pointNotes,
+        pointNotes
       );
 
       if (result.success) {
@@ -278,13 +278,6 @@ export default function MainContent() {
             data={members}
             isLoading={isLoading}
             onEdit={handleEdit}
-            onRefresh={() => fetchMembers()}
-            onSearch={handleSearch}
-            onSort={handleSort}
-            onPaginate={handlePaginationChange}
-            currentPage={currentPage}
-            totalPages={totalPages}
-            totalItems={totalCount}
             onAwardPoints={handleOpenAwardPoints}
           />
         </TabsContent>
