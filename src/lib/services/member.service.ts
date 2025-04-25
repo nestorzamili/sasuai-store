@@ -191,7 +191,11 @@ export class MemberService {
         where,
         include: {
           tier: true,
-          discountRelationsMember: true,
+          discountRelationsMember: {
+            include: {
+              discount: true,
+            },
+          },
         },
         orderBy: {
           [sortBy]: sortDirection,

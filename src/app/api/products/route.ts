@@ -1,7 +1,6 @@
-import { NextResponse } from 'next/server';
-import { NextRequest } from 'next/server';
-import { ProductService } from '@/lib/services/product.service';
+import { NextResponse, NextRequest } from 'next/server';
 import { withAuth } from '@/lib/with-auth';
+import { ProductService } from '@/lib/services/product.service';
 
 export const GET = withAuth(async (req: NextRequest) => {
   try {

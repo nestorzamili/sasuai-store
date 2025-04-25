@@ -318,6 +318,12 @@ export class TransactionService {
           items: {
             select: {
               id: true,
+              discountAmount: true,
+            },
+          },
+          memberPoints: {
+            select: {
+              pointsEarned: true,
             },
           },
         },
@@ -329,17 +335,35 @@ export class TransactionService {
     ]);
 
     // Process transaction data to include formatted fields
-    const processedTransactions = transactions.map((transaction) => ({
-      id: transaction.id,
-      cashierName: transaction.cashier?.name || 'Unknown',
-      memberName: transaction.member?.name || null,
-      totalAmount: transaction.totalAmount,
-      discountAmount: transaction.discountAmount,
-      finalAmount: transaction.finalAmount,
-      paymentMethod: transaction.paymentMethod,
-      itemCount: transaction.items.length,
-      createdAt: transaction.createdAt,
-    }));
+    const processedTransactions = transactions.map((transaction) => {
+      // Calculate total discount amount
+      const totalDiscountAmount =
+        (transaction.discountAmount || 0) +
+        transaction.items.reduce(
+          (sum, item) => sum + (item.discountAmount || 0),
+          0,
+        );
+
+      // Calculate points earned
+      const pointsEarned =
+        transaction.memberPoints?.reduce(
+          (sum, point) => sum + point.pointsEarned,
+          0,
+        ) || 0;
+
+      return {
+        id: transaction.id,
+        cashierName: transaction.cashier?.name || 'Unknown',
+        memberName: transaction.member?.name || null,
+        totalAmount: transaction.totalAmount,
+        totalDiscountAmount: totalDiscountAmount,
+        finalAmount: transaction.finalAmount,
+        paymentMethod: transaction.paymentMethod,
+        itemCount: transaction.items.length,
+        pointsEarned: pointsEarned,
+        createdAt: transaction.createdAt,
+      };
+    });
 
     // Calculate total pages
     const totalPages = Math.ceil(totalCount / pageSize);
@@ -487,7 +511,7 @@ export class TransactionService {
           quantity: item._sum?.quantity || 0,
           revenue: item._sum?.subtotal || 0,
         };
-      })
+      }),
     );
 
     return {
@@ -585,12 +609,12 @@ export class TransactionService {
 
         // Sort tiers by minPoints in descending order
         const sortedTiers = [...allTiers].sort(
-          (a, b) => b.minPoints - a.minPoints
+          (a, b) => b.minPoints - a.minPoints,
         );
 
         // Find the appropriate tier based on current points
         let eligibleTier = sortedTiers.find(
-          (tier) => updatedMember.totalPointsEarned >= tier.minPoints
+          (tier) => updatedMember.totalPointsEarned >= tier.minPoints,
         );
 
         // If no eligible tier found (rare case), use the lowest tier
@@ -757,7 +781,7 @@ export class TransactionService {
         !discount.minPurchase ||
         (subAmount !== null &&
           subAmount !== undefined &&
-          subAmount >= discount.minPurchase)
+          subAmount >= discount.minPurchase),
     );
 
     // Get the best discount (highest value)
