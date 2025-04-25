@@ -15,12 +15,24 @@ export const GET = withAuth(async (req: NextRequest) => {
     const cashierId = searchParams.get('cashierId') || undefined;
     const memberId = searchParams.get('memberId') || undefined;
     const paymentMethod = searchParams.get('paymentMethod') || undefined;
-    const startDate = searchParams.get('startDate')
-      ? new Date(searchParams.get('startDate')!)
-      : undefined;
-    const endDate = searchParams.get('endDate')
-      ? new Date(searchParams.get('endDate')!)
-      : undefined;
+
+    // Better date parsing with timezone handling
+    let startDate: Date | undefined = undefined;
+    let endDate: Date | undefined = undefined;
+
+    if (searchParams.get('startDate')) {
+      startDate = new Date(searchParams.get('startDate')!);
+      // Set to beginning of the day
+      startDate.setHours(0, 0, 0, 0);
+    }
+
+    if (searchParams.get('endDate')) {
+      endDate = new Date(searchParams.get('endDate')!);
+      // Set to end of the day
+      endDate.setHours(23, 59, 59, 999);
+    }
+
+    // Parse numeric values
     const minAmount = searchParams.get('minAmount')
       ? parseFloat(searchParams.get('minAmount')!)
       : undefined;
