@@ -5,6 +5,7 @@ import { errorHandling } from '../common/response-formatter';
 interface TransactionData {
   cashierId: string;
   memberId?: string | null;
+  selectedMemberDiscountId: string | null;
   totalAmount: number;
   finalAmount: number;
   paymentMethod: string;
@@ -18,6 +19,7 @@ interface TransactionData {
     pricePerUnit: number;
     subtotal: number;
     batchId: string; // Added batchId field
+    discountId?: string | null;
   }[];
 }
 
@@ -82,7 +84,7 @@ export class TransactionProcessingService {
       if (cartItem.selectedDiscountId) {
         // Use selected discount if provided
         const discountRelation = product.discountRelationProduct.find(
-          (dr) => dr.discountId === cartItem.selectedDiscountId
+          (dr) => dr.discountId === cartItem.selectedDiscountId,
         );
 
         if (discountRelation && discountRelation.discount) {
@@ -118,7 +120,7 @@ export class TransactionProcessingService {
       // Add to validated items
       // Find the first batch with remaining quantity > 0
       const validBatch = product.batches.find(
-        (batch) => batch.remainingQuantity > 0
+        (batch) => batch.remainingQuantity > 0,
       );
 
       if (!validBatch) {
@@ -158,12 +160,13 @@ export class TransactionProcessingService {
 
   static async validationTransaction(
     validatedCart: any,
-    memberId: string | null | undefined = null
+    memberId: string | null | undefined = null,
+    selectedMemberDiscountId: string | null = null,
   ) {
     // Calculate subtotal from all cart items
     const subtotal = validatedCart.reduce(
       (sum: number, item: any) => sum + item.subtotal,
-      0
+      0,
     );
 
     // Initialize member discount variables
@@ -171,6 +174,7 @@ export class TransactionProcessingService {
     let memberDiscountType = null;
     let memberDiscountValue = 0;
     let memberName = null;
+    let memberDiscountId = null;
 
     // Check if member exists and has discount
     if (memberId) {
@@ -188,16 +192,21 @@ export class TransactionProcessingService {
       if (member) {
         memberName = member.name;
 
-        // Get member's discount if available
+        // Get member's discount if available and a specific discount ID is provided
         if (
+          selectedMemberDiscountId &&
           member.discountRelationsMember &&
           member.discountRelationsMember.length > 0
         ) {
-          // Use the first discount for simplicity (can be modified to use specific discount logic)
-          const discountRelation = member.discountRelationsMember[0];
+          // Find the specific discount that matches the selected ID
+          const discountRelation = member.discountRelationsMember.find(
+            (dr) => dr.discountId === selectedMemberDiscountId,
+          );
+
           if (discountRelation && discountRelation.discount) {
             memberDiscountType = discountRelation.discount.valueType;
             memberDiscountValue = discountRelation.discount.value;
+            memberDiscountId = discountRelation.discountId;
 
             // Calculate member discount amount
             if (memberDiscountType === 'percentage') {
@@ -239,7 +248,7 @@ export class TransactionProcessingService {
   static async checkPaymentMethod(
     paymentMethod: string,
     cashAmount?: number,
-    finalAmount?: number
+    finalAmount?: number,
   ) {
     // Check if payment method is cash
     if (paymentMethod.toLowerCase() === 'cash') {
@@ -299,7 +308,7 @@ export class TransactionProcessingService {
       const cartItems = data.items.map((item) => ({
         productId: item.productId,
         quantity: item.quantity,
-        selectedDiscountId: null, // Can be enhanced to accept discountId if needed
+        selectedDiscountId: item.discountId,
       }));
       const validatedCartResult = await this.validationCart(cartItems);
       if (!validatedCartResult.success) {
@@ -312,7 +321,8 @@ export class TransactionProcessingService {
       // Validate the transaction (calculate totals and member discount)
       const validatedTransactionResult = await this.validationTransaction(
         validatedCartResult.data,
-        data.memberId
+        data.memberId,
+        data.selectedMemberDiscountId,
       );
 
       if (!validatedTransactionResult.success) {
@@ -334,7 +344,7 @@ export class TransactionProcessingService {
       const paymentCheck = await this.checkPaymentMethod(
         data.paymentMethod,
         data.cashAmount,
-        finalAmount
+        finalAmount,
       );
 
       if (!paymentCheck.success) {
@@ -398,8 +408,8 @@ export class TransactionProcessingService {
             if (member) {
               // Calculate points based on settings and tier multiplier
               const pointsEarned = await calculateMemberPoints(
-                finalAmount,
-                member
+                transactionData.subtotal,
+                member,
               );
 
               if (pointsEarned > 0) {
