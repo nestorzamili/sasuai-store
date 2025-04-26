@@ -41,3 +41,51 @@ export const GET = withAuth(async (req: NextRequest, context) => {
     );
   }
 });
+
+// Void a transaction
+export const POST = withAuth(async (req: NextRequest, context) => {
+  try {
+    const params = await context.params;
+    const id = params.id;
+
+    if (!id) {
+      return NextResponse.json(
+        { success: false, message: 'Transaction ID is required' },
+        { status: 400 },
+      );
+    }
+
+    const { reason } = await req.json();
+
+    if (!reason) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: 'Reason is required for voiding transaction',
+        },
+        { status: 400 },
+      );
+    }
+
+    const result = await TransactionService.voidTransaction(id, reason);
+
+    return NextResponse.json(
+      {
+        success: true,
+        message: 'Transaction successfully voided',
+        data: result,
+      },
+      { status: 200 },
+    );
+  } catch (error) {
+    console.error('Error voiding transaction:', error);
+    return NextResponse.json(
+      {
+        success: false,
+        message: 'Failed to void transaction',
+        error: error instanceof Error ? error.message : 'Unknown error',
+      },
+      { status: 500 },
+    );
+  }
+});
