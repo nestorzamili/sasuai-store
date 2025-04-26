@@ -233,6 +233,7 @@ export class TransactionProcessingService {
               discount:
                 memberDiscount > 0
                   ? {
+                      id: memberDiscountId,
                       value: memberDiscountValue,
                       type: memberDiscountType,
                       amount: memberDiscount,
@@ -375,7 +376,7 @@ export class TransactionProcessingService {
             data: {
               cashierId: data.cashierId,
               memberId: transactionData.member?.id || null,
-              discountMemberId: transactionData.member?.id || null,
+              discountMemberId: transactionData.member?.discount?.id || null,
               discountValueType: transactionData.member?.discount?.type || null,
               discountValue: transactionData.member?.discount?.value || null,
               discountAmount: transactionData.member?.discount?.amount || null,

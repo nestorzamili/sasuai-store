@@ -1,43 +1,8 @@
 import prisma from '@/lib/prisma';
-import {
-  CreateTransactionData,
-  TransactionPaginationParams,
-  validationTransaction,
-} from '../types/transaction';
+import { TransactionPaginationParams } from '../types/transaction';
 import { Prisma } from '@prisma/client';
-import { calculateMemberPoints } from './setting.service';
-import { MemberService } from './member.service';
 
 export class TransactionService {
-  /**
-   * Get all transactions
-   */
-  static async getAll() {
-    return prisma.transaction.findMany({
-      include: {
-        cashier: true,
-        member: true,
-        items: {
-          include: {
-            batch: {
-              include: {
-                product: {
-                  include: {
-                    category: true,
-                    brand: true,
-                    unit: true,
-                  },
-                },
-              },
-            },
-            unit: true,
-          },
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-  }
-
   /**
    * Get a transaction by ID
    */
@@ -71,172 +36,6 @@ export class TransactionService {
       },
     });
   }
-
-  /**
-   * Create a new transaction
-   */
-  /**
-   * Creates a new transaction with optional discount calculation for members
-   * and updates related records including inventory and member points.
-   *
-   * @param data - Transaction creation data
-   * @param data.cashierId - ID of the cashier processing the transaction
-   * @param data.memberId - Optional ID of the member making the purchase
-   * @param data.totalAmount - Total amount before any discounts
-   * @param data.finalAmount - Final amount after discounts
-   * @param data.paymentMethod - Method of payment used
-   * @param data.items - Array of items in the transaction
-   * @param data.items[].batchId - ID of the product batch
-   * @param data.items[].quantity - Quantity purchased
-   * @param data.items[].unitId - Unit of measurement ID
-   * @param data.items[].pricePerUnit - Price per unit
-   * @param data.items[].subtotal - Subtotal for this item
-   *
-   * @returns The created transaction with included items
-   *
-   * @throws Error If any batch is not found or other database operations fail
-   *
-   * @remarks
-   * This method:
-   * 1. Checks if the member is eligible for a discount
-   * 2. Creates the transaction record with its items
-   * 3. Awards points to the member if applicable
-   * 4. Updates the member's tier if they qualify for a higher one
-   * 5. Updates product inventory for all purchased items
-   *
-   * @debug
-   * - Currently contains debugging code with console.log(data, sample, discount)
-   * - Has a temporary block with Error throwing: 'Transaction creation is not implemented yet'
-   * - Remove these debug elements before production deployment
-   */
-  // static async create(data: CreateTransactionData) {
-  //   return await prisma.$transaction(async (tx) => {
-  //     // Create the transaction record
-  //     const transaction = await tx.transaction.create({
-  //       data: {
-  //         cashierId: data.cashierId,
-  //         memberId: data.memberId || null,
-  //         totalAmount: data.totalAmount,
-  //         discountAmount: 0,
-  //         finalAmount: data.finalAmount,
-  //         paymentMethod: data.paymentMethod,
-  //         items: {
-  //           create: data.items.map((item) => ({
-  //             batchId: item.batchId,
-  //             discountId: item.discountId || null,
-  //             discountValueType: item.discountValueType || null,
-  //             discountValue: item.discountValue || null,
-  //             discountAmount: item.discountAmount || null,
-  //             quantity: item.quantity,
-  //             unitId: item.unitId,
-  //             pricePerUnit: item.pricePerUnit,
-  //             subtotal: item.subtotal,
-  //           })),
-  //         },
-  //       },
-  //       include: {
-  //         items: true,
-  //       },
-  //     });
-
-  //     // Process member points if member is provided
-  //     if (data.memberId) {
-  //       // Get the member
-  //       const member = await tx.member.findUnique({
-  //         where: { id: data.memberId },
-  //         include: { tier: true },
-  //       });
-
-  //       if (member) {
-  //         // Calculate points based on settings and tier multiplier
-  //         const pointsEarned = await calculateMemberPoints(
-  //           data.finalAmount,
-  //           member
-  //         );
-
-  //         if (pointsEarned > 0) {
-  //           // Award points and create point history
-  //           await tx.memberPoint.create({
-  //             data: {
-  //               memberId: data.memberId,
-  //               transactionId: transaction.id,
-  //               pointsEarned,
-  //               dateEarned: new Date(),
-  //               notes: `Points from transaction ${transaction.id}`,
-  //             },
-  //           });
-
-  //           // Update member's total points
-  //           const updatedMember = await tx.member.update({
-  //             where: { id: data.memberId },
-  //             data: {
-  //               totalPoints: { increment: pointsEarned },
-  //               totalPointsEarned: { increment: pointsEarned },
-  //             },
-  //             include: {
-  //               tier: true,
-  //             },
-  //           });
-
-  //           // Check if member is eligible for a higher tier
-  //           const eligibleTier = await tx.memberTier.findFirst({
-  //             where: {
-  //               minPoints: { lte: updatedMember.totalPointsEarned },
-  //             },
-  //             orderBy: {
-  //               minPoints: 'desc',
-  //             },
-  //           });
-
-  //           // Update member tier if eligible for a higher one
-  //           if (
-  //             eligibleTier &&
-  //             (!updatedMember.tierId ||
-  //               eligibleTier.id !== updatedMember.tierId)
-  //           ) {
-  //             await tx.member.update({
-  //               where: { id: data.memberId },
-  //               data: {
-  //                 tierId: eligibleTier.id,
-  //               },
-  //             });
-  //           }
-  //         }
-  //       }
-  //     }
-
-  //     // Update product inventory for each item
-  //     for (const item of data.items) {
-  //       // Get the current batch
-  //       const batch = await tx.productBatch.findUnique({
-  //         where: { id: item.batchId },
-  //       });
-
-  //       if (!batch) {
-  //         throw new Error(`Batch with ID ${item.batchId} not found`);
-  //       }
-
-  //       // Update the batch's remaining quantity
-  //       await tx.productBatch.update({
-  //         where: { id: item.batchId },
-  //         data: {
-  //           remainingQuantity: { decrement: item.quantity },
-  //         },
-  //       });
-
-  //       // Update the product's current stock
-  //       await tx.product.update({
-  //         where: { id: batch.productId },
-  //         data: {
-  //           currentStock: { decrement: item.quantity },
-  //         },
-  //       });
-  //     }
-
-  //     // Return the created transaction
-  //     return transaction;
-  //   });
-  // }
 
   /**
    * Get paginated transactions with filters and sorting
@@ -305,27 +104,18 @@ export class TransactionService {
       prisma.transaction.findMany({
         where,
         include: {
-          cashier: {
-            select: {
-              name: true,
-            },
-          },
-          member: {
-            select: {
-              name: true,
-            },
-          },
+          cashier: { select: { id: true, name: true } },
+          member: { select: { id: true, name: true } },
           items: {
             select: {
-              id: true,
+              pricePerUnit: true,
+              quantity: true,
               discountAmount: true,
+              discountValue: true,
+              discountValueType: true,
             },
           },
-          memberPoints: {
-            select: {
-              pointsEarned: true,
-            },
-          },
+          memberPoints: { select: { pointsEarned: true } },
         },
         orderBy,
         skip,
@@ -334,45 +124,60 @@ export class TransactionService {
       prisma.transaction.count({ where }),
     ]);
 
-    // Process transaction data to include formatted fields
     const processedTransactions = transactions.map((transaction) => {
-      // Calculate total discount amount
-      const totalDiscountAmount =
-        (transaction.discountAmount || 0) +
-        transaction.items.reduce(
-          (sum, item) => sum + (item.discountAmount || 0),
-          0,
-        );
+      // Calculate total original amount (before any discounts)
+      const originalAmount = transaction.items.reduce(
+        (sum, item) => sum + item.pricePerUnit * item.quantity,
+        0,
+      );
 
-      // Calculate points earned
-      const pointsEarned =
-        transaction.memberPoints?.reduce(
-          (sum, point) => sum + point.pointsEarned,
-          0,
-        ) || 0;
+      // Calculate total product discounts
+      const productDiscounts = transaction.items.reduce((sum, item) => {
+        if (item.discountAmount !== null) {
+          return sum + item.discountAmount;
+        }
+        if (item.discountValue && item.discountValueType) {
+          const itemTotal = item.pricePerUnit * item.quantity;
+          return item.discountValueType === 'percentage'
+            ? sum + Math.round((itemTotal * item.discountValue) / 100)
+            : sum + item.discountValue;
+        }
+        return sum;
+      }, 0);
+
+      // Member discount
+      const memberDiscount = transaction.discountAmount || 0;
 
       return {
         id: transaction.id,
-        cashierName: transaction.cashier?.name || 'Unknown',
-        memberName: transaction.member?.name || null,
-        totalAmount: transaction.totalAmount,
-        totalDiscountAmount: totalDiscountAmount,
-        finalAmount: transaction.finalAmount,
+        cashier: transaction.cashier,
+        member: transaction.member,
+        pricing: {
+          originalAmount, // Total sebelum diskon
+          memberDiscount, // Diskon member
+          productDiscounts, // Total diskon produk
+          totalDiscount: memberDiscount + productDiscounts, // Total semua diskon
+          finalAmount: transaction.finalAmount, // Total setelah diskon
+        },
         paymentMethod: transaction.paymentMethod,
         itemCount: transaction.items.length,
-        pointsEarned: pointsEarned,
+        pointsEarned:
+          transaction.memberPoints?.reduce(
+            (sum, p) => sum + p.pointsEarned,
+            0,
+          ) || 0,
         createdAt: transaction.createdAt,
       };
     });
 
-    // Calculate total pages
-    const totalPages = Math.ceil(totalCount / pageSize);
-
     return {
       transactions: processedTransactions,
-      totalCount,
-      totalPages,
-      currentPage: page,
+      pagination: {
+        totalCount,
+        totalPages: Math.ceil(totalCount / pageSize),
+        currentPage: page,
+        pageSize,
+      },
     };
   }
 
@@ -865,6 +670,170 @@ export class TransactionService {
     } catch (error) {
       console.error('Error checking discount:', error);
       return {};
+    }
+  }
+
+  /**
+   * Get transaction by ID with discounts
+   * @param id Transaction ID
+   * @returns Transaction details with discounts applied
+   */
+
+  static async getTransactionById(id: string) {
+    try {
+      const transaction = await prisma.transaction.findUnique({
+        where: { id },
+        include: {
+          cashier: { select: { id: true, name: true, email: true } },
+          member: {
+            include: {
+              tier: true,
+              discountRelationsMember: { include: { discount: true } },
+            },
+          },
+          items: {
+            include: {
+              batch: {
+                include: {
+                  product: {
+                    include: {
+                      category: true,
+                      brand: true,
+                      unit: true,
+                      discountRelationProduct: { include: { discount: true } },
+                    },
+                  },
+                },
+              },
+              unit: true,
+            },
+          },
+          memberPoints: true,
+        },
+      });
+
+      if (!transaction) {
+        return { success: false, message: 'Transaction not found' };
+      }
+
+      // Get all discount details
+      const discountIds = [
+        ...(transaction.discountMemberId ? [transaction.discountMemberId] : []),
+        ...(transaction.items
+          .map((item) => item.discountId)
+          .filter(Boolean) as string[]),
+      ];
+
+      const discounts =
+        discountIds.length > 0
+          ? await prisma.discount.findMany({
+              where: { id: { in: discountIds } },
+            })
+          : [];
+
+      const discountMap = new Map(discounts.map((d) => [d.id, d]));
+
+      // Process items and calculate pricing
+      let originalAmount = 0;
+      let productDiscounts = 0;
+
+      const simplifiedItems = transaction.items.map((item) => {
+        const itemTotal = item.pricePerUnit * item.quantity;
+        originalAmount += itemTotal;
+
+        const appliedDiscount = item.discountId
+          ? discountMap.get(item.discountId)
+          : null;
+
+        // Calculate discount amount for item
+        let discountAmount = 0;
+        if (appliedDiscount && item.discountValueType && item.discountValue) {
+          if (item.discountValueType === 'percentage') {
+            discountAmount = Math.round((itemTotal * item.discountValue) / 100);
+          } else if (item.discountValueType === 'flat') {
+            discountAmount = item.discountValue * item.quantity;
+          }
+        }
+        productDiscounts += discountAmount;
+
+        return {
+          id: item.id,
+          product: {
+            name: item.batch.product.name,
+            brand: item.batch.product.brand?.name || null,
+            category: item.batch.product.category.name,
+            price: item.pricePerUnit,
+            unit: item.unit.symbol,
+          },
+          quantity: item.quantity,
+          originalAmount: itemTotal,
+          discountApplied: appliedDiscount
+            ? {
+                id: appliedDiscount.id,
+                name: appliedDiscount.name,
+                type: appliedDiscount.discountType,
+                valueType: item.discountValueType,
+                value: item.discountValue,
+                amount: discountAmount,
+                discountedAmount: itemTotal - discountAmount,
+              }
+            : null,
+        };
+      });
+
+      // Member data and discount
+      const memberData = transaction.member
+        ? {
+            id: transaction.member.id,
+            name: transaction.member.name,
+            tier: transaction.member.tier?.name || null,
+            pointsEarned: transaction.memberPoints[0]?.pointsEarned || 0,
+          }
+        : null;
+
+      const memberDiscount = transaction.discountMemberId
+        ? {
+            type: 'member',
+            name:
+              discountMap.get(transaction.discountMemberId)?.name || 'Unknown',
+            valueType: transaction.discountValueType,
+            value: transaction.discountValue,
+            amount: transaction.discountAmount || 0,
+          }
+        : null;
+
+      // Calculate summary
+      const totalDiscount = (memberDiscount?.amount || 0) + productDiscounts;
+      const finalAmount = originalAmount - totalDiscount;
+
+      // Final response
+      return {
+        transactionDetails: {
+          id: transaction.id,
+          cashier: transaction.cashier,
+          member: memberData,
+          pricing: {
+            originalAmount,
+            discounts: {
+              member: memberDiscount,
+              products: productDiscounts,
+              total: totalDiscount,
+            },
+            finalAmount,
+          },
+          paymentMethod: transaction.paymentMethod,
+          items: simplifiedItems,
+          pointsEarned: transaction.memberPoints[0]?.pointsEarned || 0,
+          createdAt: transaction.createdAt,
+        },
+      };
+    } catch (error) {
+      console.error(`Error fetching transaction ${id}:`, error);
+      return {
+        success: false,
+        message: 'Failed to fetch transaction',
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
     }
   }
 }
