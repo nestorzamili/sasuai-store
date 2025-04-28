@@ -5,6 +5,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
+import { getAllProducts } from '@/app/(app)/products/action';
+import { getAllUnits } from '@/app/(app)/products/units/action';
+import { getAllSuppliers, getSupplier } from '@/app/(app)/suppliers/action';
 import {
   Dialog,
   DialogContent,
@@ -86,9 +89,6 @@ interface BatchFormDialogProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   initialData?: ProductBatchFormInitialData;
-  products: Product[];
-  units: UnitWithCounts[];
-  suppliers: SupplierWithCount[];
   onSuccess?: () => void;
 }
 
@@ -175,9 +175,6 @@ export default function BatchFormDialog({
   open,
   onOpenChange,
   initialData,
-  products,
-  units,
-  suppliers,
   onSuccess,
 }: BatchFormDialogProps) {
   const [loading, setLoading] = useState(false);
@@ -202,6 +199,40 @@ export default function BatchFormDialog({
 
     return `${prefix}-${dateStr}-${randomSuffix}`;
   };
+  // State for data from APIs
+  const [products, setProducts] = useState<Product[]>([]);
+  const [units, setUnits] = useState<UnitWithCounts[]>([]);
+  const [suppliers, setSuppliers] = useState<SupplierWithCount[]>([]);
+
+  // Fetch data on component mount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const productsData = await getAllProducts();
+        setProducts(productsData.data || []);
+
+        const unitsData = await getAllUnits();
+        setUnits(unitsData.data || []);
+
+        const suppliersData = await getAllSuppliers();
+        setSuppliers(
+          suppliersData.data?.map((supplier) => ({
+            ...supplier,
+            _count: { stockIns: 0 }, // Adding the missing _count property
+          })) || []
+        );
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load necessary data',
+          variant: 'destructive',
+        });
+      }
+    };
+
+    fetchData();
+  }, []);
 
   // Convert data arrays to ComboBox options
   const productOptions = useMemo(
@@ -210,7 +241,7 @@ export default function BatchFormDialog({
         value: product.id,
         label: product.name,
       })),
-    [products],
+    [products]
   );
 
   const unitOptions = useMemo(
@@ -219,7 +250,7 @@ export default function BatchFormDialog({
         value: unit.id,
         label: `${unit.name} (${unit.symbol})`,
       })),
-    [units],
+    [units]
   );
 
   const supplierOptions = useMemo(
@@ -230,7 +261,7 @@ export default function BatchFormDialog({
         label: supplier.name,
       })),
     ],
-    [suppliers],
+    [suppliers]
   );
 
   // Default form values
@@ -315,7 +346,6 @@ export default function BatchFormDialog({
   const onSubmit = async (values: FormValues) => {
     try {
       setLoading(true);
-
       const result =
         isEditing && initialData?.id
           ? await updateBatch(initialData.id, {
@@ -460,7 +490,7 @@ export default function BatchFormDialog({
                           variant="outline"
                           className={cn(
                             'w-full justify-start text-left font-normal',
-                            !field.value && 'text-muted-foreground',
+                            !field.value && 'text-muted-foreground'
                           )}
                         >
                           <CalendarIcon className="mr-2 h-4 w-4" />

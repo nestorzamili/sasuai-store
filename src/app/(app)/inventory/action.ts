@@ -408,3 +408,17 @@ export async function getProductBatchStats(productId: string) {
     };
   }
 }
+export async function getBatchSummary() {
+  try {
+    const summary = await ProductBatchService.getBatchSummary();
+    return {
+      success: true,
+      data: summary,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: 'Failed to fetch batch summary',
+    };
+  }
+}

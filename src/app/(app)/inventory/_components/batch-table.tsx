@@ -31,17 +31,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { DataTablePagination } from '@/components/ui/data-table-pagination';
-import { BatchTableSkeleton } from './batch-skeleton';
-import { Input } from '@/components/ui/input';
 import { ProductBatchWithProduct } from '@/lib/types/product-batch';
 import { BatchDeleteDialog } from './batch-delete-dialog';
 import { BatchDetailDialog } from './batch-detail-dialog';
@@ -50,16 +39,16 @@ import { formatRupiah } from '@/lib/currency';
 import { useFetch } from '@/hooks/use-fetch';
 import { TableLayout } from '@/components/layout/table-layout';
 import { getAllBatchesOptimalized } from '../action';
+import { BatchAdjustmentDialog } from './batch-adjustment-dialog';
+import { UnitWithCounts } from '@/lib/types/unit';
+import BatchPrimaryButton from './batch-primary-button';
+import BatchFormDialog from './batch-form-dialog';
 
 interface BatchTableProps {
-  data: ProductBatchWithProduct[];
-  isLoading?: boolean;
-  onEdit?: (batch: ProductBatchWithProduct) => void;
-  onAdjust?: (batch: ProductBatchWithProduct) => void;
-  onRefresh?: () => void;
+  onSetRefresh?: (refreshFn: () => void) => void;
 }
 
-export function BatchTable({ onEdit, onAdjust }: BatchTableProps) {
+export function BatchTable({ onSetRefresh }: BatchTableProps) {
   const [selectedBatchForDelete, setSelectedBatchForDelete] =
     useState<ProductBatchWithProduct | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -174,14 +163,16 @@ export function BatchTable({ onEdit, onAdjust }: BatchTableProps) {
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="flex justify-between cursor-pointer"
-                  onClick={() => onAdjust?.(batch)}
+                  onClick={() => {
+                    handleAdjust(batch);
+                  }}
                 >
                   Adjust Quantity{' '}
                   <IconAdjustmentsHorizontal className="h-4 w-4" />
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="flex justify-between cursor-pointer"
-                  onClick={() => onEdit?.(batch)}
+                  onClick={() => handleEdit?.(batch)}
                 >
                   Edit <IconEdit className="h-4 w-4" />
                 </DropdownMenuItem>
@@ -199,6 +190,7 @@ export function BatchTable({ onEdit, onAdjust }: BatchTableProps) {
       },
     },
   ];
+  // handle pagination change
   const handlePaginationChange = (newPagination: {
     pageIndex: number;
     pageSize: number;
@@ -206,12 +198,19 @@ export function BatchTable({ onEdit, onAdjust }: BatchTableProps) {
     setPage(newPagination.pageIndex);
     setLimit(newPagination.pageSize);
   };
+  // handle sorting change
   const handleSortingChange = (newSorting: any) => {
     setSortBy(newSorting);
   };
-
+  // handle page change
   const handleSearchChange = (search: string) => {
     setSearch(search);
+  };
+  // Handle adjust quantity
+  const [adjustQtyDialog, setAdjustQtyDialog] = useState(false);
+  const handleAdjust = (batch: ProductBatchWithProduct) => {
+    setSelectedBatch(batch);
+    setAdjustQtyDialog(true);
   };
   // fetch data
   const fetchBatchData = async (options: any) => {
@@ -235,7 +234,14 @@ export function BatchTable({ onEdit, onAdjust }: BatchTableProps) {
       };
     }
   };
-
+  // const [selectedBatch, setSelectedBatch] =
+  // useState<ProductBatchWithProduct | null>(null);
+  // Handle edit batch
+  const [formDialog, setFormDialog] = useState(false);
+  const handleEdit = (batch: ProductBatchWithProduct) => {
+    setSelectedBatch(batch);
+    setFormDialog(true);
+  };
   const {
     data,
     isLoading,
@@ -250,6 +256,11 @@ export function BatchTable({ onEdit, onAdjust }: BatchTableProps) {
     fetchData: fetchBatchData,
     initialPageIndex: 0,
   });
+
+  const [selectedBatch, setSelectedBatch] =
+    useState<ProductBatchWithProduct | null>(null);
+  const [units, setUnits] = useState<UnitWithCounts[]>([]);
+
   return (
     <>
       <TableLayout
@@ -263,7 +274,6 @@ export function BatchTable({ onEdit, onAdjust }: BatchTableProps) {
         totalRows={totalRows}
         enableSelection={true}
       />
-
       {/* Delete dialog */}
       {selectedBatchForDelete && (
         <BatchDeleteDialog
@@ -273,13 +283,57 @@ export function BatchTable({ onEdit, onAdjust }: BatchTableProps) {
           onSuccess={refresh}
         />
       )}
+      {isDetailDialogOpen && selectedBatchId && (
+        <BatchDetailDialog
+          open={isDetailDialogOpen}
+          onOpenChange={setIsDetailDialogOpen}
+          batchId={selectedBatchId}
+        />
+      )}
 
+      {/* Batch adjustment dialog */}
+      {adjustQtyDialog && selectedBatch && (
+        <BatchAdjustmentDialog
+          open={adjustQtyDialog}
+          onOpenChange={(prev) => {
+            setAdjustQtyDialog(!prev);
+            setSelectedBatch(null);
+          }}
+          batch={selectedBatch}
+          units={units}
+          onSuccess={() => {
+            setAdjustQtyDialog(false);
+            refresh();
+          }}
+        />
+      )}
       {/* Details dialog */}
-      <BatchDetailDialog
-        open={isDetailDialogOpen}
-        onOpenChange={setIsDetailDialogOpen}
-        batchId={selectedBatchId}
-      />
+      {formDialog && selectedBatch && (
+        <BatchFormDialog
+          open={formDialog}
+          onOpenChange={() => {
+            setFormDialog(false);
+          }}
+          initialData={
+            selectedBatch
+              ? {
+                  id: selectedBatch.id,
+                  productId: selectedBatch.productId,
+                  batchCode: selectedBatch.batchCode,
+                  expiryDate: selectedBatch.expiryDate,
+                  initialQuantity: selectedBatch.initialQuantity,
+                  buyPrice: selectedBatch.buyPrice,
+                  unitId: selectedBatch.product.unitId,
+                }
+              : undefined
+          }
+          onSuccess={() => {
+            setFormDialog(false);
+            refresh();
+          }}
+        />
+      )}
+      {/* Batch primary button */}
     </>
   );
 }
