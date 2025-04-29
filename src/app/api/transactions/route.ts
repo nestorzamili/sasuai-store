@@ -35,6 +35,7 @@ export const GET = withAuth(async (req: NextRequest) => {
       : undefined;
 
     // Get paginated transactions with filters
+    // Now returns updated transaction objects with tranId, payment.amount, and payment.change
     const transactions = await TransactionService.getPaginated({
       page,
       pageSize,
@@ -63,6 +64,25 @@ export const GET = withAuth(async (req: NextRequest) => {
       {
         success: false,
         message: 'Failed to fetch transactions',
+        error: error instanceof Error ? error.message : 'Unknown error',
+      },
+      { status: 500 },
+    );
+  }
+});
+
+export const POST = withAuth(async (req: NextRequest) => {
+  try {
+    const body = await req.json();
+
+    const trx = await TransactionService.processTransaction(body);
+    return NextResponse.json(trx);
+  } catch (error) {
+    console.error('Error processing transaction:', error);
+    return NextResponse.json(
+      {
+        success: false,
+        message: 'Failed to process transaction',
         error: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 },

@@ -1,109 +1,75 @@
-import {
-  Member,
-  ProductBatch,
-  Transaction,
-  TransactionItem,
-  Unit,
-  User,
-  MemberPoint,
-} from '@prisma/client';
-import { ProductWithRelations } from './product';
+export type Cart = {
+  productId: string;
+  selectedDiscountId?: string | null;
+  quantity: number;
+}[];
 
-// Basic transaction type with relationships
-export type TransactionWithRelations = Transaction & {
-  cashier: User;
-  member: Member | null;
-  items: (TransactionItem & {
-    batch: ProductBatch & {
-      product: {
-        name: string;
-        // Other product fields
-      };
-      batchCode: string;
-    };
-    unit: Unit;
-  })[];
-  memberPoints?: MemberPoint[];
-};
-
-export type TransactionItemWithRelations = TransactionItem & {
-  batch: ProductBatch & {
-    product: ProductWithRelations;
-  };
-  unit: Unit;
-};
-
-// Full transaction type with all relations for detailed view
-export type TransactionWithItems = Transaction & {
-  cashier: User;
-  member: Member | null;
-  items: TransactionItemWithRelations[]; // Using the enhanced item type that includes batch and unit
-  memberPoints?: MemberPoint[];
-};
-
-// Simple transaction for list views
-export type TransactionListItem = {
-  id: string;
-  cashierName: string;
-  memberName: string | null;
-  totalAmount: number;
-  discountAmount: number;
-  finalAmount: number;
-  paymentMethod: string;
-  itemCount: number;
-  createdAt: Date;
-};
-
-// Type for transaction creation
-export type CreateTransactionData = {
+export interface TransactionData {
   cashierId: string;
   memberId?: string | null;
+  selectedMemberDiscountId: string | null;
   totalAmount: number;
   finalAmount: number;
   paymentMethod: string;
-  discountMemberId?: string | null;
-  discountValueType?: 'percentage' | 'fixed';
-  discountValue?: number;
   discountAmount?: number;
-  items: {
-    batchId: string;
-    quantity: number;
-    unitId: string;
-    pricePerUnit: number;
-    discountId?: string | null;
-    discountValueType?: 'percentage' | 'fixed';
-    discountValue?: number;
-    discountAmount?: number;
-    subtotal: number;
-  }[];
-};
+  cashAmount?: number;
+  items: TransactionItemData[];
+}
 
-// Type for transaction item creation
-export type CreateTransactionItemData = {
-  transactionId: string;
-  batchId: string;
+export interface TransactionItemData {
+  productId: string;
   quantity: number;
   unitId: string;
+  cost: number;
   pricePerUnit: number;
-  discountId?: string | null;
   subtotal: number;
-};
+  batchId: string;
+  discountId?: string | null;
+}
 
-// Search params for transaction search
-export type TransactionSearchParams = {
-  query?: string;
-  cashierId?: string;
-  memberId?: string;
-  paymentMethod?: string;
-  startDate?: Date;
-  endDate?: Date;
-  minAmount?: number;
-  maxAmount?: number;
-  page?: number;
-  limit?: number;
-};
+export interface ValidatedCartItem {
+  productId: string;
+  batchId: string;
+  unitId: string;
+  basicPrice: number;
+  buyPrice: number;
+  quantity: number;
+  discount: {
+    id: string;
+    value: number;
+    type: string;
+  } | null;
+  discountedPrice: number;
+  subtotal: number;
+}
 
-// Pagination params for server-side pagination
+export interface ValidationResult<T> {
+  success: boolean;
+  message: string;
+  data?: T;
+}
+
+export interface PaymentValidationResult {
+  success: boolean;
+  message: string;
+  change?: number;
+}
+
+export interface TransactionSummary {
+  subtotal: number;
+  member: {
+    id: string;
+    name: string | null;
+    discount: {
+      id: string;
+      value: number;
+      type: string;
+      amount: number;
+    } | null;
+  } | null;
+  finalAmount: number;
+}
+
 export type TransactionPaginationParams = {
   page: number;
   pageSize: number;
@@ -118,42 +84,3 @@ export type TransactionPaginationParams = {
   minAmount?: number;
   maxAmount?: number;
 };
-
-// Server response for paginated transactions
-export type PaginatedTransactionResponse = {
-  transactions: TransactionListItem[];
-  totalCount: number;
-  totalPages: number;
-  currentPage: number;
-};
-
-// Type for transaction summary statistics
-export type TransactionSummary = {
-  totalTransactions: number;
-  totalRevenue: number;
-  averageTransactionValue: number;
-  topSellingProducts: {
-    productId: string;
-    productName: string;
-    quantity: number;
-    revenue: number;
-  }[];
-};
-export type validationTransaction = {
-  memberId?: string | null;
-  paymentMethod: string;
-  discountMemberId?: string | null;
-  cashAmount?: number;
-  items: {
-    batchId: string;
-    quantity: number;
-    unitId: string;
-    discountId?: string | null;
-  }[];
-};
-export type validationDiscountMember = {
-  memberId?: string | null;
-  discountMemberId?: string | null;
-  subAmount: number;
-};
-export type SubTransaction = {};
