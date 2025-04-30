@@ -12,11 +12,9 @@ import {
   IconPlane,
   IconPackage,
   IconBuildingStore,
-  IconListCheck,
   IconUsersGroup,
   IconGift,
 } from '@tabler/icons-react';
-import { Command } from 'lucide-react';
 import { type SidebarData } from '../types';
 
 export const sidebarData: SidebarData = {
@@ -28,7 +26,7 @@ export const sidebarData: SidebarData = {
   stores: [
     {
       name: 'Sasuai Store',
-      logo: Command,
+      logo: 'https://res.cloudinary.com/samunu/image/upload/f_auto/q_auto/v1745953012/icon_z07a9i.png',
       plan: 'Store Management',
     },
   ],
