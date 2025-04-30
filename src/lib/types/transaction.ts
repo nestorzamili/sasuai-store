@@ -72,7 +72,7 @@ export interface TransactionSummary {
 
 export type TransactionPaginationParams = {
   page: number;
-  pageSize: number;
+  pageSize: number | undefined;
   sortField?: string;
   sortDirection?: 'asc' | 'desc';
   search?: string;
