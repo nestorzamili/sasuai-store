@@ -162,12 +162,14 @@ export class MemberService {
    */
   static async search({
     query = '',
+    tier = '',
     page = 1,
     limit = 10,
     sortBy = 'name',
     sortDirection = 'asc',
   }: {
     query?: string;
+    tier?: string;
     page?: number;
     limit?: number;
     sortBy?: string;
@@ -176,6 +178,16 @@ export class MemberService {
     const skip = (page - 1) * limit;
 
     const where: Prisma.MemberWhereInput = {};
+
+    if (tier) {
+      const tierNames = tier.split(',').map((t) => t.trim());
+      where.tier = {
+        name: {
+          in: tierNames,
+          mode: 'insensitive',
+        },
+      };
+    }
 
     if (query) {
       where.OR = [
@@ -212,6 +224,32 @@ export class MemberService {
       totalPages: Math.ceil(totalCount / limit),
       currentPage: page,
     };
+  }
+
+  /**
+   * Ban a member
+   */
+  static async ban(id: string, reason: string) {
+    return prisma.member.update({
+      where: { id },
+      data: {
+        isBanned: true,
+        banReason: reason,
+      },
+    });
+  }
+
+  /**
+   * Unban a member
+   */
+  static async unban(id: string) {
+    return prisma.member.update({
+      where: { id },
+      data: {
+        isBanned: false,
+        banReason: null,
+      },
+    });
   }
 
   /**
