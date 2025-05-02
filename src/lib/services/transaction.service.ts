@@ -399,6 +399,7 @@ export class TransactionService {
             data.memberId,
             transaction.id,
             transactionData.subtotal,
+            transaction.tranId,
           );
         }
 
@@ -483,6 +484,7 @@ export class TransactionService {
     memberId: string,
     transactionId: string,
     subtotal: number,
+    tranId: string,
   ) {
     // Get member data
     const member = await tx.member.findUnique({
@@ -503,7 +505,7 @@ export class TransactionService {
         transactionId,
         pointsEarned,
         dateEarned: new Date(),
-        notes: `Points from transaction ${transactionId}`,
+        notes: `Points from transaction ${tranId}`,
       },
     });
 
