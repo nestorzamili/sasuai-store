@@ -397,7 +397,7 @@ export class TransactionService {
           await this.processMemberPoints(
             tx,
             data.memberId,
-            transaction.tranId,
+            transaction.id,
             transactionData.subtotal,
           );
         }
