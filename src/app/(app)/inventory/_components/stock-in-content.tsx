@@ -81,12 +81,7 @@ export default function StockInContent() {
       </div>
 
       {/* Stock In Table */}
-      <StockInTable
-        data={stockIns}
-        isLoading={isLoading}
-        onRefresh={fetchStockIns}
-        suppliers={suppliers}
-      />
+      <StockInTable />
     </div>
   );
 }
