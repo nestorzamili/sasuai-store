@@ -1,5 +1,6 @@
 import prisma from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
+import { buildQueryOptions } from '../common/query-options';
 
 export class ProductBatchService {
   /**
@@ -22,7 +23,26 @@ export class ProductBatchService {
       ],
     });
   }
+  static async getAllOptimalize(queryOptions?: any) {
+    const options = buildQueryOptions(queryOptions);
+    const [batch, count] = await Promise.all([
+      prisma.productBatch.findMany({
+        include: {
+          product: true,
+        },
+        ...options,
+      }),
+      prisma.productBatch.count(),
+    ]);
 
+    return {
+      data: batch,
+      meta: {
+        ...options,
+        rowsCount: count,
+      },
+    };
+  }
   /**
    * Get all product batches for a specific product
    */
@@ -459,5 +479,33 @@ export class ProductBatchService {
         },
       },
     });
+  }
+  // Batch Summary
+  static async getBatchSummary() {
+    const today = new Date();
+    const soonDate = new Date();
+    soonDate.setDate(today.getDate() + 30); // Consider 30 days as "soon"
+
+    const [total, inStock, outOfStock, expired, expiringSoon] =
+      await Promise.all([
+        prisma.productBatch.count(),
+        prisma.productBatch.count({ where: { remainingQuantity: { gt: 0 } } }),
+        prisma.productBatch.count({
+          where: { remainingQuantity: { equals: 0 } },
+        }),
+        prisma.productBatch.count({
+          where: {
+            expiryDate: { lt: today },
+          },
+        }),
+        prisma.productBatch.count({
+          where: {
+            expiryDate: { gte: today, lte: soonDate },
+            remainingQuantity: { gt: 0 },
+          },
+        }),
+      ]);
+
+    return { total, inStock, outOfStock, expired, expiringSoon };
   }
 }
