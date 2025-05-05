@@ -1,7 +1,6 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -72,7 +71,6 @@
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
-
   /* styles.css */
   .CollapsibleContent {
     overflow: hidden;
@@ -83,7 +81,6 @@
   .CollapsibleContent[data-state='closed'] {
     animation: slideUp 300ms ease-out;
   }
-
   @keyframes slideDown {
     from {
       height: 0;
@@ -92,7 +89,6 @@
       height: var(--radix-collapsible-content-height);
     }
   }
-
   @keyframes slideUp {
     from {
       height: var(--radix-collapsible-content-height);
@@ -101,7 +97,6 @@
       height: 0;
     }
   }
-
   /* Prevent focus zoom on mobile devices */
   @media screen and (max-width: 767px) {
     input,
@@ -119,12 +114,13 @@
   }
   /* Hide scrollbar for IE, Edge and Firefox */
   .no-scrollbar {
-    -ms-overflow-style: none; /* IE and Edge */
-    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none;
+    /* IE and Edge */
+    scrollbar-width: none;
+    /* Firefox */
   }
-
   .faded-bottom {
-    @apply after:pointer-events-none after:absolute after:bottom-0 after:left-0 after:hidden after:h-32 after:w-full after:bg-[linear-gradient(180deg,_transparent_10%,_hsl(var(--background))_70%)] after:md:block;
+    @apply after: pointer-events-none after: absolute after: bottom-0 after: left-0 after: hidden after: h-32 after: w-full after: bg-[linear-gradient(180deg, _transparent_10%, _hsl(var(--background))_70%)] after: md: block;
   }
 }
 
@@ -132,27 +128,21 @@
   * {
     @apply border-border;
   }
-
   body {
     @apply antialiased bg-background text-foreground scroll-smooth;
   }
-
   ::selection {
     @apply bg-primary text-background;
   }
-
   ::-webkit-scrollbar {
     @apply w-2 h-2;
   }
-
   ::-webkit-scrollbar-track {
     @apply bg-muted;
   }
-
   ::-webkit-scrollbar-thumb {
     @apply rounded-full bg-muted-foreground;
   }
-
   input:-webkit-autofill,
   textarea:-webkit-autofill,
   select:-webkit-autofill {
@@ -162,8 +152,6 @@
   }
 }
 
-
-
 @layer base {
   * {
     @apply border-border;
@@ -172,4 +160,3 @@
     @apply bg-background text-foreground;
   }
 }
-
