@@ -23,11 +23,17 @@ export function InventoryTabs() {
             <IconBox size={16} />
             <span>Product Batches</span>
           </TabsTrigger>
-          <TabsTrigger value="stock-in" className="flex items-center gap-1">
+          <TabsTrigger
+            value="stock-in"
+            className="flex items-center gap-1 text-green-500"
+          >
             <IconLogin size={16} />
             <span>Stock In</span>
           </TabsTrigger>
-          <TabsTrigger value="stock-out" className="flex items-center gap-1">
+          <TabsTrigger
+            value="stock-out"
+            className="flex items-center gap-1 text-orange-500"
+          >
             <IconLogout size={16} />
             <span>Stock Out</span>
           </TabsTrigger>

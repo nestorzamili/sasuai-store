@@ -93,9 +93,7 @@ export function BatchAdjustmentDialog({
   const onSubmit = async (values: FormValues) => {
     try {
       setLoading(true);
-
       let result;
-
       if (values.adjustmentType === 'add') {
         // Create a stock-in record using StockMovementService
         result = await createStockIn({

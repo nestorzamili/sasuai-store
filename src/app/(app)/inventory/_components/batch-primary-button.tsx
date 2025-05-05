@@ -11,9 +11,6 @@ interface BatchPrimaryButtonProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   initialData?: ProductBatchFormInitialData;
-  products: Product[];
-  units: UnitWithCounts[];
-  suppliers: SupplierWithCount[];
   onSuccess?: () => void;
 }
 
@@ -21,9 +18,6 @@ export default function BatchPrimaryButton({
   open,
   onOpenChange,
   initialData,
-  products,
-  units,
-  suppliers,
   onSuccess,
 }: BatchPrimaryButtonProps) {
   return (
@@ -32,9 +26,6 @@ export default function BatchPrimaryButton({
         open={open}
         onOpenChange={onOpenChange}
         initialData={initialData}
-        products={products}
-        units={units}
-        suppliers={suppliers}
         onSuccess={onSuccess}
       />
     </div>

@@ -278,13 +278,6 @@ export default function MainContent() {
             data={members}
             isLoading={isLoading}
             onEdit={handleEdit}
-            onRefresh={() => fetchMembers()}
-            onSearch={handleSearch}
-            onSort={handleSort}
-            onPaginate={handlePaginationChange}
-            currentPage={currentPage}
-            totalPages={totalPages}
-            totalItems={totalCount}
             onAwardPoints={handleOpenAwardPoints}
           />
         </TabsContent>
