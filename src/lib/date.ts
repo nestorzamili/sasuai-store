@@ -3,11 +3,11 @@
  */
 
 /**
- * Format a date to a readable date string (e.g., "Jan 1, 2023")
+ * Format a date to a readable date string (e.g., "1 Jan 2023")
  */
 export function formatDate(date: Date | string | number): string {
   const d = new Date(date);
-  return d.toLocaleDateString('en-US', {
+  return d.toLocaleDateString('id-ID', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
@@ -15,11 +15,11 @@ export function formatDate(date: Date | string | number): string {
 }
 
 /**
- * Format a date to a readable date and time string (e.g., "Jan 1, 2023, 12:00 PM")
+ * Format a date to a readable date and time string (e.g., "1 Jan 2023, 12.00")
  */
 export function formatDateTime(date: Date | string | number): string {
   const d = new Date(date);
-  return d.toLocaleDateString('en-US', {
+  return d.toLocaleDateString('id-ID', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
@@ -29,11 +29,11 @@ export function formatDateTime(date: Date | string | number): string {
 }
 
 /**
- * Format a date to a time only string (e.g., "12:00 PM")
+ * Format a date to a time only string (e.g., "12.00")
  */
 export function formatTime(date: Date | string | number): string {
   const d = new Date(date);
-  return d.toLocaleTimeString('en-US', {
+  return d.toLocaleTimeString('id-ID', {
     hour: '2-digit',
     minute: '2-digit',
   });
@@ -124,7 +124,7 @@ export function isToday(date: Date | string | number): boolean {
  */
 export function daysDiff(
   date1: Date | string | number,
-  date2: Date | string | number,
+  date2: Date | string | number
 ): number {
   const d1 = new Date(date1);
   const d2 = new Date(date2);
@@ -167,4 +167,105 @@ export function formatRelativeTime(date: Date | string | number): string {
   } else {
     return 'just now';
   }
+}
+/**
+ * Subtract days from a date
+ */
+export function subDays(date: Date | string | number, days: number): Date {
+  return addDays(date, -days);
+}
+
+/**
+ * Subtract months from a date
+ */
+export function subMonths(date: Date | string | number, months: number): Date {
+  const d = new Date(date);
+  d.setMonth(d.getMonth() - months);
+  return d;
+}
+
+/**
+ * Calculate date ranges for comparison with optional custom range
+ * @param period - Predefined period or 'custom' for custom date range
+ * @param customStartDate - Start date of custom range
+ * @param customEndDate - End date of custom range
+ * @param compareStartDate - Optional custom comparison start date
+ * @param compareEndDate - Optional custom comparison end date
+ */
+export function dateToCompare(
+  period: 'day' | 'week' | 'month' | 'quarter' = 'day',
+  customStartDate?: string | Date,
+  customEndDate?: string | Date,
+  compareStartDate?: string | Date,
+  compareEndDate?: string | Date
+) {
+  const today = new Date();
+  let startDate, endDate, prevStartDate, prevEndDate;
+
+  if (customStartDate && customEndDate) {
+    // Use custom date range if provided
+    startDate = startOfDay(new Date(customStartDate));
+    endDate = endOfDay(new Date(customEndDate));
+
+    if (compareStartDate && compareEndDate) {
+      // Use specified comparison date range if provided exactly as entered
+      prevStartDate = startOfDay(new Date(compareStartDate));
+      prevEndDate = endOfDay(new Date(compareEndDate));
+    } else {
+      // Calculate previous period with same duration automatically
+      const startMs = startDate.getTime();
+      const endMs = endDate.getTime();
+      const durationMs = endMs - startMs + 24 * 60 * 60 * 1000; // Include both start and end days
+      const durationDays = Math.ceil(durationMs / (1000 * 60 * 60 * 24));
+
+      // Calculate previous period starting from the day before the current start date
+      prevEndDate = startOfDay(subDays(startDate, 1)); // The day before start date
+      prevStartDate = startOfDay(subDays(prevEndDate, durationDays - 1)); // Full duration before
+    }
+  } else {
+    // Use predefined periods
+    switch (period) {
+      case 'day':
+        startDate = startOfDay(today);
+        endDate = endOfDay(today);
+        prevStartDate = startOfDay(subDays(today, 1));
+        prevEndDate = endOfDay(subDays(today, 1));
+        break;
+      case 'week': // Previous 7 days
+        startDate = startOfDay(subDays(today, 7));
+        endDate = endOfDay(today);
+        prevStartDate = startOfDay(subDays(today, 14));
+        prevEndDate = endOfDay(subDays(today, 8));
+        break;
+      case 'month':
+        startDate = startOfMonth(today);
+        endDate = endOfDay(today);
+        prevStartDate = startOfMonth(subMonths(today, 1));
+        prevEndDate = endOfMonth(subMonths(today, 1));
+        break;
+      case 'quarter': // Previous 90 days
+        startDate = startOfDay(subDays(today, 90));
+        endDate = endOfDay(today);
+        prevStartDate = startOfDay(subDays(today, 180));
+        prevEndDate = endOfDay(subDays(today, 91));
+        break;
+      default:
+        startDate = startOfDay(today);
+        endDate = endOfDay(today);
+        prevStartDate = startOfDay(subDays(today, 1));
+        prevEndDate = endOfDay(subDays(today, 1));
+    }
+  }
+
+  // Return the calculated date ranges
+  return {
+    current: {
+      startDate,
+      endDate,
+    },
+    previous: {
+      startDate: prevStartDate,
+      endDate: prevEndDate,
+    },
+  };
 }
