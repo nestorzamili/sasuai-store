@@ -260,6 +260,8 @@ model Member {
   totalPoints             Int                      @default(0) @map("total_points")
   totalPointsEarned       Int                      @default(0) @map("total_points_earned")
   joinDate                DateTime                 @map("join_date") @db.Timestamptz
+  isBanned                Boolean?                 @default(false) @map("is_banned")
+  banReason               String?                  @map("ban_reason")
   memberPoints            MemberPoint[]
   rewardClaims            RewardClaim[]
   transactions            Transaction[]

@@ -5,11 +5,13 @@ import { MemberService } from '@/lib/services/member.service';
 export const GET = withAuth(async (req: NextRequest) => {
   try {
     const query = req.nextUrl.searchParams.get('search') || '';
+    const tier = req.nextUrl.searchParams.get('tier') || '';
     const page = Number(req.nextUrl.searchParams.get('page')) || 1;
     const limit = Number(req.nextUrl.searchParams.get('limit')) || 10;
 
     const members = await MemberService.search({
       query,
+      tier,
       page,
       limit,
     });
