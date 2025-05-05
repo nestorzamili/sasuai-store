@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { StockMovementService } from '@/lib/services/stock-movement.service';
 import { z } from 'zod';
+import { buildQueryOptions } from '@/lib/common/query-options';
 
 // Schema for stock-in creation
 const stockInSchema = z.object({
@@ -44,7 +45,23 @@ export async function getAllStockIns() {
     };
   }
 }
-
+export async function getAllOptimalizedStockIns(options?: any) {
+  try {
+    const stockIns = await StockMovementService.getAllStockInsOptimalized(
+      options,
+    );
+    return {
+      success: true,
+      data: stockIns.data,
+      meta: stockIns.meta,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: 'Failed to fetch stock-in records',
+    };
+  }
+}
 /**
  * Get stock-ins for a specific batch
  */

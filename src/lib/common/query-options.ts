@@ -23,6 +23,24 @@ export function buildQueryOptions(options?: options) {
           // Check if it's a relation field (contains dots)
           if (column.includes('.')) {
             const parts = column.split('.');
+
+            // Handle two-level relation (e.g. batch.product.name)
+            if (parts.length === 3) {
+              const [relationL1, relationL2, field] = parts;
+
+              return {
+                [relationL1]: {
+                  [relationL2]: {
+                    [field]: {
+                      contains: search,
+                      mode: 'insensitive',
+                    },
+                  },
+                },
+              };
+            }
+
+            // Handle one-level relation (e.g. batch.name)
             const relation = parts[0];
             const field = parts[1];
 

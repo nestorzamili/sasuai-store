@@ -4,6 +4,7 @@ import { options } from '@/lib/types/table';
 export const Discount = {
   async getAll(queryOptions?: options) {
     const options = buildQueryOptions(queryOptions);
+    console.log('options', options);
     // Run both queries in parallel for better performance
     const [discounts, count] = await Promise.all([
       prisma.discount.findMany({
@@ -15,7 +16,7 @@ export const Discount = {
         ...options,
       }),
       prisma.discount.count(
-        options.where ? { where: options.where } : undefined
+        options.where ? { where: options.where } : undefined,
       ),
     ]);
 
@@ -106,17 +107,17 @@ export const Discount = {
 
           // Extract existing product IDs for easy comparison
           const existingProductIds = existingRelations.map(
-            (rel) => rel.productId
+            (rel) => rel.productId,
           );
 
           // Find new relations to add
           const newRelations = relation.filter(
-            (productId: string) => !existingProductIds.includes(productId)
+            (productId: string) => !existingProductIds.includes(productId),
           );
 
           // Find relations to delete (items in existing but not in new relation list)
           const relationsToDelete = existingProductIds.filter(
-            (productId: string) => !relation.includes(productId)
+            (productId: string) => !relation.includes(productId),
           );
 
           // Add new relations
@@ -146,17 +147,17 @@ export const Discount = {
 
           // Extract existing member IDs for easy comparison
           const existingMemberIds = existingRelations.map(
-            (rel) => rel.memberId
+            (rel) => rel.memberId,
           );
 
           // Find new relations to add
           const newRelations = relation.filter(
-            (memberId: string) => !existingMemberIds.includes(memberId)
+            (memberId: string) => !existingMemberIds.includes(memberId),
           );
 
           // Find relations to delete (items in existing but not in new relation list)
           const relationsToDelete = existingMemberIds.filter(
-            (memberId: string) => !relation.includes(memberId)
+            (memberId: string) => !relation.includes(memberId),
           );
 
           // Add new relations
