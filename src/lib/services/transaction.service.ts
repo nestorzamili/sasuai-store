@@ -313,7 +313,17 @@ export class TransactionService {
         };
       }
 
-      // Step 2: Validate transaction (totals and member discount)
+      // Step 2: Validate transaction (totals, member, and discount)
+      if (data.memberId) {
+        const memberCheck = await this.isMemberBanned(data.memberId);
+        if (!memberCheck.success) {
+          return {
+            success: false,
+            message: memberCheck.message,
+          };
+        }
+      }
+
       const validatedTransactionResult = await this.validationTransaction(
         validatedCartResult.data,
         data.memberId,
@@ -399,6 +409,7 @@ export class TransactionService {
             data.memberId,
             transaction.id,
             transactionData.subtotal,
+            transaction.tranId,
           );
         }
 
@@ -483,6 +494,7 @@ export class TransactionService {
     memberId: string,
     transactionId: string,
     subtotal: number,
+    tranId: string,
   ) {
     // Get member data
     const member = await tx.member.findUnique({
@@ -503,7 +515,7 @@ export class TransactionService {
         transactionId,
         pointsEarned,
         dateEarned: new Date(),
-        notes: `Points from transaction ${transactionId}`,
+        notes: `Points from transaction ${tranId}`,
       },
     });
 
@@ -911,5 +923,25 @@ export class TransactionService {
         error: error instanceof Error ? error.message : 'Unknown error',
       };
     }
+  }
+
+  // Check if member is banned
+  static async isMemberBanned(memberId: string) {
+    const member = await prisma.member.findUnique({
+      where: { id: memberId },
+      select: { isBanned: true, banReason: true },
+    });
+    if (!member) {
+      return { success: false, message: 'Member not found' };
+    }
+    if (member.isBanned) {
+      return {
+        success: false,
+        message: `Member is banned. Reason: ${
+          member.banReason || 'No reason provided'
+        }`,
+      };
+    }
+    return { success: true, message: 'Member is not banned' };
   }
 }
