@@ -1,5 +1,5 @@
 import prisma from '@/lib/prisma';
-
+import { buildQueryOptions } from '../common/query-options';
 export class StockMovementService {
   /**
    * Get all stock-in records
@@ -27,7 +27,37 @@ export class StockMovementService {
       },
     });
   }
+  static async getAllStockInsOptimalized(queryBuild?: any) {
+    const options = buildQueryOptions(queryBuild);
+    options?.where?.OR.map((res) => {
+      console.log(res);
+    });
+    const [stockIns, count] = await Promise.all([
+      prisma.stockIn.findMany({
+        include: {
+          batch: {
+            include: {
+              product: true,
+            },
+          },
+          supplier: true,
+          unit: true,
+        },
+        ...options,
+      }),
+      prisma.stockIn.count(
+        options.where ? { where: options.where } : undefined,
+      ),
+    ]);
 
+    return {
+      data: stockIns,
+      meta: {
+        ...options,
+        rowsCount: count,
+      },
+    };
+  }
   /**
    * Get stock-ins by batch ID
    */

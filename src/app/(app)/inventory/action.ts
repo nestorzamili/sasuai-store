@@ -62,7 +62,21 @@ export async function getAllBatches() {
     };
   }
 }
-
+export async function getAllBatchesOptimalized(options?: any) {
+  try {
+    const batch = await ProductBatchService.getAllOptimalize(options);
+    return {
+      success: true,
+      data: batch.data,
+      meta: batch.meta,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: 'Failed to fetch batch',
+    };
+  }
+}
 /**
  * Get all batches for a specific product
  */
@@ -391,6 +405,20 @@ export async function getProductBatchStats(productId: string) {
     return {
       success: false,
       error: 'Failed to fetch batch statistics',
+    };
+  }
+}
+export async function getBatchSummary() {
+  try {
+    const summary = await ProductBatchService.getBatchSummary();
+    return {
+      success: true,
+      data: summary,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: 'Failed to fetch batch summary',
     };
   }
 }

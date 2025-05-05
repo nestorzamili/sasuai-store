@@ -1,22 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getAllBatches } from '../action';
-import { getAllProducts } from '@/app/(app)/products/action';
-import { getAllUnits } from '@/app/(app)/products/units/action';
-import { getAllSuppliers } from '@/app/(app)/suppliers/action';
-import BatchPrimaryButton from './batch-primary-button';
+import { getBatchSummary } from '../action';
 import { BatchTable } from './batch-table';
-import { BatchAdjustmentDialog } from './batch-adjustment-dialog';
 import { ProductBatchWithProduct } from '@/lib/types/product-batch';
-import { Product } from '@prisma/client';
-import { SupplierWithCount } from '@/lib/types/supplier';
 import { UnitWithCounts } from '@/lib/types/unit';
+import BatchPrimaryButton from './batch-primary-button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import {
-  IconRefresh,
-  IconFilter,
   IconCalendarExclamation,
   IconBox,
   IconPackage,
@@ -24,191 +15,67 @@ import {
   IconAlertTriangle,
   IconCalendarTime,
 } from '@tabler/icons-react';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { getExpiringBatches } from '../action';
-
 export default function MainContent() {
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(true);
-  const [batches, setBatches] = useState<ProductBatchWithProduct[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [units, setUnits] = useState<UnitWithCounts[]>([]);
-  const [suppliers, setSuppliers] = useState<SupplierWithCount[]>([]);
   const [expiringBatches, setExpiringBatches] = useState<
     ProductBatchWithProduct[]
   >([]);
-
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isAdjustmentDialogOpen, setIsAdjustmentDialogOpen] = useState(false);
-  const [selectedBatch, setSelectedBatch] =
-    useState<ProductBatchWithProduct | null>(null);
-  const [filterOption, setFilterOption] = useState<string>('all');
-
-  const fetchBatches = async () => {
-    setIsLoading(true);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [batchStats, setBatchStats] = useState({
+    total: 0,
+    inStock: 0,
+    outOfStock: 0,
+    expired: 0,
+    expiringSoon: 0,
+    isLoading: true,
+  });
+  const simpleLoading = () => {
+    return (
+      <div className="flex items-center space-x-1 py-4">
+        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+        <span className="text-muted-foreground text-xs animate-pulse">
+          {' '}
+          Calculating..
+        </span>
+      </div>
+    );
+  };
+  const fetchbatchSummary = async () => {
+    setBatchStats((prev) => ({ ...prev, isLoading: true }));
     try {
-      const { data, success } = await getAllBatches();
-      if (success) {
-        const batchData = (data as ProductBatchWithProduct[]) || [];
-        setBatches(batchData);
+      const response = await getBatchSummary();
+      if (response.success) {
+        const data = response.data;
+        setBatchStats({
+          total: data?.total || 0,
+          inStock: data?.inStock || 0,
+          outOfStock: data?.outOfStock || 0,
+          expired: data?.expired || 0,
+          expiringSoon: data?.expiringSoon || 0,
+          isLoading: false,
+        });
       } else {
         toast({
           title: 'Error',
-          description: 'Failed to fetch batches',
+          description: 'Failed to fetch batch summary',
           variant: 'destructive',
         });
       }
     } catch (error) {
       toast({
         title: 'Error',
-        description: 'An unexpected error occurred while fetching batches',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const fetchProducts = async () => {
-    try {
-      const { data, success } = await getAllProducts();
-      if (success) {
-        const productData = (data as Product[]) || [];
-        setProducts(productData);
-      }
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'An unexpected error occurred while fetching products',
+        description: 'Failed to fetch batch summary',
         variant: 'destructive',
       });
     }
   };
-
-  const fetchUnits = async () => {
-    try {
-      const { data, success } = await getAllUnits();
-      if (success) {
-        const unitData = (data as UnitWithCounts[]) || [];
-        setUnits(unitData);
-      }
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'An unexpected error occurred while fetching units',
-        variant: 'destructive',
-      });
-    }
+  const handleOpenForm = (state: boolean) => {
+    setDialogOpen(state);
   };
-
-  const fetchSuppliers = async () => {
-    try {
-      const { data, success } = await getAllSuppliers();
-      if (success) {
-        const supplierData = (data as SupplierWithCount[]) || [];
-        setSuppliers(supplierData);
-      }
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'An unexpected error occurred while fetching suppliers',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const fetchExpiringBatches = async () => {
-    try {
-      const { data, success } = await getExpiringBatches(30); // Get batches expiring in the next 30 days
-      if (success) {
-        const expiringData = (data as ProductBatchWithProduct[]) || [];
-        setExpiringBatches(expiringData);
-      }
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description:
-          'An unexpected error occurred while fetching expiring batches',
-        variant: 'destructive',
-      });
-    }
-  };
-
   useEffect(() => {
-    Promise.all([
-      fetchBatches(),
-      fetchProducts(),
-      fetchUnits(),
-      fetchSuppliers(),
-      fetchExpiringBatches(),
-    ]);
+    fetchbatchSummary();
   }, []);
-
-  const handleDialogOpenChange = (open: boolean) => {
-    setIsDialogOpen(open);
-    if (!open) {
-      setSelectedBatch(null);
-    }
-  };
-
-  // Handle edit batch
-  const handleEdit = (batch: ProductBatchWithProduct) => {
-    setSelectedBatch(batch);
-    setIsDialogOpen(true);
-  };
-
-  // Handle adjust quantity
-  const handleAdjust = (batch: ProductBatchWithProduct) => {
-    setSelectedBatch(batch);
-    setIsAdjustmentDialogOpen(true);
-  };
-
-  // Handle operation success
-  const handleSuccess = () => {
-    setIsDialogOpen(false);
-    setIsAdjustmentDialogOpen(false);
-    setSelectedBatch(null);
-    fetchBatches();
-    fetchExpiringBatches();
-  };
-
-  // Filter batches based on selection
-  const getFilteredBatches = () => {
-    if (filterOption === 'expired') {
-      return batches.filter((batch) => new Date(batch.expiryDate) < new Date());
-    } else if (filterOption === 'expiring-soon') {
-      const thirtyDaysFromNow = new Date();
-      thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
-      return batches.filter((batch) => {
-        const expiryDate = new Date(batch.expiryDate);
-        return expiryDate >= new Date() && expiryDate <= thirtyDaysFromNow;
-      });
-    } else if (filterOption === 'in-stock') {
-      return batches.filter((batch) => batch.remainingQuantity > 0);
-    } else if (filterOption === 'out-of-stock') {
-      return batches.filter((batch) => batch.remainingQuantity === 0);
-    }
-    return batches; // 'all' option
-  };
-
-  const filteredBatches = getFilteredBatches();
-
-  // Calculate stats
-  const batchStats = {
-    total: batches.length,
-    inStock: batches.filter((batch) => batch.remainingQuantity > 0).length,
-    outOfStock: batches.filter((batch) => batch.remainingQuantity === 0).length,
-    expired: batches.filter((batch) => new Date(batch.expiryDate) < new Date())
-      .length,
-    expiringSoon: expiringBatches.length,
-  };
 
   return (
     <div className="space-y-6">
@@ -223,37 +90,25 @@ export default function MainContent() {
           </p>
         </div>
         <BatchPrimaryButton
-          open={isDialogOpen}
-          onOpenChange={handleDialogOpenChange}
-          initialData={
-            selectedBatch
-              ? {
-                  id: selectedBatch.id,
-                  productId: selectedBatch.productId,
-                  batchCode: selectedBatch.batchCode,
-                  expiryDate: selectedBatch.expiryDate,
-                  initialQuantity: selectedBatch.initialQuantity,
-                  buyPrice: selectedBatch.buyPrice,
-                  unitId: selectedBatch.product.unitId,
-                }
-              : undefined
-          }
-          products={products}
-          units={units}
-          suppliers={suppliers}
-          onSuccess={handleSuccess}
+          open={dialogOpen}
+          onOpenChange={(state) => {
+            handleOpenForm(state ? true : false);
+          }}
+          onSuccess={() => {}}
         />
       </div>
 
       {/* Stats cards to match dashboard style */}
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 border-b-2 pb-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Batches</CardTitle>
             <IconPackage className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{batchStats.total}</div>
+            <div className="text-2xl font-bold">
+              {batchStats.isLoading ? simpleLoading() : batchStats.total}
+            </div>
             <p className="text-xs text-muted-foreground">
               All product batches in inventory
             </p>
@@ -267,7 +122,7 @@ export default function MainContent() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              {batchStats.inStock}
+              {batchStats.isLoading ? simpleLoading() : batchStats.inStock}
             </div>
             <p className="text-xs text-muted-foreground">
               {Math.round((batchStats.inStock / batchStats.total) * 100) || 0}%
@@ -283,7 +138,7 @@ export default function MainContent() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-gray-500">
-              {batchStats.outOfStock}
+              {batchStats.isLoading ? simpleLoading() : batchStats.outOfStock}
             </div>
             <p className="text-xs text-muted-foreground">
               {Math.round((batchStats.outOfStock / batchStats.total) * 100) ||
@@ -300,7 +155,7 @@ export default function MainContent() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-destructive">
-              {batchStats.expired}
+              {batchStats.isLoading ? simpleLoading() : batchStats.expired}
             </div>
             <p className="text-xs text-muted-foreground">
               {Math.round((batchStats.expired / batchStats.total) * 100) || 0}%
@@ -316,7 +171,7 @@ export default function MainContent() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-yellow-500">
-              {batchStats.expiringSoon}
+              {batchStats.isLoading ? simpleLoading() : batchStats.expiringSoon}
             </div>
             <p className="text-xs text-muted-foreground">
               Within the next 30 days
@@ -349,53 +204,8 @@ export default function MainContent() {
           </CardContent>
         </Card>
       )}
-
-      {/* Filters and search */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-4">
-          <Select value={filterOption} onValueChange={setFilterOption}>
-            <SelectTrigger className="w-[180px]">
-              <div className="flex items-center gap-2">
-                <IconFilter size={16} />
-                <SelectValue placeholder="Filter batches" />
-              </div>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Batches</SelectItem>
-              <SelectItem value="in-stock">In Stock</SelectItem>
-              <SelectItem value="out-of-stock">Out of Stock</SelectItem>
-              <SelectItem value="expired">Expired</SelectItem>
-              <SelectItem value="expiring-soon">Expiring Soon (30d)</SelectItem>
-            </SelectContent>
-          </Select>
-          <p className="text-sm text-muted-foreground">
-            Showing {filteredBatches.length} of {batches.length} batches
-          </p>
-        </div>
-        <Button variant="outline" size="sm" onClick={fetchBatches}>
-          <IconRefresh size={16} className="mr-2" /> Refresh
-        </Button>
-      </div>
-
       {/* Main batch table */}
-      <BatchTable
-        data={filteredBatches}
-        isLoading={isLoading}
-        onEdit={handleEdit}
-        onAdjust={handleAdjust}
-        onRefresh={fetchBatches}
-      />
-
-      {/* Batch adjustment dialog */}
-      {selectedBatch && (
-        <BatchAdjustmentDialog
-          open={isAdjustmentDialogOpen}
-          onOpenChange={setIsAdjustmentDialogOpen}
-          batch={selectedBatch}
-          units={units}
-          onSuccess={handleSuccess}
-        />
-      )}
+      <BatchTable />
     </div>
   );
 }

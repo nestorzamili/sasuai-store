@@ -31,21 +31,11 @@ import { StockInComplete } from '@/lib/types/stock-movement';
 import { format } from 'date-fns';
 import { SupplierWithCount } from '@/lib/types/supplier';
 import { Checkbox } from '@/components/ui/checkbox';
-
-interface StockInTableProps {
-  data: StockInComplete[];
-  isLoading?: boolean;
-  suppliers: SupplierWithCount[];
-  onRefresh?: () => void;
-}
-
-export function StockInTable({ data, isLoading = false }: StockInTableProps) {
+import { TableLayout } from '@/components/layout/table-layout';
+import { useFetch } from '@/hooks/use-fetch';
+import { getAllOptimalizedStockIns } from '../stock-actions';
+export function StockInTable() {
   // Table state
-  const [sorting, setSorting] = useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
-  const [rowSelection, setRowSelection] = useState({});
-  const [searchQuery, setSearchQuery] = useState('');
 
   // Format date function
   const formatDate = (date: Date | string) => {
@@ -55,54 +45,15 @@ export function StockInTable({ data, isLoading = false }: StockInTableProps) {
   // Define columns
   const columns: ColumnDef<StockInComplete>[] = [
     {
-      id: 'select',
-      header: ({ table }) => (
-        <Checkbox
-          checked={
-            table.getIsAllPageRowsSelected() ||
-            (table.getIsSomePageRowsSelected() && 'indeterminate')
-          }
-          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-          aria-label="Select all"
-        />
-      ),
-      cell: ({ row }) => (
-        <Checkbox
-          checked={row.getIsSelected()}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label="Select row"
-        />
-      ),
-      enableSorting: false,
-      enableHiding: false,
-    },
-    // Date column
-    {
       accessorKey: 'date',
-      header: ({ column }) => (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-        >
-          Date
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      ),
+      header: 'date',
       cell: ({ row }) => formatDate(row.original.date),
     },
 
     // Product column
     {
       accessorKey: 'batch.product.name',
-      header: ({ column }) => (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-        >
-          Product
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      ),
+      header: 'product name',
       cell: ({ row }) => {
         return (
           <div className="font-medium">{row.original.batch.product.name}</div>
@@ -113,31 +64,14 @@ export function StockInTable({ data, isLoading = false }: StockInTableProps) {
     // Batch Code column
     {
       accessorKey: 'batch.batchCode',
-      header: ({ column }) => (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-        >
-          Batch Code
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      ),
+      header: 'batch code',
       cell: ({ row }) => <div>{row.original.batch.batchCode}</div>,
     },
 
     // Quantity column
     {
       accessorKey: 'quantity',
-      header: ({ column }) => (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-          className="w-full justify-center"
-        >
-          Quantity
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      ),
+      header: 'quantity',
       cell: ({ row }) => {
         const quantity = row.getValue('quantity') as number;
         const unit = row.original.unit?.symbol || '';
@@ -152,15 +86,7 @@ export function StockInTable({ data, isLoading = false }: StockInTableProps) {
     // Supplier column
     {
       accessorKey: 'supplier.name',
-      header: ({ column }) => (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-        >
-          Supplier
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      ),
+      header: 'supplier',
       cell: ({ row }) => {
         const supplier = row.original.supplier;
         return supplier ? (
@@ -172,141 +98,75 @@ export function StockInTable({ data, isLoading = false }: StockInTableProps) {
     },
   ];
 
-  // Create table instance
-  const table = useReactTable({
+  const fetchDataTable = async (options: any) => {
+    try {
+      const response = await getAllOptimalizedStockIns({
+        page: options.page + 1,
+        limit: options.limit,
+        sortBy: options.sortBy,
+        search: options.search,
+        columnFilter: ['batch.product.name', 'batch.batchCode'],
+      });
+
+      return {
+        data: response.data,
+        totalRows: response.meta?.rowsCount || 0,
+      };
+    } catch (error) {
+      console.log(error);
+      return {
+        data: [],
+        totalRows: 0,
+      };
+    }
+  };
+
+  const {
     data,
-    columns,
-    onGlobalFilterChange: setSearchQuery,
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange: setRowSelection,
-    state: {
-      sorting,
-      columnFilters,
-      columnVisibility,
-      rowSelection,
-      globalFilter: searchQuery,
-    },
+    isLoading,
+    options,
+    setPage,
+    setLimit,
+    setSortBy,
+    setSearch,
+    totalRows,
+    refresh,
+  } = useFetch({
+    fetchData: fetchDataTable,
+    initialPageIndex: 0,
+    initialPageSize: 10,
+    initialSortField: 'id',
+    initialSortDirection: false,
   });
+  const handlePaginationChange = (newPagination: {
+    pageIndex: number;
+    pageSize: number;
+  }) => {
+    setPage(newPagination.pageIndex);
+    setLimit(newPagination.pageSize);
+  };
 
-  // Show skeleton while loading
-  if (isLoading) {
-    return <StockInTableSkeleton />;
-  }
+  const handleSortingChange = (newSorting: any) => {
+    setSortBy(newSorting);
+  };
+
+  const handleSearchChange = (search: string) => {
+    setSearch(search);
+  };
 
   return (
     <div className="space-y-4">
-      {/* Search input */}
-      <Input
-        placeholder="Search records..."
-        value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
-        className="max-w-sm"
+      <TableLayout
+        data={data || []}
+        columns={columns}
+        isLoading={isLoading}
+        pagination={options.pagination}
+        handlePaginationChange={handlePaginationChange}
+        handleSortingChange={handleSortingChange}
+        handleSearchChange={handleSearchChange}
+        totalRows={totalRows}
+        enableSelection={true}
       />
-
-      {/* Table */}
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && 'selected'}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  No results.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
-
-      {/* Pagination */}
-      <div className="mt-4">
-        <DataTablePagination table={table} />
-      </div>
-    </div>
-  );
-}
-
-function StockInTableSkeleton() {
-  return (
-    <div className="space-y-4">
-      <div>
-        <Skeleton className="h-10 w-[384px]" />
-      </div>
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              {Array.from({ length: 6 }).map((_, index) => (
-                <TableHead key={index}>
-                  <Skeleton className="h-7 w-full" />
-                </TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {Array.from({ length: 5 }).map((_, rowIndex) => (
-              <TableRow key={rowIndex}>
-                {Array.from({ length: 6 }).map((_, cellIndex) => (
-                  <TableCell key={`${rowIndex}-${cellIndex}`}>
-                    <Skeleton className="h-5 w-full" />
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-      <div className="mt-4">
-        <div className="flex items-center justify-between px-2">
-          <Skeleton className="h-5 w-[200px]" />
-          <div className="flex items-center space-x-6">
-            <Skeleton className="h-8 w-[120px]" />
-            <Skeleton className="h-8 w-[100px]" />
-            <Skeleton className="h-8 w-[120px]" />
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
