@@ -36,25 +36,6 @@ export async function getAllRewardsWithClaimCount() {
 }
 
 /**
- * Get all rewards
- */
-export async function getAllRewards(includeInactive: boolean = false) {
-  try {
-    const rewards = await RewardService.getAll(includeInactive);
-
-    return {
-      success: true,
-      data: rewards,
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: 'Failed to fetch rewards',
-    };
-  }
-}
-
-/**
  * Get a reward by ID
  */
 export async function getReward(id: string) {
