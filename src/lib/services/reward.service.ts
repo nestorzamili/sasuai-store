@@ -3,58 +3,9 @@ import { Prisma } from '@prisma/client';
 
 export class RewardService {
   /**
-   * Check and update expired rewards
-   * This is a utility method to be called before retrieving rewards
-   */
-  static async updateExpiredRewards() {
-    const now = new Date();
-
-    // Update any rewards that have expired - using exact timestamp comparison
-    return prisma.reward.updateMany({
-      where: {
-        expiryDate: {
-          lt: now,
-        },
-        isActive: true,
-      },
-      data: {
-        isActive: false,
-      },
-    });
-  }
-
-  /**
-   * Get all rewards
-   */
-  static async getAll(includeInactive: boolean = false) {
-    // First, update any rewards that have expired
-    await this.updateExpiredRewards();
-
-    const now = new Date();
-
-    // Then return the rewards
-    return prisma.reward.findMany({
-      where: includeInactive
-        ? undefined
-        : {
-            isActive: true,
-            // Only include rewards that either have no expiry date or haven't expired yet
-            OR: [{ expiryDate: null }, { expiryDate: { gt: now } }],
-          },
-      orderBy: {
-        pointsCost: 'asc',
-      },
-    });
-  }
-
-  /**
    * Get a reward by ID
    */
   static async getById(id: string) {
-    // First check if any rewards have expired
-    await this.updateExpiredRewards();
-
-    // Then fetch the requested reward
     return prisma.reward.findUnique({
       where: { id },
     });
@@ -143,9 +94,6 @@ export class RewardService {
    * Get all rewards with claim count
    */
   static async getAllWithClaimCount() {
-    // Update expired rewards first
-    await this.updateExpiredRewards();
-
     return prisma.reward.findMany({
       include: {
         _count: {
@@ -202,9 +150,6 @@ export class RewardService {
     includeInactive?: boolean;
   }) {
     const skip = (page - 1) * limit;
-
-    // Update any expired rewards first
-    await this.updateExpiredRewards();
 
     const where: Prisma.RewardWhereInput = {};
 
