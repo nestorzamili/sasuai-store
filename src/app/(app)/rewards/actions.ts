@@ -5,7 +5,7 @@ import { RewardService } from '@/lib/services/reward.service';
 import { MemberService } from '@/lib/services/member.service';
 import { z } from 'zod';
 
-// Update reward schema for validation
+// Simplified reward schema - removed unnecessary validations
 const rewardSchema = z.object({
   name: z.string().min(1, 'Reward name is required'),
   pointsCost: z.number().min(1, 'Points cost must be at least 1'),
@@ -19,19 +19,42 @@ const rewardSchema = z.object({
 /**
  * Get all rewards with claim count
  */
-export async function getAllRewardsWithClaimCount() {
+export async function getAllRewardsWithClaimCount({
+  page = 1,
+  limit = 10,
+  sortBy = 'name',
+  sortDirection = 'asc',
+  search = '',
+  includeInactive = true,
+}: {
+  page?: number;
+  limit?: number;
+  sortBy?: string;
+  sortDirection?: 'asc' | 'desc';
+  search?: string;
+  includeInactive?: boolean;
+} = {}) {
   try {
-    const rewards = await RewardService.getAllWithClaimCount();
+    const result = await RewardService.search({
+      query: search,
+      page,
+      limit,
+      sortBy,
+      sortDirection,
+      includeInactive,
+    });
 
     return {
       success: true,
-      data: rewards,
+      data: {
+        rewards: result.rewards,
+        totalCount: result.totalCount,
+        totalPages: result.totalPages,
+        currentPage: result.currentPage,
+      },
     };
   } catch (error) {
-    return {
-      success: false,
-      error: 'Failed to fetch rewards',
-    };
+    return { success: false, error: 'Failed to fetch rewards' };
   }
 }
 
@@ -41,23 +64,10 @@ export async function getAllRewardsWithClaimCount() {
 export async function getReward(id: string) {
   try {
     const reward = await RewardService.getById(id);
-
-    if (!reward) {
-      return {
-        success: false,
-        error: 'Reward not found',
-      };
-    }
-
-    return {
-      success: true,
-      data: reward,
-    };
+    if (!reward) return { success: false, error: 'Reward not found' };
+    return { success: true, data: reward };
   } catch (error) {
-    return {
-      success: false,
-      error: 'Failed to fetch reward',
-    };
+    return { success: false, error: 'Failed to fetch reward' };
   }
 }
 
@@ -77,14 +87,6 @@ export async function createReward(data: {
     // Validate data
     const validatedData = rewardSchema.parse(data);
 
-    // Check if expiry date is in the past
-    if (validatedData.expiryDate && validatedData.expiryDate < new Date()) {
-      return {
-        success: false,
-        error: 'Expiry date cannot be in the past',
-      };
-    }
-
     // Create reward
     const reward = await RewardService.create({
       name: validatedData.name,
@@ -99,10 +101,7 @@ export async function createReward(data: {
     // Revalidate rewards page
     revalidatePath('/rewards');
 
-    return {
-      success: true,
-      data: reward,
-    };
+    return { success: true, data: reward };
   } catch (error) {
     if (error instanceof z.ZodError) {
       return {
@@ -112,10 +111,7 @@ export async function createReward(data: {
       };
     }
 
-    return {
-      success: false,
-      error: 'Failed to create reward',
-    };
+    return { success: false, error: 'Failed to create reward' };
   }
 }
 
@@ -135,27 +131,16 @@ export async function updateReward(
   },
 ) {
   try {
-    // Validate data
+    // Validate data - removed expiry date check
     const validatedData = rewardSchema.partial().parse(data);
 
     // Update reward
-    const reward = await RewardService.update(id, {
-      name: validatedData.name,
-      pointsCost: validatedData.pointsCost,
-      stock: validatedData.stock,
-      isActive: validatedData.isActive,
-      description: validatedData.description,
-      imageUrl: validatedData.imageUrl,
-      expiryDate: validatedData.expiryDate,
-    });
+    const reward = await RewardService.update(id, validatedData);
 
     // Revalidate rewards page
     revalidatePath('/rewards');
 
-    return {
-      success: true,
-      data: reward,
-    };
+    return { success: true, data: reward };
   } catch (error) {
     if (error instanceof z.ZodError) {
       return {
@@ -165,10 +150,7 @@ export async function updateReward(
       };
     }
 
-    return {
-      success: false,
-      error: 'Failed to update reward',
-    };
+    return { success: false, error: 'Failed to update reward' };
   }
 }
 
@@ -179,7 +161,6 @@ export async function deleteReward(id: string) {
   try {
     // Check if reward has been claimed
     const hasClaims = await RewardService.hasClaims(id);
-
     if (hasClaims) {
       return {
         success: false,
@@ -189,60 +170,50 @@ export async function deleteReward(id: string) {
 
     // Delete reward
     await RewardService.delete(id);
-
-    // Revalidate rewards page
     revalidatePath('/rewards');
-
-    return {
-      success: true,
-    };
+    return { success: true };
   } catch (error) {
-    return {
-      success: false,
-      error: 'Failed to delete reward',
-    };
-  }
-}
-
-/**
- * Get reward claims
- */
-export async function getRewardClaims(rewardId: string) {
-  try {
-    const claims = await RewardService.getClaims(rewardId);
-
-    return {
-      success: true,
-      data: claims,
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: 'Failed to fetch reward claims',
-    };
+    return { success: false, error: 'Failed to delete reward' };
   }
 }
 
 /**
  * Claim a reward for a member
  */
-export async function claimReward(memberId: string, rewardId: string) {
+export async function claimRewardForMember(memberId: string, rewardId: string) {
   try {
-    const result = await MemberService.claimReward(memberId, rewardId);
-
-    // Revalidate paths
+    const claim = await MemberService.claimReward(memberId, rewardId);
     revalidatePath('/rewards');
-    revalidatePath(`/members/${memberId}`);
-
-    return {
-      success: true,
-      data: result,
-    };
+    return { success: true, data: claim };
   } catch (error: any) {
     return {
       success: false,
       error: error.message || 'Failed to claim reward',
     };
+  }
+}
+
+/**
+ * Search members with pagination
+ */
+export async function searchMembers({
+  query = '',
+  page = 1,
+  limit = 10,
+}: {
+  query?: string;
+  page?: number;
+  limit?: number;
+}) {
+  try {
+    const result = await MemberService.search({
+      query,
+      page,
+      limit,
+    });
+    return { success: true, data: result };
+  } catch (error) {
+    return { success: false, error: 'Failed to search members' };
   }
 }
 
@@ -273,16 +244,9 @@ export async function getAllRewardClaims({
       search,
       status,
     });
-
-    return {
-      success: true,
-      data,
-    };
+    return { success: true, data };
   } catch (error) {
-    return {
-      success: false,
-      error: 'Failed to fetch reward claims',
-    };
+    return { success: false, error: 'Failed to fetch reward claims' };
   }
 }
 
@@ -292,106 +256,9 @@ export async function getAllRewardClaims({
 export async function updateClaimStatus(id: string, status: string) {
   try {
     const claim = await RewardService.updateClaimStatus(id, status);
-
-    // Revalidate rewards page
     revalidatePath('/rewards');
-
-    return {
-      success: true,
-      data: claim,
-    };
+    return { success: true, data: claim };
   } catch (error) {
-    return {
-      success: false,
-      error: 'Failed to update claim status',
-    };
-  }
-}
-
-/**
- * Search members with pagination
- */
-export async function searchMembers({
-  query = '',
-  page = 1,
-  limit = 10,
-  sortBy = 'name',
-  sortDirection = 'asc',
-}: {
-  query?: string;
-  page?: number;
-  limit?: number;
-  sortBy?: string;
-  sortDirection?: 'asc' | 'desc';
-}) {
-  try {
-    const result = await MemberService.search({
-      query,
-      page,
-      limit,
-      sortBy,
-      sortDirection,
-    });
-
-    return {
-      success: true,
-      data: result,
-    };
-  } catch (error) {
-    console.error('Error searching members:', error);
-    return {
-      success: false,
-      error: 'Failed to search members',
-    };
-  }
-}
-
-/**
- * Claim a reward for a member
- */
-export async function claimRewardForMember(memberId: string, rewardId: string) {
-  try {
-    const claim = await MemberService.claimReward(memberId, rewardId);
-
-    // Revalidate paths
-    revalidatePath('/rewards');
-
-    return {
-      success: true,
-      data: claim,
-    };
-  } catch (error: any) {
-    return {
-      success: false,
-      error: error.message || 'Failed to claim reward',
-    };
-  }
-}
-
-/**
- * Get rewards available for a member to claim
- */
-export async function getMemberAvailableRewards(memberId: string) {
-  try {
-    if (!memberId) {
-      return {
-        success: false,
-        error: 'Member ID is required',
-      };
-    }
-
-    // Get available rewards for the member from MemberService
-    const availableRewards = await MemberService.getAvailableRewards(memberId);
-
-    return {
-      success: true,
-      data: availableRewards,
-    };
-  } catch (error: any) {
-    console.error('Error getting available rewards:', error);
-    return {
-      success: false,
-      error: error.message || 'Failed to get available rewards for member',
-    };
+    return { success: false, error: 'Failed to update claim status' };
   }
 }
