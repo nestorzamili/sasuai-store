@@ -1,15 +1,32 @@
 import prisma from '@/lib/prisma';
 import { format } from 'date-fns';
 import { dateToCompare } from '../date';
-export class DashboardService {
-  static async getPerformanceMetrics() {
-    // Current period
-    const startDate = '2024-09-01';
-    const endDate = '2024-09-02';
 
-    // Previous period for comparison
-    const prevStartDate = '2024-08-01';
-    const prevEndDate = '2024-08-02';
+type DateFilter = {
+  startDate: string;
+  endDate: string;
+};
+
+export class DashboardService {
+  static async getPerformanceMetrics(dateFilter?: DateFilter) {
+    // Default dates if no filter provided
+    const defaultStart = '2024-09-01';
+    const defaultEnd = '2024-09-02';
+
+    // Process dates - either use provided dates or defaults
+    const dates =
+      dateFilter?.startDate && dateFilter?.endDate
+        ? dateToCompare(dateFilter.startDate, dateFilter.endDate)
+        : dateToCompare(defaultStart, defaultEnd);
+
+    // Format all dates at once
+    const [startDate, endDate, prevStartDate, prevEndDate] = [
+      dates.current.startDate,
+      dates.current.endDate,
+      dates.previous.startDate,
+      dates.previous.endDate,
+    ].map((date) => format(date, 'yyyy-MM-dd'));
+
     try {
       // Run current period queries in parallel
       const [

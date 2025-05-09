@@ -29,52 +29,52 @@ import { formatDate, formatTime } from '@/lib/date';
 const SalesTrend = lazy(() =>
   import('./components/_parts/chart-sales-trend').then((mod) => ({
     default: mod.SalesTrend,
-  })),
+  }))
 );
 const TransactionTrend = lazy(() =>
   import('./components/_parts/chart-transaction-trend').then((mod) => ({
     default: mod.TransactionTrend,
-  })),
+  }))
 );
 const PaymentMethod = lazy(() =>
   import('./components/_parts/chart-payment-method').then((mod) => ({
     default: mod.PaymentMethod,
-  })),
+  }))
 );
 const SalesCategory = lazy(() =>
   import('./components/_parts/chart-sales-category').then((mod) => ({
     default: mod.SalesCategory,
-  })),
+  }))
 );
 const TopSellingProduct = lazy(() =>
   import('./components/_parts/top-selling-product').then((mod) => ({
     default: mod.TopSellingProduct,
-  })),
+  }))
 );
 const TopDiscount = lazy(() =>
   import('./components/_parts/top-discount').then((mod) => ({
     default: mod.TopDiscount,
-  })),
+  }))
 );
 const TopMember = lazy(() =>
   import('./components/_parts/top-member').then((mod) => ({
     default: mod.TopMember,
-  })),
+  }))
 );
 const LowProductStock = lazy(() =>
   import('./components/_parts/low-product-stock').then((mod) => ({
     default: mod.LowProductStock,
-  })),
+  }))
 );
 const MemberActivities = lazy(() =>
   import('./components/_parts/member-activities').then((mod) => ({
     default: mod.MemberActivities,
-  })),
+  }))
 );
 const OverviewSales = lazy(() =>
   import('./components/overview-sales').then((mod) => ({
     default: mod.OverviewSales,
-  })),
+  }))
 );
 
 // Loading fallback component
@@ -103,13 +103,13 @@ export default function Dashboard() {
   const currentDateTime = useMemo(() => {
     const now = new Date();
     return {
-      date: now.toLocaleDateString('id-ID', {
-        day: '2-digit',
+      date: now.toLocaleDateString('en-US', {
         month: '2-digit',
+        day: '2-digit',
         year: 'numeric',
       }),
       time:
-        now.toLocaleTimeString('id-ID', {
+        now.toLocaleTimeString('en-US', {
           hour: '2-digit',
           minute: '2-digit',
           hour12: false,
@@ -125,7 +125,7 @@ export default function Dashboard() {
       costProduct: { value: 0, growth: 0 },
       productOut: { value: 0, growth: 0 },
       margin: { value: 0, growth: 0 },
-    },
+    }
   );
   const [filter, setFilter] = useState({
     startDate: new Date(currentDateTime.date),
@@ -138,11 +138,10 @@ export default function Dashboard() {
   }>({});
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-
   const fetchMetricPerformance = async () => {
     try {
       setIsLoading(true);
-      const response = await metricPeformance();
+      const response = await metricPeformance(filter);
       // Transform the response data to match the MetricPerformance interface
       const transformedData: MetricPerformance = {
         totalSales: response?.data?.totalSales || { value: 0, growth: 0 },
@@ -164,7 +163,6 @@ export default function Dashboard() {
       setIsLoading(false);
     }
   };
-
   const handleRefresh = () => {
     fetchMetricPerformance();
   };
@@ -182,7 +180,7 @@ export default function Dashboard() {
     return () => {
       abortController.abort(); // Cancel any in-flight requests when component unmounts
     };
-  }, []);
+  }, [filter]);
 
   return (
     <div className="space-y-6 relative">
@@ -193,14 +191,10 @@ export default function Dashboard() {
           <p className="text-muted-foreground">
             Real-time performance insights for your business
           </p>
-          <div className="mt-1 flex flex-col text-sm text-muted-foreground">
+          <div className="mt-1 flex flex-col  text-muted-foreground">
             <span>
               Current: {formatDate(currentDateTime.date)} |{' '}
               {currentDateTime.time}
-            </span>
-            <span className="mt-0.5">
-              Date Range: {formatDate(filter.startDate)} -{' '}
-              {formatDate(filter.endDate)}
             </span>
           </div>
         </div>
@@ -209,7 +203,10 @@ export default function Dashboard() {
             <DialogTrigger asChild>
               <Button variant="outline" onClick={() => setIsDialogOpen(true)}>
                 <CalendarIcon className="h-4 w-4" />
-                Filter Dates
+                <span className="mt-0.5">
+                  Date Range: {formatDate(filter.startDate)} -{' '}
+                  {formatDate(filter.endDate)}
+                </span>
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
