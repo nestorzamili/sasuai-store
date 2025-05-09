@@ -15,12 +15,9 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { RewardWithClaimCount } from '@/lib/types/reward';
-import { CountdownTimer } from '@/components/countdown-timer';
 import { format } from 'date-fns';
 import Image from 'next/image';
 import { useFetch } from '@/hooks/use-fetch';
@@ -29,66 +26,29 @@ import { TableLayout } from '@/components/layout/table-layout';
 import { ImagePreviewDialog } from '@/components/image-preview-dialog';
 
 interface RewardTableProps {
-  data?: RewardWithClaimCount[];
-  isLoading?: boolean;
   onEdit?: (reward: RewardWithClaimCount) => void;
   onDelete: (reward: RewardWithClaimCount) => void;
-  onRefresh?: () => void;
 }
 
-export function RewardTable({ onEdit, onDelete, onRefresh }: RewardTableProps) {
+export function RewardTable({ onEdit, onDelete }: RewardTableProps) {
   // State for image preview dialog
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   // Use the useFetch hook to handle data fetching, pagination, and sorting
   const fetchRewards = async (options: any) => {
-    const response = await getAllRewardsWithClaimCount();
+    const response = await getAllRewardsWithClaimCount({
+      page: options.page + 1, // +1 because API uses 1-based pagination
+      limit: options.limit,
+      sortBy: options.sortBy?.id || 'name',
+      sortDirection: options.sortBy?.desc ? 'desc' : 'asc',
+      search: options.search,
+      includeInactive: true,
+    });
 
     if (response.success && response.data) {
-      const rewards = response.data as RewardWithClaimCount[];
-
-      // Apply filtering if search term is provided
-      let filteredData = rewards;
-      if (options.search) {
-        const searchLower = options.search.toLowerCase();
-        filteredData = rewards.filter(
-          (reward) =>
-            reward.name.toLowerCase().includes(searchLower) ||
-            (reward.description &&
-              reward.description.toLowerCase().includes(searchLower)),
-        );
-      }
-
-      // Apply sorting if needed
-      if (options.sortBy?.id) {
-        const { id, desc } = options.sortBy;
-        filteredData.sort((a: any, b: any) => {
-          // Handle null values to avoid comparison errors
-          if (a[id] === null) return desc ? -1 : 1;
-          if (b[id] === null) return desc ? 1 : -1;
-
-          // For strings, use localeCompare
-          if (typeof a[id] === 'string') {
-            return desc
-              ? b[id].localeCompare(a[id])
-              : a[id].localeCompare(b[id]);
-          }
-
-          // For numbers and other types
-          if (a[id] < b[id]) return desc ? 1 : -1;
-          if (a[id] > b[id]) return desc ? -1 : 1;
-          return 0;
-        });
-      }
-
-      // Apply pagination
-      const start = options.page * options.limit;
-      const end = start + options.limit;
-      const paginatedData = filteredData.slice(start, end);
-
       return {
-        data: paginatedData,
-        totalRows: filteredData.length,
+        data: response.data.rewards || [],
+        totalRows: response.data.totalCount || 0,
       };
     }
 
@@ -130,12 +90,6 @@ export function RewardTable({ onEdit, onDelete, onRefresh }: RewardTableProps) {
   // Handle search change
   const handleSearchChange = (newSearch: string) => {
     setSearch(newSearch);
-  };
-
-  // Handle successful operations
-  const handleOperationSuccess = () => {
-    refresh();
-    onRefresh?.();
   };
 
   // Define columns
@@ -241,7 +195,6 @@ export function RewardTable({ onEdit, onDelete, onRefresh }: RewardTableProps) {
     {
       accessorKey: 'expiryDate',
       header: 'Expiry',
-      maxSize: 180, // Limit the maximum width
       cell: ({ row }) => {
         const expiryDate = row.original.expiryDate;
         if (!expiryDate)
@@ -249,7 +202,13 @@ export function RewardTable({ onEdit, onDelete, onRefresh }: RewardTableProps) {
             <span className="text-muted-foreground text-sm">No expiry</span>
           );
 
-        const isExpired = new Date(expiryDate) < new Date();
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const expiryDateOnly = new Date(expiryDate);
+        expiryDateOnly.setHours(0, 0, 0, 0);
+
+        const isExpired = expiryDateOnly < today;
 
         if (isExpired) {
           return (
@@ -259,17 +218,10 @@ export function RewardTable({ onEdit, onDelete, onRefresh }: RewardTableProps) {
           );
         }
 
-        // Use CountdownTimer for active rewards with more compact display
         return (
-          <div className="flex flex-col gap-1">
-            <CountdownTimer expiryDate={new Date(expiryDate)} />
-            <span
-              className="text-xs text-muted-foreground truncate max-w-[150px]"
-              title={format(new Date(expiryDate), "MMM d, yyyy 'at' h:mm a")}
-            >
-              {format(new Date(expiryDate), 'MMM d, yyyy')}
-            </span>
-          </div>
+          <span className="text-sm">
+            {format(new Date(expiryDate), 'MMM d, yyyy')}
+          </span>
         );
       },
     },
@@ -301,8 +253,6 @@ export function RewardTable({ onEdit, onDelete, onRefresh }: RewardTableProps) {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                <DropdownMenuSeparator />
                 <DropdownMenuItem
                   className="flex justify-between cursor-pointer"
                   onClick={() => onEdit?.(reward)}
