@@ -18,7 +18,7 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <ThemeProvider defaultTheme="light" storageKey="ui-theme">
-          <NextTopLoader />
+          <NextTopLoader showSpinner={false} />
           {children}
         </ThemeProvider>
       </body>
