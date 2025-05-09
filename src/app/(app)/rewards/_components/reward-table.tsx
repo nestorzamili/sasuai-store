@@ -37,7 +37,7 @@ export function RewardTable({ onEdit, onDelete }: RewardTableProps) {
   // Use the useFetch hook to handle data fetching, pagination, and sorting
   const fetchRewards = async (options: any) => {
     const response = await getAllRewardsWithClaimCount({
-      page: options.page + 1, // +1 because API uses 1-based pagination
+      page: options.page + 1,
       limit: options.limit,
       sortBy: options.sortBy?.id || 'name',
       sortDirection: options.sortBy?.desc ? 'desc' : 'asc',
@@ -64,7 +64,6 @@ export function RewardTable({ onEdit, onDelete }: RewardTableProps) {
     setSortBy,
     setSearch,
     totalRows,
-    refresh,
   } = useFetch<RewardWithClaimCount[]>({
     fetchData: fetchRewards,
     initialPageIndex: 0,
