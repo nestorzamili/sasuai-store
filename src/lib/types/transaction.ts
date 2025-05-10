@@ -27,6 +27,10 @@ export interface TransactionItemData {
   discountId?: string | null;
 }
 
+// Import the actual enum type from Prisma client (recommended solution)
+// If importing is not an option, ensure this matches the Prisma enum
+export type DiscountType = 'PERCENTAGE' | 'FIXED_AMOUNT';
+
 export interface ValidatedCartItem {
   productId: string;
   batchId: string;
@@ -38,6 +42,7 @@ export interface ValidatedCartItem {
     id: string;
     value: number;
     type: string;
+    valueType: DiscountType;
   } | null;
   discountedPrice: number;
   subtotal: number;
@@ -63,7 +68,7 @@ export interface TransactionSummary {
     discount: {
       id: string;
       value: number;
-      type: string;
+      type: DiscountType;
       amount: number;
     } | null;
   } | null;

@@ -46,9 +46,9 @@ export class MemberService {
       where: { id },
       include: {
         tier: true,
-        discountRelationsMember: {
+        discounts: {
           where: {
-            discount: { isActive: true },
+            isActive: true,
           },
         },
         memberPoints: {
@@ -203,9 +203,9 @@ export class MemberService {
         where,
         include: {
           tier: true,
-          discountRelationsMember: {
-            include: {
-              discount: true,
+          discounts: {
+            where: {
+              isActive: true,
             },
           },
         },

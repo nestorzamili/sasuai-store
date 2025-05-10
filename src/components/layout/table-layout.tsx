@@ -24,6 +24,28 @@ import {
 } from '@/components/ui/table';
 import { useState, useEffect, useRef } from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+
+// Define filter option type
+export interface FilterOption {
+  value: string;
+  label: string;
+}
+
+// Define filter configuration type
+export interface FilterConfig {
+  id: string;
+  label: string;
+  type: 'select' | 'date' | 'number' | 'boolean';
+  options?: FilterOption[];
+  handleFilterChange: (value: string) => void;
+}
 
 interface TableProps {
   data: any[];
@@ -32,14 +54,15 @@ interface TableProps {
   columnFilters?: ColumnFiltersState;
   pagination?: PaginationState;
   enableSelection?: boolean | false;
+  filters?: FilterConfig[]; // Add filters prop
   setColumnFilters?: (columnFilters: ColumnFiltersState) => void;
   handlePaginationChange?: (pagination: PaginationState) => void;
   handleSortingChange?: (sorting: SortingState) => void;
   handleSearchChange?: (search: string) => void;
   totalRows?: number;
-  uniqueIdField?: string; // Add this to identify which field to use as the unique ID
-  onSelectionChange?: (selectedIds: Record<string, boolean>) => void; // Add this to handle selection changes
-  initialSelectedRows?: Record<string, boolean>; // Add this to set initially selected rows
+  uniqueIdField?: string;
+  onSelectionChange?: (selectedIds: Record<string, boolean>) => void;
+  initialSelectedRows?: Record<string, boolean>;
 }
 
 export function TableLayout({
@@ -49,14 +72,15 @@ export function TableLayout({
   pagination,
   columnFilters,
   enableSelection = false,
+  filters = [], // Default to empty array
   handleSearchChange,
   handlePaginationChange,
   handleSortingChange,
   setColumnFilters,
   totalRows = 1,
-  uniqueIdField = 'id', // Default to 'id' if not provided
+  uniqueIdField = 'id',
   onSelectionChange,
-  initialSelectedRows = {}, // Default to empty object if not provided
+  initialSelectedRows = {},
 }: TableProps) {
   const [searchValue, setSearchValue] = useState<string>('');
   const [isSearching, setIsSearching] = useState<boolean>(false);
@@ -66,6 +90,9 @@ export function TableLayout({
   const searchTimeout = useRef<NodeJS.Timeout | null>(null);
 
   const isInitialMount = useRef(true);
+
+  // Track active filters for UI state
+  const [activeFilterCount, setActiveFilterCount] = useState<number>(0);
 
   useEffect(() => {
     if (isInitialMount.current) {
@@ -165,6 +192,7 @@ export function TableLayout({
     },
     onRowSelectionChange: setRowSelection,
   });
+
   const SortingButtonTable = ({
     column,
     label,
@@ -198,7 +226,7 @@ export function TableLayout({
 
   return (
     <div className="w-full">
-      <div className="flex items-center py-2 justify-between">
+      <div className="flex flex-wrap items-center py-2 gap-2 justify-between">
         <div className="relative max-w-sm w-full">
           <Input
             placeholder="Search..."
@@ -215,7 +243,34 @@ export function TableLayout({
             </div>
           )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Render filter controls */}
+          {filters.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2">
+              {filters.map((filter) => (
+                <div key={filter.id} className="flex items-center gap-1">
+                  {filter.type === 'select' && filter.options && (
+                    <Select onValueChange={filter.handleFilterChange}>
+                      <SelectTrigger className="h-8 w-[180px]">
+                        <SelectValue placeholder={filter.label} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {filter.options.map((option) => (
+                          <SelectItem
+                            key={`${filter.id}-${option.value}`}
+                            value={option.value}
+                          >
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
           {enableSelection &&
             table.getFilteredSelectedRowModel().rows.length > 0 && (
               <>
@@ -260,7 +315,7 @@ export function TableLayout({
                           ? ''
                           : (flexRender(
                               header.column.columnDef.header,
-                              header.getContext()
+                              header.getContext(),
                             ) as string)
                       }
                       column={header.column}
@@ -291,7 +346,7 @@ export function TableLayout({
                     <TableCell key={cell.id}>
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext()
+                        cell.getContext(),
                       )}
                     </TableCell>
                   ))}
