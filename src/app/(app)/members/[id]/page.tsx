@@ -9,8 +9,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import MemberProfile from './_components/member-profile';
 import MemberPointHistory from './_components/member-point-history';
 import MemberRewardHistory from './_components/member-reward-history';
-import { Button } from '@/components/ui/button';
-import { IconArrowLeft } from '@tabler/icons-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function MemberDetailsPage() {
@@ -24,6 +22,12 @@ export default function MemberDetailsPage() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [member, setMember] = useState<MemberWithRelations | null>(null);
+
+  // Set breadcrumb loading state immediately on component mount
+  useEffect(() => {
+    // Don't set the breadcrumb when loading - remove initial null label setup
+    // The breadcrumb will only appear when we have the actual member data
+  }, []);
 
   // Fetch member data
   const fetchMember = useCallback(async () => {
@@ -42,7 +46,16 @@ export default function MemberDetailsPage() {
       const result = await getMember(memberId.current);
 
       if (result.success && result.data) {
-        setMember(result.data as MemberWithRelations);
+        const memberData = result.data as MemberWithRelations;
+        setMember(memberData);
+
+        // Update breadcrumb only when we have the actual member name
+        if (
+          typeof window !== 'undefined' &&
+          (window as any).__updateBreadcrumb
+        ) {
+          (window as any).__updateBreadcrumb(memberId.current, memberData.name);
+        }
       } else {
         toast({
           title: 'Error',
@@ -70,20 +83,10 @@ export default function MemberDetailsPage() {
 
   return (
     <>
-      <Button
-        variant="ghost"
-        size="sm"
-        className="gap-2"
-        onClick={() => router.push('/members')}
-      >
-        <IconArrowLeft size={16} />
-        Back to Members
-      </Button>
-
       {isLoading ? (
         <MemberDetailSkeleton />
       ) : member ? (
-        <div className="space-y-6 mt-2">
+        <div className="space-y-6">
           <MemberProfile member={member} onUpdate={fetchMember} />
 
           <Tabs defaultValue="points" className="w-full">
@@ -112,9 +115,12 @@ export default function MemberDetailsPage() {
           <p className="text-muted-foreground mb-4">
             The requested member could not be found
           </p>
-          <Button onClick={() => router.push('/members')}>
+          <button
+            className="text-primary underline hover:no-underline"
+            onClick={() => router.push('/members')}
+          >
             Return to Members List
-          </Button>
+          </button>
         </div>
       )}
     </>

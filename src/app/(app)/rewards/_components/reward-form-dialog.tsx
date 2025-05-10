@@ -58,7 +58,7 @@ interface RewardFormDialogProps {
   onOpenChange?: (open: boolean) => void;
   initialData?: RewardWithClaimCount;
   onSuccess?: () => void;
-  showTrigger?: boolean; // New prop to control trigger visibility
+  showTrigger?: boolean;
 }
 
 export default function RewardFormDialog({
@@ -66,7 +66,7 @@ export default function RewardFormDialog({
   onOpenChange,
   initialData,
   onSuccess,
-  showTrigger = false, // Default to false to hide the trigger
+  showTrigger = false,
 }: RewardFormDialogProps) {
   const [loading, setLoading] = useState(false);
   const isEditing = Boolean(initialData?.id);
@@ -120,14 +120,23 @@ export default function RewardFormDialog({
       setLoading(true);
 
       // Check if expiry date is in the past
-      if (values.expiryDate && values.expiryDate < new Date()) {
-        toast({
-          title: 'Invalid date',
-          description: 'Expiry date cannot be in the past',
-          variant: 'destructive',
-        });
-        setLoading(false);
-        return;
+      if (values.expiryDate) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Reset waktu ke awal hari
+
+        const expiryDate = new Date(values.expiryDate);
+        expiryDate.setHours(0, 0, 0, 0); // Reset waktu ke awal hari
+
+        // Validasi: hanya tolak tanggal yang SEBELUM hari ini
+        if (expiryDate < today) {
+          toast({
+            title: 'Invalid date',
+            description: 'Expiry date cannot be in the past',
+            variant: 'destructive',
+          });
+          setLoading(false);
+          return;
+        }
       }
 
       const result =
@@ -340,93 +349,42 @@ export default function RewardFormDialog({
                       name="expiryDate"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Expiry Date & Time</FormLabel>
-                          <div className="flex flex-col sm:flex-row gap-2">
-                            <div className="flex-1">
-                              <Popover>
-                                <PopoverTrigger asChild>
-                                  <FormControl>
-                                    <Button
-                                      variant="outline"
-                                      className={cn(
-                                        'w-full pl-3 text-left font-normal',
-                                        !field.value && 'text-muted-foreground',
-                                      )}
-                                    >
-                                      {field.value ? (
-                                        format(field.value, 'PPP')
-                                      ) : (
-                                        <span>Pick a date</span>
-                                      )}
-                                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                    </Button>
-                                  </FormControl>
-                                </PopoverTrigger>
-                                <PopoverContent
-                                  className="w-auto p-0"
-                                  align="start"
+                          <FormLabel>Expiry Date</FormLabel>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant="outline"
+                                  className={cn(
+                                    'w-full pl-3 text-left font-normal',
+                                    !field.value && 'text-muted-foreground',
+                                  )}
                                 >
-                                  <Calendar
-                                    mode="single"
-                                    selected={field.value || undefined}
-                                    onSelect={(date) => {
-                                      if (date) {
-                                        if (field.value) {
-                                          const currentTime = field.value;
-                                          date.setHours(
-                                            currentTime.getHours(),
-                                            currentTime.getMinutes(),
-                                            currentTime.getSeconds(),
-                                          );
-                                        } else {
-                                          date.setHours(23, 59, 59);
-                                        }
-                                      }
-                                      field.onChange(date);
-                                    }}
-                                    disabled={(date) =>
-                                      date <
-                                      new Date(new Date().setHours(0, 0, 0, 0))
-                                    }
-                                    initialFocus
-                                  />
-                                </PopoverContent>
-                              </Popover>
-                            </div>
-
-                            {field.value && (
-                              <FormControl className="sm:w-[180px]">
-                                <Input
-                                  type="time"
-                                  step="1"
-                                  value={
-                                    field.value
-                                      ? format(field.value, 'HH:mm:ss')
-                                      : ''
-                                  }
-                                  onChange={(e) => {
-                                    if (field.value) {
-                                      const [hours, minutes, seconds] =
-                                        e.target.value.split(':').map(Number);
-                                      const newDate = new Date(field.value);
-                                      newDate.setHours(
-                                        hours || 0,
-                                        minutes || 0,
-                                        seconds || 0,
-                                      );
-                                      field.onChange(newDate);
-                                    }
-                                  }}
-                                  className="w-full"
-                                  placeholder="Time"
-                                />
+                                  {field.value ? (
+                                    format(field.value, 'PPP')
+                                  ) : (
+                                    <span>Pick a date</span>
+                                  )}
+                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
                               </FormControl>
-                            )}
-                          </div>
-                          <FormDescription>
-                            The reward will automatically expire at the
-                            specified date and time
-                          </FormDescription>
+                            </PopoverTrigger>
+                            <PopoverContent
+                              className="w-auto p-0"
+                              align="start"
+                            >
+                              <Calendar
+                                mode="single"
+                                selected={field.value || undefined}
+                                onSelect={field.onChange}
+                                disabled={(date) =>
+                                  date <
+                                  new Date(new Date().setHours(0, 0, 0, 0))
+                                }
+                                initialFocus
+                              />
+                            </PopoverContent>
+                          </Popover>
                           <FormMessage />
                         </FormItem>
                       )}

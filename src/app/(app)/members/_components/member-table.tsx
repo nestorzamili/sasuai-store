@@ -153,7 +153,7 @@ export function MemberTable({ onEdit, onAwardPoints }: MemberTableProps) {
     // Actions column
     {
       id: 'actions',
-      header: 'Actions',
+      header: '',
       cell: ({ row }) => {
         const member = row.original;
         return (
@@ -166,8 +166,6 @@ export function MemberTable({ onEdit, onAwardPoints }: MemberTableProps) {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                <DropdownMenuSeparator />
                 <DropdownMenuItem
                   className="flex justify-between cursor-pointer"
                   onClick={() => viewMemberDetails(member)}

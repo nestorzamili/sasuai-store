@@ -86,7 +86,7 @@ export function TopMember() {
               <TableRow key={member.id}>
                 <TableCell className="flex items-center gap-2">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={member.avatar} alt={member.name} />
+                    {/* <AvatarImage src={member.avatar} alt={member.name} /> */}
                     <AvatarFallback>{member.name.charAt(0)}</AvatarFallback>
                   </Avatar>
                   <div>
