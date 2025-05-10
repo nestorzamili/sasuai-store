@@ -575,6 +575,7 @@ export class ProductService {
         },
         category: true,
         unit: true,
+        brand: true,
       },
       orderBy: { name: 'asc' },
       take: options?.take || 10,

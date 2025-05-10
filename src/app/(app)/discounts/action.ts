@@ -151,7 +151,7 @@ export async function getProductsForSelection(search?: string) {
   try {
     const products = await ProductService.getProductFiltered({
       search: search || '',
-      take: 50,
+      take: 10,
     });
 
     return products;
@@ -173,9 +173,9 @@ export async function getMembersForSelection(search?: string) {
       page: 1,
       limit: 50,
       sortBy: 'name',
-      sortDirection: 'asc'
+      sortDirection: 'asc',
     });
-    
+
     return result.members;
   } catch (error) {
     return errorHandling({
