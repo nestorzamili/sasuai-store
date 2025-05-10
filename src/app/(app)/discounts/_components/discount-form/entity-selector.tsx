@@ -65,20 +65,20 @@ export default function EntitySelector<T extends Entity>({
   const fetchMissingItems = async (missingIds: string[]): Promise<T[]> => {
     if (missingIds.length === 0) return [];
 
-    const missingItems: T[] = [];
-
-    for (const id of missingIds) {
+    const fetchPromises = missingIds.map(async (id) => {
       const singleItemResponse = await fetchItems(id);
       if (
         singleItemResponse.success &&
         singleItemResponse.data &&
         singleItemResponse.data.length > 0
       ) {
-        missingItems.push(...singleItemResponse.data);
+        return singleItemResponse.data;
       }
-    }
+      return [];
+    });
 
-    return missingItems;
+    const results = await Promise.all(fetchPromises);
+    return results.flat();
   };
 
   // Load items on initial render
