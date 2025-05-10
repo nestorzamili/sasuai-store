@@ -192,7 +192,7 @@ export class ProductService {
       skuCode?: string | null;
       barcode?: string | null;
       isActive?: boolean;
-    }
+    },
   ) {
     return prisma.product.update({
       where: { id },
@@ -339,7 +339,7 @@ export class ProductService {
       batchCode?: string;
       expiryDate?: Date;
       buyPrice?: number;
-    }
+    },
   ) {
     return prisma.productBatch.update({
       where: { id },
@@ -545,8 +545,11 @@ export class ProductService {
       data: { isPrimary: true },
     });
   }
-  // Function get products for order
-  static async getProductFiltered(options?: { search?: string; take: 10 }) {
+
+  static async getProductFiltered(options?: {
+    search?: string;
+    take?: number;
+  }) {
     return prisma.product.findMany({
       where: {
         OR: [
@@ -565,16 +568,13 @@ export class ProductService {
           },
           take: 1,
         },
-        discountRelationProduct: {
+        discounts: {
           where: {
-            discount: {
-              isActive: true,
-            },
-          },
-          include: {
-            discount: true,
+            isActive: true,
           },
         },
+        category: true,
+        unit: true,
       },
       orderBy: { name: 'asc' },
       take: options?.take || 10,
