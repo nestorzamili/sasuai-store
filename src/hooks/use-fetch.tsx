@@ -19,18 +19,20 @@ export interface TableFetchOptions {
   sortBy?: SortByOptions;
   sortOrder?: string;
   columnFilter?: string[];
+  filters?: Record<string, any>; // Add filters to TableFetchOptions
   [key: string]: any; // Allow for additional custom options
 }
 
 export interface FetchOptions<T> {
   fetchData: (
-    options: TableFetchOptions
+    options: TableFetchOptions,
   ) => Promise<{ data: T; totalRows: number; [key: string]: any }>;
   options?: TableFetchOptions;
   initialPageIndex?: number;
   initialPageSize?: number;
   initialSortField?: string;
   initialSortDirection?: boolean;
+  initialFilters?: Record<string, any>; // Add initialFilters
   debounceTime?: number;
   onError?: (error: any) => void;
   onSuccess?: (data: any) => void;
@@ -42,6 +44,7 @@ export interface HookOptions {
   search: string;
   sortOrder?: string;
   columnFilter?: string[];
+  filters: Record<string, any>; // Add filters to HookOptions
   [key: string]: any; // Allow for additional custom options
 }
 
@@ -69,6 +72,7 @@ export function useFetch<T>(fetchOptions: FetchOptions<T>) {
     search: fetchOptions.options?.search || '',
     sortOrder: fetchOptions.options?.sortOrder,
     columnFilter: fetchOptions.options?.columnFilter || [],
+    filters: fetchOptions.initialFilters || fetchOptions.options?.filters || {}, // Initialize filters state
     // Copy any additional options
     ...(fetchOptions.options
       ? Object.fromEntries(
@@ -81,8 +85,9 @@ export function useFetch<T>(fetchOptions: FetchOptions<T>) {
                 'sortBy',
                 'sortOrder',
                 'columnFilter',
-              ].includes(key)
-          )
+                'filters',
+              ].includes(key),
+          ),
         )
       : {}),
   });
@@ -102,7 +107,7 @@ export function useFetch<T>(fetchOptions: FetchOptions<T>) {
         ...prev,
         pagination: { ...prev.pagination, pageIndex: newPage },
       })),
-    []
+    [],
   );
 
   const setLimit = useCallback((newLimit: number) => {
@@ -118,7 +123,7 @@ export function useFetch<T>(fetchOptions: FetchOptions<T>) {
         setOptions((prev) => ({ ...prev, search: newSearch }));
         resetPagination();
       }, fetchOptions.debounceTime || 500),
-    [resetPagination, fetchOptions.debounceTime]
+    [resetPagination, fetchOptions.debounceTime],
   );
 
   const setSortBy = useCallback((newSortBy: SortByOptions[]) => {
@@ -145,7 +150,22 @@ export function useFetch<T>(fetchOptions: FetchOptions<T>) {
       }));
       resetPagination();
     },
-    [resetPagination]
+    [resetPagination],
+  );
+
+  // Add a dedicated setFilters function
+  const setFilters = useCallback(
+    (newFilters: Record<string, any>) => {
+      setOptions((prev) => ({
+        ...prev,
+        filters:
+          typeof newFilters === 'function'
+            ? newFilters(prev.filters)
+            : { ...prev.filters, ...newFilters },
+      }));
+      resetPagination();
+    },
+    [resetPagination],
   );
 
   // Add custom option setter
@@ -191,6 +211,7 @@ export function useFetch<T>(fetchOptions: FetchOptions<T>) {
       sortBy: options.sortBy,
       sortOrder: options.sortOrder,
       columnFilter: options.columnFilter,
+      filters: options.filters, // Include filters in formattedOptions
       // Include any additional custom options
       ...Object.fromEntries(
         Object.entries(options).filter(
@@ -201,11 +222,12 @@ export function useFetch<T>(fetchOptions: FetchOptions<T>) {
               'search',
               'sortOrder',
               'columnFilter',
-            ].includes(key)
-        )
+              'filters',
+            ].includes(key),
+        ),
       ),
     }),
-    [options]
+    [options],
   );
 
   useEffect(() => {
@@ -229,6 +251,7 @@ export function useFetch<T>(fetchOptions: FetchOptions<T>) {
     setSortBy,
     setSearch,
     setColumnFilter,
+    setFilters, // Add setFilters to return value
     setCustomOption,
     refresh,
     resetPagination,

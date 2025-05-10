@@ -1,36 +1,53 @@
-export interface DiscountInterface {
+import { DiscountApplyTo, DiscountType } from '@prisma/client';
+
+export interface DiscountData {
   id?: string;
   name: string;
-  discountType: 'member' | 'product';
-  valueType: 'percentage' | 'flat';
+  code?: string | null;
+  description?: string | null;
+  type: DiscountType;
   value: number;
-  type?: string;
-  minPurchase?: number;
+  minPurchase?: number | null;
   startDate: Date;
-  endDate?: Date;
+  endDate: Date;
   isActive?: boolean;
-  discountRelations: {
-    discountId: string;
-    relationId: string;
-  }[];
-  discountProducts?: {
-    discountId: string;
-    productId: string;
-  }[];
-  // Ubah definisi ini juga
-  discountMembers?: {
-    discountId: string;
-    memberId: string;
-  }[];
-  createdAt?: Date;
-  updatedAt?: Date;
+  isGlobal?: boolean;
+  maxUses?: number | null;
+  applyTo?: DiscountApplyTo;
+  productIds?: string[];
+  memberIds?: string[];
+  memberTierIds?: string[];
 }
-export interface DiscountRelationInterface {
-  relationId: string;
-  discountId: string;
+
+export type DiscountPaginationParams = {
+  page: number;
+  pageSize: number;
+  sortField?: string;
+  sortDirection?: 'asc' | 'desc';
+  search?: string;
+  isActive?: boolean;
+  type?: DiscountType;
+  applyTo?: DiscountApplyTo;
+  isGlobal?: boolean;
+  validAsOf?: Date;
+};
+
+export interface DiscountCreateResult {
+  success: boolean;
+  message: string;
+  discount?: any;
 }
-export interface DiscountRelationGetDataInterface {
-  id: string;
-  name: string;
-  category: string;
+
+export interface DiscountUpdateResult {
+  success: boolean;
+  message: string;
+  discount?: any;
+}
+
+export interface DiscountValidationResult {
+  success: boolean;
+  message: string;
+  isValid?: boolean;
+  discount?: any;
+  error?: string;
 }

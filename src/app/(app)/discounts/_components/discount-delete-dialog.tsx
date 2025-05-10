@@ -1,56 +1,108 @@
 'use client';
-import { ConfirmDialog } from '@/components/confirm-dialog';
-import { useState, useEffect } from 'react';
-import { deleteDiscount } from '../actions';
-interface props {
-  isOpen: boolean;
-  onClose: () => void;
-  data?: any;
-  onRefresh?: () => void;
-}
-export function DeleteDialog({ isOpen, data, onClose, onRefresh }: props) {
-  const [open, setIsOpen] = useState(isOpen);
-  const [loading, setLoading] = useState(false);
 
-  const handleDeleteDiscount = async () => {
-    const id = data.id;
+import { useState } from 'react';
+import { IconAlertTriangle } from '@tabler/icons-react';
+import { toast } from '@/hooks/use-toast';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { ConfirmDialog } from '@/components/confirm-dialog';
+import { deleteDiscount } from '../action';
+
+interface Props {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  discount: any;
+  onSuccess?: () => void;
+}
+
+export function DiscountDeleteDialog({
+  open,
+  onOpenChange,
+  discount,
+  onSuccess,
+}: Props) {
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Check if discount has been used in transactions
+  const hasBeenUsed =
+    discount._count?.transactions > 0 || discount._count?.transactionItems > 0;
+
+  const handleDelete = async () => {
     try {
-      setLoading(true);
-      const response = await deleteDiscount(id);
-      if (response.success) {
-        onRefresh?.();
+      setIsDeleting(true);
+
+      // This would call a delete endpoint when implemented
+      const result = await deleteDiscount(discount.id);
+
+      if (result.success) {
+        toast({
+          title: 'Discount deleted',
+          description: `The discount "${discount.name}" has been deleted successfully`,
+        });
+        onSuccess?.();
+      } else {
+        toast({
+          title: 'Error',
+          description: result.message || 'Failed to delete discount',
+          variant: 'destructive',
+        });
       }
     } catch (error) {
-      console.error('Error deleting discount:', error);
+      toast({
+        title: 'Error',
+        description: 'An unexpected error occurred',
+        variant: 'destructive',
+      });
     } finally {
-      setLoading(false);
-      onClose();
+      setIsDeleting(false);
+      onOpenChange(false);
     }
   };
 
-  // Sync internal state with prop
-  useEffect(() => {
-    setIsOpen(isOpen);
-  }, [isOpen]);
-
   return (
-    <>
-      <ConfirmDialog
-        open={open}
-        onOpenChange={(newOpen) => {
-          setIsOpen(newOpen);
-          if (!newOpen) onClose();
-        }}
-        title="Delete Discount"
-        desc={`Are you sure you want to delete ${
-          data?.label || 'this'
-        }? This action cannot be undone`}
-        confirmText="Delete"
-        cancelBtnText="Cancel"
-        destructive={true}
-        handleConfirm={handleDeleteDiscount}
-        isLoading={loading}
-      />
-    </>
+    <ConfirmDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      handleConfirm={handleDelete}
+      disabled={isDeleting || hasBeenUsed}
+      title={
+        <span className="text-destructive">
+          <IconAlertTriangle
+            className="mr-1 inline-block stroke-destructive"
+            size={18}
+          />{' '}
+          Delete Discount
+        </span>
+      }
+      desc={
+        <div className="space-y-4">
+          <p className="mb-2">
+            Are you sure you want to delete{' '}
+            <span className="font-bold">{discount.name}</span>?
+            <br />
+            This action will permanently remove this discount from the system.
+            This cannot be undone.
+          </p>
+
+          {hasBeenUsed ? (
+            <Alert variant="destructive">
+              <AlertTitle>Cannot Delete</AlertTitle>
+              <AlertDescription>
+                This discount has been used in transactions and cannot be
+                deleted. You can disable it instead by setting it to inactive.
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <Alert variant="destructive">
+              <AlertTitle>Warning!</AlertTitle>
+              <AlertDescription>
+                Please be careful, this operation cannot be rolled back.
+              </AlertDescription>
+            </Alert>
+          )}
+        </div>
+      }
+      confirmText={isDeleting ? 'Deleting...' : 'Delete'}
+      destructive
+    />
   );
 }
