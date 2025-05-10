@@ -1,6 +1,6 @@
 'use client';
 
-import { getProductsForSelection } from '../action';
+import { getProductsForSelection } from '../../action';
 import EntitySelector from './entity-selector';
 
 interface Product {
@@ -13,6 +13,7 @@ interface Product {
   brand?: {
     name: string;
   } | null;
+  primaryImage?: string | null;
 }
 
 interface ProductSelectorProps {
@@ -28,11 +29,11 @@ export default function ProductSelector({
     search: string,
   ): Promise<{ success: boolean; data?: Product[] }> => {
     try {
-      const response = await getProductsForSelection(search);
-      if (response.success && 'products' in response) {
+      const products = await getProductsForSelection(search);
+      if (Array.isArray(products)) {
         return {
           success: true,
-          data: response.products as Product[],
+          data: products,
         };
       }
       return {

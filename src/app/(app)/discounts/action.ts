@@ -2,6 +2,8 @@
 
 import { revalidatePath } from 'next/cache';
 import { DiscountService } from '@/lib/services/discount.service';
+import { ProductService } from '@/lib/services/product.service';
+import { MemberService } from '@/lib/services/member.service';
 import { DiscountData, DiscountPaginationParams } from '@/lib/types/discount';
 import { z } from 'zod';
 import { errorHandling } from '@/lib/common/response-formatter';
@@ -147,7 +149,12 @@ export async function deleteDiscount(id: string) {
  */
 export async function getProductsForSelection(search?: string) {
   try {
-    return await DiscountService.getProductsForSelection(search);
+    const products = await ProductService.getProductFiltered({
+      search: search || '',
+      take: 50,
+    });
+
+    return products;
   } catch (error) {
     return errorHandling({
       message: 'Failed to fetch products',
@@ -161,7 +168,15 @@ export async function getProductsForSelection(search?: string) {
  */
 export async function getMembersForSelection(search?: string) {
   try {
-    return await DiscountService.getMembersForSelection(search);
+    const result = await MemberService.search({
+      query: search || '',
+      page: 1,
+      limit: 50,
+      sortBy: 'name',
+      sortDirection: 'asc'
+    });
+    
+    return result.members;
   } catch (error) {
     return errorHandling({
       message: 'Failed to fetch members',
