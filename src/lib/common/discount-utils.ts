@@ -1,5 +1,6 @@
 import { DiscountType, DiscountApplyTo } from '@prisma/client';
 import { customAlphabet } from 'nanoid';
+import { formatRupiah } from '../currency';
 
 // Generate alphanumeric IDs with uppercase letters and numbers
 const nanoid = customAlphabet('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', 6);
@@ -12,7 +13,7 @@ export function formatDiscountValue(
   value?: number,
 ): string {
   if (type === undefined || value === undefined) return 'N/A';
-  return type === 'PERCENTAGE' ? `${value}%` : `$${value.toLocaleString()}`;
+  return type === 'PERCENTAGE' ? `${value}%` : formatRupiah(value);
 }
 
 /**
@@ -32,22 +33,18 @@ export function formatApplyTo(applyTo?: DiscountApplyTo): string {
 }
 
 /**
- * Auto-generate a discount code based on name
+ * Auto-generate a discount code based on name (6 characters total)
  */
 export function generateDiscountCode(name: string): string {
   if (!name) return '';
 
-  // Convert to uppercase and remove special characters and spaces
   const cleanName = name.toUpperCase().replace(/[^A-Z0-9]/g, '');
 
-  // Take first 4-6 characters (or less if name is shorter)
-  const prefix = cleanName.substring(0, Math.min(6, cleanName.length));
+  const prefixLength = Math.min(3, cleanName.length);
+  const prefix = cleanName.substring(0, prefixLength);
 
-  // Generate a unique suffix
-  const suffix = nanoid();
+  const suffixLength = 6 - prefixLength;
+  const suffix = nanoid().substring(0, suffixLength);
 
-  // Store prefix
-  const storedPrefix = 'SAS';
-
-  return `${storedPrefix}${prefix}${suffix}`;
+  return `${prefix}${suffix}`;
 }

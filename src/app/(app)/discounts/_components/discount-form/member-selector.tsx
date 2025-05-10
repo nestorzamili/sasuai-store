@@ -1,6 +1,6 @@
 'use client';
 
-import { getMembersForSelection } from '../action';
+import { getMembersForSelection } from '../../action';
 import EntitySelector from './entity-selector';
 
 interface Member {
@@ -23,12 +23,11 @@ export default function MemberSelector({
 }: MemberSelectorProps) {
   const fetchMembers = async (search: string) => {
     try {
-      const response = await getMembersForSelection(search);
-      // Type-safe check for members property
-      if (response.success && 'members' in response) {
+      const members = await getMembersForSelection(search);
+      if (Array.isArray(members)) {
         return {
           success: true,
-          data: response.members,
+          data: members,
         };
       }
       return {

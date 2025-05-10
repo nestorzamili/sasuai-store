@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   FormControl,
@@ -21,6 +22,7 @@ import { DiscountType } from '@prisma/client';
 import { generateDiscountCode } from '@/lib/common/discount-utils';
 import { UseFormReturn } from 'react-hook-form';
 import { DiscountFormValues } from '../../schema';
+import { debounce } from '@/lib/common/debounce-effect';
 
 interface BasicInfoProps {
   form: UseFormReturn<DiscountFormValues>;
@@ -28,21 +30,42 @@ interface BasicInfoProps {
 
 export default function BasicInfo({ form }: BasicInfoProps) {
   const discountType = form.watch('type');
+  const discountName = form.watch('name');
+  const [debouncedName, setDebouncedName] = useState('');
 
-  // Function to generate and set discount code
-  const generateAndSetCode = () => {
-    const name = form.getValues('name');
-    if (name) {
-      const generatedCode = generateDiscountCode(name);
-      form.setValue('code', generatedCode);
-    } else {
-      toast({
-        title: 'Cannot Generate Code',
-        description: 'Please enter a discount name first',
-        variant: 'default',
-      });
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedName(discountName || '');
+    }, 500);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [discountName]);
+
+  const generateAndSetCode = useMemo(
+    () =>
+      debounce(() => {
+        const name = form.getValues('name');
+        if (name) {
+          const generatedCode = generateDiscountCode(name);
+          form.setValue('code', generatedCode);
+        } else {
+          toast({
+            title: 'Cannot Generate Code',
+            description: 'Please enter a discount name first',
+            variant: 'default',
+          });
+        }
+      }, 500),
+    [form],
+  );
+
+  useEffect(() => {
+    if (debouncedName && !form.getValues('code')) {
+      generateAndSetCode();
     }
-  };
+  }, [debouncedName, generateAndSetCode]);
 
   return (
     <div className="space-y-6">
@@ -159,16 +182,43 @@ export default function BasicInfo({ form }: BasicInfoProps) {
                 <FormLabel>Value</FormLabel>
                 <FormControl>
                   <div className="relative">
+                    {discountType === DiscountType.FIXED_AMOUNT && (
+                      <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                        Rp
+                      </div>
+                    )}
                     <Input
-                      type="number"
+                      type={
+                        discountType === DiscountType.PERCENTAGE
+                          ? 'number'
+                          : 'text'
+                      }
                       placeholder={
                         discountType === DiscountType.PERCENTAGE ? '0-100' : '0'
                       }
+                      className={
+                        discountType === DiscountType.FIXED_AMOUNT ? 'pl-8' : ''
+                      }
                       {...field}
+                      onChange={(e) => {
+                        if (discountType === DiscountType.FIXED_AMOUNT) {
+                          // Remove non-numeric characters first
+                          const value = e.target.value.replace(/[^\d]/g, '');
+                          // Format with thousand separators
+                          const formattedValue = value
+                            ? parseInt(value).toLocaleString('id-ID')
+                            : '';
+                          field.onChange(formattedValue);
+                        } else {
+                          field.onChange(e.target.value);
+                        }
+                      }}
                     />
-                    <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                      {discountType === DiscountType.PERCENTAGE ? '%' : '$'}
-                    </div>
+                    {discountType === DiscountType.PERCENTAGE && (
+                      <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                        %
+                      </div>
+                    )}
                   </div>
                 </FormControl>
                 <FormDescription>

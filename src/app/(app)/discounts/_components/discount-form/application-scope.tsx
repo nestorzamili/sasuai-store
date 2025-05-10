@@ -17,9 +17,9 @@ import {
 import { DiscountApplyTo } from '@prisma/client';
 import { UseFormReturn } from 'react-hook-form';
 import { DiscountFormValues } from '../../schema';
-import ProductSelector from '../product-selector';
-import MemberSelector from '../member-selector';
-import TierSelector from '../tier-selector';
+import ProductSelector from './product-selector';
+import MemberSelector from './member-selector';
+import TierSelector from './tier-selector';
 
 interface ApplicationScopeProps {
   form: UseFormReturn<DiscountFormValues>;
