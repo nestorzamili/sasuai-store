@@ -2,7 +2,8 @@
 
 import { TrendingUp } from 'lucide-react';
 import { LabelList, Pie, PieChart } from 'recharts';
-
+import { getTopPaymentMethod } from '../../actions';
+import { DateFilter } from '@/lib/types/filter';
 import {
   Card,
   CardContent,
@@ -17,41 +18,43 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
-const chartData = [
-  { browser: 'chrome', visitors: 275, fill: 'var(--color-chrome)' },
-  { browser: 'safari', visitors: 200, fill: 'var(--color-safari)' },
-  { browser: 'firefox', visitors: 187, fill: 'var(--color-firefox)' },
-  { browser: 'edge', visitors: 173, fill: 'var(--color-edge)' },
-  { browser: 'other', visitors: 90, fill: 'var(--color-other)' },
-];
+import { useEffect, useState } from 'react';
 
 const chartConfig = {
-  visitors: {
-    label: 'Visitors',
-  },
-  chrome: {
-    label: 'Chrome',
-    color: 'hsl(var(--chart-1))',
-  },
-  safari: {
-    label: 'Safari',
+  cash: {
+    label: 'Cash',
     color: 'hsl(var(--chart-2))',
   },
-  firefox: {
-    label: 'Firefox',
-    color: 'hsl(var(--chart-3))',
-  },
-  edge: {
-    label: 'Edge',
+  debit: {
+    label: 'Debit',
     color: 'hsl(var(--chart-4))',
-  },
-  other: {
-    label: 'Other',
-    color: 'hsl(var(--chart-5))',
   },
 } satisfies ChartConfig;
 
-export function PaymentMethod() {
+export function PaymentMethod(filter?: DateFilter) {
+  const [chart, setChart] = useState([
+    { type: 'cash', total: 275, fill: 'var(--color-cash)' },
+    { type: 'debit', total: 200, fill: 'var(--color-debit)' },
+  ]);
+  const fetchPaymentMethod = async () => {
+    try {
+      const response = await getTopPaymentMethod(filter);
+      if (response.success && response.data) {
+        const formattedData = response.data.map((item: any) => ({
+          type: item.type,
+          total: item.total,
+          fill:
+            item.type === 'cash' ? 'var(--color-cash)' : 'var(--color-debit)',
+        }));
+        setChart(formattedData);
+      }
+    } catch (error) {
+      console.error('Error fetching top payment methods:', error);
+    }
+  };
+  useEffect(() => {
+    fetchPaymentMethod();
+  }, [filter]);
   return (
     <Card className="flex flex-col">
       <CardHeader className="items-center pb-0">
@@ -65,14 +68,14 @@ export function PaymentMethod() {
         >
           <PieChart>
             <ChartTooltip
-              content={<ChartTooltipContent nameKey="visitors" hideLabel />}
+              content={<ChartTooltipContent nameKey="type" hideLabel />}
             />
-            <Pie data={chartData} dataKey="visitors">
+            <Pie data={chart} dataKey="total">
               <LabelList
-                dataKey="browser"
+                dataKey="type"
                 className="fill-background"
                 stroke="none"
-                fontSize={12}
+                fontSize={14}
                 formatter={(value: keyof typeof chartConfig) =>
                   chartConfig[value]?.label
                 }
@@ -82,11 +85,36 @@ export function PaymentMethod() {
         </ChartContainer>
       </CardContent>
       <CardFooter className="flex-col gap-2 text-sm">
-        <div className="flex items-center gap-2 font-medium leading-none">
-          Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
-        </div>
-        <div className="leading-none text-muted-foreground">
-          Showing total visitors for the last 6 months
+        <div className="flex items-center justify-between w-full">
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2 font-medium">
+              <span
+                className="h-3 w-3 rounded-full"
+                style={{ backgroundColor: 'var(--color-cash)' }}
+              ></span>
+              <span>
+                Cash: {chart.find((item) => item.type === 'cash')?.total || 0}
+              </span>
+            </div>
+            <div className="flex items-center gap-2 font-medium">
+              <span
+                className="h-3 w-3 rounded-full"
+                style={{ backgroundColor: 'var(--color-debit)' }}
+              ></span>
+              <span>
+                Debit: {chart.find((item) => item.type === 'debit')?.total || 0}
+              </span>
+            </div>
+          </div>
+          <div className="flex flex-col items-end">
+            <div className="flex items-center gap-2 font-medium leading-none">
+              <TrendingUp className="h-4 w-4" />
+              Total: {chart.reduce((sum, item) => sum + item.total, 0)}
+            </div>
+            <div className="text-xs text-muted-foreground mt-1">
+              Based on recent transactions
+            </div>
+          </div>
         </div>
       </CardFooter>
     </Card>
