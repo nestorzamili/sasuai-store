@@ -61,6 +61,26 @@ export default function EntitySelector<T extends Entity>({
 
   const tableColumns = columns || defaultColumns;
 
+  // Helper function to fetch missing items by ID
+  const fetchMissingItems = async (missingIds: string[]): Promise<T[]> => {
+    if (missingIds.length === 0) return [];
+
+    const missingItems: T[] = [];
+
+    for (const id of missingIds) {
+      const singleItemResponse = await fetchItems(id);
+      if (
+        singleItemResponse.success &&
+        singleItemResponse.data &&
+        singleItemResponse.data.length > 0
+      ) {
+        missingItems.push(...singleItemResponse.data);
+      }
+    }
+
+    return missingItems;
+  };
+
   // Load items on initial render
   useEffect(() => {
     const fetchInitialItems = async () => {
@@ -84,27 +104,8 @@ export default function EntitySelector<T extends Entity>({
                 (id) => !selectedItemsFromResponse.some((i) => i.id === id),
               );
 
-              if (missingIds.length > 0) {
-                const missingItems: T[] = [];
-
-                for (const id of missingIds) {
-                  const singleItemResponse = await fetchItems(id);
-                  if (
-                    singleItemResponse.success &&
-                    singleItemResponse.data &&
-                    singleItemResponse.data.length > 0
-                  ) {
-                    missingItems.push(...singleItemResponse.data);
-                  }
-                }
-
-                setSelectedItems([
-                  ...selectedItemsFromResponse,
-                  ...missingItems,
-                ]);
-              } else {
-                setSelectedItems(selectedItemsFromResponse);
-              }
+              const missingItems = await fetchMissingItems(missingIds);
+              setSelectedItems([...selectedItemsFromResponse, ...missingItems]);
             }
           }
         }
