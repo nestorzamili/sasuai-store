@@ -106,10 +106,10 @@ export function MemberActivities() {
               <TableRow key={activity.id}>
                 <TableCell className="flex items-center gap-2">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage
+                    {/* <AvatarImage
                       src={activity.member.avatar}
                       alt={activity.member.name}
-                    />
+                    /> */}
                     <AvatarFallback>
                       {activity.member.name.charAt(0)}
                     </AvatarFallback>

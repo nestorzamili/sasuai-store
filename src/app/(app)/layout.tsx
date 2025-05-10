@@ -5,7 +5,7 @@ import { SearchProvider } from '@/context/search-context';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/layout/app-sidebar';
 import { cn } from '@/lib/utils';
-import { StrictMode } from 'react';
+import { StrictMode, useState } from 'react';
 import { AuthProvider } from '@/context/auth-context';
 import { Header } from '@/components/layout/header';
 import { Main } from '@/components/layout/main';
@@ -15,8 +15,29 @@ import { ThemeSwitch } from '@/components/theme-switch';
 import { Toaster } from '@/components/ui/toaster';
 import { BreadCrumb } from '@/components/breadcrumb';
 
+// Create a type-safe context for breadcrumb labels
+export type BreadcrumbLabels = Record<string, string>;
+
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const defaultOpen = Cookies.get('sidebar:state') !== 'false';
+
+  // Create state to hold custom breadcrumb labels
+  const [breadcrumbLabels, setBreadcrumbLabels] = useState<BreadcrumbLabels>(
+    {},
+  );
+
+  // Function to expose to child components to update breadcrumb labels
+  const updateBreadcrumb = (id: string, label: string) => {
+    setBreadcrumbLabels((prev) => ({
+      ...prev,
+      [id]: label,
+    }));
+  };
+
+  // Add updateBreadcrumb to the window object so it can be accessed from any component
+  if (typeof window !== 'undefined') {
+    (window as any).__updateBreadcrumb = updateBreadcrumb;
+  }
 
   return (
     <div className="group/body">
@@ -34,7 +55,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   'transition-[width] ease-linear duration-200',
                   'h-svh flex flex-col',
                   'group-data-[scroll-locked=1]/body:h-full',
-                  'group-data-[scroll-locked=1]/body:has-[main.fixed-main]:h-svh'
+                  'group-data-[scroll-locked=1]/body:has-[main.fixed-main]:h-svh',
                 )}
               >
                 <Header fixed>
@@ -45,7 +66,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   </div>
                 </Header>
                 <Main>
-                  <BreadCrumb />
+                  <BreadCrumb customLabels={breadcrumbLabels} />
                   {children}
                 </Main>
                 <Toaster />

@@ -6,6 +6,7 @@ import {
   PaymentValidationResult,
   TransactionSummary,
   TransactionPaginationParams,
+  DiscountType,
 } from '@/lib/types/transaction';
 import prisma from '@/lib/prisma';
 import { calculateMemberPoints } from './setting.service';
@@ -30,11 +31,7 @@ export class TransactionService {
       include: {
         batches: true,
         unit: true,
-        discountRelationProduct: {
-          include: {
-            discount: true,
-          },
-        },
+        discounts: true, // Updated to use the direct many-to-many relationship
       },
     });
 
@@ -88,7 +85,15 @@ export class TransactionService {
         basicPrice: product.price,
         buyPrice: validBatch.buyPrice,
         quantity: cartItem.quantity,
-        discount: value ? { id: discountId!, value, type: valueType! } : null,
+        discount: value
+          ? {
+              id: discountId!,
+              value,
+              type: valueType!,
+              valueType:
+                valueType === 'percentage' ? 'PERCENTAGE' : 'FIXED_AMOUNT',
+            }
+          : null,
         discountedPrice: finalPrice,
         subtotal,
       });
@@ -117,23 +122,25 @@ export class TransactionService {
 
     // Check for selected discount
     if (selectedDiscountId) {
-      const discountRelation = product.discountRelationProduct.find(
-        (dr: any) => dr.discountId === selectedDiscountId,
+      const discount = product.discounts?.find(
+        (d: any) => d.id === selectedDiscountId,
       );
 
-      if (discountRelation?.discount) {
-        value = discountRelation.discount.value;
-        valueType = discountRelation.discount.valueType;
-        discountId = discountRelation.discountId;
+      if (discount) {
+        value = discount.value;
+        // Map Prisma enum to internal string representation
+        valueType = discount.type === 'PERCENTAGE' ? 'percentage' : 'flat';
+        discountId = discount.id;
       }
     }
     // Otherwise use first available discount
-    else if (product.discountRelationProduct?.length > 0) {
-      const firstDiscount = product.discountRelationProduct[0];
-      if (firstDiscount?.discount) {
-        value = firstDiscount.discount.value;
-        valueType = firstDiscount.discount.valueType;
-        discountId = firstDiscount.discountId;
+    else if (product.discounts?.length > 0) {
+      const firstDiscount = product.discounts[0];
+      if (firstDiscount) {
+        value = firstDiscount.value;
+        // Map Prisma enum to internal string representation
+        valueType = firstDiscount.type === 'PERCENTAGE' ? 'percentage' : 'flat';
+        discountId = firstDiscount.id;
       }
     }
 
@@ -200,37 +207,33 @@ export class TransactionService {
     const member = await prisma.member.findUnique({
       where: { id: memberId },
       include: {
-        discountRelationsMember: {
-          include: {
-            discount: true,
-          },
-        },
+        discounts: true,
       },
     });
 
     if (!member) return null;
 
     // If no selected discount or no discounts available
-    if (!selectedMemberDiscountId || !member.discountRelationsMember?.length) {
+    if (!selectedMemberDiscountId || !member.discounts?.length) {
       return { id: memberId, name: member.name, discount: null };
     }
 
     // Find the selected discount
-    const discountRelation = member.discountRelationsMember.find(
-      (dr) => dr.discountId === selectedMemberDiscountId,
+    const discount = member.discounts.find(
+      (d) => d.id === selectedMemberDiscountId,
     );
 
-    if (!discountRelation?.discount) {
+    if (!discount) {
       return { id: memberId, name: member.name, discount: null };
     }
 
-    const { valueType, value } = discountRelation.discount;
+    const { type, value } = discount;
 
     // Calculate discount amount
     const discountAmount =
-      valueType === 'percentage'
+      type === 'PERCENTAGE'
         ? (value * subtotal) / 100
-        : valueType === 'flat'
+        : type === 'FIXED_AMOUNT'
         ? value
         : 0;
 
@@ -240,9 +243,9 @@ export class TransactionService {
       discount:
         discountAmount > 0
           ? {
-              id: discountRelation.discountId,
+              id: discount.id,
               value,
-              type: valueType,
+              type: type as DiscountType,
               amount: discountAmount,
             }
           : null,
@@ -463,9 +466,7 @@ export class TransactionService {
         tranId,
         cashierId: data.cashierId,
         memberId: transactionData.member?.id || null,
-        discountMemberId: transactionData.member?.discount?.id || null,
-        discountValueType: transactionData.member?.discount?.type || null,
-        discountValue: transactionData.member?.discount?.value || null,
+        discountId: transactionData.member?.discount?.id || null,
         discountAmount: transactionData.member?.discount?.amount || null,
         totalAmount: transactionData.subtotal,
         finalAmount: transactionData.finalAmount,
@@ -480,13 +481,36 @@ export class TransactionService {
             cost: item.cost,
             pricePerUnit: item.basicPrice,
             discountId: item.discountId,
-            discountValue: item.discountValue || null,
-            discountValueType: item.discountValueType || null,
+            discountAmount: this.calculateDiscountAmount(
+              item.basicPrice,
+              item.quantity,
+              item.discountValue,
+              item.discountValueType,
+            ),
             subtotal: item.subtotal,
           })),
         },
       },
     });
+  }
+
+  // Helper method to calculate discount amount
+  private static calculateDiscountAmount(
+    price: number,
+    quantity: number,
+    discountValue: number | null,
+    discountType: string | null,
+  ): number | null {
+    if (!discountValue || !discountType) return null;
+
+    const totalPrice = price * quantity;
+    if (discountType === 'percentage' || discountType === 'PERCENTAGE') {
+      return (discountValue * totalPrice) / 100;
+    }
+    if (discountType === 'flat' || discountType === 'FIXED_AMOUNT') {
+      return discountValue * quantity;
+    }
+    return null;
   }
 
   private static async processMemberPoints(
@@ -681,8 +705,8 @@ export class TransactionService {
               pricePerUnit: true,
               quantity: true,
               discountAmount: true,
-              discountValue: true,
-              discountValueType: true,
+              discountId: true,
+              discount: true,
             },
           },
           memberPoints: { select: { pointsEarned: true } },
@@ -706,12 +730,6 @@ export class TransactionService {
         if (item.discountAmount !== null) {
           return sum + item.discountAmount;
         }
-        if (item.discountValue && item.discountValueType) {
-          const itemTotal = item.pricePerUnit * item.quantity;
-          return item.discountValueType === 'percentage'
-            ? sum + Math.round((itemTotal * item.discountValue) / 100)
-            : sum + item.discountValue;
-        }
         return sum;
       }, 0);
 
@@ -724,11 +742,11 @@ export class TransactionService {
         cashier: transaction.cashier,
         member: transaction.member,
         pricing: {
-          originalAmount, // Total sebelum diskon
-          memberDiscount, // Diskon member
-          productDiscounts, // Total diskon produk
-          totalDiscount: memberDiscount + productDiscounts, // Total semua diskon
-          finalAmount: transaction.finalAmount, // Total setelah diskon
+          originalAmount,
+          memberDiscount,
+          productDiscounts,
+          totalDiscount: memberDiscount + productDiscounts,
+          finalAmount: transaction.finalAmount,
         },
         payment: {
           method: transaction.paymentMethod,
@@ -771,7 +789,7 @@ export class TransactionService {
           member: {
             include: {
               tier: true,
-              discountRelationsMember: { include: { discount: true } },
+              discounts: true,
             },
           },
           items: {
@@ -783,38 +801,23 @@ export class TransactionService {
                       category: true,
                       brand: true,
                       unit: true,
-                      discountRelationProduct: { include: { discount: true } },
+                      discounts: true,
                     },
                   },
                 },
               },
               unit: true,
+              discount: true,
             },
           },
           memberPoints: true,
+          discount: true,
         },
       });
 
       if (!transaction) {
         return { success: false, message: 'Transaction not found' };
       }
-
-      // Get all discount details
-      const discountIds = [
-        ...(transaction.discountMemberId ? [transaction.discountMemberId] : []),
-        ...(transaction.items
-          .map((item) => item.discountId)
-          .filter(Boolean) as string[]),
-      ];
-
-      const discounts =
-        discountIds.length > 0
-          ? await prisma.discount.findMany({
-              where: { id: { in: discountIds } },
-            })
-          : [];
-
-      const discountMap = new Map(discounts.map((d) => [d.id, d]));
 
       // Process items and calculate pricing
       let originalAmount = 0;
@@ -824,19 +827,11 @@ export class TransactionService {
         const itemTotal = item.pricePerUnit * item.quantity;
         originalAmount += itemTotal;
 
-        const appliedDiscount = item.discountId
-          ? discountMap.get(item.discountId)
-          : null;
+        // Get discount information directly from the item
+        const appliedDiscount = item.discount;
 
         // Calculate discount amount for item
-        let discountAmount = 0;
-        if (appliedDiscount && item.discountValueType && item.discountValue) {
-          if (item.discountValueType === 'percentage') {
-            discountAmount = Math.round((itemTotal * item.discountValue) / 100);
-          } else if (item.discountValueType === 'flat') {
-            discountAmount = item.discountValue * item.quantity;
-          }
-        }
+        let discountAmount = item.discountAmount || 0;
         productDiscounts += discountAmount;
 
         return {
@@ -854,9 +849,8 @@ export class TransactionService {
             ? {
                 id: appliedDiscount.id,
                 name: appliedDiscount.name,
-                type: appliedDiscount.discountType,
-                valueType: item.discountValueType,
-                value: item.discountValue,
+                type: appliedDiscount.type,
+                value: appliedDiscount.value,
                 amount: discountAmount,
                 discountedAmount: itemTotal - discountAmount,
               }
@@ -874,13 +868,12 @@ export class TransactionService {
           }
         : null;
 
-      const memberDiscount = transaction.discountMemberId
+      const memberDiscount = transaction.discount
         ? {
             type: 'member',
-            name:
-              discountMap.get(transaction.discountMemberId)?.name || 'Unknown',
-            valueType: transaction.discountValueType,
-            value: transaction.discountValue,
+            name: transaction.discount.name,
+            valueType: transaction.discount.type,
+            value: transaction.discount.value,
             amount: transaction.discountAmount || 0,
           }
         : null;
