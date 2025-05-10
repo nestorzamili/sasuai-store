@@ -15,8 +15,11 @@ export class DashboardService {
 
     // Process dates - either use provided dates or defaults
     const dates =
-      dateFilter?.startDate && dateFilter?.endDate
-        ? dateToCompare(dateFilter.startDate, dateFilter.endDate)
+      dateFilter?.startDate || dateFilter?.endDate
+        ? dateToCompare(
+            dateFilter.startDate || defaultStart,
+            dateFilter.endDate || defaultEnd
+          )
         : dateToCompare(defaultStart, defaultEnd);
 
     // Format all dates at once
@@ -369,6 +372,62 @@ export class DashboardService {
       return {
         success: false,
         error: 'Failed to retrieve sales statistics',
+      };
+    }
+  }
+  static async getTopPaymentMethods(dateFilter?: DateFilter) {
+    // Default dates if no filter provided
+    const defaultStart = '2024-09-01';
+    const defaultEnd = '2024-09-02';
+    // Process dates - either use provided dates or defaults
+    const dates =
+      dateFilter?.startDate || dateFilter?.endDate
+        ? dateToCompare(
+            dateFilter.startDate || defaultStart,
+            dateFilter.endDate || defaultEnd
+          )
+        : dateToCompare(defaultStart, defaultEnd);
+
+    // Format all dates at once
+    const [startDate, endDate, prevStartDate, prevEndDate] = [
+      dates.current.startDate,
+      dates.current.endDate,
+      dates.previous.startDate,
+      dates.previous.endDate,
+    ].map((date) => format(date, 'yyyy-MM-dd'));
+    console.log('dates', dates);
+    try {
+      const paymentMethods = await prisma.transaction
+        .groupBy({
+          by: ['paymentMethod'],
+          _count: {
+            paymentMethod: true,
+          },
+          where: {
+            createdAt: {
+              gte: new Date(startDate),
+              lte: new Date(endDate),
+            },
+          },
+        })
+        .then((results) =>
+          results.map((item) => ({
+            type: item.paymentMethod,
+            total: item._count.paymentMethod,
+          }))
+        );
+      console.log('dateFilter', dateFilter?.startDate);
+      console.log('startDate', startDate);
+      console.log('Payment Methods:', paymentMethods);
+      return {
+        success: true,
+        data: paymentMethods,
+      };
+    } catch (error) {
+      console.error('Error getting top payment methods:', error);
+      return {
+        success: false,
+        error: error,
       };
     }
   }

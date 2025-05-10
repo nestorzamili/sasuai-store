@@ -25,6 +25,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { formatDate, formatTime } from '@/lib/date';
+import { DateFilter } from '@/lib/types/filter';
 // Lazy load components for better initial load time
 const SalesTrend = lazy(() =>
   import('./components/_parts/chart-sales-trend').then((mod) => ({
@@ -127,7 +128,7 @@ export default function Dashboard() {
       margin: { value: 0, growth: 0 },
     }
   );
-  const [filter, setFilter] = useState({
+  const [filter, setFilter] = useState<DateFilter>({
     startDate: new Date(currentDateTime.date),
     endDate: new Date(currentDateTime.date),
   });
@@ -164,7 +165,7 @@ export default function Dashboard() {
     }
   };
   const handleRefresh = () => {
-    fetchMetricPerformance();
+    // fetchMetricPerformance();
   };
 
   const filterOnChange = (date: any) => {
@@ -176,7 +177,7 @@ export default function Dashboard() {
   useEffect(() => {
     // Use AbortController for fetch cleanup
     const abortController = new AbortController();
-    fetchMetricPerformance();
+    // fetchMetricPerformance();
     return () => {
       abortController.abort(); // Cancel any in-flight requests when component unmounts
     };
@@ -320,7 +321,7 @@ export default function Dashboard() {
         {/* Main content area with more detailed analytics */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main column - 2/3 width on large screens */}
-          <div className="lg:col-span-2 space-y-8">
+          <div className="lg:col-span-3 space-y-8">
             {/* Sales trend - prioritized as most important chart */}
             <section aria-label="Sales Trend Analysis">
               <SalesTrend />
@@ -331,13 +332,28 @@ export default function Dashboard() {
             </section> */}
             {/* Product and Category Analysis */}
             <section aria-label="Products and Categories">
-              <div className="mb-4 flex items-center gap-2">
-                <Percent className="h-5 w-5 text-primary" />
-                <h2 className="text-xl font-semibold">Sales Analysis</h2>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {/* <PaymentMethod filter={filter} /> */}
                 <SalesCategory />
-                <PaymentMethod />
+                <section aria-label="Time Analysis" className="space-y-4">
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle>Peak Sales Time</CardTitle>
+                      <CardDescription>Most active time of day</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">11:00 WIB</div>
+                      <p className="text-sm text-muted-foreground">
+                        Highest transaction volume
+                      </p>
+                    </CardContent>
+                  </Card>
+                  {/* <MemberActivities /> */}
+                </section>
+                <TopSellingProduct filter={filter} />
+                <TopMember />
+                <TopDiscount />
+                <LowProductStock />
               </div>
             </section>
           </div>
@@ -345,42 +361,10 @@ export default function Dashboard() {
           <div className="lg:col-span-1 space-y-8">
             {/* Top Performers Section */}
             <section aria-label="Top Performers">
-              <div className="space-y-4">
-                <TopSellingProduct />
-                <TopMember />
-              </div>
+              <div className="space-y-4"></div>
             </section>
-            {/* Attention Required Section */}
-            <section
-              aria-label="Attention Required"
-              className="bg-card rounded-xl p-5 shadow-sm border"
-            >
-              <div className="mb-4">
-                <h2 className="text-xl font-semibold text-amber-500">
-                  Attention Required
-                </h2>
-              </div>
-              <div className="space-y-4">
-                <LowProductStock />
-                <TopDiscount />
-              </div>
-            </section>
+
             {/* Time Analysis & Recent Activity */}
-            <section aria-label="Time Analysis" className="space-y-4">
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle>Peak Sales Time</CardTitle>
-                  <CardDescription>Most active time of day</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">11:00 WIB</div>
-                  <p className="text-sm text-muted-foreground">
-                    Highest transaction volume
-                  </p>
-                </CardContent>
-              </Card>
-              <MemberActivities />
-            </section>
           </div>
         </div>
       </div>
