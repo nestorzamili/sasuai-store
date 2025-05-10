@@ -1,23 +1,20 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { getAllRewardsWithClaimCount } from './actions';
-import { RewardWithClaimCount } from '@/lib/types/reward';
+import { useState } from 'react';
 import RewardPrimaryButton from './_components/reward-primary-button';
-import { toast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { IconGift } from '@tabler/icons-react';
-import { RewardListView } from './_components/reward-list-view';
+import { RewardTable } from './_components/reward-table';
 import { RewardDeleteDialog } from './_components/reward-delete-dialog';
 import RewardFormDialog from './_components/reward-form-dialog';
 import { ClaimRewardDialog } from './_components/claim-reward-dialog';
 import { RewardClaimsTable } from './_components/reward-claims-table';
+import { RewardWithClaimCount } from '@/lib/types/reward';
 
 export default function RewardsPage() {
-  const [isLoading, setIsLoading] = useState(true);
-  const [rewards, setRewards] = useState<RewardWithClaimCount[]>([]);
   const [activeTab, setActiveTab] = useState('rewards');
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // State for Dialogs
   const [isFormDialogOpen, setIsFormDialogOpen] = useState(false);
@@ -29,38 +26,6 @@ export default function RewardsPage() {
     useState<RewardWithClaimCount | null>(null);
   const [selectedRewardForDelete, setSelectedRewardForDelete] =
     useState<RewardWithClaimCount | null>(null);
-
-  // Fetch initial rewards data
-  const fetchRewards = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const { data, success } = await getAllRewardsWithClaimCount();
-      if (success && data) {
-        const rewardData = (data as RewardWithClaimCount[]) || [];
-        setRewards(rewardData);
-      } else {
-        toast({
-          title: 'Error',
-          description: 'Failed to fetch rewards',
-          variant: 'destructive',
-        });
-        setRewards([]);
-      }
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'An unexpected error occurred while fetching rewards',
-        variant: 'destructive',
-      });
-      setRewards([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchRewards();
-  }, [fetchRewards]);
 
   // Handlers for opening dialogs
   const handleOpenCreateDialog = () => {
@@ -89,7 +54,7 @@ export default function RewardsPage() {
     setIsClaimDialogOpen(false);
     setSelectedRewardForEdit(null);
     setSelectedRewardForDelete(null);
-    fetchRewards();
+    setRefreshTrigger((prev) => prev + 1);
   };
 
   return (
@@ -130,21 +95,17 @@ export default function RewardsPage() {
         </TabsList>
 
         {/* Rewards Tab */}
-        <TabsContent value="rewards" className="mt-6">
-          <RewardListView
-            rewards={rewards}
-            isLoading={isLoading}
+        <TabsContent value="rewards" className="mt-4">
+          <RewardTable
+            key={`reward-table-${refreshTrigger}`}
             onEdit={handleOpenEditDialog}
             onDelete={handleOpenDeleteDialog}
-            onRefresh={fetchRewards}
           />
         </TabsContent>
 
         {/* Claims History Tab */}
-        <TabsContent value="claims" className="mt-2">
-          <div className="space-y-4">
-            <RewardClaimsTable />
-          </div>
+        <TabsContent value="claims" className="mt-4">
+          <RewardClaimsTable />
         </TabsContent>
       </Tabs>
 
