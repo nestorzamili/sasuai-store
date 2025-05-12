@@ -17,7 +17,9 @@ import {
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from '@/hooks/use-toast';
-import { IconPrinter, IconReceipt } from '@tabler/icons-react';
+import { IconDownload } from '@tabler/icons-react';
+import { BlobProvider } from '@react-pdf/renderer';
+import { TransactionPDF } from './transaction-genarate-pdf';
 
 interface TransactionDetailDialogProps {
   open: boolean;
@@ -32,6 +34,7 @@ export function TransactionDetailDialog({
 }: TransactionDetailDialogProps) {
   const [transaction, setTransaction] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [isPdfGenerating, setIsPdfGenerating] = useState(false);
 
   useEffect(() => {
     const fetchTransactionDetails = async () => {
@@ -64,44 +67,11 @@ export function TransactionDetailDialog({
     fetchTransactionDetails();
   }, [open, transactionId]);
 
-  const handlePrint = () => {
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) return;
-
-    const printContent = document.getElementById(
-      'transaction-details',
-    )?.innerHTML;
-
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>Transaction Receipt: ${transaction?.tranId || ''}</title>
-          <style>
-            body { font-family: Arial, sans-serif; padding: 20px; }
-            table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-            th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
-            th { background-color: #f3f4f6; }
-            .text-right { text-align: right; }
-            .font-bold { font-weight: bold; }
-          </style>
-        </head>
-        <body>
-          ${printContent || ''}
-        </body>
-      </html>
-    `);
-
-    printWindow.document.close();
-    printWindow.focus();
-    setTimeout(() => printWindow.print(), 250);
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <IconReceipt className="h-5 w-5" />
             {!loading && transaction
               ? `Transaction Receipt: ${transaction.tranId}`
               : 'Transaction Receipt'}
@@ -119,17 +89,6 @@ export function TransactionDetailDialog({
             </div>
           ) : transaction ? (
             <div className="space-y-6" id="transaction-details">
-              {/* Transaction ID */}
-              <div className="text-sm text-muted-foreground">
-                <div className="flex justify-between items-center">
-                  <span>
-                    Transaction ID: <strong>{transaction.tranId}</strong>
-                  </span>
-                  <span>Internal ID: {transaction.id}</span>
-                </div>
-              </div>
-
-              {/* Meta Information */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-2">
                 <div className="space-y-3">
                   <div>
@@ -418,10 +377,46 @@ export function TransactionDetailDialog({
             Close
           </Button>
           {!loading && transaction && (
-            <Button onClick={handlePrint}>
-              <IconPrinter className="h-4 w-4 mr-2" />
-              Print
-            </Button>
+            <>
+              {isPdfGenerating ? (
+                <BlobProvider
+                  document={<TransactionPDF transaction={transaction} />}
+                >
+                  {({ url, loading: pdfLoading, error }) => (
+                    <Button
+                      disabled={pdfLoading}
+                      onClick={() => {
+                        if (error) {
+                          toast({
+                            title: 'Error',
+                            description: 'Failed to generate PDF',
+                            variant: 'destructive',
+                          });
+                          setIsPdfGenerating(false);
+                          return;
+                        }
+
+                        if (url) {
+                          const link = document.createElement('a');
+                          link.href = url;
+                          link.download = `receipt-${transaction.tranId}.pdf`;
+                          link.click();
+                        }
+                        setIsPdfGenerating(false);
+                      }}
+                    >
+                      <IconDownload className="h-4 w-4 mr-2" />
+                      {pdfLoading ? 'Generating PDF...' : 'Download PDF'}
+                    </Button>
+                  )}
+                </BlobProvider>
+              ) : (
+                <Button onClick={() => setIsPdfGenerating(true)}>
+                  <IconDownload className="h-4 w-4 mr-2" />
+                  Download PDF
+                </Button>
+              )}
+            </>
           )}
         </DialogFooter>
       </DialogContent>
