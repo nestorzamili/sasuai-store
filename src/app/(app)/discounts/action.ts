@@ -3,7 +3,6 @@
 import { revalidatePath } from 'next/cache';
 import { DiscountService } from '@/lib/services/discount.service';
 import { ProductService } from '@/lib/services/product.service';
-import { MemberService } from '@/lib/services/member.service';
 import { DiscountData, DiscountPaginationParams } from '@/lib/types/discount';
 import { z } from 'zod';
 import { errorHandling } from '@/lib/common/response-formatter';
@@ -168,15 +167,7 @@ export async function getProductsForSelection(search?: string) {
  */
 export async function getMembersForSelection(search?: string) {
   try {
-    const result = await MemberService.search({
-      query: search || '',
-      page: 1,
-      limit: 50,
-      sortBy: 'name',
-      sortDirection: 'asc',
-    });
-
-    return result.members;
+    return await DiscountService.getMembersForSelection(search);
   } catch (error) {
     return errorHandling({
       message: 'Failed to fetch members',
@@ -184,7 +175,6 @@ export async function getMembersForSelection(search?: string) {
     });
   }
 }
-
 /**
  * Get member tiers for discount selection
  */

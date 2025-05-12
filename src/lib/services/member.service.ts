@@ -5,20 +5,8 @@ import { options } from '@/lib/types/table';
 import { buildQueryOptions } from '../common/query-options';
 export class MemberService {
   /**
-   * Get all members
+   * Get all members with pagination/sort/search/filter
    */
-  static async getAll() {
-    return prisma.member.findMany({
-      include: {
-        tier: true,
-      },
-      orderBy: {
-        name: 'asc',
-      },
-    });
-  }
-  // optimalize get member
-
   static async getAllOptimalize(queryOptions?: options) {
     const options = buildQueryOptions(queryOptions);
     const [member, count] = await Promise.all([

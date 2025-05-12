@@ -21,13 +21,15 @@ export default function MemberSelector({
   selectedIds,
   onChange,
 }: MemberSelectorProps) {
-  const fetchMembers = async (search: string) => {
+  const fetchMembers = async (
+    search: string,
+  ): Promise<{ success: boolean; data?: Member[] }> => {
     try {
-      const members = await getMembersForSelection(search);
-      if (Array.isArray(members)) {
+      const response = await getMembersForSelection(search);
+      if (response.success && response.members) {
         return {
           success: true,
-          data: members,
+          data: response.members,
         };
       }
       return {
@@ -36,7 +38,10 @@ export default function MemberSelector({
       };
     } catch (error) {
       console.error('Error fetching members:', error);
-      return { success: false, data: [] };
+      return {
+        success: false,
+        data: [],
+      };
     }
   };
 

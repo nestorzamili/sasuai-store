@@ -20,6 +20,7 @@ import { DiscountFormValues } from '../../schema';
 import ProductSelector from './product-selector';
 import MemberSelector from './member-selector';
 import TierSelector from './tier-selector';
+import { useMemo } from 'react';
 
 interface ApplicationScopeProps {
   form: UseFormReturn<DiscountFormValues>;
@@ -28,6 +29,88 @@ interface ApplicationScopeProps {
 export default function ApplicationScope({ form }: ApplicationScopeProps) {
   const isGlobal = form.watch('isGlobal');
   const applyTo = form.watch('applyTo');
+
+  // Memoize the selector components to prevent unnecessary re-renders
+  const ProductSelectorMemoized = useMemo(() => {
+    if (!isGlobal && applyTo === DiscountApplyTo.SPECIFIC_PRODUCTS) {
+      return (
+        <FormField
+          control={form.control}
+          name="productIds"
+          render={({ field }) => (
+            <FormItem className="border rounded-md p-4">
+              <FormLabel className="text-base">Select Products</FormLabel>
+              <FormDescription className="mt-1 mb-3">
+                Choose which products this discount will apply to
+              </FormDescription>
+              <FormControl>
+                <ProductSelector
+                  selectedIds={field.value || []}
+                  onChange={field.onChange}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      );
+    }
+    return null;
+  }, [form, isGlobal, applyTo]);
+
+  const MemberSelectorMemoized = useMemo(() => {
+    if (!isGlobal && applyTo === DiscountApplyTo.SPECIFIC_MEMBERS) {
+      return (
+        <FormField
+          control={form.control}
+          name="memberIds"
+          render={({ field }) => (
+            <FormItem className="border rounded-md p-4">
+              <FormLabel className="text-base">Select Members</FormLabel>
+              <FormDescription className="mt-1 mb-3">
+                Choose which members will be eligible for this discount
+              </FormDescription>
+              <FormControl>
+                <MemberSelector
+                  selectedIds={field.value || []}
+                  onChange={field.onChange}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      );
+    }
+    return null;
+  }, [form, isGlobal, applyTo]);
+
+  const TierSelectorMemoized = useMemo(() => {
+    if (!isGlobal && applyTo === DiscountApplyTo.SPECIFIC_MEMBER_TIERS) {
+      return (
+        <FormField
+          control={form.control}
+          name="memberTierIds"
+          render={({ field }) => (
+            <FormItem className="border rounded-md p-4">
+              <FormLabel className="text-base">Select Member Tiers</FormLabel>
+              <FormDescription className="mt-1 mb-3">
+                Choose which membership tiers will be eligible for this discount
+              </FormDescription>
+              <FormControl>
+                <TierSelector
+                  selectedIds={field.value || []}
+                  onChange={field.onChange}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      );
+    }
+    return null;
+  }, [form, isGlobal, applyTo]);
 
   return (
     <div className="space-y-6">
@@ -93,72 +176,9 @@ export default function ApplicationScope({ form }: ApplicationScopeProps) {
           )}
         />
 
-        {!isGlobal && applyTo === DiscountApplyTo.SPECIFIC_PRODUCTS && (
-          <FormField
-            control={form.control}
-            name="productIds"
-            render={({ field }) => (
-              <FormItem className="border rounded-md p-4">
-                <FormLabel className="text-base">Select Products</FormLabel>
-                <FormDescription className="mt-1 mb-3">
-                  Choose which products this discount will apply to
-                </FormDescription>
-                <FormControl>
-                  <ProductSelector
-                    selectedIds={field.value || []}
-                    onChange={field.onChange}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        )}
-
-        {!isGlobal && applyTo === DiscountApplyTo.SPECIFIC_MEMBERS && (
-          <FormField
-            control={form.control}
-            name="memberIds"
-            render={({ field }) => (
-              <FormItem className="border rounded-md p-4">
-                <FormLabel className="text-base">Select Members</FormLabel>
-                <FormDescription className="mt-1 mb-3">
-                  Choose which members will be eligible for this discount
-                </FormDescription>
-                <FormControl>
-                  <MemberSelector
-                    selectedIds={field.value || []}
-                    onChange={field.onChange}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        )}
-
-        {!isGlobal && applyTo === DiscountApplyTo.SPECIFIC_MEMBER_TIERS && (
-          <FormField
-            control={form.control}
-            name="memberTierIds"
-            render={({ field }) => (
-              <FormItem className="border rounded-md p-4">
-                <FormLabel className="text-base">Select Member Tiers</FormLabel>
-                <FormDescription className="mt-1 mb-3">
-                  Choose which membership tiers will be eligible for this
-                  discount
-                </FormDescription>
-                <FormControl>
-                  <TierSelector
-                    selectedIds={field.value || []}
-                    onChange={field.onChange}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        )}
+        {ProductSelectorMemoized}
+        {MemberSelectorMemoized}
+        {TierSelectorMemoized}
       </div>
     </div>
   );

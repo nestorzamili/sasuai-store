@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { X, Search, Loader2 } from 'lucide-react';
@@ -54,12 +54,15 @@ export default function EntitySelector<T extends Entity>({
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(false);
   const [initialLoad, setInitialLoad] = useState(true);
+  const [fetchedSelectedIds, setFetchedSelectedIds] = useState<string[]>([]);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const initialLoadRef = useRef(true);
 
   // Default columns if none provided
-  const defaultColumns = [{ header: 'Name', accessor: 'name' }];
-
-  const tableColumns = columns || defaultColumns;
+  const tableColumns = useMemo(
+    () => columns || [{ header: 'Name', accessor: 'name' }],
+    [columns],
+  );
 
   // Helper function to fetch missing items by ID
   const fetchMissingItems = async (missingIds: string[]): Promise<T[]> => {
@@ -81,8 +84,18 @@ export default function EntitySelector<T extends Entity>({
     return results.flat();
   };
 
-  // Load items on initial render
+  // Compare selected IDs to see if they've changed
+  const selectedIdsChanged = useMemo(() => {
+    if (selectedIds.length !== fetchedSelectedIds.length) return true;
+    return selectedIds.some((id) => !fetchedSelectedIds.includes(id));
+  }, [selectedIds, fetchedSelectedIds]);
+
+  // Load items on initial render or when selected IDs change significantly
   useEffect(() => {
+    if (!initialLoadRef.current && !selectedIdsChanged) {
+      return; // Skip if not initial load and selected IDs haven't changed
+    }
+
     const fetchInitialItems = async () => {
       setLoading(true);
       try {
@@ -96,49 +109,66 @@ export default function EntitySelector<T extends Entity>({
               selectedIds.includes(item.id),
             );
 
-            if (selectedItemsFromResponse.length === selectedIds.length) {
-              setSelectedItems(selectedItemsFromResponse);
-            } else {
-              // Some items weren't in the initial load, fetch them individually
+            // Only fetch missing items if necessary
+            if (selectedItemsFromResponse.length !== selectedIds.length) {
+              const foundIds = selectedItemsFromResponse.map((item) => item.id);
               const missingIds = selectedIds.filter(
-                (id) => !selectedItemsFromResponse.some((i) => i.id === id),
+                (id) => !foundIds.includes(id),
               );
 
-              const missingItems = await fetchMissingItems(missingIds);
-              setSelectedItems([...selectedItemsFromResponse, ...missingItems]);
+              if (missingIds.length > 0) {
+                const missingItems = await fetchMissingItems(missingIds);
+                setSelectedItems([
+                  ...selectedItemsFromResponse,
+                  ...missingItems,
+                ]);
+              } else {
+                setSelectedItems(selectedItemsFromResponse);
+              }
+            } else {
+              setSelectedItems(selectedItemsFromResponse);
             }
+          } else {
+            setSelectedItems([]);
           }
+
+          // Store fetched IDs to avoid unnecessary refetches
+          setFetchedSelectedIds(selectedIds);
         }
       } catch (error) {
         console.error('Error fetching items:', error);
       } finally {
         setLoading(false);
         setInitialLoad(false);
+        initialLoadRef.current = false;
       }
     };
 
     fetchInitialItems();
-  }, []);
+  }, [fetchItems, selectedIds, selectedIdsChanged]);
 
-  // Handle search input change
-  const handleSearchChange = async (value: string) => {
-    setSearch(value);
-    setLoading(true);
+  // Handle search input change - memoize to avoid unnecessary re-renders
+  const handleSearchChange = useMemo(
+    () => async (value: string) => {
+      setSearch(value);
+      setLoading(true);
 
-    try {
-      const response = await fetchItems(value);
-      if (response.success && response.data) {
-        setItems(response.data);
-      } else {
+      try {
+        const response = await fetchItems(value);
+        if (response.success && response.data) {
+          setItems(response.data);
+        } else {
+          setItems([]);
+        }
+      } catch (error) {
+        console.error('Error searching items:', error);
         setItems([]);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Error searching items:', error);
-      setItems([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    [fetchItems],
+  );
 
   // Function to handle barcode search on Enter key
   const handleKeyDown = async (e: React.KeyboardEvent) => {
@@ -214,6 +244,20 @@ export default function EntitySelector<T extends Entity>({
     }
   }, [open]);
 
+  // If search value changes, do the search
+  useEffect(() => {
+    if (search !== '') {
+      // Using a reference to avoid stale closures
+      const currentSearch = search;
+      const timer = setTimeout(() => {
+        if (currentSearch === search) {
+          handleSearchChange(search);
+        }
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [search, handleSearchChange]);
+
   return (
     <div className="space-y-4">
       <div className="flex gap-2">
@@ -237,7 +281,7 @@ export default function EntitySelector<T extends Entity>({
               <CommandInput
                 placeholder={placeholder}
                 value={search}
-                onValueChange={handleSearchChange}
+                onValueChange={setSearch}
                 onKeyDown={handleKeyDown}
                 ref={searchInputRef}
               />
