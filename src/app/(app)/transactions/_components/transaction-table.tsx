@@ -3,7 +3,15 @@
 import * as React from 'react';
 import { useState } from 'react';
 import { ColumnDef } from '@tanstack/react-table';
-import { MoreHorizontal, Eye, CreditCard } from 'lucide-react';
+import { MoreHorizontal, Eye } from 'lucide-react';
+import {
+  IconCash,
+  IconCreditCard,
+  IconWallet,
+  IconQrcode,
+  IconBuildingBank,
+  IconDots,
+} from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -19,6 +27,19 @@ import { getPaginatedTransactions } from '../action';
 import { formatRupiah } from '@/lib/currency';
 import { TableFetchOptions } from '@/hooks/use-fetch';
 import { TransactionDetailDialog } from './transaction-detail-dialog';
+import { DateRange } from 'react-day-picker';
+import {
+  startOfDay,
+  endOfDay,
+  subDays,
+  startOfWeek,
+  endOfWeek,
+  startOfMonth,
+  endOfMonth,
+  startOfYear,
+  endOfYear,
+} from 'date-fns';
+import TransactionFilterToolbar from './transaction-filter-toolbar';
 
 interface Transaction {
   id: string;
@@ -45,21 +66,25 @@ interface TransactionTableProps {
 }
 
 const paymentMethodIcons: Record<string, React.ReactNode> = {
-  CASH: <CreditCard size={16} className="text-muted-foreground" />,
-  CREDIT_CARD: <CreditCard size={16} className="text-muted-foreground" />,
-  DEBIT_CARD: <CreditCard size={16} className="text-muted-foreground" />,
-  TRANSFER: <CreditCard size={16} className="text-muted-foreground" />,
+  CASH: <IconCash size={16} className="text-muted-foreground" />,
+  DEBIT: <IconCreditCard size={16} className="text-muted-foreground" />,
+  E_WALLET: <IconWallet size={16} className="text-muted-foreground" />,
+  QRIS: <IconQrcode size={16} className="text-muted-foreground" />,
+  TRANSFER: <IconBuildingBank size={16} className="text-muted-foreground" />,
+  OTHER: <IconDots size={16} className="text-muted-foreground" />,
 };
 
-export function TransactionTable({
-  onRefresh,
-  onSelectionChange,
-}: TransactionTableProps) {
+export function TransactionTable({}: TransactionTableProps) {
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [selectedTransactionId, setSelectedTransactionId] = useState<
     string | null
   >(null);
-  const [selectedRows, setSelectedRows] = useState<Transaction[]>([]);
+
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+
+  const [minAmount, setMinAmount] = useState<string>('');
+  const [maxAmount, setMaxAmount] = useState<string>('');
+  const [paymentMethod, setPaymentMethod] = useState<string>('ALL_METHODS');
 
   const fetchTransactions = async (
     options: TableFetchOptions,
@@ -67,12 +92,50 @@ export function TransactionTable({
     data: Transaction[];
     totalRows: number;
   }> => {
+    let startDate: Date | undefined;
+    let endDate: Date | undefined;
+
+    if (
+      options.filters?.dateRange &&
+      typeof options.filters.dateRange === 'object'
+    ) {
+      const range = options.filters.dateRange as DateRange;
+      if (range.from) {
+        startDate = startOfDay(range.from);
+      }
+      if (range.to) {
+        endDate = endOfDay(range.to);
+      }
+    }
+
+    let minAmountValue: number | undefined;
+    let maxAmountValue: number | undefined;
+
+    if (
+      options.filters?.minAmount &&
+      !isNaN(parseFloat(options.filters.minAmount as string))
+    ) {
+      minAmountValue = parseFloat(options.filters.minAmount as string);
+    }
+
+    if (
+      options.filters?.maxAmount &&
+      !isNaN(parseFloat(options.filters.maxAmount as string))
+    ) {
+      maxAmountValue = parseFloat(options.filters.maxAmount as string);
+    }
+
     const response = await getPaginatedTransactions({
       page: (options.page ?? 0) + 1,
       pageSize: options.limit ?? 10,
       sortField: options.sortBy?.id || 'createdAt',
       sortDirection: options.sortBy?.desc ? 'desc' : 'asc',
       search: options.search,
+      paymentMethod: options.filters?.paymentMethod as string,
+      startDate,
+      endDate,
+      minAmount: minAmountValue,
+      maxAmount: maxAmountValue,
     });
 
     const transactions: Transaction[] = (response.data || []).map(
@@ -112,8 +175,8 @@ export function TransactionTable({
     setLimit,
     setSortBy,
     setSearch,
+    setFilters,
     totalRows,
-    refresh,
   } = useFetch<Transaction[]>({
     fetchData: fetchTransactions,
     initialPageIndex: 0,
@@ -136,6 +199,118 @@ export function TransactionTable({
 
   const handleSearchChange = (newSearch: string) => {
     setSearch(newSearch);
+  };
+
+  const handleFilterChange = (key: string, value: any) => {
+    if (key === 'paymentMethod') {
+      if (value === 'ALL_METHODS') {
+        setFilters((prev: any) => {
+          const newFilters = { ...prev };
+          delete newFilters[key];
+          return newFilters;
+        });
+        return;
+      }
+    }
+
+    if (key === 'dateRange') {
+      setDateRange(value);
+    }
+
+    if (key === 'minAmount') {
+      setMinAmount(value);
+    }
+    if (key === 'maxAmount') {
+      setMaxAmount(value);
+    }
+
+    setFilters((prev: any) => ({
+      ...prev,
+      [key]: value,
+    }));
+  };
+
+  const applyDatePreset = (preset: string) => {
+    const today = new Date();
+    let range: DateRange;
+
+    switch (preset) {
+      case 'today':
+        range = {
+          from: startOfDay(today),
+          to: endOfDay(today),
+        };
+        break;
+      case 'yesterday':
+        const yesterday = subDays(today, 1);
+        range = {
+          from: startOfDay(yesterday),
+          to: endOfDay(yesterday),
+        };
+        break;
+      case 'last7days':
+        range = {
+          from: startOfDay(subDays(today, 6)),
+          to: endOfDay(today),
+        };
+        break;
+      case 'last30days':
+        range = {
+          from: startOfDay(subDays(today, 29)),
+          to: endOfDay(today),
+        };
+        break;
+      case 'thisWeek':
+        range = {
+          from: startOfWeek(today, { weekStartsOn: 1 }),
+          to: endOfWeek(today, { weekStartsOn: 1 }),
+        };
+        break;
+      case 'thisMonth':
+        range = {
+          from: startOfMonth(today),
+          to: endOfMonth(today),
+        };
+        break;
+      case 'thisYear':
+        range = {
+          from: startOfYear(today),
+          to: endOfYear(today),
+        };
+        break;
+      default:
+        range = {
+          from: subDays(today, 7),
+          to: today,
+        };
+    }
+
+    setDateRange(range);
+    handleFilterChange('dateRange', range);
+  };
+
+  const handleMinAmountChange = (value: string) => {
+    setMinAmount(value);
+    handleFilterChange('minAmount', value);
+  };
+
+  const handleMaxAmountChange = (value: string) => {
+    setMaxAmount(value);
+    handleFilterChange('maxAmount', value);
+  };
+
+  const handlePaymentMethodChange = (value: string) => {
+    setPaymentMethod(value);
+
+    if (value === 'ALL_METHODS') {
+      setFilters((prev: any) => {
+        const newFilters = { ...prev };
+        delete newFilters['paymentMethod'];
+        return newFilters;
+      });
+    } else {
+      handleFilterChange('paymentMethod', value);
+    }
   };
 
   const viewTransactionDetails = (id: string) => {
@@ -219,7 +394,7 @@ export function TransactionTable({
         return (
           <div className="flex items-center gap-x-2">
             {paymentMethodIcons[method] || (
-              <CreditCard size={16} className="text-muted-foreground" />
+              <IconCash size={16} className="text-muted-foreground" />
             )}
             <span className="text-sm capitalize">
               {method.replace(/[_-]/g, ' ')}
@@ -280,6 +455,20 @@ export function TransactionTable({
     },
   ];
 
+  const filterToolbarElement = (
+    <TransactionFilterToolbar
+      dateRange={dateRange}
+      setDateRange={(range) => handleFilterChange('dateRange', range)}
+      minAmount={minAmount}
+      setMinAmount={handleMinAmountChange}
+      maxAmount={maxAmount}
+      setMaxAmount={handleMaxAmountChange}
+      paymentMethod={paymentMethod}
+      setPaymentMethod={handlePaymentMethodChange}
+      onDatePresetClick={applyDatePreset}
+    />
+  );
+
   return (
     <>
       <TableLayout
@@ -292,6 +481,7 @@ export function TransactionTable({
         handleSearchChange={handleSearchChange}
         totalRows={totalRows}
         enableSelection={true}
+        filterToolbar={filterToolbarElement}
       />
 
       {/* Transaction Detail Dialog */}
