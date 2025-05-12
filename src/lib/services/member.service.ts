@@ -5,28 +5,6 @@ import { options } from '@/lib/types/table';
 import { buildQueryOptions } from '../common/query-options';
 export class MemberService {
   /**
-   * Get all members with pagination/sort/search/filter
-   */
-  static async getAllOptimalize(queryOptions?: options) {
-    const options = buildQueryOptions(queryOptions);
-    const [member, count] = await Promise.all([
-      prisma.member.findMany({
-        include: {
-          tier: true,
-        },
-        ...options,
-      }),
-      prisma.member.count(),
-    ]);
-    return {
-      data: member,
-      meta: {
-        ...options,
-        rowsCount: count,
-      },
-    };
-  }
-  /**
    * Get a member by ID
    */
   static async getById(id: string) {
@@ -155,6 +133,7 @@ export class MemberService {
     limit = 10,
     sortBy = 'name',
     sortDirection = 'asc',
+    isBanned,
   }: {
     query?: string;
     tier?: string;
@@ -162,6 +141,7 @@ export class MemberService {
     limit?: number;
     sortBy?: string;
     sortDirection?: 'asc' | 'desc';
+    isBanned?: boolean;
   }) {
     const skip = (page - 1) * limit;
 
@@ -175,6 +155,10 @@ export class MemberService {
           mode: 'insensitive',
         },
       };
+    }
+
+    if (isBanned !== undefined) {
+      where.isBanned = isBanned;
     }
 
     if (query) {
