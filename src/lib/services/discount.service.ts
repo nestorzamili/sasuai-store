@@ -495,6 +495,45 @@ export class DiscountService {
   }
 
   /**
+   * Get members for discount selection
+   */
+  static async getMembersForSelection(search?: string) {
+    try {
+      const members = await prisma.member.findMany({
+        select: {
+          id: true,
+          name: true,
+          tier: { select: { name: true } },
+          cardId: true,
+        },
+        take: 10,
+        orderBy: { name: 'asc' },
+        where: {
+          ...(search && {
+            OR: [
+              { name: { contains: search, mode: 'insensitive' } },
+              { id: { contains: search, mode: 'insensitive' } },
+              { cardId: { contains: search, mode: 'insensitive' } },
+              { email: { contains: search, mode: 'insensitive' } },
+            ],
+          }),
+        },
+      });
+
+      return {
+        success: true,
+        members,
+      };
+    } catch (error) {
+      console.error('Get members for selection error:', error);
+      return errorHandling({
+        message: 'Failed to get members',
+        details: error,
+      });
+    }
+  }
+
+  /**
    * Validate discount data
    */
   private static async validateDiscount(

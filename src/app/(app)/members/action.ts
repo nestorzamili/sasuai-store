@@ -24,24 +24,6 @@ const memberTierSchema = z.object({
   multiplier: z.number().min(0.1, 'Multiplier must be at least 0.1'),
 });
 
-/**
- * Get all members
- */
-export async function getAllMembers() {
-  try {
-    const members = await MemberService.getAll();
-
-    return {
-      success: true,
-      data: members,
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: 'Failed to fetch members',
-    };
-  }
-}
 // Optimalize get member
 export async function optimalizeGetMember(options?: options) {
   try {
@@ -144,7 +126,7 @@ export async function updateMember(
     address?: string | null;
     phone?: string | null;
     tierId?: string | null;
-  }
+  },
 ) {
   try {
     // Validate data
@@ -270,7 +252,7 @@ export async function getMemberPointHistory(memberId: string) {
 export async function awardPointsToMember(
   memberId: string,
   points: number,
-  notes?: string
+  notes?: string,
 ) {
   try {
     if (points <= 0) {
@@ -294,7 +276,7 @@ export async function awardPointsToMember(
       manualTransactionId,
       points,
       pointNotes,
-      userId
+      userId,
     );
 
     // Revalidate member paths
@@ -337,12 +319,12 @@ export async function getMemberRewardClaimHistory(memberId: string) {
  */
 export async function calculatePotentialPoints(
   memberId: string,
-  transactionAmount: number
+  transactionAmount: number,
 ) {
   try {
     const points = await MemberService.calculatePotentialPoints(
       memberId,
-      transactionAmount
+      transactionAmount,
     );
 
     return {
@@ -431,7 +413,7 @@ export async function updateMemberTier(
     name?: string;
     minPoints?: number;
     multiplier?: number;
-  }
+  },
 ) {
   try {
     // Validate data
