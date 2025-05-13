@@ -8,6 +8,8 @@ export interface TransactionData {
   cashierId: string;
   memberId?: string | null;
   selectedMemberDiscountId: string | null;
+  selectedTierDiscountId?: string | null;
+  globalDiscountCode?: string | null;
   totalAmount: number;
   finalAmount: number;
   paymentMethod: string;
@@ -65,6 +67,8 @@ export interface TransactionSummary {
   member: {
     id: string;
     name: string | null;
+    tierId?: string | null;
+    tierName?: string | null;
     discount: {
       id: string;
       value: number;
@@ -72,6 +76,14 @@ export interface TransactionSummary {
       amount: number;
     } | null;
   } | null;
+  globalDiscount?: {
+    id: string;
+    code?: string;
+    value: number;
+    type: DiscountType;
+    amount: number;
+  } | null;
+  discountSource?: 'member' | 'tier' | 'global' | null;
   finalAmount: number;
 }
 
