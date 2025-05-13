@@ -11,7 +11,11 @@ export class MemberService {
     return prisma.member.findUnique({
       where: { id },
       include: {
-        tier: true,
+        tier: {
+          include: {
+            discounts: true,
+          },
+        },
         discounts: {
           where: {
             isActive: true,
@@ -174,12 +178,12 @@ export class MemberService {
       prisma.member.findMany({
         where,
         include: {
-          tier: true,
-          discounts: {
-            where: {
-              isActive: true,
+          tier: {
+            include: {
+              discounts: true,
             },
           },
+          discounts: true,
         },
         orderBy: {
           [sortBy]: sortDirection,
