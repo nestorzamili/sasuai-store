@@ -62,13 +62,14 @@ export default function EditDiscountPage() {
       if (response.success && response.discount) {
         const discount = response.discount;
 
-        // Pre-process the data
-        let applyToValue = discount.applyTo;
-        let isGlobalValue = discount.isGlobal;
-
+        // Update how we handle applyTo for global discounts
+        let applyToValue;
         if (discount.isGlobal) {
-          applyToValue = DiscountApplyTo.SPECIFIC_PRODUCTS;
-          isGlobalValue = true;
+          // Use ALL for global discounts (not SPECIFIC_PRODUCTS)
+          applyToValue = DiscountApplyTo.ALL;
+        } else {
+          // For non-global discounts, use the stored value
+          applyToValue = discount.applyTo || DiscountApplyTo.SPECIFIC_PRODUCTS;
         }
 
         // Create a new form values object instead of setting fields individually
@@ -83,9 +84,9 @@ export default function EditDiscountPage() {
           startDate: new Date(discount.startDate),
           endDate: new Date(discount.endDate),
           isActive: discount.isActive,
-          isGlobal: isGlobalValue,
+          isGlobal: discount.isGlobal,
           maxUses: discount.maxUses || null,
-          applyTo: applyToValue || DiscountApplyTo.SPECIFIC_PRODUCTS,
+          applyTo: applyToValue,
           productIds: discount.products?.map((product) => product.id) || [],
           memberIds: discount.members?.map((member) => member.id) || [],
           memberTierIds: discount.memberTiers?.map((tier) => tier.id) || [],
@@ -129,8 +130,15 @@ export default function EditDiscountPage() {
 
     try {
       setLoading(true);
+      console.log('Form values before submission:', values);
+
+      // Always ensure global discounts use the ALL enum
+      if (values.isGlobal) {
+        values.applyTo = DiscountApplyTo.ALL;
+      }
 
       const result = await updateDiscount(discountId, values);
+      console.log('Update result:', result);
 
       if (result.success) {
         toast({
@@ -148,7 +156,6 @@ export default function EditDiscountPage() {
         });
       }
     } catch (error) {
-      console.error('Form submission error:', error);
       toast({
         title: 'Error',
         description: 'An unexpected error occurred',
@@ -157,6 +164,15 @@ export default function EditDiscountPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Add an onError handler for form validation errors
+  const onError = (errors: any) => {
+    toast({
+      title: 'Validation Error',
+      description: 'Please check the form for errors',
+      variant: 'destructive',
+    });
   };
 
   if (initialLoading) {
@@ -186,7 +202,10 @@ export default function EditDiscountPage() {
       <Separator />
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <form
+          onSubmit={form.handleSubmit(onSubmit, onError)}
+          className="space-y-6"
+        >
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <div className="space-y-6">
               <Card>
@@ -215,7 +234,13 @@ export default function EditDiscountPage() {
                 Cancel
               </Button>
             </Link>
-            <Button type="submit" disabled={loading}>
+            <Button
+              type="submit"
+              disabled={loading}
+              onClick={() =>
+                console.log('Update button clicked', form.formState.errors)
+              }
+            >
               {loading ? 'Updating...' : 'Update Discount'}
             </Button>
           </div>

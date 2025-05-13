@@ -21,26 +21,28 @@ export class DiscountService {
         return validation;
       }
 
+      // Extract data and handle relationships
       const { productIds, memberIds, memberTierIds, ...discountData } = data;
+
+      // Auto-generate code
+      discountData.code = this.generateDiscountCode(discountData.name);
+
+      // For global discounts, set applyTo to ALL (not null)
+      if (discountData.isGlobal) {
+        discountData.applyTo = 'ALL';
+      }
 
       const discount = await prisma.discount.create({
         data: {
           ...discountData,
+          // Only connect relationships for non-global discounts
           ...(productIds &&
           productIds.length > 0 &&
+          !discountData.isGlobal &&
           data.applyTo === 'SPECIFIC_PRODUCTS'
             ? {
                 products: {
                   connect: productIds.map((id) => ({ id })),
-                },
-              }
-            : {}),
-          ...(memberIds &&
-          memberIds.length > 0 &&
-          data.applyTo === 'SPECIFIC_MEMBERS'
-            ? {
-                members: {
-                  connect: memberIds.map((id) => ({ id })),
                 },
               }
             : {}),
@@ -85,6 +87,25 @@ export class DiscountService {
   }
 
   /**
+   * Generate a discount code based on name
+   */
+  private static generateDiscountCode(name: string): string {
+    // Bersihkan karakter dan ambil 2 karakter pertama, kapital
+    const baseCode = name
+      .replace(/[^a-zA-Z0-9]/g, '')
+      .toUpperCase()
+      .padEnd(2, 'X') // Tambah 'X' jika kurang dari 2 huruf
+      .substring(0, 2);
+
+    // Tambah angka 4 digit
+    const randomSuffix = Math.floor(Math.random() * 10000)
+      .toString()
+      .padStart(4, '0');
+
+    return `${baseCode}${randomSuffix}`; // total: 2 + 4 = 6 karakter
+  }
+
+  /**
    * Update an existing discount
    */
   static async updateDiscount(
@@ -121,6 +142,11 @@ export class DiscountService {
           message:
             'Cannot update type or value of a discount that has been used in transactions',
         };
+      }
+
+      // For global discounts, ensure applyTo is ALL
+      if (data.isGlobal === true) {
+        data.applyTo = 'ALL';
       }
 
       // Extract relation IDs
@@ -540,8 +566,7 @@ export class DiscountService {
     data: DiscountData,
   ): Promise<DiscountValidationResult> {
     try {
-      // Check if discount with same code already exists (if code provided)
-      if (data.code) {
+      if (data.id && data.code) {
         const existingDiscount = await prisma.discount.findUnique({
           where: { code: data.code },
         });
@@ -575,7 +600,25 @@ export class DiscountService {
         };
       }
 
-      // Validate specific product IDs
+      // Global discounts should use ALL enum value
+      if (data.isGlobal && data.applyTo !== 'ALL') {
+        return {
+          success: false,
+          message: 'Global discounts must use ALL scope',
+          isValid: false,
+        };
+      }
+
+      // Skip product/member validation for global discounts
+      if (data.isGlobal) {
+        return {
+          success: true,
+          message: 'Global discount data is valid',
+          isValid: true,
+        };
+      }
+
+      // Only validate specific associations if the discount is not global
       if (
         data.applyTo === 'SPECIFIC_PRODUCTS' &&
         (!data.productIds || data.productIds.length === 0)
@@ -588,7 +631,6 @@ export class DiscountService {
         };
       }
 
-      // Validate specific member IDs
       if (
         data.applyTo === 'SPECIFIC_MEMBERS' &&
         (!data.memberIds || data.memberIds.length === 0)
@@ -597,6 +639,18 @@ export class DiscountService {
           success: false,
           message:
             'Member IDs are required when apply to is set to SPECIFIC_MEMBERS',
+          isValid: false,
+        };
+      }
+
+      if (
+        data.applyTo === 'SPECIFIC_MEMBER_TIERS' &&
+        (!data.memberTierIds || data.memberTierIds.length === 0)
+      ) {
+        return {
+          success: false,
+          message:
+            'Member tier IDs are required when apply to is set to SPECIFIC_MEMBER_TIERS',
           isValid: false,
         };
       }
@@ -614,6 +668,50 @@ export class DiscountService {
         isValid: false,
         error: error instanceof Error ? error.message : 'Unknown error',
       };
+    }
+  }
+
+  /**
+   * Get a global discount by its code
+   * @param code The discount code to retrieve
+   * @returns The global discount if valid, or error message
+   */
+  static async getGlobalDiscountByCode(code: string) {
+    try {
+      if (!code) {
+        return {
+          success: false,
+          message: 'Discount code is required',
+        };
+      }
+
+      // Find the discount with the provided code that's global and valid
+      const discount = await prisma.discount.findFirst({
+        where: {
+          code,
+          isGlobal: true,
+          isActive: true,
+        },
+      });
+
+      if (!discount) {
+        return {
+          success: false,
+          message: 'Invalid or expired discount code',
+        };
+      }
+
+      return {
+        success: true,
+        message: 'Valid global discount code',
+        discount,
+      };
+    } catch (error) {
+      console.error('Get global discount by code error:', error);
+      return errorHandling({
+        message: 'Failed to validate discount code',
+        details: error,
+      });
     }
   }
 }

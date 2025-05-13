@@ -20,7 +20,7 @@ import { DiscountFormValues } from '../../schema';
 import ProductSelector from './product-selector';
 import MemberSelector from './member-selector';
 import TierSelector from './tier-selector';
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 
 interface ApplicationScopeProps {
   form: UseFormReturn<DiscountFormValues>;
@@ -29,6 +29,18 @@ interface ApplicationScopeProps {
 export default function ApplicationScope({ form }: ApplicationScopeProps) {
   const isGlobal = form.watch('isGlobal');
   const applyTo = form.watch('applyTo');
+
+  // When isGlobal changes, set applyTo to ALL
+  useEffect(() => {
+    if (isGlobal) {
+      // Set applyTo to ALL for global discounts (instead of null)
+      form.setValue('applyTo', DiscountApplyTo.ALL, { shouldValidate: true });
+      // Clear selected items
+      form.setValue('productIds', [], { shouldValidate: true });
+      form.setValue('memberIds', [], { shouldValidate: true });
+      form.setValue('memberTierIds', [], { shouldValidate: true });
+    }
+  }, [isGlobal, form]);
 
   // Memoize the selector components to prevent unnecessary re-renders
   const ProductSelectorMemoized = useMemo(() => {
@@ -124,7 +136,9 @@ export default function ApplicationScope({ form }: ApplicationScopeProps) {
               <FormControl>
                 <Checkbox
                   checked={field.value}
-                  onCheckedChange={field.onChange}
+                  onCheckedChange={(checked) => {
+                    field.onChange(checked);
+                  }}
                 />
               </FormControl>
               <div className="space-y-1 leading-none">
@@ -137,48 +151,60 @@ export default function ApplicationScope({ form }: ApplicationScopeProps) {
           )}
         />
 
-        <FormField
-          control={form.control}
-          name="applyTo"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Apply Discount To</FormLabel>
-              <Select
-                onValueChange={field.onChange}
-                defaultValue={field.value}
-                value={field.value}
-                disabled={isGlobal}
-              >
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select application scope" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value={DiscountApplyTo.SPECIFIC_PRODUCTS}>
-                    Specific Products
-                  </SelectItem>
-                  <SelectItem value={DiscountApplyTo.SPECIFIC_MEMBERS}>
-                    Specific Members
-                  </SelectItem>
-                  <SelectItem value={DiscountApplyTo.SPECIFIC_MEMBER_TIERS}>
-                    Member Tiers
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-              <FormDescription>
-                {isGlobal
-                  ? 'Global discounts apply to all eligible items'
-                  : 'Choose which items or members this discount applies to'}
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {!isGlobal ? (
+          <FormField
+            control={form.control}
+            name="applyTo"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Apply Discount To</FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value || undefined}
+                  value={field.value || undefined}
+                  disabled={isGlobal}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select application scope" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value={DiscountApplyTo.SPECIFIC_PRODUCTS}>
+                      Specific Products
+                    </SelectItem>
+                    <SelectItem value={DiscountApplyTo.SPECIFIC_MEMBERS}>
+                      Specific Members
+                    </SelectItem>
+                    <SelectItem value={DiscountApplyTo.SPECIFIC_MEMBER_TIERS}>
+                      Member Tiers
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormDescription>
+                  Choose which items or members this discount applies to
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        ) : (
+          <div className="rounded-md border bg-muted/50 p-4">
+            <p className="text-sm text-muted-foreground">
+              Global discounts apply to all purchases and don't require specific
+              targeting
+            </p>
+          </div>
+        )}
 
-        {ProductSelectorMemoized}
-        {MemberSelectorMemoized}
-        {TierSelectorMemoized}
+        {/* Show selectors only if not global */}
+        {!isGlobal && (
+          <>
+            {ProductSelectorMemoized}
+            {MemberSelectorMemoized}
+            {TierSelectorMemoized}
+          </>
+        )}
       </div>
     </div>
   );

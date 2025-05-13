@@ -74,12 +74,8 @@ export async function createDiscount(data: DiscountData) {
  */
 export async function updateDiscount(id: string, data: Partial<DiscountData>) {
   try {
-    // Validate data using the partial schema
     const validatedData = partialDiscountSchema.parse(data);
-
-    // Update discount
     const result = await DiscountService.updateDiscount(id, validatedData);
-
     if (result.success) {
       // Revalidate discounts page
       revalidatePath('/discounts');
