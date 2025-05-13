@@ -162,6 +162,8 @@ export class TransactionService {
     validatedCart: ValidatedCartItem[],
     memberId: string | null | undefined = null,
     selectedMemberDiscountId: string | null = null,
+    selectedTierDiscountId: string | null = null,
+    globalDiscountCode: string | null = null,
   ): Promise<ValidationResult<TransactionSummary>> {
     // Calculate subtotal from all cart items
     const subtotal = validatedCart.reduce(
@@ -170,22 +172,73 @@ export class TransactionService {
     );
 
     // Get member discount info if applicable
-    const memberInfo = await this.getMemberDiscountInfo(
-      memberId,
-      selectedMemberDiscountId,
-      subtotal,
-    );
+    let memberInfo = null;
+    if (memberId) {
+      memberInfo = await this.getMemberInfo(memberId);
+    }
 
-    // Calculate final amount after member discount
-    const memberDiscountAmount = memberInfo?.discount?.amount || 0;
-    const finalAmount = subtotal - memberDiscountAmount;
+    // Process discounts based on what was sent from frontend
+    let appliedDiscount = null;
+    let discountSource: 'global' | 'member' | 'tier' | null = null;
+
+    // 1. If global discount code provided, validate and apply it
+    if (globalDiscountCode) {
+      const globalDiscount = await this.getGlobalDiscountInfo(
+        globalDiscountCode,
+        subtotal,
+      );
+      if (globalDiscount) {
+        appliedDiscount = globalDiscount;
+        discountSource = 'global';
+      }
+    }
+    // 2. If member discount ID provided, validate and apply it
+    else if (memberId && selectedMemberDiscountId) {
+      const memberDiscount = await this.getMemberDiscountInfo(
+        memberId,
+        selectedMemberDiscountId,
+        subtotal,
+      );
+
+      if (memberDiscount?.discount) {
+        appliedDiscount = memberDiscount.discount;
+        discountSource = 'member';
+      }
+    }
+    // 3. If tier discount ID provided, validate and apply it
+    else if (memberId && selectedTierDiscountId && memberInfo?.tierId) {
+      const tierDiscount = await this.getTierDiscountInfo(
+        memberInfo.tierId,
+        selectedTierDiscountId,
+        subtotal,
+      );
+
+      if (tierDiscount) {
+        appliedDiscount = tierDiscount;
+        discountSource = 'tier';
+      }
+    }
+
+    // Calculate final amount
+    const discountAmount = appliedDiscount?.amount || 0;
+    const finalAmount = subtotal - discountAmount;
 
     return {
       success: true,
       message: 'Transaction validated successfully',
       data: {
         subtotal,
-        member: memberInfo,
+        member: memberInfo
+          ? {
+              ...memberInfo,
+              discount:
+                discountSource === 'member' || discountSource === 'tier'
+                  ? appliedDiscount
+                  : null,
+            }
+          : null,
+        globalDiscount: discountSource === 'global' ? appliedDiscount : null,
+        discountSource,
         finalAmount,
       },
     };
@@ -250,6 +303,119 @@ export class TransactionService {
             }
           : null,
     };
+  }
+
+  // Get basic member info
+  private static async getMemberInfo(memberId: string) {
+    const member = await prisma.member.findUnique({
+      where: { id: memberId },
+      include: {
+        tier: true,
+      },
+    });
+
+    if (!member) return null;
+
+    return {
+      id: memberId,
+      name: member.name,
+      tierId: member.tierId,
+      tierName: member.tier?.name,
+    };
+  }
+
+  // Get tier-based discount
+  private static async getTierDiscountInfo(
+    tierId: string,
+    discountId: string,
+    subtotal: number,
+  ) {
+    // Get tier discount
+    const tierDiscount = await prisma.discount.findFirst({
+      where: {
+        id: discountId,
+        isActive: true,
+        startDate: { lte: new Date() },
+        endDate: { gte: new Date() },
+        memberTiers: {
+          some: { id: tierId },
+        },
+        OR: [
+          { maxUses: null },
+          { usedCount: { lt: prisma.discount.fields.maxUses } },
+        ],
+        AND: [
+          {
+            OR: [{ minPurchase: null }, { minPurchase: { lte: subtotal } }],
+          },
+        ],
+      },
+    });
+
+    if (!tierDiscount) return null;
+
+    // Calculate discount amount
+    const discountAmount =
+      tierDiscount.type === 'PERCENTAGE'
+        ? (tierDiscount.value * subtotal) / 100
+        : tierDiscount.type === 'FIXED_AMOUNT'
+        ? tierDiscount.value
+        : 0;
+
+    return discountAmount > 0
+      ? {
+          id: tierDiscount.id,
+          value: tierDiscount.value,
+          type: tierDiscount.type as DiscountType,
+          amount: discountAmount,
+        }
+      : null;
+  }
+
+  // Get global discount
+  private static async getGlobalDiscountInfo(
+    discountCode: string,
+    subtotal: number,
+  ) {
+    // Get global discount by code
+    const globalDiscount = await prisma.discount.findFirst({
+      where: {
+        code: discountCode,
+        isGlobal: true,
+        isActive: true,
+        startDate: { lte: new Date() },
+        endDate: { gte: new Date() },
+        OR: [
+          { maxUses: null },
+          { usedCount: { lt: prisma.discount.fields.maxUses } },
+        ],
+        AND: [
+          {
+            OR: [{ minPurchase: null }, { minPurchase: { lte: subtotal } }],
+          },
+        ],
+      },
+    });
+
+    if (!globalDiscount) return null;
+
+    // Calculate discount amount
+    const discountAmount =
+      globalDiscount.type === 'PERCENTAGE'
+        ? (globalDiscount.value * subtotal) / 100
+        : globalDiscount.type === 'FIXED_AMOUNT'
+        ? globalDiscount.value
+        : 0;
+
+    return discountAmount > 0
+      ? {
+          id: globalDiscount.id,
+          code: globalDiscount.code,
+          value: globalDiscount.value,
+          type: globalDiscount.type as DiscountType,
+          amount: discountAmount,
+        }
+      : null;
   }
 
   static async checkPaymentMethod(
@@ -331,6 +497,8 @@ export class TransactionService {
         validatedCartResult.data,
         data.memberId,
         data.selectedMemberDiscountId,
+        data.selectedTierDiscountId,
+        data.globalDiscountCode,
       );
 
       if (
@@ -416,6 +584,19 @@ export class TransactionService {
           );
         }
 
+        // First determine which discount ID to track
+        let transactionDiscountId = null;
+        if (
+          transactionData.discountSource === 'global' &&
+          transactionData.globalDiscount
+        ) {
+          transactionDiscountId = transactionData.globalDiscount.id;
+        } else if (
+          transactionData.discountSource === 'member' ||
+          transactionData.discountSource === 'tier'
+        ) {
+          transactionDiscountId = transactionData.member?.discount?.id;
+        }
         // Update inventory
         await this.updateInventory(tx, items);
 
@@ -423,7 +604,7 @@ export class TransactionService {
         await this.incrementDiscountUsages(
           tx,
           validatedCart,
-          transactionData.member?.discount?.id,
+          transactionDiscountId,
         );
 
         return {
@@ -447,21 +628,22 @@ export class TransactionService {
   /**
    * Increment the usage count for all discounts used in the transaction
    */
+  // Fix this method signature to accept either approach
   private static async incrementDiscountUsages(
     tx: any,
     validatedCart: ValidatedCartItem[],
-    memberDiscountId: string | null | undefined,
+    transactionDiscountId: string | null | undefined,
   ) {
     // Get all product discount IDs
     const productDiscountIds = validatedCart
       .filter((item) => item.discount?.id)
       .map((item) => item.discount!.id);
 
-    // Combine with member discount if any
+    // Combine with transaction-level discount
     const allDiscountIds = [
       ...new Set([
         ...productDiscountIds,
-        ...(memberDiscountId ? [memberDiscountId] : []),
+        ...(transactionDiscountId ? [transactionDiscountId] : []),
       ]),
     ];
 
@@ -498,13 +680,31 @@ export class TransactionService {
     change: number,
     items: any[],
   ) {
+    let discountId = null;
+    let discountAmount = null;
+
+    if (
+      transactionData.discountSource === 'global' &&
+      transactionData.globalDiscount
+    ) {
+      discountId = transactionData.globalDiscount.id;
+      discountAmount = transactionData.globalDiscount.amount;
+    } else if (
+      (transactionData.discountSource === 'member' ||
+        transactionData.discountSource === 'tier') &&
+      transactionData.member?.discount
+    ) {
+      discountId = transactionData.member.discount.id;
+      discountAmount = transactionData.member.discount.amount;
+    }
+
     return tx.transaction.create({
       data: {
         tranId,
         cashierId: data.cashierId,
         memberId: transactionData.member?.id || null,
-        discountId: transactionData.member?.discount?.id || null,
-        discountAmount: transactionData.member?.discount?.amount || null,
+        discountId: discountId,
+        discountAmount: discountAmount,
         totalAmount: transactionData.subtotal,
         finalAmount: transactionData.finalAmount,
         paymentMethod: data.paymentMethod,
