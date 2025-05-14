@@ -1,8 +1,9 @@
 'use client';
-import { HTMLAttributes, useState, useEffect } from 'react';
+
+import { HTMLAttributes, useState } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -17,198 +18,164 @@ import {
 import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/password-input';
 import Link from 'next/link';
-import { AlertCircle, CheckCircle2 } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import {
-  signInWithEmail,
-  signInWithUsername,
-} from '@/app/(auth)/sign-in/components/actions';
+import { useToast } from '@/hooks/use-toast';
+import { signInWithEmail, signInWithUsername } from './actions';
+import { extractErrorMessage } from '@/lib/error-handler';
+import { AuthLink } from '@/components/auth/auth-footers';
 
 type UserAuthFormProps = HTMLAttributes<HTMLDivElement>;
 
+// A combined schema that accepts either email or username
 const formSchema = z.object({
   identifier: z
     .string()
-    .min(1, { message: 'Please enter your email or username' }),
+    .min(1, { message: 'Please enter your email or username' })
+    .refine(
+      (value) => {
+        // Either valid email or username with minimum length
+        const isEmail = value.includes('@') && value.includes('.');
+        const isUsername = !value.includes('@') && value.length >= 3;
+        return isEmail || isUsername;
+      },
+      {
+        message: 'Please enter a valid email or username (min 3 characters)',
+      },
+    ),
   password: z
     .string()
     .min(1, { message: 'Please enter your password' })
-    .min(8, { message: 'Password must be at least 8 characters long' }),
+    .min(7, { message: 'Password must be at least 7 characters long' }),
 });
-
-const ERROR_MESSAGES = {
-  invalid_token: 'Your verification link has expired or is invalid.',
-  verification_required: 'Please verify your email address before signing in.',
-  invalid_credentials: 'Invalid email or password. Please try again.',
-  account_blocked: 'Your account has been blocked. Please contact support.',
-  expired_token: 'Your verification link has expired.',
-  default: 'An error occurred. Please try again.',
-};
-
-const SUCCESS_MESSAGES = {
-  verification_sent:
-    "We've sent you an email with a verification link. Please check your inbox.",
-  password_reset:
-    'Your password has been reset successfully. You can now log in with your new password.',
-  default: 'Success! Please sign in.',
-};
 
 export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const [authError, setAuthError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const { toast } = useToast();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      identifier: '',
-      password: '',
-    },
+    defaultValues: { identifier: '', password: '' },
   });
 
-  useEffect(() => {
-    const errorCode = searchParams?.get('error');
-    if (errorCode) {
-      setAuthError(
-        ERROR_MESSAGES[errorCode as keyof typeof ERROR_MESSAGES] ||
-          ERROR_MESSAGES.default,
-      );
-    }
-
-    const success = searchParams?.get('success');
-    if (success) {
-      setSuccessMessage(
-        SUCCESS_MESSAGES[success as keyof typeof SUCCESS_MESSAGES] ||
-          SUCCESS_MESSAGES.default,
-      );
-    }
-
-    const email = searchParams?.get('email');
-    if (email) {
-      form.setValue('identifier', email);
-    }
-  }, [searchParams, form]);
-
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(data: z.infer<typeof formSchema>) {
     setIsLoading(true);
-    setAuthError(null);
-    setSuccessMessage(null);
 
     try {
-      // Check if identifier is email (contains @) or username
-      const trimmedIdentifier = values.identifier.trim();
-      const isEmail = trimmedIdentifier.includes('@');
-
+      // Determine login method based on identifier format
+      const isEmail = data.identifier.includes('@');
       let result;
+
       if (isEmail) {
-        result = await signInWithEmail(values.identifier, values.password);
+        result = await signInWithEmail(data.identifier, data.password);
       } else {
-        result = await signInWithUsername(values.identifier, values.password);
+        result = await signInWithUsername(data.identifier, data.password);
       }
 
       if (result.success) {
+        toast({
+          title: 'Success',
+          description: 'Logged in successfully',
+        });
         router.push('/');
         router.refresh();
         return;
       }
 
-      const statusCodeMessages: Record<number, string> = {
-        401: 'Invalid credentials. Please try again.',
-        403: 'Please verify your email address before signing in.',
-        423: 'Your account has been blocked. Please contact support.',
-        429: 'Too many attempts. Please try again later.',
-      };
+      // Reset password field but keep identifier
+      form.setValue('password', '');
 
-      setAuthError(
-        result.statusCode
-          ? statusCodeMessages[result.statusCode] ||
-              result.errorMessage ||
-              'Authentication failed.'
-          : result.errorMessage || 'Authentication failed.',
-      );
+      // Use a user-friendly error message
+      const errorMessage = result.errorMessage
+        ? typeof result.errorMessage === 'string'
+          ? result.errorMessage
+          : 'Invalid credentials'
+        : 'Authentication failed. Please try again.';
+
+      toast({
+        title: 'Login failed',
+        description: errorMessage,
+        variant: 'destructive',
+      });
     } catch (error) {
-      setAuthError('An unexpected error occurred. Please try again.');
+      // Reset password field but preserve identifier
+      form.setValue('password', '');
+
+      toast({
+        title: 'Error',
+        description: 'Authentication failed. Please try again.',
+        variant: 'destructive',
+      });
     } finally {
       setIsLoading(false);
     }
   }
 
   return (
-    <div className={cn('grid gap-6', className)} {...props}>
+    <div className={cn('w-full', className)} {...props}>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
-          <div className="grid gap-4">
-            {authError && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{authError}</AlertDescription>
-              </Alert>
-            )}
-
-            {successMessage && (
-              <Alert
-                variant="default"
-                className="bg-green-50 text-green-800 border-green-200"
-              >
-                <CheckCircle2 className="h-4 w-4" />
-                <AlertDescription>{successMessage}</AlertDescription>
-              </Alert>
-            )}
-
+        <form onSubmit={form.handleSubmit(onSubmit)} className="w-full">
+          <div className="grid gap-3 sm:gap-4 w-full">
             <FormField
               control={form.control}
               name="identifier"
               render={({ field }) => (
-                <FormItem className="space-y-2">
-                  <FormLabel>Email or Username</FormLabel>
+                <FormItem className="space-y-1 sm:space-y-1.5 w-full">
+                  <FormLabel className="text-sm sm:text-base">
+                    Email or Username
+                  </FormLabel>
                   <FormControl>
                     <Input
                       placeholder="name@example.com or username"
+                      className="h-9 sm:h-10 text-sm sm:text-base w-full"
                       {...field}
+                      disabled={isLoading}
                     />
                   </FormControl>
-                  <FormMessage className="text-xs font-medium text-destructive" />
+                  <FormMessage className="text-xs font-medium" />
                 </FormItem>
               )}
             />
-
             <FormField
               control={form.control}
               name="password"
               render={({ field }) => (
-                <FormItem className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <FormLabel>Password</FormLabel>
+                <FormItem className="space-y-1 sm:space-y-1.5 w-full">
+                  <div className="flex items-center justify-between w-full">
+                    <FormLabel className="text-sm sm:text-base">
+                      Password
+                    </FormLabel>
                     <Link
                       href="/forgot-password"
-                      className="text-sm font-medium text-muted-foreground hover:opacity-75"
+                      className="text-xs sm:text-sm font-medium text-primary hover:opacity-80 transition-opacity"
                     >
                       Forgot password?
                     </Link>
                   </div>
                   <FormControl>
-                    <PasswordInput placeholder="********" {...field} />
+                    <PasswordInput
+                      placeholder="********"
+                      className="h-9 sm:h-10 text-sm sm:text-base w-full"
+                      {...field}
+                      disabled={isLoading}
+                    />
                   </FormControl>
-                  <FormMessage className="text-xs font-medium text-destructive" />
+                  <FormMessage className="text-xs font-medium" />
                 </FormItem>
               )}
             />
-
-            <Button className="mt-2" disabled={isLoading} type="submit">
-              {isLoading ? 'Signing in...' : 'Login'}
+            <Button
+              className="mt-1 sm:mt-2 h-9 sm:h-11 text-sm sm:text-base font-medium w-full"
+              type="submit"
+              disabled={isLoading}
+            >
+              {isLoading ? 'Logging in...' : 'Sign in'}
             </Button>
 
-            <div className="text-center text-sm">
-              Don't have an account?{' '}
-              <Link
-                href="/sign-up"
-                className="font-medium text-primary hover:underline"
-              >
-                Create an account
-              </Link>
-            </div>
+            <AuthLink
+              question="Don't have an account?"
+              linkText="Create an account"
+              href="/sign-up"
+            />
           </div>
         </form>
       </Form>
