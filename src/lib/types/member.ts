@@ -44,10 +44,12 @@ export type UpdateMemberData = {
 // Member search parameters
 export type MemberSearchParams = {
   query?: string;
+  tier?: string;
   page?: number;
   limit?: number;
   sortBy?: string;
   sortDirection?: 'asc' | 'desc';
+  isBanned?: boolean;
 };
 
 // Paginated response for member search

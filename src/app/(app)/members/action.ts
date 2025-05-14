@@ -25,40 +25,6 @@ const memberTierSchema = z.object({
 });
 
 /**
- * Get all members
- */
-export async function getAllMembers() {
-  try {
-    const members = await MemberService.getAll();
-
-    return {
-      success: true,
-      data: members,
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: 'Failed to fetch members',
-    };
-  }
-}
-// Optimalize get member
-export async function optimalizeGetMember(options?: options) {
-  try {
-    const members = await MemberService.getAllOptimalize(options);
-    return {
-      success: true,
-      data: members.data,
-      meta: members.meta,
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: 'Failed to fetch members',
-    };
-  }
-}
-/**
  * Get a member by ID with full details
  */
 export async function getMember(id: string) {
@@ -144,7 +110,7 @@ export async function updateMember(
     address?: string | null;
     phone?: string | null;
     tierId?: string | null;
-  }
+  },
 ) {
   try {
     // Validate data
@@ -209,33 +175,88 @@ export async function deleteMember(id: string) {
 }
 
 /**
+ * Ban a member
+ */
+export async function banMember(id: string, reason: string) {
+  try {
+    await MemberService.ban(id, reason);
+
+    // Revalidate member paths
+    revalidatePath('/members');
+    revalidatePath(`/members/${id}`);
+
+    return {
+      success: true,
+      message: 'Member has been banned successfully',
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: 'Failed to ban member',
+    };
+  }
+}
+
+/**
+ * Unban a member
+ */
+export async function unbanMember(id: string) {
+  try {
+    await MemberService.unban(id);
+
+    // Revalidate member paths
+    revalidatePath('/members');
+    revalidatePath(`/members/${id}`);
+
+    return {
+      success: true,
+      message: 'Member has been unbanned successfully',
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: 'Failed to unban member',
+    };
+  }
+}
+
+/**
  * Search members with pagination
  */
 export async function searchMembers({
   query = '',
+  tier = '',
   page = 1,
   limit = 10,
   sortBy = 'name',
   sortDirection = 'asc',
+  isBanned,
 }: {
   query?: string;
+  tier?: string;
   page?: number;
   limit?: number;
   sortBy?: string;
   sortDirection?: 'asc' | 'desc';
+  isBanned?: boolean;
 }) {
   try {
     const result = await MemberService.search({
       query,
+      tier,
       page,
       limit,
       sortBy,
       sortDirection,
+      isBanned,
     });
 
     return {
       success: true,
-      data: result,
+      members: result.members,
+      totalCount: result.totalCount,
+      totalPages: result.totalPages,
+      currentPage: result.currentPage,
     };
   } catch (error) {
     return {
@@ -270,7 +291,7 @@ export async function getMemberPointHistory(memberId: string) {
 export async function awardPointsToMember(
   memberId: string,
   points: number,
-  notes?: string
+  notes?: string,
 ) {
   try {
     if (points <= 0) {
@@ -294,7 +315,7 @@ export async function awardPointsToMember(
       manualTransactionId,
       points,
       pointNotes,
-      userId
+      userId,
     );
 
     // Revalidate member paths
@@ -337,12 +358,12 @@ export async function getMemberRewardClaimHistory(memberId: string) {
  */
 export async function calculatePotentialPoints(
   memberId: string,
-  transactionAmount: number
+  transactionAmount: number,
 ) {
   try {
     const points = await MemberService.calculatePotentialPoints(
       memberId,
-      transactionAmount
+      transactionAmount,
     );
 
     return {
@@ -431,7 +452,7 @@ export async function updateMemberTier(
     name?: string;
     minPoints?: number;
     multiplier?: number;
-  }
+  },
 ) {
   try {
     // Validate data

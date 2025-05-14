@@ -14,7 +14,7 @@ export default function DiscountsPage() {
   };
 
   return (
-    <div className="space-y-1">
+    <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-x-4">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Discounts</h2>
