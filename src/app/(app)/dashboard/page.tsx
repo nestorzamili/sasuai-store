@@ -221,7 +221,7 @@ export default function Dashboard() {
               <div className="flex gap-4 py-4">
                 {/* Right side: Date range inputs */}
                 <div className="w-full space-y-4">
-                  <div className="grid grid-cols-1 gap-2">
+                  {/* <div className="grid grid-cols-1 gap-2">
                     <Label htmlFor="start-date">Start Date</Label>
                     <Input
                       type="date"
@@ -256,7 +256,7 @@ export default function Dashboard() {
                         });
                       }}
                     />
-                  </div>
+                  </div> */}
                 </div>
               </div>
               <DialogFooter>
