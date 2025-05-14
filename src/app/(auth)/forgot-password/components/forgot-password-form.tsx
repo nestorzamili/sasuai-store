@@ -16,8 +16,8 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { authClient } from '@/lib/auth-client';
+import { AlertCircle, CheckCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle, CheckCircle2 } from 'lucide-react';
 
 type ForgotFormProps = HTMLAttributes<HTMLDivElement>;
 
@@ -30,8 +30,10 @@ const formSchema = z.object({
 
 export function ForgotForm({ className, ...props }: ForgotFormProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [formState, setFormState] = useState<{
+    status: 'idle' | 'success' | 'error';
+    message: string;
+  }>({ status: 'idle', message: '' });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -40,73 +42,100 @@ export function ForgotForm({ className, ...props }: ForgotFormProps) {
 
   async function onSubmit(data: z.infer<typeof formSchema>) {
     setIsLoading(true);
-    setError(null);
+    setFormState({ status: 'idle', message: '' });
 
     try {
-      const { error: authError } = await authClient.forgetPassword({
+      const response = await authClient.forgetPassword({
         email: data.email,
         redirectTo: '/reset-password',
       });
 
-      if (authError) {
-        setError(
-          authError.message || 'Failed to send reset email. Please try again.',
-        );
+      if (response.error) {
+        // Get a safe error message
+        const errorMessage =
+          typeof response.error.message === 'string'
+            ? response.error.message
+            : 'Failed to process your request';
+
+        setFormState({
+          status: 'error',
+          message: errorMessage,
+        });
         return;
       }
 
-      setSuccess(true);
-    } catch (err) {
-      setError('An unexpected error occurred. Please try again.');
+      // Success path
+      setFormState({
+        status: 'success',
+        message:
+          'If the email exists in our database, an email will be sent to your inbox to reset your password.',
+      });
+
+      // Clear the form on success
+      form.reset();
+    } catch (error) {
+      setFormState({
+        status: 'error',
+        message: 'Unable to process your request. Please try again later.',
+      });
     } finally {
       setIsLoading(false);
     }
   }
 
   return (
-    <div className={cn('grid gap-6', className)} {...props}>
-      {!success ? (
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)}>
-            <div className="grid gap-4">
-              {error && (
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
-
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem className="space-y-1">
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input placeholder="name@example.com" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <Button className="mt-2" disabled={isLoading}>
-                {isLoading ? 'Sending...' : 'Send Reset Link'}
-              </Button>
-            </div>
-          </form>
-        </Form>
-      ) : (
+    <div className={cn('w-full', className)} {...props}>
+      {formState.status !== 'idle' && (
         <Alert
-          variant="default"
-          className="bg-green-50 text-green-800 border-green-200"
+          variant={formState.status === 'success' ? 'default' : 'destructive'}
+          className={
+            formState.status === 'success'
+              ? 'border-green-500 text-green-700 bg-green-50 dark:bg-green-950 dark:text-green-400 mb-4'
+              : 'mb-4'
+          }
         >
-          <CheckCircle2 className="h-4 w-4" />
-          <AlertDescription>
-            We've sent a password reset link to your email. Please check your
-            inbox and follow the instructions.
-          </AlertDescription>
+          <div className="flex items-center gap-2">
+            {formState.status === 'success' ? (
+              <CheckCircle className="h-4 w-4" />
+            ) : (
+              <AlertCircle className="h-4 w-4" />
+            )}
+            <AlertDescription>{formState.message}</AlertDescription>
+          </div>
         </Alert>
       )}
+
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="w-full">
+          <div className="grid gap-3 sm:gap-4 w-full">
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem className="space-y-1 sm:space-y-1.5 w-full">
+                  <FormLabel className="text-sm sm:text-base">Email</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="name@example.com"
+                      className="h-9 sm:h-10 text-sm sm:text-base w-full"
+                      {...field}
+                      disabled={isLoading}
+                    />
+                  </FormControl>
+                  <FormMessage className="text-xs font-medium" />
+                </FormItem>
+              )}
+            />
+            <Button
+              className="mt-1 sm:mt-2 h-9 sm:h-10 text-sm sm:text-base font-medium w-full"
+              type="submit"
+              disabled={isLoading}
+            >
+              {isLoading ? 'Sending...' : 'Continue'}
+            </Button>
+          </div>
+        </form>
+      </Form>
     </div>
   );
 }

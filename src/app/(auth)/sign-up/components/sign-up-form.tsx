@@ -17,8 +17,10 @@ import {
 import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/password-input';
 import { authClient } from '@/lib/auth-client';
-import { AlertCircle, CheckCircle } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useToast } from '@/hooks/use-toast';
+import Link from 'next/link';
+import { extractErrorMessage } from '@/lib/error-handler';
+import { AuthLink } from '@/components/auth/auth-footers';
 
 type SignUpFormProps = HTMLAttributes<HTMLDivElement>;
 
@@ -32,15 +34,6 @@ const formSchema = z
       .max(50, { message: 'Name must not exceed 50 characters' })
       .regex(/^[a-zA-Z\s'-]+$/, {
         message: 'Name contains invalid characters',
-      }),
-    username: z
-      .string()
-      .trim()
-      .min(5, { message: 'Username must be at least 5 characters' })
-      .max(20, { message: 'Username must not exceed 20 characters' })
-      .regex(/^[a-zA-Z0-9_-]+$/, {
-        message:
-          'Username can only contain letters, numbers, dashes, and underscores',
       }),
     email: z
       .string()
@@ -64,16 +57,12 @@ const formSchema = z
 
 export function SignUpForm({ className, ...props }: SignUpFormProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const [authState, setAuthState] = useState<{
-    message: string | null;
-    isSuccess: boolean;
-  }>({ message: null, isSuccess: false });
+  const { toast } = useToast();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: '',
-      username: '',
       email: '',
       password: '',
       confirmPassword: '',
@@ -90,55 +79,38 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
     );
   }, [isLoading, form.formState.isValid, form.watch()]);
 
-  // Centralized error handling
-  const handleAuthError = (error: { code?: string; message?: string }) => {
-    const errorMap: { [key: string]: string } = {
-      AuthUserAlreadyExists: 'This email address is already registered.',
-      AuthInvalidEmail: 'Please provide a valid email address.',
-      AuthWeakPassword:
-        'Password is too weak. Please choose a stronger password.',
-    };
-
-    return (
-      errorMap[error.code as string] ||
-      error.message ||
-      'Failed to sign up. Please try again.'
-    );
-  };
-
   // Sign-up submission handler
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
-    setAuthState({ message: null, isSuccess: false });
 
-    const { name, username, email, password } = values;
+    const { name, email, password } = values;
 
     try {
       const { error } = await authClient.signUp.email({
         name,
-        username,
         email,
         password,
         callbackURL: '/sign-in',
       });
 
       if (error) {
-        setAuthState({
-          message: handleAuthError(error),
-          isSuccess: false,
+        toast({
+          title: 'Registration failed',
+          description: extractErrorMessage(error),
+          variant: 'destructive',
         });
       } else {
         form.reset();
-        setAuthState({
-          message:
-            'Registration successful! Please check your email to verify your account.',
-          isSuccess: true,
+        toast({
+          title: 'Registration successful',
+          description: 'Please check your email to verify your account.',
         });
       }
     } catch (err) {
-      setAuthState({
-        message: 'An unexpected error occurred. Please try again.',
-        isSuccess: false,
+      toast({
+        title: 'Error',
+        description: extractErrorMessage(err),
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
@@ -146,105 +118,107 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
   }
 
   return (
-    <div className={cn('grid gap-6', className)} {...props}>
+    <div className={cn('w-full', className)} {...props}>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
-          <div className="grid gap-4">
-            {authState.message && (
-              <Alert
-                variant={authState.isSuccess ? 'default' : 'destructive'}
-                className={
-                  authState.isSuccess
-                    ? 'border-green-500 text-green-700 bg-green-50 dark:bg-green-950 dark:text-green-400'
-                    : ''
-                }
-              >
-                <div className="flex items-center gap-2">
-                  {authState.isSuccess ? (
-                    <CheckCircle className="h-4 w-4" />
-                  ) : (
-                    <AlertCircle className="h-4 w-4" />
-                  )}
-                  <AlertDescription>{authState.message}</AlertDescription>
-                </div>
-              </Alert>
-            )}
-
+        <form onSubmit={form.handleSubmit(onSubmit)} className="w-full">
+          <div className="grid gap-3 sm:gap-4 w-full">
             <FormField
               control={form.control}
               name="name"
               render={({ field }) => (
-                <FormItem className="space-y-2">
-                  <FormLabel>Full Name</FormLabel>
+                <FormItem className="space-y-1 sm:space-y-1.5 w-full">
+                  <FormLabel className="text-sm sm:text-base">
+                    Full Name
+                  </FormLabel>
                   <FormControl>
-                    <Input placeholder="John Doe" {...field} />
+                    <Input
+                      placeholder="John Doe"
+                      className="h-9 sm:h-10 text-sm sm:text-base w-full"
+                      {...field}
+                      disabled={isLoading}
+                    />
                   </FormControl>
-                  <FormMessage className="text-xs font-medium text-destructive" />
+                  <FormMessage className="text-xs font-medium" />
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="username"
-              render={({ field }) => (
-                <FormItem className="space-y-2">
-                  <FormLabel>Username</FormLabel>
-                  <FormControl>
-                    <Input placeholder="johndoe" {...field} />
-                  </FormControl>
-                  <FormMessage className="text-xs font-medium text-destructive" />
-                </FormItem>
-              )}
-            />
+
             <FormField
               control={form.control}
               name="email"
               render={({ field }) => (
-                <FormItem className="space-y-2">
-                  <FormLabel>Email</FormLabel>
+                <FormItem className="space-y-1 sm:space-y-1.5 w-full">
+                  <FormLabel className="text-sm sm:text-base">Email</FormLabel>
                   <FormControl>
-                    <Input placeholder="name@example.com" {...field} />
+                    <Input
+                      placeholder="name@example.com"
+                      className="h-9 sm:h-10 text-sm sm:text-base w-full"
+                      {...field}
+                      disabled={isLoading}
+                    />
                   </FormControl>
-                  <FormMessage className="text-xs font-medium text-destructive" />
+                  <FormMessage className="text-xs font-medium" />
                 </FormItem>
               )}
             />
+
             <FormField
               control={form.control}
               name="password"
               render={({ field }) => (
-                <FormItem className="space-y-2">
-                  <FormLabel>Password</FormLabel>
+                <FormItem className="space-y-1 sm:space-y-1.5 w-full">
+                  <FormLabel className="text-sm sm:text-base">
+                    Password
+                  </FormLabel>
                   <FormControl>
-                    <PasswordInput placeholder="********" {...field} />
+                    <PasswordInput
+                      placeholder="********"
+                      className="h-9 sm:h-10 text-sm sm:text-base w-full"
+                      {...field}
+                      disabled={isLoading}
+                    />
                   </FormControl>
-                  <p className="text-xs text-muted-foreground">
-                    At least 8 characters, including uppercase, lowercase,
-                    number, and special character
-                  </p>
-                  <FormMessage className="text-xs font-medium text-destructive" />
+                  <FormMessage className="text-xs font-medium" />
                 </FormItem>
               )}
             />
+
             <FormField
               control={form.control}
               name="confirmPassword"
               render={({ field }) => (
-                <FormItem className="space-y-2">
-                  <FormLabel>Confirm Password</FormLabel>
+                <FormItem className="space-y-1 sm:space-y-1.5 w-full">
+                  <FormLabel className="text-sm sm:text-base">
+                    Confirm Password
+                  </FormLabel>
                   <FormControl>
-                    <PasswordInput placeholder="********" {...field} />
+                    <PasswordInput
+                      placeholder="********"
+                      className="h-9 sm:h-10 text-sm sm:text-base w-full"
+                      {...field}
+                      disabled={isLoading}
+                    />
                   </FormControl>
-                  <FormMessage className="text-xs font-medium text-destructive" />
+                  <FormMessage className="text-xs font-medium" />
                 </FormItem>
               )}
             />
-            <Button className="mt-2" disabled={isSubmitDisabled} type="submit">
+
+            <Button
+              className="mt-1 sm:mt-2 h-9 sm:h-11 text-sm sm:text-base font-medium w-full"
+              disabled={isSubmitDisabled}
+              type="submit"
+            >
               {isLoading ? 'Creating account...' : 'Create Account'}
             </Button>
           </div>
         </form>
       </Form>
+      <AuthLink
+        question="Already have an account?"
+        linkText="Sign in"
+        href="/sign-in"
+      />
     </div>
   );
 }

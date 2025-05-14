@@ -1,50 +1,30 @@
-import { Card } from '@/components/ui/card';
+'use client';
+
 import AuthLayout from '../auth-layout';
 import { SignUpForm } from './components/sign-up-form';
-import Link from 'next/link';
-
-export const metadata = {
-  title: 'Sign Up',
-};
+import { UserPlus } from 'lucide-react';
+import { useThemeIllustration } from '@/hooks/use-theme-illustration';
+import lightIllustration from '../../../../public/images/auth-register-illustration-light.png';
+import darkIllustration from '../../../../public/images/auth-register-illustration-dark.png';
+import { AuthCard } from '@/components/auth/auth-card';
+import { TermsFooter } from '@/components/auth/auth-footers';
 
 export default function SignUp() {
+  const illustration = useThemeIllustration(
+    lightIllustration,
+    darkIllustration,
+  );
+
   return (
-    <AuthLayout>
-      <Card className="p-6">
-        <div className="mb-2 flex flex-col space-y-2 text-left">
-          <h1 className="text-lg font-semibold tracking-tight">
-            Create an account
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Enter your email and password to create an account. <br />
-            Already have an account?{' '}
-            <Link
-              href="/sign-in"
-              className="underline underline-offset-4 hover:text-primary"
-            >
-              Sign In
-            </Link>
-          </p>
-        </div>
+    <AuthLayout
+      illustration={illustration}
+      title="Join Sasuai Store"
+      subtitle="Create your account to get started"
+      tagline="Your journey starts here with us"
+    >
+      <AuthCard title="Create Account" icon={UserPlus} footer={<TermsFooter />}>
         <SignUpForm />
-        <p className="mt-4 px-8 text-center text-sm text-muted-foreground">
-          By creating an account, you agree to our{' '}
-          <a
-            href="/terms"
-            className="underline underline-offset-4 hover:text-primary"
-          >
-            Terms of Service
-          </a>{' '}
-          and{' '}
-          <a
-            href="/privacy"
-            className="underline underline-offset-4 hover:text-primary"
-          >
-            Privacy Policy
-          </a>
-          .
-        </p>
-      </Card>
+      </AuthCard>
     </AuthLayout>
   );
 }
