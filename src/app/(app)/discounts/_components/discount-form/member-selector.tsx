@@ -1,6 +1,6 @@
 'use client';
 
-import { getMembersForSelection } from '../action';
+import { getMembersForSelection } from '../../action';
 import EntitySelector from './entity-selector';
 
 interface Member {
@@ -21,11 +21,12 @@ export default function MemberSelector({
   selectedIds,
   onChange,
 }: MemberSelectorProps) {
-  const fetchMembers = async (search: string) => {
+  const fetchMembers = async (
+    search: string,
+  ): Promise<{ success: boolean; data?: Member[] }> => {
     try {
       const response = await getMembersForSelection(search);
-      // Type-safe check for members property
-      if (response.success && 'members' in response) {
+      if (response.success && response.members) {
         return {
           success: true,
           data: response.members,
@@ -37,7 +38,10 @@ export default function MemberSelector({
       };
     } catch (error) {
       console.error('Error fetching members:', error);
-      return { success: false, data: [] };
+      return {
+        success: false,
+        data: [],
+      };
     }
   };
 

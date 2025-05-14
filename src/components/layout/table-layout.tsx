@@ -11,7 +11,7 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 import { Loader2 } from 'lucide-react';
-import { ArrowUp, ArrowDown, XCircle } from 'lucide-react';
+import { ArrowUp, ArrowDown } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { DataTablePagination } from '@/components/ui/data-table-pagination';
 import {
@@ -32,13 +32,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-// Define filter option type
 export interface FilterOption {
   value: string;
   label: string;
 }
 
-// Define filter configuration type
 export interface FilterConfig {
   id: string;
   label: string;
@@ -47,14 +45,14 @@ export interface FilterConfig {
   handleFilterChange: (value: string) => void;
 }
 
-interface TableProps {
+interface TableLayoutProps {
   data: any[];
   columns: ColumnDef<any>[];
   isLoading?: boolean;
   columnFilters?: ColumnFiltersState;
   pagination?: PaginationState;
   enableSelection?: boolean | false;
-  filters?: FilterConfig[]; // Add filters prop
+  filters?: FilterConfig[];
   setColumnFilters?: (columnFilters: ColumnFiltersState) => void;
   handlePaginationChange?: (pagination: PaginationState) => void;
   handleSortingChange?: (sorting: SortingState) => void;
@@ -63,6 +61,7 @@ interface TableProps {
   uniqueIdField?: string;
   onSelectionChange?: (selectedIds: Record<string, boolean>) => void;
   initialSelectedRows?: Record<string, boolean>;
+  filterToolbar?: React.ReactNode;
 }
 
 export function TableLayout({
@@ -72,7 +71,7 @@ export function TableLayout({
   pagination,
   columnFilters,
   enableSelection = false,
-  filters = [], // Default to empty array
+  filters = [],
   handleSearchChange,
   handlePaginationChange,
   handleSortingChange,
@@ -81,7 +80,8 @@ export function TableLayout({
   uniqueIdField = 'id',
   onSelectionChange,
   initialSelectedRows = {},
-}: TableProps) {
+  filterToolbar,
+}: TableLayoutProps) {
   const [searchValue, setSearchValue] = useState<string>('');
   const [isSearching, setIsSearching] = useState<boolean>(false);
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -90,9 +90,6 @@ export function TableLayout({
   const searchTimeout = useRef<NodeJS.Timeout | null>(null);
 
   const isInitialMount = useRef(true);
-
-  // Track active filters for UI state
-  const [activeFilterCount, setActiveFilterCount] = useState<number>(0);
 
   useEffect(() => {
     if (isInitialMount.current) {
@@ -225,66 +222,53 @@ export function TableLayout({
   };
 
   return (
-    <div className="w-full">
-      <div className="flex flex-wrap items-center py-2 gap-2 justify-between">
-        <div className="relative max-w-sm w-full">
+    <div className="space-y-4">
+      <div className="flex items-center gap-4 flex-wrap">
+        {/* Search input */}
+        <div className="w-[250px] lg:w-[300px]">
           <Input
             placeholder="Search..."
             value={searchValue}
-            onChange={(e) => setSearchValue(e.target.value)}
-            className="w-full pr-8"
+            onChange={(event) => setSearchValue(event.target.value)}
+            className="h-9"
           />
-          {searchValue.length > 0 && (
-            <div
-              className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer"
-              onClick={() => setSearchValue('')}
-            >
-              <XCircle className="h-4 w-4 text-muted-foreground" />
-            </div>
-          )}
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Render filter controls */}
-          {filters.length > 0 && (
-            <div className="flex flex-wrap items-center gap-2">
-              {filters.map((filter) => (
-                <div key={filter.id} className="flex items-center gap-1">
-                  {filter.type === 'select' && filter.options && (
-                    <Select onValueChange={filter.handleFilterChange}>
-                      <SelectTrigger className="h-8 w-[180px]">
-                        <SelectValue placeholder={filter.label} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {filter.options.map((option) => (
-                          <SelectItem
-                            key={`${filter.id}-${option.value}`}
-                            value={option.value}
-                          >
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
 
-          {enableSelection &&
-            table.getFilteredSelectedRowModel().rows.length > 0 && (
-              <>
-                <button
-                  onClick={() => setRowSelection({})}
-                  className="text-sm text-destructive hover:underline"
-                  title="Clear selection"
-                >
-                  Clear
-                </button>
-              </>
-            )}
-        </div>
+        {/* Filter toolbar - positioned directly next to search */}
+        {filterToolbar && (
+          <div className="flex-1 flex items-center flex-wrap gap-2">
+            {filterToolbar}
+          </div>
+        )}
+
+        {/* Standard filters if no custom toolbar */}
+        {!filterToolbar && filters && filters.length > 0 && (
+          <div className="flex items-center flex-wrap gap-2">
+            {filters.map((filter) => (
+              <div key={filter.id} className="flex items-center">
+                {filter.type === 'select' && filter.options && (
+                  <Select onValueChange={filter.handleFilterChange}>
+                    <SelectTrigger className="h-9 w-[150px]">
+                      <SelectValue placeholder={filter.label} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {filter.options.map((option) => (
+                        <SelectItem
+                          key={`${filter.id}-${option.value}`}
+                          value={option.value}
+                        >
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
+
       <div className="rounded-md border relative">
         {isLoading && (
           <div className="absolute inset-0 bg-background/50 flex items-center justify-center z-10">

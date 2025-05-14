@@ -1,6 +1,6 @@
 'use client';
 
-import { getMemberTiersForSelection } from '../action';
+import { getMemberTiersForSelection } from '../../action';
 import EntitySelector from './entity-selector';
 
 interface MemberTier {

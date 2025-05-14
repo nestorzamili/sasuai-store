@@ -1,7 +1,8 @@
 'use client';
 
-import { getProductsForSelection } from '../action';
+import { getProductsForSelection } from '../../action';
 import EntitySelector from './entity-selector';
+import { useEffect } from 'react';
 
 interface Product {
   id: string;
@@ -13,6 +14,7 @@ interface Product {
   brand?: {
     name: string;
   } | null;
+  primaryImage?: string | null;
 }
 
 interface ProductSelectorProps {
@@ -28,11 +30,12 @@ export default function ProductSelector({
     search: string,
   ): Promise<{ success: boolean; data?: Product[] }> => {
     try {
-      const response = await getProductsForSelection(search);
-      if (response.success && 'products' in response) {
+      const products = await getProductsForSelection(search);
+
+      if (Array.isArray(products)) {
         return {
           success: true,
-          data: response.products as Product[],
+          data: products,
         };
       }
       return {
@@ -47,9 +50,9 @@ export default function ProductSelector({
 
   const renderProductDetails = (product: Product) => (
     <>
-      {product.category && <span>{product.category.name}</span>}
-      {product.brand && <span>{product.brand.name}</span>}
       {product.barcode && <span>Barcode: {product.barcode}</span>}
+      {product.category && <span>Category: {product.category.name}</span>}
+      {product.brand && <span>Brand: {product.brand.name}</span>}
     </>
   );
 
@@ -76,7 +79,7 @@ export default function ProductSelector({
       onChange={onChange}
       fetchItems={fetchProducts}
       renderItemDetails={renderProductDetails}
-      placeholder="Search products..."
+      placeholder="Search products by name or barcode..."
       noSelectionText="No products selected"
       columns={productColumns}
     />

@@ -1,91 +1,55 @@
 import { z } from 'zod';
 import { DiscountType, DiscountApplyTo } from '@prisma/client';
 
-// Main discount schema
-export const discountSchema = z
-  .object({
-    id: z.string().optional(),
-    name: z.string().min(1, 'Discount name is required'),
-    code: z.string().nullable().optional(),
-    description: z.string().nullable().optional(),
-    type: z.nativeEnum(DiscountType, {
-      errorMap: () => ({ message: 'Please select a valid discount type' }),
-    }),
-    value: z.coerce.number().min(0, 'Value must be a positive number'),
-    minPurchase: z.coerce.number().nullable().optional(),
-    startDate: z.date(),
-    endDate: z.date(),
-    isActive: z.boolean().default(true),
-    isGlobal: z.boolean().default(false),
-    maxUses: z.coerce.number().nullable().optional(),
-    applyTo: z.nativeEnum(DiscountApplyTo),
-    productIds: z.array(z.string()).optional(),
-    memberIds: z.array(z.string()).optional(),
-    memberTierIds: z.array(z.string()).optional(),
-  })
-  .refine((data) => data.startDate <= data.endDate, {
-    message: 'End date must be after start date',
-    path: ['endDate'],
-  })
-  .refine(
-    (data) =>
-      data.type !== DiscountType.PERCENTAGE ||
-      (data.value >= 0 && data.value <= 100),
-    {
-      message: 'Percentage discount must be between 0 and 100',
-      path: ['value'],
-    },
-  )
-  .refine(
-    (data) =>
-      data.applyTo !== DiscountApplyTo.SPECIFIC_PRODUCTS ||
-      (data.productIds && data.productIds.length > 0),
-    {
-      message: 'You must select at least one product',
-      path: ['productIds'],
-    },
-  )
-  .refine(
-    (data) =>
-      data.applyTo !== DiscountApplyTo.SPECIFIC_MEMBERS ||
-      (data.memberIds && data.memberIds.length > 0),
-    {
-      message: 'You must select at least one member',
-      path: ['memberIds'],
-    },
-  )
-  .refine(
-    (data) =>
-      data.applyTo !== DiscountApplyTo.SPECIFIC_MEMBER_TIERS ||
-      (data.memberTierIds && data.memberTierIds.length > 0),
-    {
-      message: 'You must select at least one member tier',
-      path: ['memberTierIds'],
-    },
-  );
-
-// Partial schema for updates (without refinements)
-export const partialDiscountSchema = z.object({
-  name: z.string().min(1, 'Discount name is required').optional(),
-  code: z.string().nullable().optional(),
-  description: z.string().nullable().optional(),
-  type: z
-    .nativeEnum(DiscountType, {
-      errorMap: () => ({ message: 'Please select a valid discount type' }),
-    })
-    .optional(),
-  value: z.number().min(0, 'Value must be a positive number').optional(),
-  minPurchase: z.number().nullable().optional(),
-  startDate: z.date().optional(),
-  endDate: z.date().optional(),
-  isActive: z.boolean().optional(),
-  isGlobal: z.boolean().optional(),
-  maxUses: z.number().nullable().optional(),
-  applyTo: z.nativeEnum(DiscountApplyTo).optional(),
-  productIds: z.array(z.string()).optional(),
-  memberIds: z.array(z.string()).optional(),
-  memberTierIds: z.array(z.string()).optional(),
+// Base schema without refinement
+const baseDiscountSchema = z.object({
+  id: z.string().optional(),
+  name: z.string().min(1, 'Name is required'),
+  code: z.string().nullable(),
+  description: z.string().nullable(),
+  type: z.nativeEnum(DiscountType),
+  value: z.coerce.number().min(0, 'Value must be positive'),
+  minPurchase: z.coerce.number().nullable(),
+  startDate: z.date(),
+  endDate: z.date(),
+  isActive: z.boolean(),
+  isGlobal: z.boolean(),
+  maxUses: z.coerce.number().nullable(),
+  // Make applyTo required (not nullable/optional)
+  applyTo: z.nativeEnum(DiscountApplyTo),
+  productIds: z.array(z.string()).default([]).optional(),
+  memberIds: z.array(z.string()).default([]).optional(),
+  memberTierIds: z.array(z.string()).default([]).optional(),
 });
 
-// Type definition for form values
+// Full schema with refinement for validation
+export const discountSchema = baseDiscountSchema.refine(
+  (data) => {
+    // Global discounts should use the ALL enum value
+    if (data.isGlobal) {
+      return data.applyTo === DiscountApplyTo.ALL;
+    }
+
+    // For non-global discounts, validate based on applyTo type
+    if (data.applyTo === DiscountApplyTo.SPECIFIC_PRODUCTS) {
+      return data.productIds && data.productIds.length > 0;
+    }
+    if (data.applyTo === DiscountApplyTo.SPECIFIC_MEMBERS) {
+      return data.memberIds && data.memberIds.length > 0;
+    }
+    if (data.applyTo === DiscountApplyTo.SPECIFIC_MEMBER_TIERS) {
+      return data.memberTierIds && data.memberTierIds.length > 0;
+    }
+    return true;
+  },
+  {
+    message:
+      'Please select at least one item for the selected application type',
+    path: ['applyTo'],
+  },
+);
+
+// Create partial schema from the base schema
+export const partialDiscountSchema = baseDiscountSchema.partial();
+
 export type DiscountFormValues = z.infer<typeof discountSchema>;

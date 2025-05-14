@@ -7,10 +7,18 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { format } from 'date-fns';
 import { MemberTierBadge } from '../../_components/member-tier-badge';
-import { IconEdit, IconCrown, IconClock } from '@tabler/icons-react';
+import {
+  IconEdit,
+  IconCrown,
+  IconClock,
+  IconBan,
+  IconShieldCheck,
+} from '@tabler/icons-react';
 import MemberFormDialog from '../../_components/member-form-dialog';
 import { getAllMemberTiers } from '../../action';
 import { Badge } from '@/components/ui/badge';
+import { toast } from '@/hooks/use-toast';
+import { unbanMember } from '../../action';
 
 interface MemberProfileProps {
   member: MemberWithRelations;
@@ -136,6 +144,57 @@ export default function MemberProfile({
                 {membershipDuration} days as member
               </div>
             </div>
+
+            {member.isBanned && (
+              <div className="mt-4 p-3 rounded-md bg-red-50 border border-red-200">
+                <div className="flex items-start gap-2">
+                  <IconBan className="h-5 w-5 text-red-500 mt-0.5" />
+                  <div>
+                    <h4 className="text-sm font-medium text-red-800">
+                      Member is Banned
+                    </h4>
+                    {member.banReason && (
+                      <p className="text-sm text-red-700 mt-1">
+                        {member.banReason}
+                      </p>
+                    )}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-2 border-red-300 hover:bg-red-50 text-red-700"
+                      onClick={async () => {
+                        try {
+                          const result = await unbanMember(member.id);
+                          if (result.success) {
+                            toast({
+                              title: 'Member unbanned',
+                              description: `${member.name} has been unbanned successfully`,
+                            });
+                            onUpdate?.();
+                          } else {
+                            toast({
+                              title: 'Error',
+                              description:
+                                result.error || 'Failed to unban member',
+                              variant: 'destructive',
+                            });
+                          }
+                        } catch (error) {
+                          toast({
+                            title: 'Error',
+                            description: 'An unexpected error occurred',
+                            variant: 'destructive',
+                          });
+                        }
+                      }}
+                    >
+                      <IconShieldCheck className="h-4 w-4 mr-2" />
+                      Remove Ban
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Points and tier information */}

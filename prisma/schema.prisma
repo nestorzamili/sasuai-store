@@ -397,4 +397,5 @@ enum DiscountApplyTo {
   SPECIFIC_PRODUCTS
   SPECIFIC_MEMBERS
   SPECIFIC_MEMBER_TIERS
+  ALL // New enum value for global discounts
 }
