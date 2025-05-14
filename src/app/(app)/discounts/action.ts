@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { DiscountService } from '@/lib/services/discount.service';
+import { ProductService } from '@/lib/services/product.service';
 import { DiscountData, DiscountPaginationParams } from '@/lib/types/discount';
 import { z } from 'zod';
 import { errorHandling } from '@/lib/common/response-formatter';
@@ -73,12 +74,8 @@ export async function createDiscount(data: DiscountData) {
  */
 export async function updateDiscount(id: string, data: Partial<DiscountData>) {
   try {
-    // Validate data using the partial schema
     const validatedData = partialDiscountSchema.parse(data);
-
-    // Update discount
     const result = await DiscountService.updateDiscount(id, validatedData);
-
     if (result.success) {
       // Revalidate discounts page
       revalidatePath('/discounts');
@@ -147,7 +144,12 @@ export async function deleteDiscount(id: string) {
  */
 export async function getProductsForSelection(search?: string) {
   try {
-    return await DiscountService.getProductsForSelection(search);
+    const products = await ProductService.getProductFiltered({
+      search: search || '',
+      take: 10,
+    });
+
+    return products;
   } catch (error) {
     return errorHandling({
       message: 'Failed to fetch products',
@@ -169,7 +171,6 @@ export async function getMembersForSelection(search?: string) {
     });
   }
 }
-
 /**
  * Get member tiers for discount selection
  */

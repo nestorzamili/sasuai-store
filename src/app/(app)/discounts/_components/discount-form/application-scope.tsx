@@ -17,9 +17,10 @@ import {
 import { DiscountApplyTo } from '@prisma/client';
 import { UseFormReturn } from 'react-hook-form';
 import { DiscountFormValues } from '../../schema';
-import ProductSelector from '../product-selector';
-import MemberSelector from '../member-selector';
-import TierSelector from '../tier-selector';
+import ProductSelector from './product-selector';
+import MemberSelector from './member-selector';
+import TierSelector from './tier-selector';
+import { useMemo, useEffect } from 'react';
 
 interface ApplicationScopeProps {
   form: UseFormReturn<DiscountFormValues>;
@@ -28,6 +29,100 @@ interface ApplicationScopeProps {
 export default function ApplicationScope({ form }: ApplicationScopeProps) {
   const isGlobal = form.watch('isGlobal');
   const applyTo = form.watch('applyTo');
+
+  // When isGlobal changes, set applyTo to ALL
+  useEffect(() => {
+    if (isGlobal) {
+      // Set applyTo to ALL for global discounts (instead of null)
+      form.setValue('applyTo', DiscountApplyTo.ALL, { shouldValidate: true });
+      // Clear selected items
+      form.setValue('productIds', [], { shouldValidate: true });
+      form.setValue('memberIds', [], { shouldValidate: true });
+      form.setValue('memberTierIds', [], { shouldValidate: true });
+    }
+  }, [isGlobal, form]);
+
+  // Memoize the selector components to prevent unnecessary re-renders
+  const ProductSelectorMemoized = useMemo(() => {
+    if (!isGlobal && applyTo === DiscountApplyTo.SPECIFIC_PRODUCTS) {
+      return (
+        <FormField
+          control={form.control}
+          name="productIds"
+          render={({ field }) => (
+            <FormItem className="border rounded-md p-4">
+              <FormLabel className="text-base">Select Products</FormLabel>
+              <FormDescription className="mt-1 mb-3">
+                Choose which products this discount will apply to
+              </FormDescription>
+              <FormControl>
+                <ProductSelector
+                  selectedIds={field.value || []}
+                  onChange={field.onChange}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      );
+    }
+    return null;
+  }, [form, isGlobal, applyTo]);
+
+  const MemberSelectorMemoized = useMemo(() => {
+    if (!isGlobal && applyTo === DiscountApplyTo.SPECIFIC_MEMBERS) {
+      return (
+        <FormField
+          control={form.control}
+          name="memberIds"
+          render={({ field }) => (
+            <FormItem className="border rounded-md p-4">
+              <FormLabel className="text-base">Select Members</FormLabel>
+              <FormDescription className="mt-1 mb-3">
+                Choose which members will be eligible for this discount
+              </FormDescription>
+              <FormControl>
+                <MemberSelector
+                  selectedIds={field.value || []}
+                  onChange={field.onChange}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      );
+    }
+    return null;
+  }, [form, isGlobal, applyTo]);
+
+  const TierSelectorMemoized = useMemo(() => {
+    if (!isGlobal && applyTo === DiscountApplyTo.SPECIFIC_MEMBER_TIERS) {
+      return (
+        <FormField
+          control={form.control}
+          name="memberTierIds"
+          render={({ field }) => (
+            <FormItem className="border rounded-md p-4">
+              <FormLabel className="text-base">Select Member Tiers</FormLabel>
+              <FormDescription className="mt-1 mb-3">
+                Choose which membership tiers will be eligible for this discount
+              </FormDescription>
+              <FormControl>
+                <TierSelector
+                  selectedIds={field.value || []}
+                  onChange={field.onChange}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      );
+    }
+    return null;
+  }, [form, isGlobal, applyTo]);
 
   return (
     <div className="space-y-6">
@@ -41,7 +136,9 @@ export default function ApplicationScope({ form }: ApplicationScopeProps) {
               <FormControl>
                 <Checkbox
                   checked={field.value}
-                  onCheckedChange={field.onChange}
+                  onCheckedChange={(checked) => {
+                    field.onChange(checked);
+                  }}
                 />
               </FormControl>
               <div className="space-y-1 leading-none">
@@ -54,110 +151,59 @@ export default function ApplicationScope({ form }: ApplicationScopeProps) {
           )}
         />
 
-        <FormField
-          control={form.control}
-          name="applyTo"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Apply Discount To</FormLabel>
-              <Select
-                onValueChange={field.onChange}
-                defaultValue={field.value}
-                value={field.value}
-                disabled={isGlobal}
-              >
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select application scope" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value={DiscountApplyTo.SPECIFIC_PRODUCTS}>
-                    Specific Products
-                  </SelectItem>
-                  <SelectItem value={DiscountApplyTo.SPECIFIC_MEMBERS}>
-                    Specific Members
-                  </SelectItem>
-                  <SelectItem value={DiscountApplyTo.SPECIFIC_MEMBER_TIERS}>
-                    Member Tiers
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-              <FormDescription>
-                {isGlobal
-                  ? 'Global discounts apply to all eligible items'
-                  : 'Choose which items or members this discount applies to'}
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {!isGlobal && applyTo === DiscountApplyTo.SPECIFIC_PRODUCTS && (
+        {!isGlobal ? (
           <FormField
             control={form.control}
-            name="productIds"
+            name="applyTo"
             render={({ field }) => (
-              <FormItem className="border rounded-md p-4">
-                <FormLabel className="text-base">Select Products</FormLabel>
-                <FormDescription className="mt-1 mb-3">
-                  Choose which products this discount will apply to
+              <FormItem>
+                <FormLabel>Apply Discount To</FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value || undefined}
+                  value={field.value || undefined}
+                  disabled={isGlobal}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select application scope" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value={DiscountApplyTo.SPECIFIC_PRODUCTS}>
+                      Specific Products
+                    </SelectItem>
+                    <SelectItem value={DiscountApplyTo.SPECIFIC_MEMBERS}>
+                      Specific Members
+                    </SelectItem>
+                    <SelectItem value={DiscountApplyTo.SPECIFIC_MEMBER_TIERS}>
+                      Member Tiers
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormDescription>
+                  Choose which items or members this discount applies to
                 </FormDescription>
-                <FormControl>
-                  <ProductSelector
-                    selectedIds={field.value || []}
-                    onChange={field.onChange}
-                  />
-                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
+        ) : (
+          <div className="rounded-md border bg-muted/50 p-4">
+            <p className="text-sm text-muted-foreground">
+              Global discounts apply to all purchases and don't require specific
+              targeting
+            </p>
+          </div>
         )}
 
-        {!isGlobal && applyTo === DiscountApplyTo.SPECIFIC_MEMBERS && (
-          <FormField
-            control={form.control}
-            name="memberIds"
-            render={({ field }) => (
-              <FormItem className="border rounded-md p-4">
-                <FormLabel className="text-base">Select Members</FormLabel>
-                <FormDescription className="mt-1 mb-3">
-                  Choose which members will be eligible for this discount
-                </FormDescription>
-                <FormControl>
-                  <MemberSelector
-                    selectedIds={field.value || []}
-                    onChange={field.onChange}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        )}
-
-        {!isGlobal && applyTo === DiscountApplyTo.SPECIFIC_MEMBER_TIERS && (
-          <FormField
-            control={form.control}
-            name="memberTierIds"
-            render={({ field }) => (
-              <FormItem className="border rounded-md p-4">
-                <FormLabel className="text-base">Select Member Tiers</FormLabel>
-                <FormDescription className="mt-1 mb-3">
-                  Choose which membership tiers will be eligible for this
-                  discount
-                </FormDescription>
-                <FormControl>
-                  <TierSelector
-                    selectedIds={field.value || []}
-                    onChange={field.onChange}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+        {/* Show selectors only if not global */}
+        {!isGlobal && (
+          <>
+            {ProductSelectorMemoized}
+            {MemberSelectorMemoized}
+            {TierSelectorMemoized}
+          </>
         )}
       </div>
     </div>

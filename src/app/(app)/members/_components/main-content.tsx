@@ -1,11 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import {
-  searchMembers,
-  getAllMemberTiers,
-  awardPointsToMember,
-} from '../action';
+import { getAllMemberTiers, awardPointsToMember } from '../action';
 import { MemberWithTier } from '@/lib/types/member';
 import MemberPrimaryButton from './member-primary-button';
 import { MemberTable } from './member-table';
@@ -29,15 +25,6 @@ import { Label } from '@/components/ui/label';
 
 export default function MainContent() {
   const [isLoading, setIsLoading] = useState(true);
-  const [members, setMembers] = useState<MemberWithTier[]>([]);
-  const [totalCount, setTotalCount] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState('name');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
-
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<MemberWithTier | null>(
     null,
@@ -63,46 +50,6 @@ export default function MainContent() {
   const [pointNotes, setPointNotes] = useState('');
   const [isAwarding, setIsAwarding] = useState(false);
 
-  const fetchMembers = async (
-    page = currentPage,
-    limit = pageSize,
-    query = searchQuery,
-    sort = sortBy,
-    direction = sortDirection,
-  ) => {
-    setIsLoading(true);
-    try {
-      const { data, success } = await searchMembers({
-        query,
-        page,
-        limit,
-        sortBy: sort,
-        sortDirection: direction,
-      });
-
-      if (success && data) {
-        setMembers(data.members);
-        setTotalCount(data.totalCount);
-        setTotalPages(data.totalPages);
-        setCurrentPage(data.currentPage);
-      } else {
-        toast({
-          title: 'Error',
-          description: 'Failed to fetch members',
-          variant: 'destructive',
-        });
-      }
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to fetch members',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const fetchTiers = async () => {
     try {
       const { data, success } = await getAllMemberTiers();
@@ -115,31 +62,14 @@ export default function MainContent() {
         description: 'Failed to fetch member tiers',
         variant: 'destructive',
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchMembers();
     fetchTiers();
   }, []);
-
-  // Handle pagination change
-  const handlePaginationChange = (page: number) => {
-    fetchMembers(page, pageSize, searchQuery, sortBy, sortDirection);
-  };
-
-  // Handle search
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
-    fetchMembers(1, pageSize, query, sortBy, sortDirection);
-  };
-
-  // Handle sort
-  const handleSort = (column: string, direction: 'asc' | 'desc') => {
-    setSortBy(column);
-    setSortDirection(direction);
-    fetchMembers(currentPage, pageSize, searchQuery, column, direction);
-  };
 
   // Handle dialog reset on close
   const handleDialogOpenChange = (open: boolean) => {
@@ -159,10 +89,6 @@ export default function MainContent() {
   const handleSuccess = () => {
     setIsDialogOpen(false);
     setSelectedMember(null);
-    fetchMembers();
-    if (activeTab === 'tiers') {
-      fetchTiers();
-    }
   };
 
   // Handle tab change
@@ -219,7 +145,6 @@ export default function MainContent() {
         });
         setIsAwardPointsOpen(false);
         resetAwardPointsForm();
-        fetchMembers(); // Refresh the members list
       } else {
         toast({
           title: 'Error',
@@ -275,8 +200,6 @@ export default function MainContent() {
         </TabsList>
         <TabsContent value="members" className="mt-6">
           <MemberTable
-            data={members}
-            isLoading={isLoading}
             onEdit={handleEdit}
             onAwardPoints={handleOpenAwardPoints}
           />

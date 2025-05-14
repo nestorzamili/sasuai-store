@@ -31,7 +31,7 @@ export class TransactionService {
       include: {
         batches: true,
         unit: true,
-        discounts: true, // Updated to use the direct many-to-many relationship
+        discounts: true,
       },
     });
 
@@ -64,17 +64,45 @@ export class TransactionService {
         continue;
       }
 
-      // Calculate discount
-      const { value, valueType, discountId } = this.calculateProductDiscount(
-        product,
-        cartItem.selectedDiscountId,
-      );
+      // Get applicable discount - only if specifically selected
+      let selectedDiscount = null;
+      const now = new Date();
+
+      if (cartItem.selectedDiscountId) {
+        selectedDiscount = product.discounts.find(
+          (discount) =>
+            discount.id === cartItem.selectedDiscountId &&
+            discount.isActive &&
+            now >= discount.startDate &&
+            now <= discount.endDate &&
+            (!discount.maxUses || discount.usedCount < discount.maxUses),
+        );
+
+        if (cartItem.selectedDiscountId && !selectedDiscount) {
+          errors.push(
+            `Selected discount for product ${product.id} is not valid or has reached usage limit`,
+          );
+          continue;
+        }
+      }
+      // We're not auto-selecting any discount when none is chosen
 
       // Calculate final price and subtotal
+      const basicPrice = product.price;
+      let discountValue = 0;
+      let discountType = null;
+      let discountId = null;
+
+      if (selectedDiscount) {
+        discountValue = selectedDiscount.value;
+        discountType = selectedDiscount.type;
+        discountId = selectedDiscount.id;
+      }
+
       const finalPrice = this.calculateDiscountedPrice(
-        product.price,
-        value,
-        valueType,
+        basicPrice,
+        discountValue,
+        discountType,
       );
       const subtotal = finalPrice * cartItem.quantity;
 
@@ -85,13 +113,12 @@ export class TransactionService {
         basicPrice: product.price,
         buyPrice: validBatch.buyPrice,
         quantity: cartItem.quantity,
-        discount: value
+        discount: selectedDiscount
           ? {
-              id: discountId!,
-              value,
-              type: valueType!,
-              valueType:
-                valueType === 'percentage' ? 'PERCENTAGE' : 'FIXED_AMOUNT',
+              id: selectedDiscount.id,
+              value: selectedDiscount.value,
+              type: selectedDiscount.type,
+              valueType: selectedDiscount.type,
             }
           : null,
         discountedPrice: finalPrice,
@@ -111,42 +138,6 @@ export class TransactionService {
     };
   }
 
-  private static calculateProductDiscount(
-    product: any,
-    selectedDiscountId: string | null | undefined,
-  ): { value: number; valueType: string | null; discountId: string | null } {
-    // Default values
-    let value = 0;
-    let valueType = null;
-    let discountId = null;
-
-    // Check for selected discount
-    if (selectedDiscountId) {
-      const discount = product.discounts?.find(
-        (d: any) => d.id === selectedDiscountId,
-      );
-
-      if (discount) {
-        value = discount.value;
-        // Map Prisma enum to internal string representation
-        valueType = discount.type === 'PERCENTAGE' ? 'percentage' : 'flat';
-        discountId = discount.id;
-      }
-    }
-    // Otherwise use first available discount
-    else if (product.discounts?.length > 0) {
-      const firstDiscount = product.discounts[0];
-      if (firstDiscount) {
-        value = firstDiscount.value;
-        // Map Prisma enum to internal string representation
-        valueType = firstDiscount.type === 'PERCENTAGE' ? 'percentage' : 'flat';
-        discountId = firstDiscount.id;
-      }
-    }
-
-    return { value, valueType, discountId };
-  }
-
   private static calculateDiscountedPrice(
     basePrice: number,
     discountValue: number,
@@ -154,19 +145,25 @@ export class TransactionService {
   ): number {
     if (!discountValue || !discountType) return basePrice;
 
-    if (discountType === 'percentage') {
-      return basePrice - (discountValue * basePrice) / 100;
+    let discountedPrice = basePrice;
+
+    if (discountType === 'PERCENTAGE') {
+      const discountAmount = (discountValue * basePrice) / 100;
+      discountedPrice = basePrice - discountAmount;
+    } else if (discountType === 'FIXED_AMOUNT') {
+      discountedPrice = basePrice - discountValue;
     }
-    if (discountType === 'flat') {
-      return basePrice - discountValue;
-    }
-    return basePrice;
+
+    // Ensure price doesn't go below zero
+    return Math.max(0, discountedPrice);
   }
 
   static async validationTransaction(
     validatedCart: ValidatedCartItem[],
     memberId: string | null | undefined = null,
     selectedMemberDiscountId: string | null = null,
+    selectedTierDiscountId: string | null = null,
+    globalDiscountCode: string | null = null,
   ): Promise<ValidationResult<TransactionSummary>> {
     // Calculate subtotal from all cart items
     const subtotal = validatedCart.reduce(
@@ -175,22 +172,73 @@ export class TransactionService {
     );
 
     // Get member discount info if applicable
-    const memberInfo = await this.getMemberDiscountInfo(
-      memberId,
-      selectedMemberDiscountId,
-      subtotal,
-    );
+    let memberInfo = null;
+    if (memberId) {
+      memberInfo = await this.getMemberInfo(memberId);
+    }
 
-    // Calculate final amount after member discount
-    const memberDiscountAmount = memberInfo?.discount?.amount || 0;
-    const finalAmount = subtotal - memberDiscountAmount;
+    // Process discounts based on what was sent from frontend
+    let appliedDiscount = null;
+    let discountSource: 'global' | 'member' | 'tier' | null = null;
+
+    // 1. If global discount code provided, validate and apply it
+    if (globalDiscountCode) {
+      const globalDiscount = await this.getGlobalDiscountInfo(
+        globalDiscountCode,
+        subtotal,
+      );
+      if (globalDiscount) {
+        appliedDiscount = globalDiscount;
+        discountSource = 'global';
+      }
+    }
+    // 2. If member discount ID provided, validate and apply it
+    else if (memberId && selectedMemberDiscountId) {
+      const memberDiscount = await this.getMemberDiscountInfo(
+        memberId,
+        selectedMemberDiscountId,
+        subtotal,
+      );
+
+      if (memberDiscount?.discount) {
+        appliedDiscount = memberDiscount.discount;
+        discountSource = 'member';
+      }
+    }
+    // 3. If tier discount ID provided, validate and apply it
+    else if (memberId && selectedTierDiscountId && memberInfo?.tierId) {
+      const tierDiscount = await this.getTierDiscountInfo(
+        memberInfo.tierId,
+        selectedTierDiscountId,
+        subtotal,
+      );
+
+      if (tierDiscount) {
+        appliedDiscount = tierDiscount;
+        discountSource = 'tier';
+      }
+    }
+
+    // Calculate final amount
+    const discountAmount = appliedDiscount?.amount || 0;
+    const finalAmount = subtotal - discountAmount;
 
     return {
       success: true,
       message: 'Transaction validated successfully',
       data: {
         subtotal,
-        member: memberInfo,
+        member: memberInfo
+          ? {
+              ...memberInfo,
+              discount:
+                discountSource === 'member' || discountSource === 'tier'
+                  ? appliedDiscount
+                  : null,
+            }
+          : null,
+        globalDiscount: discountSource === 'global' ? appliedDiscount : null,
+        discountSource,
         finalAmount,
       },
     };
@@ -218,23 +266,28 @@ export class TransactionService {
       return { id: memberId, name: member.name, discount: null };
     }
 
-    // Find the selected discount
+    // Find the selected discount and validate it's applicable
+    const now = new Date();
     const discount = member.discounts.find(
-      (d) => d.id === selectedMemberDiscountId,
+      (d) =>
+        d.id === selectedMemberDiscountId &&
+        d.isActive &&
+        now >= d.startDate &&
+        now <= d.endDate &&
+        (!d.maxUses || d.usedCount < d.maxUses) &&
+        (!d.minPurchase || subtotal >= d.minPurchase),
     );
 
     if (!discount) {
       return { id: memberId, name: member.name, discount: null };
     }
 
-    const { type, value } = discount;
-
     // Calculate discount amount
     const discountAmount =
-      type === 'PERCENTAGE'
-        ? (value * subtotal) / 100
-        : type === 'FIXED_AMOUNT'
-        ? value
+      discount.type === 'PERCENTAGE'
+        ? (discount.value * subtotal) / 100
+        : discount.type === 'FIXED_AMOUNT'
+        ? discount.value
         : 0;
 
     return {
@@ -244,12 +297,125 @@ export class TransactionService {
         discountAmount > 0
           ? {
               id: discount.id,
-              value,
-              type: type as DiscountType,
+              value: discount.value,
+              type: discount.type as DiscountType,
               amount: discountAmount,
             }
           : null,
     };
+  }
+
+  // Get basic member info
+  private static async getMemberInfo(memberId: string) {
+    const member = await prisma.member.findUnique({
+      where: { id: memberId },
+      include: {
+        tier: true,
+      },
+    });
+
+    if (!member) return null;
+
+    return {
+      id: memberId,
+      name: member.name,
+      tierId: member.tierId,
+      tierName: member.tier?.name,
+    };
+  }
+
+  // Get tier-based discount
+  private static async getTierDiscountInfo(
+    tierId: string,
+    discountId: string,
+    subtotal: number,
+  ) {
+    // Get tier discount
+    const tierDiscount = await prisma.discount.findFirst({
+      where: {
+        id: discountId,
+        isActive: true,
+        startDate: { lte: new Date() },
+        endDate: { gte: new Date() },
+        memberTiers: {
+          some: { id: tierId },
+        },
+        OR: [
+          { maxUses: null },
+          { usedCount: { lt: prisma.discount.fields.maxUses } },
+        ],
+        AND: [
+          {
+            OR: [{ minPurchase: null }, { minPurchase: { lte: subtotal } }],
+          },
+        ],
+      },
+    });
+
+    if (!tierDiscount) return null;
+
+    // Calculate discount amount
+    const discountAmount =
+      tierDiscount.type === 'PERCENTAGE'
+        ? (tierDiscount.value * subtotal) / 100
+        : tierDiscount.type === 'FIXED_AMOUNT'
+        ? tierDiscount.value
+        : 0;
+
+    return discountAmount > 0
+      ? {
+          id: tierDiscount.id,
+          value: tierDiscount.value,
+          type: tierDiscount.type as DiscountType,
+          amount: discountAmount,
+        }
+      : null;
+  }
+
+  // Get global discount
+  private static async getGlobalDiscountInfo(
+    discountCode: string,
+    subtotal: number,
+  ) {
+    // Get global discount by code
+    const globalDiscount = await prisma.discount.findFirst({
+      where: {
+        code: discountCode,
+        isGlobal: true,
+        isActive: true,
+        startDate: { lte: new Date() },
+        endDate: { gte: new Date() },
+        OR: [
+          { maxUses: null },
+          { usedCount: { lt: prisma.discount.fields.maxUses } },
+        ],
+        AND: [
+          {
+            OR: [{ minPurchase: null }, { minPurchase: { lte: subtotal } }],
+          },
+        ],
+      },
+    });
+
+    if (!globalDiscount) return null;
+
+    // Calculate discount amount
+    const discountAmount =
+      globalDiscount.type === 'PERCENTAGE'
+        ? (globalDiscount.value * subtotal) / 100
+        : globalDiscount.type === 'FIXED_AMOUNT'
+        ? globalDiscount.value
+        : 0;
+
+    return discountAmount > 0
+      ? {
+          id: globalDiscount.id,
+          code: globalDiscount.code,
+          value: globalDiscount.value,
+          type: globalDiscount.type as DiscountType,
+          amount: discountAmount,
+        }
+      : null;
   }
 
   static async checkPaymentMethod(
@@ -331,6 +497,8 @@ export class TransactionService {
         validatedCartResult.data,
         data.memberId,
         data.selectedMemberDiscountId,
+        data.selectedTierDiscountId,
+        data.globalDiscountCode,
       );
 
       if (
@@ -416,8 +584,28 @@ export class TransactionService {
           );
         }
 
+        // First determine which discount ID to track
+        let transactionDiscountId = null;
+        if (
+          transactionData.discountSource === 'global' &&
+          transactionData.globalDiscount
+        ) {
+          transactionDiscountId = transactionData.globalDiscount.id;
+        } else if (
+          transactionData.discountSource === 'member' ||
+          transactionData.discountSource === 'tier'
+        ) {
+          transactionDiscountId = transactionData.member?.discount?.id;
+        }
         // Update inventory
         await this.updateInventory(tx, items);
+
+        // Increment used count for all discounts used in this transaction
+        await this.incrementDiscountUsages(
+          tx,
+          validatedCart,
+          transactionDiscountId,
+        );
 
         return {
           success: true,
@@ -437,6 +625,37 @@ export class TransactionService {
     });
   }
 
+  /**
+   * Increment the usage count for all discounts used in the transaction
+   */
+  // Fix this method signature to accept either approach
+  private static async incrementDiscountUsages(
+    tx: any,
+    validatedCart: ValidatedCartItem[],
+    transactionDiscountId: string | null | undefined,
+  ) {
+    // Get all product discount IDs
+    const productDiscountIds = validatedCart
+      .filter((item) => item.discount?.id)
+      .map((item) => item.discount!.id);
+
+    // Combine with transaction-level discount
+    const allDiscountIds = [
+      ...new Set([
+        ...productDiscountIds,
+        ...(transactionDiscountId ? [transactionDiscountId] : []),
+      ]),
+    ];
+
+    // Increment used count for each discount
+    for (const discountId of allDiscountIds) {
+      await tx.discount.update({
+        where: { id: discountId },
+        data: { usedCount: { increment: 1 } },
+      });
+    }
+  }
+
   private static prepareTransactionItems(validatedCart: ValidatedCartItem[]) {
     return validatedCart.map((item) => ({
       productId: item.productId,
@@ -446,7 +665,7 @@ export class TransactionService {
       quantity: item.quantity,
       discountId: item.discount?.id || null,
       discountValue: item.discount?.value || null,
-      discountValueType: item.discount?.type || null,
+      discountValueType: item.discount?.valueType || null,
       basicPrice: item.basicPrice,
       subtotal: item.subtotal,
     }));
@@ -461,13 +680,31 @@ export class TransactionService {
     change: number,
     items: any[],
   ) {
+    let discountId = null;
+    let discountAmount = null;
+
+    if (
+      transactionData.discountSource === 'global' &&
+      transactionData.globalDiscount
+    ) {
+      discountId = transactionData.globalDiscount.id;
+      discountAmount = transactionData.globalDiscount.amount;
+    } else if (
+      (transactionData.discountSource === 'member' ||
+        transactionData.discountSource === 'tier') &&
+      transactionData.member?.discount
+    ) {
+      discountId = transactionData.member.discount.id;
+      discountAmount = transactionData.member.discount.amount;
+    }
+
     return tx.transaction.create({
       data: {
         tranId,
         cashierId: data.cashierId,
         memberId: transactionData.member?.id || null,
-        discountId: transactionData.member?.discount?.id || null,
-        discountAmount: transactionData.member?.discount?.amount || null,
+        discountId: discountId,
+        discountAmount: discountAmount,
         totalAmount: transactionData.subtotal,
         finalAmount: transactionData.finalAmount,
         paymentMethod: data.paymentMethod,
@@ -504,10 +741,10 @@ export class TransactionService {
     if (!discountValue || !discountType) return null;
 
     const totalPrice = price * quantity;
-    if (discountType === 'percentage' || discountType === 'PERCENTAGE') {
+    if (discountType === 'PERCENTAGE') {
       return (discountValue * totalPrice) / 100;
     }
-    if (discountType === 'flat' || discountType === 'FIXED_AMOUNT') {
+    if (discountType === 'FIXED_AMOUNT') {
       return discountValue * quantity;
     }
     return null;

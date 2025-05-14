@@ -9,13 +9,31 @@ import { toast } from '@/hooks/use-toast';
 import { discountSchema, DiscountFormValues } from '../../schema';
 import { DiscountType, DiscountApplyTo } from '@prisma/client';
 import { getDiscount, updateDiscount } from '../../action';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { Separator } from '@/components/ui/separator';
 import BasicInfo from '../../_components/discount-form/basic-info';
 import ValidityRules from '../../_components/discount-form/validity-rules';
 import ApplicationScope from '../../_components/discount-form/application-scope';
+
+const defaultValues: DiscountFormValues = {
+  name: '',
+  code: null,
+  description: null,
+  type: DiscountType.PERCENTAGE,
+  value: 0,
+  minPurchase: null,
+  startDate: new Date(),
+  endDate: new Date(new Date().setMonth(new Date().getMonth() + 1)),
+  isActive: true,
+  isGlobal: false,
+  maxUses: null,
+  applyTo: DiscountApplyTo.SPECIFIC_PRODUCTS,
+  productIds: [],
+  memberIds: [],
+  memberTierIds: [],
+};
 
 export default function EditDiscountPage() {
   // Use the useParams hook to get the ID from the route
@@ -29,87 +47,82 @@ export default function EditDiscountPage() {
   // Initialize the form
   const form = useForm<DiscountFormValues>({
     resolver: zodResolver(discountSchema),
-    defaultValues: {
-      name: '',
-      code: null,
-      description: null,
-      type: DiscountType.PERCENTAGE,
-      value: 0,
-      minPurchase: null,
-      startDate: new Date(),
-      endDate: new Date(new Date().setMonth(new Date().getMonth() + 1)),
-      isActive: true,
-      isGlobal: false,
-      maxUses: null,
-      applyTo: DiscountApplyTo.SPECIFIC_PRODUCTS,
-      productIds: [],
-      memberIds: [],
-      memberTierIds: [],
-    },
+    defaultValues,
+    mode: 'onChange',
   });
 
-  // Fetch discount data
-  useEffect(() => {
-    const fetchDiscount = async () => {
-      if (!discountId) return;
+  // Memoize the data fetching to avoid unnecessary rerenders
+  const fetchDiscountData = useCallback(async () => {
+    if (!discountId) return;
 
-      try {
-        setInitialLoading(true);
-        const response = await getDiscount(discountId);
+    try {
+      setInitialLoading(true);
+      const response = await getDiscount(discountId);
 
-        if (response.success && response.discount) {
-          const discount = response.discount;
+      if (response.success && response.discount) {
+        const discount = response.discount;
 
-          let applyToValue = discount.applyTo;
-          let isGlobalValue = discount.isGlobal;
-
-          if (discount.isGlobal) {
-            applyToValue = DiscountApplyTo.SPECIFIC_PRODUCTS;
-            isGlobalValue = true;
-          }
-
-          form.reset({
-            id: discount.id,
-            name: discount.name,
-            code: discount.code || null,
-            description: discount.description || null,
-            type: discount.type,
-            value: discount.value,
-            minPurchase: discount.minPurchase || null,
-            startDate: new Date(discount.startDate),
-            endDate: new Date(discount.endDate),
-            isActive: discount.isActive,
-            isGlobal: isGlobalValue,
-            maxUses: discount.maxUses || null,
-            applyTo: applyToValue || undefined,
-            productIds: discount.products?.map((product) => product.id) || [],
-            memberIds: discount.members?.map((member) => member.id) || [],
-            memberTierIds: discount.memberTiers?.map((tier) => tier.id) || [],
-          });
+        // Update how we handle applyTo for global discounts
+        let applyToValue;
+        if (discount.isGlobal) {
+          // Use ALL for global discounts (not SPECIFIC_PRODUCTS)
+          applyToValue = DiscountApplyTo.ALL;
         } else {
-          toast({
-            title: 'Error',
-            description: "Couldn't load discount. Please try again later.",
-            variant: 'destructive',
-          });
-          router.push('/discounts');
+          // For non-global discounts, use the stored value
+          applyToValue = discount.applyTo || DiscountApplyTo.SPECIFIC_PRODUCTS;
         }
-      } catch (error) {
-        console.error('Error loading discount:', error);
+
+        // Create a new form values object instead of setting fields individually
+        const formValues: DiscountFormValues = {
+          id: discount.id,
+          name: discount.name,
+          code: discount.code || null,
+          description: discount.description || null,
+          type: discount.type,
+          value: discount.value,
+          minPurchase: discount.minPurchase || null,
+          startDate: new Date(discount.startDate),
+          endDate: new Date(discount.endDate),
+          isActive: discount.isActive,
+          isGlobal: discount.isGlobal,
+          maxUses: discount.maxUses || null,
+          applyTo: applyToValue,
+          productIds: discount.products?.map((product) => product.id) || [],
+          memberIds: discount.members?.map((member) => member.id) || [],
+          memberTierIds: discount.memberTiers?.map((tier) => tier.id) || [],
+        };
+
+        // Reset form with all values at once to avoid cascading updates
+        form.reset(formValues);
+        return true;
+      } else {
         toast({
           title: 'Error',
-          description:
-            'An unexpected error occurred while loading discount data.',
+          description: "Couldn't load discount. Please try again later.",
           variant: 'destructive',
         });
         router.push('/discounts');
-      } finally {
-        setInitialLoading(false);
+        return false;
       }
-    };
-
-    fetchDiscount();
+    } catch (error) {
+      console.error('Error loading discount:', error);
+      toast({
+        title: 'Error',
+        description:
+          'An unexpected error occurred while loading discount data.',
+        variant: 'destructive',
+      });
+      router.push('/discounts');
+      return false;
+    } finally {
+      setInitialLoading(false);
+    }
   }, [discountId, router, form]);
+
+  // Fetch discount data once on component mount
+  useEffect(() => {
+    fetchDiscountData();
+  }, [fetchDiscountData]);
 
   // Handle form submission
   const onSubmit = async (values: DiscountFormValues) => {
@@ -117,8 +130,15 @@ export default function EditDiscountPage() {
 
     try {
       setLoading(true);
+      console.log('Form values before submission:', values);
+
+      // Always ensure global discounts use the ALL enum
+      if (values.isGlobal) {
+        values.applyTo = DiscountApplyTo.ALL;
+      }
 
       const result = await updateDiscount(discountId, values);
+      console.log('Update result:', result);
 
       if (result.success) {
         toast({
@@ -136,7 +156,6 @@ export default function EditDiscountPage() {
         });
       }
     } catch (error) {
-      console.error('Form submission error:', error);
       toast({
         title: 'Error',
         description: 'An unexpected error occurred',
@@ -145,6 +164,15 @@ export default function EditDiscountPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Add an onError handler for form validation errors
+  const onError = (errors: any) => {
+    toast({
+      title: 'Validation Error',
+      description: 'Please check the form for errors',
+      variant: 'destructive',
+    });
   };
 
   if (initialLoading) {
@@ -174,7 +202,10 @@ export default function EditDiscountPage() {
       <Separator />
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <form
+          onSubmit={form.handleSubmit(onSubmit, onError)}
+          className="space-y-6"
+        >
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <div className="space-y-6">
               <Card>
@@ -203,7 +234,13 @@ export default function EditDiscountPage() {
                 Cancel
               </Button>
             </Link>
-            <Button type="submit" disabled={loading}>
+            <Button
+              type="submit"
+              disabled={loading}
+              onClick={() =>
+                console.log('Update button clicked', form.formState.errors)
+              }
+            >
               {loading ? 'Updating...' : 'Update Discount'}
             </Button>
           </div>

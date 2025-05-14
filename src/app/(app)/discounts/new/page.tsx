@@ -37,7 +37,7 @@ export default function CreateDiscountPage() {
       isActive: true,
       isGlobal: false,
       maxUses: null,
-      applyTo: DiscountApplyTo.SPECIFIC_PRODUCTS,
+      applyTo: DiscountApplyTo.SPECIFIC_PRODUCTS, // Default for non-global
       productIds: [],
       memberIds: [],
       memberTierIds: [],
@@ -60,6 +60,7 @@ export default function CreateDiscountPage() {
         // Navigate back to the discounts page
         router.push('/discounts');
       } else {
+        // Show specific error message
         toast({
           title: 'Error',
           description: result.message || 'Something went wrong',
@@ -76,6 +77,16 @@ export default function CreateDiscountPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Form error event handler to catch validation errors
+  const onError = (errors: any) => {
+    console.error('Form validation errors:', errors);
+    toast({
+      title: 'Validation Error',
+      description: 'Please check the form for errors',
+      variant: 'destructive',
+    });
   };
 
   return (
@@ -97,7 +108,10 @@ export default function CreateDiscountPage() {
       <Separator />
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <form
+          onSubmit={form.handleSubmit(onSubmit, onError)}
+          className="space-y-6"
+        >
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <div className="space-y-6">
               <Card>
