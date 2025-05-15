@@ -3,8 +3,8 @@ import { format } from 'date-fns';
 import { dateToCompare } from '../date';
 
 type DateFilter = {
-  startDate: string;
-  endDate: string;
+  from: string;
+  to: string;
 };
 
 export class DashboardService {
@@ -12,16 +12,15 @@ export class DashboardService {
     // Default dates if no filter provided
     const defaultStart = '2024-09-01';
     const defaultEnd = '2024-09-02';
-
+    // console.log('dateFilter', dateFilter);
     // Process dates - either use provided dates or defaults
     const dates =
-      dateFilter?.startDate || dateFilter?.endDate
+      dateFilter?.from || dateFilter?.to
         ? dateToCompare(
-            dateFilter.startDate || defaultStart,
-            dateFilter.endDate || defaultEnd
+            dateFilter.from || defaultStart,
+            dateFilter.to || defaultEnd
           )
         : dateToCompare(defaultStart, defaultEnd);
-
     // Format all dates at once
     const [startDate, endDate, prevStartDate, prevEndDate] = [
       dates.current.startDate,
@@ -381,10 +380,10 @@ export class DashboardService {
     const defaultEnd = '2024-09-02';
     // Process dates - either use provided dates or defaults
     const dates =
-      dateFilter?.startDate || dateFilter?.endDate
+      dateFilter?.from || dateFilter?.to
         ? dateToCompare(
-            dateFilter.startDate || defaultStart,
-            dateFilter.endDate || defaultEnd
+            dateFilter.from || defaultStart,
+            dateFilter.to || defaultEnd
           )
         : dateToCompare(defaultStart, defaultEnd);
 
@@ -416,7 +415,7 @@ export class DashboardService {
             total: item._count.paymentMethod,
           }))
         );
-      console.log('dateFilter', dateFilter?.startDate);
+      console.log('dateFilter', dateFilter?.from);
       console.log('startDate', startDate);
       console.log('Payment Methods:', paymentMethods);
       return {
