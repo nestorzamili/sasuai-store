@@ -160,13 +160,13 @@ export default function Dashboard() {
     }
   };
   const handleRefresh = () => {
-    // fetchMetricPerformance();
+    fetchMetricPerformance();
   };
 
   useEffect(() => {
     // Use AbortController for fetch cleanup
     const abortController = new AbortController();
-    // fetchMetricPerformance();
+    fetchMetricPerformance();
     return () => {
       abortController.abort(); // Cancel any in-flight requests when component unmounts
     };
