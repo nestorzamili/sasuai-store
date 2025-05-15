@@ -26,6 +26,7 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { formatDate, formatTime } from '@/lib/date';
 import { DateFilter } from '@/lib/types/filter';
+import { DateRangePickerWithPresets } from '@/components/ui/date-range-picker-with-presets';
 // Lazy load components for better initial load time
 const SalesTrend = lazy(() =>
   import('./components/_parts/chart-sales-trend').then((mod) => ({
@@ -129,16 +130,10 @@ export default function Dashboard() {
     }
   );
   const [filter, setFilter] = useState<DateFilter>({
-    startDate: new Date(currentDateTime.date),
-    endDate: new Date(currentDateTime.date),
+    from: new Date(currentDateTime.date),
+    to: new Date(currentDateTime.date),
   });
-
-  const [tempFilter, setTempFilter] = useState<{
-    startDate?: Date;
-    endDate?: Date;
-  }>({});
   const { toast } = useToast();
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const fetchMetricPerformance = async () => {
     try {
       setIsLoading(true);
@@ -168,12 +163,6 @@ export default function Dashboard() {
     // fetchMetricPerformance();
   };
 
-  const filterOnChange = (date: any) => {
-    setFilter({
-      startDate: date.startDate,
-      endDate: date.endDate,
-    });
-  };
   useEffect(() => {
     // Use AbortController for fetch cleanup
     const abortController = new AbortController();
@@ -200,97 +189,17 @@ export default function Dashboard() {
           </div>
         </div>
         <div className="flex items-center space-x-2">
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline" onClick={() => setIsDialogOpen(true)}>
-                <CalendarIcon className="h-4 w-4" />
-                <span className="mt-0.5">
-                  Date Range: {formatDate(filter.startDate)} -{' '}
-                  {formatDate(filter.endDate)}
-                </span>
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Date Range</DialogTitle>
-                <DialogDescription>
-                  Make changes to your profile here. Click save when you're
-                  done.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="flex gap-4 py-4">
-                {/* Right side: Date range inputs */}
-                <div className="w-full space-y-4">
-                  {/* <div className="grid grid-cols-1 gap-2">
-                    <Label htmlFor="start-date">Start Date</Label>
-                    <Input
-                      type="date"
-                      id="start-date"
-                      className="w-full"
-                      value={
-                        tempFilter?.startDate?.toISOString().split('T')[0] ||
-                        filter.startDate.toISOString().split('T')[0]
-                      }
-                      onChange={(e) => {
-                        setTempFilter({
-                          ...tempFilter,
-                          startDate: new Date(e.target.value),
-                        });
-                      }}
-                    />
-                  </div>
-                  <div className="grid grid-cols-1 gap-2">
-                    <Label htmlFor="end-date">End Date</Label>
-                    <Input
-                      type="date"
-                      id="end-date"
-                      className="w-full"
-                      value={
-                        tempFilter?.endDate?.toISOString().split('T')[0] ||
-                        filter.endDate.toISOString().split('T')[0]
-                      }
-                      onChange={(e) => {
-                        setTempFilter({
-                          ...tempFilter,
-                          endDate: new Date(e.target.value),
-                        });
-                      }}
-                    />
-                  </div> */}
-                </div>
-              </div>
-              <DialogFooter>
-                <Button
-                  type="button"
-                  onClick={() => {
-                    const startDate = tempFilter.startDate || filter.startDate;
-                    const endDate = tempFilter.endDate || filter.endDate;
-
-                    // Validate that end date is not before start date
-                    if (endDate < startDate) {
-                      toast({
-                        title: 'Error',
-                        description: 'End date cannot be before start date.',
-                        variant: 'destructive',
-                      });
-                      return;
-                    }
-
-                    filterOnChange({
-                      startDate,
-                      endDate,
-                    });
-                    // Clear temp filter after applying
-                    setTempFilter({});
-                    // Close the dialog
-                    setIsDialogOpen(false);
-                  }}
-                >
-                  Apply Filter
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+          <DateRangePickerWithPresets
+            value={{ from: new Date(filter.from), to: new Date(filter.to) }}
+            onChange={(val) => {
+              if (val?.from && val?.to) {
+                setFilter({
+                  from: new Date(val.from),
+                  to: new Date(val.to),
+                });
+              }
+            }}
+          />
           <Button variant="outline" size="sm" className="h-9 gap-2">
             <Download className="h-4 w-4" />
             <span>Export</span>

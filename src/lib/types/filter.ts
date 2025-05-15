@@ -1,4 +1,4 @@
 export type DateFilter = {
-  startDate: Date | string | number;
-  endDate: Date | string | number;
+  from: Date | string | number;
+  to: Date | string | number;
 };
