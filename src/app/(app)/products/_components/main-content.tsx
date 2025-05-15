@@ -4,24 +4,20 @@ import { useState, useCallback } from 'react';
 import { ProductWithRelations } from '@/lib/types/product';
 import ProductPrimaryButton from './product-primary-button';
 import { ProductTable } from './product-table';
-import { IconSearch, IconX } from '@tabler/icons-react';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import ProductFilterToolbar from './product-filter-toolbar';
 
 export default function MainContent() {
   const [selectedProduct, setSelectedProduct] =
     useState<ProductWithRelations | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(Date.now());
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+
+  // Filter states
+  const [status, setStatus] = useState('all');
+  const [categoryId, setCategoryId] = useState('all');
+  const [brandId, setBrandId] = useState('all');
+  const [minPrice, setMinPrice] = useState('');
+  const [maxPrice, setMaxPrice] = useState('');
 
   // Handle dialog open state change
   const handleDialogOpenChange = useCallback((open: boolean) => {
@@ -42,14 +38,9 @@ export default function MainContent() {
     setRefreshKey(Date.now());
   }, []);
 
-  // Clear search
-  const handleClearSearch = () => {
-    setSearchQuery('');
-  };
-
   // Parse status filter to boolean for the API
   const getStatusBooleanFilter = (): boolean | undefined => {
-    switch (statusFilter) {
+    switch (status) {
       case 'active':
         return true;
       case 'inactive':
@@ -58,6 +49,31 @@ export default function MainContent() {
         return undefined;
     }
   };
+
+  // Create filter params object
+  const filterParams = {
+    isActive: getStatusBooleanFilter(),
+    categoryId: categoryId !== 'all' ? categoryId : undefined,
+    brandId: brandId !== 'all' ? brandId : undefined,
+    minPrice: minPrice ? parseFloat(minPrice) : undefined,
+    maxPrice: maxPrice ? parseFloat(maxPrice) : undefined,
+  };
+
+  // Create filter toolbar element
+  const filterToolbarElement = (
+    <ProductFilterToolbar
+      status={status}
+      setStatus={setStatus}
+      categoryId={categoryId}
+      setCategoryId={setCategoryId}
+      brandId={brandId}
+      setBrandId={setBrandId}
+      minPrice={minPrice}
+      setMinPrice={setMinPrice}
+      maxPrice={maxPrice}
+      setMaxPrice={setMaxPrice}
+    />
+  );
 
   return (
     <div className="space-y-6">
@@ -77,50 +93,12 @@ export default function MainContent() {
         />
       </div>
 
-      {/* Search and Filters */}
-      <div className="flex flex-col sm:flex-row gap-4 justify-between">
-        {/* Search Input */}
-        <div className="relative w-full max-w-sm">
-          <IconSearch className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground/70" />
-          <Input
-            placeholder="Search products..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 pr-10"
-          />
-          {searchQuery && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="absolute right-0 top-0 h-9 px-2.5"
-              onClick={handleClearSearch}
-            >
-              <IconX className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
-
-        {/* Status Filter - Simplified without counts */}
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[160px]">
-            <SelectValue placeholder="Filter by status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Products</SelectItem>
-            <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="inactive">Inactive</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Product table */}
+      {/* Product table with filters */}
       <ProductTable
-        key={`products-${refreshKey}-${statusFilter}-${searchQuery}`}
+        key={`products-${refreshKey}-${status}-${categoryId}-${brandId}-${minPrice}-${maxPrice}`}
         onEdit={handleEdit}
-        filterParams={{
-          isActive: getStatusBooleanFilter(),
-          search: searchQuery,
-        }}
+        filterParams={filterParams}
+        filterToolbar={filterToolbarElement}
       />
     </div>
   );
