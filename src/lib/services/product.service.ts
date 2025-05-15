@@ -419,6 +419,8 @@ export class ProductService {
     categoryId,
     brandId,
     isActive,
+    minPrice,
+    maxPrice,
   }: {
     page?: number;
     pageSize?: number;
@@ -428,6 +430,8 @@ export class ProductService {
     categoryId?: string;
     brandId?: string;
     isActive?: boolean;
+    minPrice?: number;
+    maxPrice?: number;
   }) {
     // Build where clause based on filters
     const where: any = {};
@@ -446,6 +450,13 @@ export class ProductService {
     if (categoryId) where.categoryId = categoryId;
     if (brandId) where.brandId = brandId;
     if (isActive !== undefined) where.isActive = isActive;
+
+    // Add price filters
+    if (minPrice !== undefined || maxPrice !== undefined) {
+      where.price = {};
+      if (minPrice !== undefined) where.price.gte = minPrice;
+      if (maxPrice !== undefined) where.price.lte = maxPrice;
+    }
 
     // Calculate pagination
     const skip = (page - 1) * pageSize;
