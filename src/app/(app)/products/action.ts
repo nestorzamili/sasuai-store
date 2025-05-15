@@ -144,7 +144,7 @@ export async function updateProduct(
     skuCode?: string | null;
     barcode?: string | null;
     isActive?: boolean;
-  }
+  },
 ) {
   try {
     // Validate data
@@ -388,6 +388,8 @@ export async function getPaginatedProducts(params: {
   categoryId?: string;
   brandId?: string;
   isActive?: boolean;
+  minPrice?: number;
+  maxPrice?: number;
 }) {
   try {
     const result = await ProductService.getPaginated({
@@ -399,6 +401,8 @@ export async function getPaginatedProducts(params: {
       categoryId: params.categoryId,
       brandId: params.brandId,
       isActive: params.isActive,
+      minPrice: params.minPrice,
+      maxPrice: params.maxPrice,
     });
 
     return {

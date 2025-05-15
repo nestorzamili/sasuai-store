@@ -29,6 +29,7 @@ interface DateRangePickerProps {
   onChange?: (date: DateRange | undefined) => void;
   className?: string;
   align?: 'center' | 'start' | 'end';
+  isCompact?: boolean;
 }
 
 export function DateRangePickerWithPresets({
@@ -36,6 +37,7 @@ export function DateRangePickerWithPresets({
   onChange,
   className,
   align = 'center',
+  isCompact = false,
 }: DateRangePickerProps) {
   const [date, setDate] = React.useState<DateRange | undefined>(value);
   const [isOpen, setIsOpen] = React.useState(false);
@@ -44,6 +46,24 @@ export function DateRangePickerWithPresets({
   React.useEffect(() => {
     setDate(value);
   }, [value]);
+
+  // Format date based on compact mode
+  const formatDate = (date: Date) => {
+    return isCompact ? format(date, 'MM/dd/yy') : format(date, 'LLL dd, y');
+  };
+
+  // Get display text for date range
+  const getDateRangeText = () => {
+    if (!date?.from) return <span>Pick a date range</span>;
+
+    if (!date.to) return formatDate(date.from);
+
+    return (
+      <>
+        {formatDate(date.from)} - {formatDate(date.to)}
+      </>
+    );
+  };
 
   // Apply date preset
   const applyDatePreset = (preset: string) => {
@@ -120,23 +140,11 @@ export function DateRangePickerWithPresets({
             className={cn(
               'w-full justify-start text-left font-normal',
               !date && 'text-muted-foreground',
+              date && 'border-primary text-primary',
             )}
           >
             <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
-            <span className="truncate">
-              {date?.from ? (
-                date.to ? (
-                  <>
-                    {format(date.from, 'LLL dd, y')} -{' '}
-                    {format(date.to, 'LLL dd, y')}
-                  </>
-                ) : (
-                  format(date.from, 'LLL dd, y')
-                )
-              ) : (
-                <span>Pick a date range</span>
-              )}
-            </span>
+            <span className="truncate">{getDateRangeText()}</span>
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0 flex" align={align}>
