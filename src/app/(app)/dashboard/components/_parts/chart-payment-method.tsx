@@ -3,7 +3,8 @@
 import { TrendingUp } from 'lucide-react';
 import { LabelList, Pie, PieChart } from 'recharts';
 import { getTopPaymentMethod } from '../../actions';
-import { DateFilter } from '@/lib/types/filter';
+import { UnavailableData } from '@/components/unavailable-data';
+import { LoaderCardContent } from '@/components/loader-card-content';
 import {
   Card,
   CardContent,
@@ -31,13 +32,16 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-export function PaymentMethod(filter?: DateFilter) {
+export function PaymentMethod(filter?: any) {
   const [chart, setChart] = useState([
     { type: 'cash', total: 275, fill: 'var(--color-cash)' },
     { type: 'debit', total: 200, fill: 'var(--color-debit)' },
   ]);
+  const [loading, setLoading] = useState(false);
+
   const fetchPaymentMethod = async () => {
     try {
+      setLoading(true);
       const response = await getTopPaymentMethod(filter);
       if (response.success && response.data) {
         const formattedData = response.data.map((item: any) => ({
@@ -50,11 +54,15 @@ export function PaymentMethod(filter?: DateFilter) {
       }
     } catch (error) {
       console.error('Error fetching top payment methods:', error);
+    } finally {
+      setLoading(false);
     }
   };
+
   useEffect(() => {
     fetchPaymentMethod();
   }, [filter]);
+
   return (
     <Card className="flex flex-col">
       <CardHeader className="items-center pb-0">
@@ -62,27 +70,42 @@ export function PaymentMethod(filter?: DateFilter) {
         <CardDescription>Filter Date</CardDescription>
       </CardHeader>
       <CardContent className="flex-1 pb-0">
-        <ChartContainer
-          config={chartConfig}
-          className="mx-auto aspect-square max-h-[250px] [&_.recharts-text]:fill-background"
-        >
-          <PieChart>
-            <ChartTooltip
-              content={<ChartTooltipContent nameKey="type" hideLabel />}
-            />
-            <Pie data={chart} dataKey="total">
-              <LabelList
-                dataKey="type"
-                className="fill-background"
-                stroke="none"
-                fontSize={14}
-                formatter={(value: keyof typeof chartConfig) =>
-                  chartConfig[value]?.label
-                }
+        {loading ? (
+          <div className="flex flex-col items-center justify-center h-[250px]">
+            <LoaderCardContent className="w-full h-full" />
+          </div>
+        ) : (
+          <>
+            {chart.length === 0 ? (
+              <UnavailableData
+                title="No Payment Method Data"
+                description="No payment method data available for the selected date range."
               />
-            </Pie>
-          </PieChart>
-        </ChartContainer>
+            ) : (
+              <ChartContainer
+                config={chartConfig}
+                className="mx-auto aspect-square max-h-[250px] [&_.recharts-text]:fill-background"
+              >
+                <PieChart>
+                  <ChartTooltip
+                    content={<ChartTooltipContent nameKey="type" hideLabel />}
+                  />
+                  <Pie data={chart} dataKey="total">
+                    <LabelList
+                      dataKey="type"
+                      className="fill-background"
+                      stroke="none"
+                      fontSize={14}
+                      formatter={(value: keyof typeof chartConfig) =>
+                        chartConfig[value]?.label
+                      }
+                    />
+                  </Pie>
+                </PieChart>
+              </ChartContainer>
+            )}
+          </>
+        )}
       </CardContent>
       <CardFooter className="flex-col gap-2 text-sm">
         <div className="flex items-center justify-between w-full">

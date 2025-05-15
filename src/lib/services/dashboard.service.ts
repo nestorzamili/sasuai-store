@@ -374,16 +374,16 @@ export class DashboardService {
       };
     }
   }
-  static async getTopPaymentMethods(dateFilter?: DateFilter) {
+  static async getTopPaymentMethods(dateFilter: any) {
     // Default dates if no filter provided
     const defaultStart = '2024-09-01';
     const defaultEnd = '2024-09-02';
     // Process dates - either use provided dates or defaults
     const dates =
-      dateFilter?.from || dateFilter?.to
+      dateFilter?.filter.from || dateFilter?.filter.to
         ? dateToCompare(
-            dateFilter.from || defaultStart,
-            dateFilter.to || defaultEnd
+            dateFilter.filter.from || defaultStart,
+            dateFilter.filter.to || defaultEnd
           )
         : dateToCompare(defaultStart, defaultEnd);
 
@@ -394,7 +394,6 @@ export class DashboardService {
       dates.previous.startDate,
       dates.previous.endDate,
     ].map((date) => format(date, 'yyyy-MM-dd'));
-    console.log('dates', dates);
     try {
       const paymentMethods = await prisma.transaction
         .groupBy({
@@ -415,9 +414,7 @@ export class DashboardService {
             total: item._count.paymentMethod,
           }))
         );
-      console.log('dateFilter', dateFilter?.from);
-      console.log('startDate', startDate);
-      console.log('Payment Methods:', paymentMethods);
+
       return {
         success: true,
         data: paymentMethods,

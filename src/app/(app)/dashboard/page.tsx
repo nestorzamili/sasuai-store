@@ -242,7 +242,7 @@ export default function Dashboard() {
             {/* Product and Category Analysis */}
             <section aria-label="Products and Categories">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {/* <PaymentMethod filter={filter} /> */}
+                <PaymentMethod filter={filter} />
                 <SalesCategory />
                 <section aria-label="Time Analysis" className="space-y-4">
                   <Card>

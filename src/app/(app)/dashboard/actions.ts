@@ -51,7 +51,6 @@ export async function getTopSellingProductsByQuantity(filter: any) {
 export async function getTopPaymentMethod(filter: any) {
   try {
     const response = await DashboardService.getTopPaymentMethods(filter);
-    console.log('filter', filter);
     return {
       data: response.data,
       success: response.success,
