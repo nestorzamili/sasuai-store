@@ -15,13 +15,23 @@ export async function signInWithEmail(email: string, password: string) {
       success: true,
     };
   } catch (error: any) {
+    // Extract only necessary information and safe error message
     let statusCode = error?.statusCode || error?.status;
+    let errorMessage = 'Invalid credentials';
+
+    // Only extract message if it's a simple string
+    if (
+      error &&
+      typeof error.message === 'string' &&
+      !error.message.includes('Server Components render')
+    ) {
+      errorMessage = error.message;
+    }
 
     return {
       success: false,
-      error: error,
       statusCode: statusCode,
-      errorMessage: error.message,
+      errorMessage: errorMessage,
     };
   }
 }
@@ -39,13 +49,23 @@ export async function signInWithUsername(username: string, password: string) {
       success: true,
     };
   } catch (error: any) {
+    // Extract only necessary information and safe error message
     let statusCode = error?.statusCode || error?.status;
+    let errorMessage = 'Invalid credentials';
+
+    // Only extract message if it's a simple string
+    if (
+      error &&
+      typeof error.message === 'string' &&
+      !error.message.includes('Server Components render')
+    ) {
+      errorMessage = error.message;
+    }
 
     return {
       success: false,
-      error: error,
       statusCode: statusCode,
-      errorMessage: error.message,
+      errorMessage: errorMessage,
     };
   }
 }

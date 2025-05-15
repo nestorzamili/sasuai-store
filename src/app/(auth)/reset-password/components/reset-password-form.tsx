@@ -14,11 +14,11 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle, CheckCircle2 } from 'lucide-react';
 import { PasswordInput } from '@/components/password-input';
 import { useRouter } from 'next/navigation';
 import { authClient } from '@/lib/auth-client';
+import { useToast } from '@/hooks/use-toast';
+import { extractErrorMessage } from '@/lib/error-handler';
 
 type ResetFormProps = HTMLAttributes<HTMLDivElement> & {
   token: string;
@@ -45,9 +45,8 @@ const formSchema = z
 
 export function ResetForm({ className, token, ...props }: ResetFormProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
   const router = useRouter();
+  const { toast } = useToast();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -59,7 +58,6 @@ export function ResetForm({ className, token, ...props }: ResetFormProps) {
 
   async function onSubmit(data: z.infer<typeof formSchema>) {
     setIsLoading(true);
-    setError(null);
 
     try {
       const { error: resetError } = await authClient.resetPassword({
@@ -68,83 +66,99 @@ export function ResetForm({ className, token, ...props }: ResetFormProps) {
       });
 
       if (resetError) {
-        setError(
-          resetError.message || 'Failed to reset password. Please try again.',
-        );
+        // Get a safe error message
+        const errorMessage =
+          typeof resetError.message === 'string'
+            ? resetError.message
+            : 'Failed to reset password';
+
+        toast({
+          title: 'Error',
+          description: errorMessage,
+          variant: 'destructive',
+        });
         return;
       }
 
-      setSuccess(true);
+      // Success path
+      toast({
+        title: 'Success',
+        description: 'Your password has been reset successfully!',
+      });
 
-      // Redirect to login after some time
+      // Redirect to login after a brief delay
       setTimeout(() => {
         router.push('/sign-in?success=password_reset');
-      }, 2000);
-    } catch (err) {
-      setError('An unexpected error occurred. Please try again.');
+      }, 1500);
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description:
+          'An error occurred while resetting your password. Please try again.',
+        variant: 'destructive',
+      });
     } finally {
       setIsLoading(false);
     }
   }
 
   return (
-    <div className={cn('grid gap-6', className)} {...props}>
-      {!success ? (
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)}>
-            <div className="grid gap-4">
-              {error && (
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
+    <div className={cn('w-full', className)} {...props}>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="w-full">
+          <div className="grid gap-3 sm:gap-4 w-full">
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem className="space-y-1 sm:space-y-1.5 w-full">
+                  <FormLabel className="text-sm sm:text-base">
+                    New Password
+                  </FormLabel>
+                  <FormControl>
+                    <PasswordInput
+                      placeholder="********"
+                      {...field}
+                      className="h-9 sm:h-10 text-sm sm:text-base w-full"
+                      disabled={isLoading}
+                    />
+                  </FormControl>
+                  <FormMessage className="text-xs font-medium" />
+                </FormItem>
               )}
+            />
 
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem className="space-y-1">
-                    <FormLabel>New Password</FormLabel>
-                    <FormControl>
-                      <PasswordInput placeholder="********" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <FormField
+              control={form.control}
+              name="confirmPassword"
+              render={({ field }) => (
+                <FormItem className="space-y-1 sm:space-y-1.5 w-full">
+                  <FormLabel className="text-sm sm:text-base">
+                    Confirm Password
+                  </FormLabel>
+                  <FormControl>
+                    <PasswordInput
+                      placeholder="********"
+                      {...field}
+                      className="h-9 sm:h-10 text-sm sm:text-base w-full"
+                      disabled={isLoading}
+                    />
+                  </FormControl>
+                  <FormMessage className="text-xs font-medium" />
+                </FormItem>
+              )}
+            />
 
-              <FormField
-                control={form.control}
-                name="confirmPassword"
-                render={({ field }) => (
-                  <FormItem className="space-y-1">
-                    <FormLabel>Confirm Password</FormLabel>
-                    <FormControl>
-                      <PasswordInput placeholder="********" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <Button className="mt-2" disabled={isLoading}>
-                {isLoading ? 'Resetting...' : 'Reset Password'}
-              </Button>
-            </div>
-          </form>
-        </Form>
-      ) : (
-        <Alert
-          variant="default"
-          className="bg-green-50 text-green-800 border-green-200"
-        >
-          <CheckCircle2 className="h-4 w-4" />
-          <AlertDescription>
-            Your password has been reset successfully! Redirecting to login...
-          </AlertDescription>
-        </Alert>
-      )}
+            <Button
+              className="mt-1 sm:mt-2 h-9 sm:h-10 text-sm sm:text-base font-medium w-full"
+              type="submit"
+              disabled={isLoading}
+            >
+              {isLoading ? 'Resetting...' : 'Reset Password'}
+            </Button>
+          </div>
+        </form>
+      </Form>
     </div>
   );
 }
