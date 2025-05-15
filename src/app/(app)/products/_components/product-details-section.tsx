@@ -1,7 +1,8 @@
 'use client';
 
-import { useFormContext } from 'react-hook-form';
-import { ProductFormValues } from './product-form-provider';
+import { useFormContext, useWatch } from 'react-hook-form';
+import { useState, useEffect } from 'react';
+import { ProductFormValues, useProductForm } from './product-form-provider';
 import {
   FormControl,
   FormDescription,
@@ -13,12 +14,60 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
+import { IconRefresh } from '@tabler/icons-react';
 import { CategoryCombobox } from './category-combobox';
 import { BrandCombobox } from './brand-combobox';
 import { UnitCombobox } from './unit-combobox';
+import { generateSKU, generateCategoryPrefix } from '@/utils/sku-generator';
 
 export function ProductDetailsSection() {
-  const { control } = useFormContext<ProductFormValues>();
+  const { control, setValue } = useFormContext<ProductFormValues>();
+  const { categories, isEditing } = useProductForm();
+  const [skuGenerated, setSkuGenerated] = useState(false);
+
+  // Watch for product name and category changes to auto-generate SKU
+  const productName = useWatch({ control, name: 'name' });
+  const categoryId = useWatch({ control, name: 'categoryId' });
+  const skuCode = useWatch({ control, name: 'skuCode' });
+
+  useEffect(() => {
+    // Only auto-generate SKU for new products and when the name is entered
+    if (!isEditing && productName && !skuGenerated && !skuCode) {
+      // Find the category name from the selected categoryId
+      const selectedCategory = categories.find((cat) => cat.id === categoryId);
+      const categoryPrefix = selectedCategory
+        ? generateCategoryPrefix(selectedCategory.name)
+        : '';
+
+      // Generate the SKU
+      const generatedSKU = generateSKU(productName, categoryPrefix);
+
+      // Set the generated SKU
+      setValue('skuCode', generatedSKU);
+      setSkuGenerated(true);
+    }
+  }, [
+    productName,
+    categoryId,
+    setValue,
+    categories,
+    isEditing,
+    skuGenerated,
+    skuCode,
+  ]);
+
+  // Handle manual SKU regeneration
+  const handleRegenerateSKU = () => {
+    const selectedCategory = categories.find((cat) => cat.id === categoryId);
+    const categoryPrefix = selectedCategory
+      ? generateCategoryPrefix(selectedCategory.name)
+      : '';
+
+    const generatedSKU = generateSKU(productName, categoryPrefix);
+    setValue('skuCode', generatedSKU);
+    setSkuGenerated(true);
+  };
 
   return (
     <div className="space-y-4">
@@ -117,20 +166,43 @@ export function ProductDetailsSection() {
           )}
         />
 
-        {/* SKU Code */}
+        {/* SKU Code with auto-generation */}
         <FormField
           control={control}
           name="skuCode"
           render={({ field }) => (
             <FormItem>
               <FormLabel>SKU Code</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="Enter SKU code"
-                  {...field}
-                  value={field.value || ''}
-                />
-              </FormControl>
+              <div className="flex gap-2 items-center">
+                <FormControl>
+                  <Input
+                    placeholder="Auto-generated from name"
+                    {...field}
+                    value={field.value || ''}
+                    onChange={(e) => {
+                      field.onChange(e.target.value);
+                      // If manually edited, don't auto-generate again
+                      if (e.target.value) {
+                        setSkuGenerated(true);
+                      }
+                    }}
+                  />
+                </FormControl>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={handleRegenerateSKU}
+                  title="Generate SKU"
+                >
+                  <IconRefresh size={16} />
+                </Button>
+              </div>
+              <FormDescription>
+                {!isEditing
+                  ? 'Auto-generated from product name'
+                  : 'SKU code for product identification'}
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}

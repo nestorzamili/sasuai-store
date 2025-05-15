@@ -1,3 +1,5 @@
+import { StaticImageData } from 'next/image';
+
 interface User {
   name: string;
   email: string;
@@ -34,7 +36,6 @@ interface NavGroup {
 }
 
 interface SidebarData {
-  user: User;
   stores: Store[];
   navGroups: NavGroup[];
 }
