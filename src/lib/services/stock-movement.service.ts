@@ -162,9 +162,6 @@ export class StockMovementService {
    */
   static async getAllStockOuts(queryBuild?: any) {
     try {
-      console.log('Processing stock-out query options:', queryBuild);
-
-      // Build query options directly instead of using buildQueryOptions
       const options: any = {};
 
       // Handle pagination

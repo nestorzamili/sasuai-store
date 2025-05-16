@@ -106,8 +106,6 @@ export const StockOutTable = memo(function StockOutTable({
   // Memoize the fetch function to prevent it from changing on every render
   const fetchStockOutData = useCallback(async (options: any) => {
     try {
-      console.log('Fetching stock out data with options:', options);
-
       const response = await getAllStockOuts({
         page: options.page + 1,
         limit: options.limit,

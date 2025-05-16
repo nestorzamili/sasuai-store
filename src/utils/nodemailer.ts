@@ -32,8 +32,6 @@ export async function sendEmail({
     throw new Error('Invalid recipient email address');
   }
 
-  console.log(`Attempting to send email to: ${to}`);
-
   try {
     const info = await transporter.sendMail({
       from,
