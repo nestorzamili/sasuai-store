@@ -42,15 +42,80 @@ const adjustmentSchema = z.object({
   unitId: z.string().uuid('Invalid unit ID'),
 });
 
-export async function getAllBatchesOptimalized(options?: any) {
+// Type definition for batch query options
+interface BatchQueryParams {
+  page?: number;
+  limit?: number;
+  sortField?: string;
+  sortDirection?: 'asc' | 'desc';
+  search?: string;
+  productId?: string;
+  expiryDateStart?: Date | string;
+  expiryDateEnd?: Date | string;
+  minRemainingQuantity?: number | string;
+  maxRemainingQuantity?: number | string;
+  includeExpired?: boolean | string;
+  includeOutOfStock?: boolean | string;
+  categoryId?: string;
+}
+
+/**
+ * Get optimalized (paginated and filtered) product batches
+ */
+export async function getAllBatches({
+  page = 1,
+  limit = 10,
+  sortField = 'createdAt',
+  sortDirection = 'desc',
+  search = '',
+  productId,
+  expiryDateStart,
+  expiryDateEnd,
+  minRemainingQuantity,
+  maxRemainingQuantity,
+  includeExpired = true,
+  includeOutOfStock = true,
+  categoryId,
+}: BatchQueryParams = {}) {
   try {
-    const batch = await ProductBatchService.getAllOptimalize(options);
+    // Convert string values to their appropriate types
+    const processedOptions = {
+      page: Number(page),
+      limit: Number(limit),
+      sortField,
+      sortDirection,
+      search,
+      productId,
+      expiryDateStart: expiryDateStart ? new Date(expiryDateStart) : undefined,
+      expiryDateEnd: expiryDateEnd ? new Date(expiryDateEnd) : undefined,
+      minRemainingQuantity:
+        minRemainingQuantity !== undefined
+          ? Number(minRemainingQuantity)
+          : undefined,
+      maxRemainingQuantity:
+        maxRemainingQuantity !== undefined
+          ? Number(maxRemainingQuantity)
+          : undefined,
+      includeExpired:
+        typeof includeExpired === 'string'
+          ? includeExpired === 'true'
+          : includeExpired,
+      includeOutOfStock:
+        typeof includeOutOfStock === 'string'
+          ? includeOutOfStock === 'true'
+          : includeOutOfStock,
+      categoryId,
+    };
+
+    const batch = await ProductBatchService.getAllBatches(processedOptions);
+
     return {
       success: true,
       data: batch.data,
       meta: batch.meta,
     };
   } catch (error) {
+    console.error('Error in getAllBatchesOptimalized:', error);
     return {
       success: false,
       error: 'Failed to fetch batch',
