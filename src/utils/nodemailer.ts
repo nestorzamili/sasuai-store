@@ -1,12 +1,17 @@
 import nodemailer from 'nodemailer';
 
 export const transporter = nodemailer.createTransport({
-  host: 'sandbox.smtp.mailtrap.io',
+  service: 'gmail',
+  host: 'smtp.gmail.com',
   port: 465,
-  secure: false,
+  secure: true,
   auth: {
     user: process.env.EMAIL_SERVER_USER,
     pass: process.env.EMAIL_SERVER_PASSWORD,
+  },
+  // Ensure proper email delivery configuration
+  tls: {
+    rejectUnauthorized: true,
   },
 });
 
@@ -14,17 +19,33 @@ export async function sendEmail({
   to,
   subject,
   html,
-  from = `Sasuai Store <${process.env.EMAIL_FROM_ADDRESS}>`,
+  from = `Sasuai Store <${process.env.EMAIL_SERVER_USER}>`,
 }: {
   to: string;
   subject: string;
   html: string;
   from?: string;
 }) {
-  return transporter.sendMail({
-    from,
-    to,
-    subject,
-    html,
-  });
+  // Validate recipient email
+  if (!to || typeof to !== 'string') {
+    console.error('Invalid recipient email address:', to);
+    throw new Error('Invalid recipient email address');
+  }
+
+  console.log(`Attempting to send email to: ${to}`);
+
+  try {
+    const info = await transporter.sendMail({
+      from,
+      to,
+      subject,
+      html,
+    });
+
+    console.log('Email sent successfully:', info.messageId);
+    return info;
+  } catch (error) {
+    console.error('Failed to send email:', error);
+    throw error;
+  }
 }
