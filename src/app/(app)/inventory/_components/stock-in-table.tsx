@@ -1,41 +1,17 @@
 'use client';
 
-import { useState } from 'react';
-import {
-  ColumnDef,
-  ColumnFiltersState,
-  SortingState,
-  VisibilityState,
-  flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
-} from '@tanstack/react-table';
-import { ArrowUpDown } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { DataTablePagination } from '@/components/ui/data-table-pagination';
-import { Input } from '@/components/ui/input';
+import { ColumnDef } from '@tanstack/react-table';
 import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
 import { StockInComplete } from '@/lib/types/stock-movement';
 import { format } from 'date-fns';
-import { SupplierWithCount } from '@/lib/types/supplier';
-import { Checkbox } from '@/components/ui/checkbox';
 import { TableLayout } from '@/components/layout/table-layout';
 import { useFetch } from '@/hooks/use-fetch';
 import { getAllOptimalizedStockIns } from '../stock-actions';
-export function StockInTable() {
-  // Table state
+import { memo, useRef, useCallback } from 'react';
+
+export const StockInTable = memo(function StockInTable() {
+  // Track if this is the initial render
+  const isInitialMount = useRef(true);
 
   // Format date function
   const formatDate = (date: Date | string) => {
@@ -98,8 +74,15 @@ export function StockInTable() {
     },
   ];
 
-  const fetchDataTable = async (options: any) => {
+  // Memoize the fetch function to prevent it from changing on every render
+  const fetchDataTable = useCallback(async (options: any) => {
     try {
+      // Skip initial fetch if not the first render (prevents double fetching)
+      if (!isInitialMount.current) {
+        console.log('Fetching stock in data');
+      }
+      isInitialMount.current = false;
+
       const response = await getAllOptimalizedStockIns({
         page: options.page + 1,
         limit: options.limit,
@@ -119,7 +102,7 @@ export function StockInTable() {
         totalRows: 0,
       };
     }
-  };
+  }, []);
 
   const {
     data,
@@ -138,6 +121,7 @@ export function StockInTable() {
     initialSortField: 'id',
     initialSortDirection: false,
   });
+
   const handlePaginationChange = (newPagination: {
     pageIndex: number;
     pageSize: number;
@@ -169,4 +153,4 @@ export function StockInTable() {
       />
     </div>
   );
-}
+});

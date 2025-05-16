@@ -29,9 +29,6 @@ export class StockMovementService {
   }
   static async getAllStockInsOptimalized(queryBuild?: any) {
     const options = buildQueryOptions(queryBuild);
-    options?.where?.OR.map((res) => {
-      console.log(res);
-    });
     const [stockIns, count] = await Promise.all([
       prisma.stockIn.findMany({
         include: {
@@ -223,6 +220,39 @@ export class StockMovementService {
     return allStockOuts.sort(
       (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
     );
+  }
+
+  /**
+   * Get optimalized stock-out records with pagination support
+   */
+  static async getAllStockOutsOptimalized(queryBuild?: any) {
+    const options = buildQueryOptions(queryBuild);
+
+    // Get paginated manual stock outs
+    const [stockOuts, count] = await Promise.all([
+      prisma.stockOut.findMany({
+        include: {
+          batch: {
+            include: {
+              product: true,
+            },
+          },
+          unit: true,
+        },
+        ...options,
+      }),
+      prisma.stockOut.count(
+        options.where ? { where: options.where } : undefined,
+      ),
+    ]);
+
+    return {
+      data: stockOuts,
+      meta: {
+        ...options,
+        rowsCount: count,
+      },
+    };
   }
 
   /**
