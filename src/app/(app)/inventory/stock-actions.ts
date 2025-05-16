@@ -22,20 +22,46 @@ const stockOutSchema = z.object({
   reason: z.string().min(1, 'Reason is required'),
 });
 
-export async function getAllOptimalizedStockIns(options?: any) {
+export async function getAllStockIns(options?: Record<string, any>) {
   try {
-    const stockIns = await StockMovementService.getAllStockInsOptimalized(
-      options,
+    console.log('Fetching stock-ins with options:', options);
+
+    // Call the service method
+    const stockIns = await StockMovementService.getAllStockIns(options);
+
+    // Ensure the response has the expected structure
+    if (!stockIns || !Array.isArray(stockIns.data)) {
+      console.error(
+        'Invalid response format from getAllStockInsOptimalized',
+        stockIns,
+      );
+      return {
+        success: false,
+        error: 'Invalid response format from server',
+        data: [],
+        meta: { rowsCount: 0 },
+      };
+    }
+
+    console.log(
+      `Successfully fetched ${stockIns.data.length} stock-in records`,
     );
+
     return {
       success: true,
       data: stockIns.data,
-      meta: stockIns.meta,
+      meta: stockIns.meta || { rowsCount: stockIns.data.length },
     };
   } catch (error) {
+    console.error('Error fetching stock-ins:', error);
     return {
       success: false,
-      error: 'Failed to fetch stock-in records',
+      error:
+        error instanceof Error
+          ? error.message
+          : 'Failed to fetch stock-in records',
+      data: [],
+      meta: { rowsCount: 0 },
     };
   }
 }
@@ -92,11 +118,9 @@ export async function createStockIn(data: {
 /**
  * Get all stock-out records with pagination support
  */
-export async function getAllOptimalizedStockOuts(options?: any) {
+export async function getAllStockOuts(options?: Record<string, any>) {
   try {
-    const stockOuts = await StockMovementService.getAllStockOutsOptimalized(
-      options,
-    );
+    const stockOuts = await StockMovementService.getAllStockOuts(options);
     return {
       success: true,
       data: stockOuts.data,

@@ -6,10 +6,16 @@ import { StockOutComplete, StockMovement } from '@/lib/types/stock-movement';
 import { format } from 'date-fns';
 import { TableLayout } from '@/components/layout/table-layout';
 import { useFetch } from '@/hooks/use-fetch';
-import { getAllOptimalizedStockOuts } from '../stock-actions';
-import { memo, useRef, useCallback } from 'react';
+import { getAllStockOuts } from '../stock-actions';
+import { memo, useRef, useCallback, useEffect } from 'react';
 
-export const StockOutTable = memo(function StockOutTable() {
+interface StockOutTableProps {
+  isActive?: boolean;
+}
+
+export const StockOutTable = memo(function StockOutTable({
+  isActive = false,
+}: StockOutTableProps) {
   // Track if this is the initial render
   const isInitialMount = useRef(true);
 
@@ -57,7 +63,7 @@ export const StockOutTable = memo(function StockOutTable() {
         const quantity = row.getValue('quantity') as number;
         const unit = row.original.unit?.symbol || '';
         return (
-          <div className="text-center">
+          <div className="text-left">
             {quantity} {unit}
           </div>
         );
@@ -100,29 +106,28 @@ export const StockOutTable = memo(function StockOutTable() {
   // Memoize the fetch function to prevent it from changing on every render
   const fetchStockOutData = useCallback(async (options: any) => {
     try {
-      // Skip initial fetch if not the first render
-      if (!isInitialMount.current) {
-        console.log('Fetching stock out data');
-      }
-      isInitialMount.current = false;
+      console.log('Fetching stock out data with options:', options);
 
-      const response = await getAllOptimalizedStockOuts({
+      const response = await getAllStockOuts({
         page: options.page + 1,
         limit: options.limit,
-        sortBy: options.sortBy,
+        sortBy: options.sortBy?.id || 'date',
+        sortDirection: options.sortBy?.desc ? 'desc' : 'asc',
         search: options.search,
         columnFilter: ['batch.product.name', 'batch.batchCode'],
       });
 
-      if (response.success) {
-        return {
-          data: response.data,
-          totalRows: response.meta?.rowsCount || 0,
-        };
+      if (!response.success) {
+        console.error('Failed to fetch stock-out data:', response.error);
+        return { data: [], totalRows: 0 };
       }
-      return { data: [], totalRows: 0 };
+
+      return {
+        data: response.data,
+        totalRows: response.meta?.rowsCount || 0,
+      };
     } catch (error) {
-      console.log(error);
+      console.error('Error fetching stock-out data:', error);
       return { data: [], totalRows: 0 };
     }
   }, []);
@@ -144,6 +149,13 @@ export const StockOutTable = memo(function StockOutTable() {
     initialSortField: 'date',
     initialSortDirection: true, // Newest first
   });
+
+  // Refresh data when tab becomes active
+  useEffect(() => {
+    if (isActive) {
+      refresh();
+    }
+  }, [isActive, refresh]);
 
   const handlePaginationChange = (newPagination: {
     pageIndex: number;

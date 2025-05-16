@@ -1,17 +1,12 @@
 'use client';
 
-import { useState, memo } from 'react';
+import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { IconBox, IconLogout, IconLogin } from '@tabler/icons-react';
 import { BatchTable } from './_components/batch-table';
 import { StockInTable } from './_components/stock-in-table';
 import { StockOutTable } from './_components/stock-out-table';
 import BatchPrimaryButton from './_components/batch-primary-button';
-
-// Memoize components to prevent unnecessary re-renders
-const MemoizedBatchTable = memo(BatchTable);
-const MemoizedStockInTable = memo(StockInTable);
-const MemoizedStockOutTable = memo(StockOutTable);
 
 export default function InventoryPage() {
   const [activeTab, setActiveTab] = useState('batches');
@@ -73,7 +68,7 @@ export default function InventoryPage() {
             </div>
 
             {/* Main batch table */}
-            <MemoizedBatchTable />
+            <BatchTable />
           </div>
         </TabsContent>
 
@@ -87,8 +82,8 @@ export default function InventoryPage() {
               </p>
             </div>
 
-            {/* Stock In Table */}
-            <MemoizedStockInTable />
+            {/* Stock In Table - pass isActive prop */}
+            <StockInTable isActive={activeTab === 'stock-in'} />
           </div>
         </TabsContent>
 
@@ -102,8 +97,8 @@ export default function InventoryPage() {
               </p>
             </div>
 
-            {/* Stock Out Table */}
-            <MemoizedStockOutTable />
+            {/* Stock Out Table - also add isActive prop */}
+            <StockOutTable isActive={activeTab === 'stock-out'} />
           </div>
         </TabsContent>
       </Tabs>

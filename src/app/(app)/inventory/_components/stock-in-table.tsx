@@ -6,10 +6,16 @@ import { StockInComplete } from '@/lib/types/stock-movement';
 import { format } from 'date-fns';
 import { TableLayout } from '@/components/layout/table-layout';
 import { useFetch } from '@/hooks/use-fetch';
-import { getAllOptimalizedStockIns } from '../stock-actions';
-import { memo, useRef, useCallback } from 'react';
+import { getAllStockIns } from '../stock-actions';
+import { memo, useRef, useCallback, useEffect } from 'react';
 
-export const StockInTable = memo(function StockInTable() {
+interface StockInTableProps {
+  isActive?: boolean;
+}
+
+export const StockInTable = memo(function StockInTable({
+  isActive = false,
+}: StockInTableProps) {
   // Track if this is the initial render
   const isInitialMount = useRef(true);
 
@@ -52,7 +58,7 @@ export const StockInTable = memo(function StockInTable() {
         const quantity = row.getValue('quantity') as number;
         const unit = row.original.unit?.symbol || '';
         return (
-          <div className="text-center">
+          <div className="text-left">
             {quantity} {unit}
           </div>
         );
@@ -77,30 +83,44 @@ export const StockInTable = memo(function StockInTable() {
   // Memoize the fetch function to prevent it from changing on every render
   const fetchDataTable = useCallback(async (options: any) => {
     try {
-      // Skip initial fetch if not the first render (prevents double fetching)
-      if (!isInitialMount.current) {
-        console.log('Fetching stock in data');
-      }
-      isInitialMount.current = false;
+      // Debug the options being sent to the backend
+      console.log(
+        'Fetching stock in data with options:',
+        JSON.stringify(options, null, 2),
+      );
 
-      const response = await getAllOptimalizedStockIns({
+      const response = await getAllStockIns({
         page: options.page + 1,
         limit: options.limit,
-        sortBy: options.sortBy,
+        sortBy: options.sortBy?.id || 'date',
+        sortDirection: options.sortBy?.desc ? 'desc' : 'asc',
         search: options.search,
         columnFilter: ['batch.product.name', 'batch.batchCode'],
       });
 
+      // Better error logging
+      if (!response.success) {
+        console.error('Failed to fetch stock-in data:', response.error);
+        return { data: [], totalRows: 0 };
+      }
+
+      // Validate the response data
+      if (!response.data || !Array.isArray(response.data)) {
+        console.error('Invalid data structure received:', response);
+        return { data: [], totalRows: 0 };
+      }
+
+      // Success case
+      console.log(
+        `Successfully loaded ${response.data.length} stock-in records`,
+      );
       return {
         data: response.data,
         totalRows: response.meta?.rowsCount || 0,
       };
     } catch (error) {
-      console.log(error);
-      return {
-        data: [],
-        totalRows: 0,
-      };
+      console.error('Error fetching stock-in data:', error);
+      return { data: [], totalRows: 0 };
     }
   }, []);
 
@@ -118,9 +138,16 @@ export const StockInTable = memo(function StockInTable() {
     fetchData: fetchDataTable,
     initialPageIndex: 0,
     initialPageSize: 10,
-    initialSortField: 'id',
-    initialSortDirection: false,
+    initialSortField: 'date', // Changed from 'id' to 'date'
+    initialSortDirection: true, // Changed to true for newest first
   });
+
+  // Refresh data when tab becomes active
+  useEffect(() => {
+    if (isActive) {
+      refresh();
+    }
+  }, [isActive, refresh]);
 
   const handlePaginationChange = (newPagination: {
     pageIndex: number;
