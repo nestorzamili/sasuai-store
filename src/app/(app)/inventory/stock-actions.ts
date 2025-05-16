@@ -24,9 +24,6 @@ const stockOutSchema = z.object({
 
 export async function getAllStockIns(options?: Record<string, any>) {
   try {
-    console.log('Fetching stock-ins with options:', options);
-
-    // Call the service method
     const stockIns = await StockMovementService.getAllStockIns(options);
 
     // Ensure the response has the expected structure
@@ -43,17 +40,12 @@ export async function getAllStockIns(options?: Record<string, any>) {
       };
     }
 
-    console.log(
-      `Successfully fetched ${stockIns.data.length} stock-in records`,
-    );
-
     return {
       success: true,
       data: stockIns.data,
       meta: stockIns.meta || { rowsCount: stockIns.data.length },
     };
   } catch (error) {
-    console.error('Error fetching stock-ins:', error);
     return {
       success: false,
       error:

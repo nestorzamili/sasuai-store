@@ -246,7 +246,6 @@ export function BatchTable({ onSetRefresh }: BatchTableProps) {
         totalRows: response.meta?.totalRows || 0,
       };
     } catch (error) {
-      console.log(error);
       return {
         data: [],
         totalRows: 0,

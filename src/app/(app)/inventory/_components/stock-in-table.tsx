@@ -83,12 +83,6 @@ export const StockInTable = memo(function StockInTable({
   // Memoize the fetch function to prevent it from changing on every render
   const fetchDataTable = useCallback(async (options: any) => {
     try {
-      // Debug the options being sent to the backend
-      console.log(
-        'Fetching stock in data with options:',
-        JSON.stringify(options, null, 2),
-      );
-
       const response = await getAllStockIns({
         page: options.page + 1,
         limit: options.limit,
@@ -110,10 +104,6 @@ export const StockInTable = memo(function StockInTable({
         return { data: [], totalRows: 0 };
       }
 
-      // Success case
-      console.log(
-        `Successfully loaded ${response.data.length} stock-in records`,
-      );
       return {
         data: response.data,
         totalRows: response.meta?.rowsCount || 0,
