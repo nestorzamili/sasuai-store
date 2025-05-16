@@ -19,7 +19,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from '@/hooks/use-toast';
 import { IconDownload } from '@tabler/icons-react';
 import { pdf } from '@react-pdf/renderer';
-import { TransactionPDF } from './transaction-genarate-pdf';
+import { TransactionPDF } from './transaction-generate-pdf';
 
 interface TransactionDetailDialogProps {
   open: boolean;
