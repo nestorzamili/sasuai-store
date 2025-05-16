@@ -1,18 +1,6 @@
 'use client';
-import * as React from 'react';
 import { useState } from 'react';
-import {
-  ColumnDef,
-  ColumnFiltersState,
-  SortingState,
-  VisibilityState,
-  flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
-} from '@tanstack/react-table';
+import { ColumnDef } from '@tanstack/react-table';
 import { MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -41,7 +29,6 @@ import { TableLayout } from '@/components/layout/table-layout';
 import { getAllBatchesOptimalized } from '../action';
 import { BatchAdjustmentDialog } from './batch-adjustment-dialog';
 import { UnitWithCounts } from '@/lib/types/unit';
-import BatchPrimaryButton from './batch-primary-button';
 import BatchFormDialog from './batch-form-dialog';
 
 interface BatchTableProps {
@@ -234,8 +221,7 @@ export function BatchTable({ onSetRefresh }: BatchTableProps) {
       };
     }
   };
-  // const [selectedBatch, setSelectedBatch] =
-  // useState<ProductBatchWithProduct | null>(null);
+
   // Handle edit batch
   const [formDialog, setFormDialog] = useState(false);
   const handleEdit = (batch: ProductBatchWithProduct) => {
