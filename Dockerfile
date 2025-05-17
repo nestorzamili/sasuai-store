@@ -56,4 +56,4 @@ CMD ["npm", "run", "start"]
 # Add metadata to the image
 LABEL org.opencontainers.image.source="https://github.com/nestorzamili/sasuai-store" \
       org.opencontainers.image.description="Production-ready Docker image for Next.js application" \
-      org.opencontainers.image.version=${GIT_TAG:-latest}
+    #   org.opencontainers.image.version=${GIT_TAG:-latest}
