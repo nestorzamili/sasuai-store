@@ -66,8 +66,24 @@ export function ProductTable({
     });
 
     // Add proper type checking to handle potentially undefined data
+    // Map API response to ensure it matches the ProductWithRelations type
+    const products =
+      response.success && response.data
+        ? (response.data.products.map(
+            (product: {
+              id: string;
+              name: string;
+              price: number;
+              [key: string]: any; // Allow other properties
+            }) => ({
+              ...product,
+              sellPrice: product.price, // Map price to sellPrice if it doesn't exist
+            }),
+          ) as ProductWithRelations[])
+        : [];
+
     return {
-      data: response.success && response.data ? response.data.products : [],
+      data: products,
       totalRows:
         response.success && response.data ? response.data.totalCount : 0,
     };

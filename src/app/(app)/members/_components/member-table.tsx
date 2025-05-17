@@ -169,7 +169,7 @@ export function MemberTable({ onEdit, onAwardPoints }: MemberTableProps) {
         const joinDate = row.original.joinDate;
         return (
           <div className="font-medium ml-4">
-            {format(new Date(joinDate), 'MMMM dd, yyyy')}
+            {joinDate ? format(new Date(joinDate), 'MMMM dd, yyyy') : 'N/A'}
           </div>
         );
       },

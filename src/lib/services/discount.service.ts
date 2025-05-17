@@ -1,4 +1,5 @@
 import prisma from '@/lib/prisma';
+import { DiscountApplyTo } from '@/lib/types/discount';
 import { errorHandling } from '../common/response-formatter';
 import {
   DiscountData,
@@ -29,7 +30,7 @@ export class DiscountService {
 
       // For global discounts, set applyTo to ALL (not null)
       if (discountData.isGlobal) {
-        discountData.applyTo = 'ALL';
+        discountData.applyTo = DiscountApplyTo.ALL;
       }
 
       const discount = await prisma.discount.create({
@@ -146,7 +147,7 @@ export class DiscountService {
 
       // For global discounts, ensure applyTo is ALL
       if (data.isGlobal === true) {
-        data.applyTo = 'ALL';
+        data.applyTo = DiscountApplyTo.ALL;
       }
 
       // Extract relation IDs

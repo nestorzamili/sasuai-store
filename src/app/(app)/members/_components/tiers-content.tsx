@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { MemberTier } from '@prisma/client';
+import { MemberTier } from '@/lib/types/member';
 import { Button } from '@/components/ui/button';
 import {
   Card,

@@ -1,28 +1,25 @@
-import { Unit, UnitConversion } from '@prisma/client';
+import { Unit } from './base-types';
 
 /**
- * Count metrics for unit relationships
- */
-export interface UnitCount {
-  productVariants?: number;
-  stockIns?: number;
-  stockOuts?: number;
-  transactionItems?: number;
-  fromUnitConversions?: number;
-  toUnitConversions?: number;
-}
-
-/**
- * Unit with relationship counts
+ * Unit with counts of related records
  */
 export interface UnitWithCounts extends Unit {
-  _count?: UnitCount;
+  _count?: {
+    products?: number;
+    stockIns?: number;
+    stockOuts?: number;
+    productBatches?: number;
+    transactionItems?: number;
+    fromUnitConversions?: number;
+    toUnitConversions?: number;
+  };
 }
 
-/**
- * Unit conversion with related units
- */
-export interface UnitConversionWithUnits extends UnitConversion {
+export interface UnitConversionWithUnits {
+  id: string;
   fromUnit: Unit;
   toUnit: Unit;
+  conversionFactor: number;
+  createdAt: Date;
+  updatedAt: Date;
 }

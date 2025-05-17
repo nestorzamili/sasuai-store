@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
-import { MemberTier } from '@prisma/client';
+import { MemberTier } from '@/lib/types/member';
 import {
   Dialog,
   DialogContent,

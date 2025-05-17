@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { DiscountApplyTo } from '@prisma/client';
+import { DiscountApplyTo } from '@/lib/types/discount';
 import { UseFormReturn } from 'react-hook-form';
 import { DiscountFormValues } from '../../schema';
 import ProductSelector from './product-selector';

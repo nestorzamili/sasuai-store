@@ -1,31 +1,20 @@
 import {
-  ProductBatch,
   Product,
+  ProductBatch,
   StockIn,
   StockOut,
   TransactionItem,
   Unit,
   Supplier,
   Category,
-} from '@prisma/client';
-
-// Re-export Prisma types
-export type {
-  ProductBatch,
-  Product,
-  StockIn,
-  StockOut,
-  TransactionItem,
-  Unit,
-  Supplier,
-  Category,
-};
+} from './base-types';
 
 /**
  * Product batch with its product
  */
 export interface ProductBatchWithProduct extends ProductBatch {
   product: Product;
+  remainingQuantity: number;
 }
 
 /**
@@ -80,6 +69,9 @@ export interface ProductBatchWithDetails extends ProductBatch {
   stockIns: StockInWithRelations[];
   stockOuts: StockOutWithRelations[];
   transactionItems: TransactionItemWithRelations[];
+  expiryDate: Date;
+  batchCode: string;
+  remainingQuantity: number;
 }
 
 /**
@@ -110,8 +102,8 @@ export interface StockMovement {
   batchId: string;
   batchCode?: string;
   reason?: string | null;
-  supplier?: any | null;
-  unit: any;
+  supplier?: Supplier | null;
+  unit: Unit;
 }
 
 /**

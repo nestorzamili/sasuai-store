@@ -5,7 +5,7 @@ import { IconAlertTriangle } from '@tabler/icons-react';
 import { toast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ConfirmDialog } from '@/components/confirm-dialog';
-import { MemberTier } from '@prisma/client';
+import { MemberTier } from '@/lib/types/member';
 import { deleteMemberTier } from '../action';
 
 interface Props {

@@ -1,4 +1,14 @@
-import { DiscountApplyTo, DiscountType } from '@prisma/client';
+export enum DiscountType {
+  PERCENTAGE = 'PERCENTAGE',
+  FIXED_AMOUNT = 'FIXED_AMOUNT',
+}
+
+export enum DiscountApplyTo {
+  ALL = 'ALL',
+  SPECIFIC_PRODUCTS = 'SPECIFIC_PRODUCTS',
+  SPECIFIC_MEMBERS = 'SPECIFIC_MEMBERS',
+  SPECIFIC_MEMBER_TIERS = 'SPECIFIC_MEMBER_TIERS',
+}
 
 export interface DiscountData {
   id?: string;

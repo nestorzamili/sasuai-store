@@ -19,7 +19,7 @@ import {
   addProductImage,
 } from '../action';
 import { ProductWithRelations, ProductImageWithUrl } from '@/lib/types/product';
-import { Category, Brand, Unit } from '@prisma/client';
+import { Category, Brand, Unit } from '@/lib/types/base-types';
 
 // Form schema for product
 const formSchema = z.object({
@@ -117,10 +117,10 @@ export function ProductFormProvider({
     defaultValues: {
       name: initialData?.name || '',
       categoryId: initialData?.categoryId || '',
-      brandId: initialData?.brandId || null,
+      brandId: initialData?.brand?.id || null,
       description: initialData?.description || '',
       unitId: initialData?.unitId || '',
-      price: initialData?.price || 0,
+      price: initialData?.sellPrice || 0,
       skuCode: initialData?.skuCode || '',
       barcode: initialData?.barcode || '',
       isActive: initialData?.isActive ?? true,
@@ -156,10 +156,10 @@ export function ProductFormProvider({
       methods.reset({
         name: initialData.name || '',
         categoryId: initialData.categoryId || '',
-        brandId: initialData.brandId || null,
+        brandId: initialData.brand?.id || null,
         description: initialData.description || '',
         unitId: initialData.unitId || '',
-        price: initialData.price || 0,
+        price: initialData.sellPrice || 0,
         skuCode: initialData.skuCode || '',
         barcode: initialData.barcode || '',
         isActive: initialData.isActive ?? true,

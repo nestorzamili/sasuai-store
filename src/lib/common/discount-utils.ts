@@ -1,4 +1,4 @@
-import { DiscountType, DiscountApplyTo } from '@prisma/client';
+import { DiscountType, DiscountApplyTo } from '../types/discount';
 import { formatRupiah } from '../currency';
 
 /**

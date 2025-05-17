@@ -46,7 +46,13 @@ export default function MemberDetailsPage() {
       const result = await getMember(memberId.current);
 
       if (result.success && result.data) {
-        const memberData = result.data as MemberWithRelations;
+        // Map the API response to match our MemberWithRelations type
+        const memberData = {
+          ...result.data,
+          // Map totalPoints to points if it exists, or default to 0
+          points: result.data.totalPoints || 0,
+        } as MemberWithRelations;
+
         setMember(memberData);
 
         // Update breadcrumb only when we have the actual member name
@@ -98,7 +104,7 @@ export default function MemberDetailsPage() {
               <MemberPointHistory
                 memberId={member.id}
                 points={member.memberPoints}
-                memberTier={member.tier}
+                memberTier={member.tier || undefined}
               />
             </TabsContent>
             <TabsContent value="rewards">

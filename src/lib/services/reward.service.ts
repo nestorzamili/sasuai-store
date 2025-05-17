@@ -1,5 +1,27 @@
 import prisma from '@/lib/prisma';
-import { Prisma } from '@prisma/client';
+
+// Custom type definitions to replace Prisma imports
+interface RewardWhereInput {
+  isActive?: boolean;
+  OR?: Array<{
+    name?: { contains: string; mode?: 'insensitive' };
+    description?: { contains: string; mode?: 'insensitive' };
+  }>;
+  AND?: Array<
+    | {
+        OR?: Array<{ expiryDate: null } | { expiryDate: { gte: Date } }>;
+      }
+    | any
+  >;
+}
+
+interface RewardClaimWhereInput {
+  OR?: Array<{
+    member?: { name?: { contains: string; mode?: 'insensitive' } };
+    reward?: { name?: { contains: string; mode?: 'insensitive' } };
+  }>;
+  status?: string;
+}
 
 export class RewardService {
   /**
@@ -142,7 +164,7 @@ export class RewardService {
   }) {
     const skip = (page - 1) * limit;
 
-    const where: Prisma.RewardWhereInput = {};
+    const where: RewardWhereInput = {};
 
     if (!includeInactive) {
       where.isActive = true;
@@ -220,7 +242,7 @@ export class RewardService {
     const skip = (page - 1) * limit;
 
     // Build where conditions
-    const where: Prisma.RewardClaimWhereInput = {};
+    const where: RewardClaimWhereInput = {};
 
     if (search) {
       where.OR = [

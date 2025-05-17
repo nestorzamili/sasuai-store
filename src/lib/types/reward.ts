@@ -1,4 +1,34 @@
-import { Member, Reward, RewardClaim } from '@prisma/client';
+// Base types to replace Prisma imports
+export interface Reward {
+  id: string;
+  name: string;
+  pointsCost: number;
+  stock: number;
+  isActive: boolean;
+  description?: string | null;
+  imageUrl?: string | null;
+  expiryDate?: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface RewardClaim {
+  id: string;
+  memberId: string;
+  rewardId: string;
+  claimDate: Date;
+  status: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Member {
+  id: string;
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  // Add minimum fields needed for this context
+}
 
 // Type for reward creation
 export type CreateRewardData = {
