@@ -32,8 +32,15 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
+// Define interface for payment method data
+interface PaymentMethodData {
+  type: string;
+  total: number;
+  fill: string;
+}
+
 export function PaymentMethod(filter?: any) {
-  const [chart, setChart] = useState([
+  const [chart, setChart] = useState<PaymentMethodData[]>([
     { type: 'cash', total: 275, fill: 'var(--color-cash)' },
     { type: 'debit', total: 200, fill: 'var(--color-debit)' },
   ]);
@@ -44,12 +51,14 @@ export function PaymentMethod(filter?: any) {
       setLoading(true);
       const response = await getTopPaymentMethod(filter);
       if (response.success && response.data) {
-        const formattedData = response.data.map((item: any) => ({
-          type: item.type,
-          total: item.total,
-          fill:
-            item.type === 'cash' ? 'var(--color-cash)' : 'var(--color-debit)',
-        }));
+        const formattedData = response.data.map(
+          (item: { type: string; total: number }) => ({
+            type: item.type,
+            total: item.total,
+            fill:
+              item.type === 'cash' ? 'var(--color-cash)' : 'var(--color-debit)',
+          })
+        );
         setChart(formattedData);
       }
     } catch (error) {

@@ -17,7 +17,14 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
-const chartData = [
+
+// Define interface for transaction data
+interface TransactionData {
+  month: string;
+  desktop: number;
+}
+
+const chartData: TransactionData[] = [
   { month: 'January', desktop: 186 },
   { month: 'February', desktop: 305 },
   { month: 'March', desktop: 237 },
