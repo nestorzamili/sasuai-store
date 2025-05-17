@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { useState } from 'react';
 import { ColumnDef } from '@tanstack/react-table';
-import { MoreHorizontal, Check, X } from 'lucide-react';
+import { MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { IconTrash, IconEdit, IconEye, IconPower } from '@tabler/icons-react';
 import { Badge } from '@/components/ui/badge';
@@ -22,7 +22,7 @@ import { format } from 'date-fns';
 import { DiscountDeleteDialog } from './discount-delete-dialog';
 import { DiscountDetailDialog } from './discount-detail-dialog';
 import { toast } from '@/hooks/use-toast';
-import { DiscountApplyTo, DiscountType } from '@prisma/client';
+import { DiscountApplyTo, DiscountType } from '@/lib/types/discount';
 import {
   formatDiscountValue,
   formatApplyTo,

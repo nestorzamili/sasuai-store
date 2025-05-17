@@ -112,12 +112,19 @@ export function BatchAdjustmentDialog({
         return;
       }
 
-      // Use the adjustBatchQuantity function for both addition and removal
+      // Add proper type for the batch adjustment params
+      interface BatchAdjustmentParams {
+        adjustment: number;
+        reason: string;
+        unitId: string;
+      }
+
+      // Use the adjustBatchQuantity function with proper typing
       const result = await adjustBatchQuantity(batch.id, {
         adjustment: adjustmentValue,
         reason: values.reason,
         unitId: values.unitId,
-      });
+      } as BatchAdjustmentParams);
 
       if (result.success) {
         toast({

@@ -2,7 +2,6 @@
 
 import { getProductsForSelection } from '../../action';
 import EntitySelector from './entity-selector';
-import { useEffect } from 'react';
 
 interface Product {
   id: string;

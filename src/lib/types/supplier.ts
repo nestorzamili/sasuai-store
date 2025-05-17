@@ -1,8 +1,8 @@
-import { Supplier } from '@prisma/client';
+import { Supplier } from './base-types';
 import { StockInComplete } from './stock-movement';
 
 /**
- * Supplier with stock-in count
+ * Supplier with counts of related records
  */
 export interface SupplierWithCount extends Supplier {
   _count: {
@@ -15,6 +15,7 @@ export interface SupplierWithCount extends Supplier {
  */
 export interface SupplierWithStockIns extends Supplier {
   stockIns: StockInComplete[];
+  contact?: string | null;
 }
 
 /**

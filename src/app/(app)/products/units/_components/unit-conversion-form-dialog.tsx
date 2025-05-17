@@ -69,8 +69,8 @@ export default function UnitConversionFormDialog({
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      fromUnitId: initialData?.fromUnitId || '',
-      toUnitId: initialData?.toUnitId || '',
+      fromUnitId: initialData?.fromUnit.id || '',
+      toUnitId: initialData?.toUnit.id || '',
       conversionFactor: initialData?.conversionFactor || 1,
     },
   });
@@ -85,8 +85,8 @@ export default function UnitConversionFormDialog({
   useEffect(() => {
     if (initialData) {
       form.reset({
-        fromUnitId: initialData.fromUnitId,
-        toUnitId: initialData.toUnitId,
+        fromUnitId: initialData.fromUnit.id,
+        toUnitId: initialData.toUnit.id,
         conversionFactor: initialData.conversionFactor,
       });
     } else {

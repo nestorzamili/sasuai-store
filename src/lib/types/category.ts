@@ -1,4 +1,4 @@
-import { Category } from '@prisma/client';
+import { Category } from '@/lib/types/base-types';
 
 export interface CategoryWithCount extends Category {
   _count?: {

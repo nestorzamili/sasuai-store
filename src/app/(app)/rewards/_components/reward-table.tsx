@@ -103,7 +103,7 @@ export function RewardTable({ onEdit, onDelete }: RewardTableProps) {
           return (
             <div
               className="relative h-12 w-16 rounded overflow-hidden cursor-pointer"
-              onClick={() => setSelectedImage(reward.imageUrl)}
+              onClick={() => setSelectedImage(reward.imageUrl || null)}
             >
               <Image
                 src={reward.imageUrl}

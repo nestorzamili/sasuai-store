@@ -1,13 +1,23 @@
+// Replace Prisma imports with custom base types
 import {
   Brand,
   Category,
   Product,
   ProductBatch,
-  ProductImage,
   StockIn,
   StockOut,
   Unit,
-} from '@prisma/client';
+} from './base-types';
+
+// Define the ProductImage interface since it doesn't exist in base-types yet
+interface ProductImage {
+  id: string;
+  productId: string;
+  imageUrl: string;
+  isPrimary: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
 // Basic types with relationships
 export type ProductWithRelations = Product & {
@@ -16,6 +26,9 @@ export type ProductWithRelations = Product & {
   unit: Unit;
   images: ProductImage[];
   batches?: ProductBatch[];
+  price: number;
+  currentStock: number;
+  primaryImage?: string | null;
 };
 
 export type ProductWithCount = Product & {

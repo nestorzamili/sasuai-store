@@ -29,7 +29,7 @@ import { Input } from '@/components/ui/input';
 import { toast } from '@/hooks/use-toast';
 import { IconPlus, IconRefresh, IconInfoCircle } from '@tabler/icons-react';
 import { ProductBatchFormInitialData } from '@/lib/types/product-batch';
-import { Product } from '@prisma/client';
+import { Product } from '@/lib/types/base-types'; // Updated import
 import { createBatch, updateBatch } from '../action';
 import {
   Popover,
@@ -209,16 +209,26 @@ export default function BatchFormDialog({
     const fetchData = async () => {
       try {
         const productsData = await getAllProducts();
-        setProducts(productsData.data || []);
+
+        // Map API response data to ensure it matches the Product type
+        const mappedProducts = productsData.data?.map((product: any) => ({
+          ...product,
+          // Ensure sellPrice is present (required by Product type)
+          sellPrice: product.sellPrice || product.price || 0,
+        }));
+
+        setProducts(mappedProducts || []);
 
         const unitsData = await getAllUnits();
         setUnits(unitsData.data || []);
 
         const suppliersData = await getAllSuppliers();
         setSuppliers(
-          suppliersData.data?.map((supplier) => ({
+          suppliersData.data?.map((supplier: any) => ({
             ...supplier,
-            _count: { stockIns: 0 }, // Adding the missing _count property
+            _count: supplier._count || { products: 0 },
+            createdAt: supplier.createdAt || new Date(),
+            updatedAt: supplier.updatedAt || new Date(),
           })) || [],
         );
       } catch (error) {
