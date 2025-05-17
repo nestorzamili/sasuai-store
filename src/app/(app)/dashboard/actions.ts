@@ -1,6 +1,6 @@
 'use server';
 import { DashboardService } from '@/lib/services/dashboard.service';
-import { ProductDashboardService } from '@/lib/services/product.dashboard.services';
+import { ProductDashboardService } from '@/lib/services/product.dashboard.service';
 export async function metricPeformance(filter?: any) {
   try {
     const response = await DashboardService.getPerformanceMetrics(filter);

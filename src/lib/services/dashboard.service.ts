@@ -128,11 +128,11 @@ export class DashboardService {
 
       // Calculate total costs
       const currentTotalCost = currentItems.reduce(
-        (acc, item: { cost: number }) => acc + item.cost,
+        (acc: number, item: { cost: number }) => acc + item.cost,
         0
       );
       const prevTotalCost = prevItems.reduce(
-        (acc, item: { cost: number }) => acc + item.cost,
+        (acc: number, item: { cost: number }) => acc + item.cost,
         0
       );
 
