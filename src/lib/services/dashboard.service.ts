@@ -505,7 +505,7 @@ export class DashboardService {
         },
       });
       const categoryDetails = await Promise.all(
-        topCategories.map(async (group) => {
+        topCategories.map(async (group: BatchGroupCount) => {
           const batch = await prisma.productBatch.findUnique({
             where: {
               id: group.batchId,
