@@ -51,6 +51,7 @@ export function BatchDetailDialog({
   const [activeTab, setActiveTab] = useState('details');
   const [movements, setMovements] = useState<StockMovement[]>([]);
   const [isLoadingMovements, setIsLoadingMovements] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Fetch batch details when the dialog opens
   useEffect(() => {
@@ -61,16 +62,29 @@ export function BatchDetailDialog({
       }
 
       setIsLoading(true);
+      setError(null);
+
       try {
         const response = await getBatchById(batchId);
-        if (response.success) {
+        if (response.success && response.data) {
+          // Validate response data has the required structure
+          if (!validateBatchData(response.data)) {
+            setError('Invalid batch data received from server');
+            setIsLoading(false);
+            return;
+          }
+
+          // Safe to set as ProductBatchWithDetails now
           setBatch(response.data as ProductBatchWithDetails);
 
           // Fetch stock movements separately
           fetchStockMovements(batchId);
+        } else {
+          setError(response.error || 'Failed to fetch batch details');
         }
       } catch (error) {
         console.error('Failed to fetch batch details', error);
+        setError('An unexpected error occurred while fetching batch details');
       } finally {
         setIsLoading(false);
       }
@@ -78,6 +92,24 @@ export function BatchDetailDialog({
 
     fetchBatch();
   }, [batchId, open]);
+
+  // Helper function to validate the batch data structure
+  const validateBatchData = (data: any): data is ProductBatchWithDetails => {
+    return (
+      data &&
+      typeof data === 'object' &&
+      'id' in data &&
+      'product' in data &&
+      data.product &&
+      typeof data.product === 'object' &&
+      'stockIns' in data &&
+      Array.isArray(data.stockIns) &&
+      'stockOuts' in data &&
+      Array.isArray(data.stockOuts) &&
+      'transactionItems' in data &&
+      Array.isArray(data.transactionItems)
+    );
+  };
 
   const fetchStockMovements = async (id: string) => {
     setIsLoadingMovements(true);
@@ -92,6 +124,8 @@ export function BatchDetailDialog({
             }))
           : [];
         setMovements(mappedMovements as StockMovement[]);
+      } else {
+        console.error('Error fetching stock movements:', response.error);
       }
     } catch (error) {
       console.error('Failed to fetch stock movements', error);
@@ -107,6 +141,7 @@ export function BatchDetailDialog({
       const timer = setTimeout(() => {
         setBatch(null);
         setMovements([]);
+        setError(null);
       }, 300);
       return () => clearTimeout(timer);
     }
@@ -148,6 +183,12 @@ export function BatchDetailDialog({
 
         {isLoading ? (
           <BatchDetailSkeleton />
+        ) : error ? (
+          <div className="py-6 text-center text-destructive">
+            <IconInfoCircle className="h-12 w-12 mx-auto" />
+            <p className="mt-2 font-medium">{error}</p>
+            <p className="mt-1 text-muted-foreground">Please try again later</p>
+          </div>
         ) : batch ? (
           <Tabs
             defaultValue="details"
