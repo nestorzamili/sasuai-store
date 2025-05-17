@@ -293,19 +293,26 @@ export class DashboardService {
       });
 
       // Map transactions to include date information
-      const sales = transactions.map((transaction) => {
-        const year = transaction.createdAt.getFullYear();
-        const month = transaction.createdAt.getMonth() + 1; // Months are 0-indexed in JavaScript
-        const day = transaction.createdAt.getDate();
-        return {
-          year,
-          month,
-          day,
-          avg_sales: transaction._avg.finalAmount,
-          total_transactions: transaction._count._all,
-          total_sales: transaction._sum.finalAmount,
-        };
-      });
+      const sales = transactions.map(
+        (transaction: {
+          createdAt: Date;
+          _avg: { finalAmount: number | null };
+          _count: { _all: number };
+          _sum: { finalAmount: number | null };
+        }) => {
+          const year = transaction.createdAt.getFullYear();
+          const month = transaction.createdAt.getMonth() + 1; // Months are 0-indexed in JavaScript
+          const day = transaction.createdAt.getDate();
+          return {
+            year,
+            month,
+            day,
+            avg_sales: transaction._avg.finalAmount,
+            total_transactions: transaction._count._all,
+            total_sales: transaction._sum.finalAmount,
+          };
+        }
+      );
 
       // Group transaction items by year and month for cost calculation
       const costsByMonth: { [key: string]: number } = {};
