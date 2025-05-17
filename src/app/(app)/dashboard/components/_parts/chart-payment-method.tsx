@@ -107,39 +107,6 @@ export function PaymentMethod(filter?: any) {
           </>
         )}
       </CardContent>
-      <CardFooter className="flex-col gap-2 text-sm">
-        <div className="flex items-center justify-between w-full">
-          <div className="flex flex-col gap-1">
-            <div className="flex items-center gap-2 font-medium">
-              <span
-                className="h-3 w-3 rounded-full"
-                style={{ backgroundColor: 'var(--color-cash)' }}
-              ></span>
-              <span>
-                Cash: {chart.find((item) => item.type === 'cash')?.total || 0}
-              </span>
-            </div>
-            <div className="flex items-center gap-2 font-medium">
-              <span
-                className="h-3 w-3 rounded-full"
-                style={{ backgroundColor: 'var(--color-debit)' }}
-              ></span>
-              <span>
-                Debit: {chart.find((item) => item.type === 'debit')?.total || 0}
-              </span>
-            </div>
-          </div>
-          <div className="flex flex-col items-end">
-            <div className="flex items-center gap-2 font-medium leading-none">
-              <TrendingUp className="h-4 w-4" />
-              Total: {chart.reduce((sum, item) => sum + item.total, 0)}
-            </div>
-            <div className="text-xs text-muted-foreground mt-1">
-              Based on recent transactions
-            </div>
-          </div>
-        </div>
-      </CardFooter>
     </Card>
   );
 }
