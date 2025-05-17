@@ -78,7 +78,7 @@ export class StockMovementService {
           ...options,
         }),
         prisma.stockIn.count(
-          options.where ? { where: options.where } : undefined,
+          options.where ? { where: options.where } : undefined
         ),
       ]);
 
@@ -235,7 +235,7 @@ export class StockMovementService {
           ...options,
         }),
         prisma.stockOut.count(
-          options.where ? { where: options.where } : undefined,
+          options.where ? { where: options.where } : undefined
         ),
       ]);
 
@@ -354,8 +354,28 @@ export class StockMovementService {
       },
     });
 
+    // Define the movement item type
+    type MovementItem = {
+      id: string;
+      date: Date;
+      type: 'IN' | 'OUT';
+      quantity: number;
+      unit: {
+        id: string;
+        name: string;
+        [key: string]: any;
+      };
+      supplier: {
+        id: string;
+        name: string;
+        [key: string]: any;
+      } | null;
+      reason: string | null;
+      transactionId: string | null;
+    };
+
     // Combine and sort by date
-    const movements = [
+    const movements: MovementItem[] = [
       ...stockIns.map((stockIn) => ({
         id: stockIn.id,
         date: stockIn.date,
@@ -363,8 +383,8 @@ export class StockMovementService {
         quantity: stockIn.quantity,
         unit: stockIn.unit,
         supplier: stockIn.supplier,
-        reason: null,
-        transactionId: null,
+        reason: null as any,
+        transactionId: null as any,
       })),
       ...stockOuts.map((stockOut) => ({
         id: stockOut.id,
@@ -372,17 +392,17 @@ export class StockMovementService {
         type: 'OUT' as const,
         quantity: stockOut.quantity,
         unit: stockOut.unit,
-        supplier: null,
+        supplier: null as any,
         reason: stockOut.reason,
-        transactionId: null,
+        transactionId: null as any,
       })),
       ...transactionItems.map((item) => ({
         id: `tr-${item.id}`,
-        date: item.transaction.createdAt,
+        date: item.transaction?.createdAt || new Date(), // Add null check
         type: 'OUT' as const,
         quantity: item.quantity,
-        unit: item.unit,
-        supplier: null,
+        unit: item.unit || { id: '', name: '' }, // Provide default if null
+        supplier: null as any,
         reason: 'Sale',
         transactionId: item.transaction.id,
       })),
@@ -390,7 +410,7 @@ export class StockMovementService {
 
     // Sort by date (newest first)
     return movements.sort(
-      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
     );
   }
 }

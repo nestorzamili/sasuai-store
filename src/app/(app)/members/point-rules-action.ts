@@ -46,8 +46,14 @@ export async function updatePointRuleSettings(data: {
     // Validate the data
     const validatedData = pointRuleSettingsSchema.parse(data);
 
-    // Update settings
-    await setPointRuleSettings(validatedData);
+    // Update settings with explicit type assertion if needed
+    await setPointRuleSettings(
+      validatedData as {
+        enabled: boolean;
+        baseAmount: number;
+        pointMultiplier: number;
+      }
+    );
 
     // Revalidate relevant paths
     revalidatePath('/members');

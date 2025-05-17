@@ -64,7 +64,7 @@ export async function getAllUnitsWithCounts(options?: {
     return {
       success: false,
       error: 'Failed to fetch units',
-      data: [],
+      data: [] as any[],
       totalRows: 0,
     };
   }
@@ -157,7 +157,7 @@ export async function createUnit(data: { name: string; symbol: string }) {
  */
 export async function updateUnit(
   id: string,
-  data: { name?: string; symbol?: string },
+  data: { name?: string; symbol?: string }
 ) {
   try {
     // Validate data

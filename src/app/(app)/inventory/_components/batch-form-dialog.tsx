@@ -229,7 +229,7 @@ export default function BatchFormDialog({
             _count: supplier._count || { products: 0 },
             createdAt: supplier.createdAt || new Date(),
             updatedAt: supplier.updatedAt || new Date(),
-          })) || [],
+          })) || []
         );
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -251,7 +251,7 @@ export default function BatchFormDialog({
         value: product.id,
         label: product.name,
       })),
-    [products],
+    [products]
   );
 
   const unitOptions = useMemo(
@@ -260,7 +260,7 @@ export default function BatchFormDialog({
         value: unit.id,
         label: `${unit.name} (${unit.symbol})`,
       })),
-    [units],
+    [units]
   );
 
   const supplierOptions = useMemo(
@@ -271,11 +271,11 @@ export default function BatchFormDialog({
         label: supplier.name,
       })),
     ],
-    [suppliers],
+    [suppliers]
   );
 
   // Default form values
-  const defaultValues = {
+  const defaultValues: FormValues = {
     productId: '',
     batchCode: '',
     expiryDate: addMonths(new Date(), 6),
@@ -500,7 +500,7 @@ export default function BatchFormDialog({
                           variant="outline"
                           className={cn(
                             'w-full justify-start text-left font-normal',
-                            !field.value && 'text-muted-foreground',
+                            !field.value && 'text-muted-foreground'
                           )}
                         >
                           <CalendarIcon className="mr-2 h-4 w-4" />

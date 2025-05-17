@@ -51,7 +51,10 @@ export function CreateCategoryDialog() {
   const onSubmit = async (values: FormValues) => {
     try {
       setLoading(true);
-      const result = await createCategory(values);
+      const result = await createCategory({
+        name: values.name,
+        description: values.description,
+      });
 
       if (result.success) {
         toast({

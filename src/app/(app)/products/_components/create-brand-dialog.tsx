@@ -48,7 +48,9 @@ export function CreateBrandDialog() {
   const onSubmit = async (values: FormValues) => {
     try {
       setLoading(true);
-      const result = await createBrand(values);
+      const result = await createBrand({
+        name: values.name,
+      });
 
       if (result.success) {
         toast({

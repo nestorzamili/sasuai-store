@@ -64,7 +64,7 @@ export async function getAllCategoriesWithCount(options?: {
     return {
       success: false,
       error: 'Failed to fetch categories',
-      data: [],
+      data: [] as any[], // Explicitly type the empty array
       totalRows: 0,
     };
   }
@@ -160,7 +160,7 @@ export async function createCategory(data: {
  */
 export async function updateCategory(
   id: string,
-  data: { name?: string; description?: string },
+  data: { name?: string; description?: string }
 ) {
   try {
     // Validate data

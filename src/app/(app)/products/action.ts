@@ -58,7 +58,17 @@ export async function createProduct(data: {
     const validatedData = productSchema.parse(data);
 
     // Create product
-    const product = await ProductService.create(validatedData);
+    const product = await ProductService.create({
+      name: validatedData.name,
+      categoryId: validatedData.categoryId,
+      brandId: validatedData.brandId,
+      description: validatedData.description,
+      unitId: validatedData.unitId,
+      price: validatedData.price,
+      skuCode: validatedData.skuCode,
+      barcode: validatedData.barcode,
+      isActive: validatedData.isActive,
+    });
 
     // Revalidate products page
     revalidatePath('/products');
@@ -98,7 +108,7 @@ export async function updateProduct(
     skuCode?: string | null;
     barcode?: string | null;
     isActive?: boolean;
-  },
+  }
 ) {
   try {
     // Validate data
