@@ -67,8 +67,8 @@ export default function InventoryPage() {
               />
             </div>
 
-            {/* Main batch table */}
-            <BatchTable />
+            {/* Main batch table - now with isActive prop */}
+            <BatchTable isActive={activeTab === 'batches'} />
           </div>
         </TabsContent>
 
@@ -82,7 +82,7 @@ export default function InventoryPage() {
               </p>
             </div>
 
-            {/* Stock In Table - pass isActive prop */}
+            {/* Stock In Table - already has isActive prop */}
             <StockInTable isActive={activeTab === 'stock-in'} />
           </div>
         </TabsContent>
@@ -97,7 +97,7 @@ export default function InventoryPage() {
               </p>
             </div>
 
-            {/* Stock Out Table - also add isActive prop */}
+            {/* Stock Out Table - already has isActive prop */}
             <StockOutTable isActive={activeTab === 'stock-out'} />
           </div>
         </TabsContent>

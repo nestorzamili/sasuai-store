@@ -36,14 +36,19 @@ import { getAllUnits } from '@/app/(app)/products/units/action';
 
 interface BatchTableProps {
   onSetRefresh?: (refreshFn: () => void) => void;
+  isActive?: boolean;
 }
 
-export function BatchTable({ onSetRefresh }: BatchTableProps) {
+export function BatchTable({
+  onSetRefresh,
+  isActive = false,
+}: BatchTableProps) {
   const [selectedBatchForDelete, setSelectedBatchForDelete] =
     useState<ProductBatchWithProduct | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedBatchId, setSelectedBatchId] = useState<string | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   // Filter states
   const [expiryDateRange, setExpiryDateRange] = useState<DateRange | undefined>(
@@ -51,6 +56,9 @@ export function BatchTable({ onSetRefresh }: BatchTableProps) {
   );
   const [minQuantity, setMinQuantity] = useState<string>('');
   const [maxQuantity, setMaxQuantity] = useState<string>('');
+  const [includeExpired, setIncludeExpired] = useState<boolean>(true);
+  const [includeOutOfStock, setIncludeOutOfStock] = useState<boolean>(true);
+  const [categoryId, setCategoryId] = useState<string>('');
 
   // Handle delete click
   const handleDeleteClick = (batch: ProductBatchWithProduct) => {
@@ -212,9 +220,17 @@ export function BatchTable({ onSetRefresh }: BatchTableProps) {
     setAdjustQtyDialog(true);
   };
 
-  // fetch data
+  // fetch data - optimized with select instead of include
   const fetchBatchData = async (options: any) => {
     try {
+      // Don't fetch if not active
+      if (!isActive && !isInitialLoad) {
+        return {
+          data: [],
+          totalRows: 0,
+        };
+      }
+
       // Process filters
       let expiryDateStart: Date | undefined;
       let expiryDateEnd: Date | undefined;
@@ -231,7 +247,7 @@ export function BatchTable({ onSetRefresh }: BatchTableProps) {
 
       const response = await getAllBatches({
         page: options.page + 1,
-        limit: options.limit,
+        pageSize: options.limit,
         sortField: options.sortBy?.id || 'createdAt',
         sortDirection: options.sortBy?.desc ? 'desc' : 'asc',
         search: options.search,
@@ -239,6 +255,9 @@ export function BatchTable({ onSetRefresh }: BatchTableProps) {
         expiryDateEnd,
         minRemainingQuantity: options.filters?.minQuantity,
         maxRemainingQuantity: options.filters?.maxQuantity,
+        includeExpired: options.filters?.includeExpired,
+        includeOutOfStock: options.filters?.includeOutOfStock,
+        categoryId: options.filters?.categoryId,
       });
 
       return {
@@ -246,6 +265,7 @@ export function BatchTable({ onSetRefresh }: BatchTableProps) {
         totalRows: response.meta?.totalRows || 0,
       };
     } catch (error) {
+      console.error('Error fetching batch data:', error);
       return {
         data: [],
         totalRows: 0,
@@ -290,6 +310,9 @@ export function BatchTable({ onSetRefresh }: BatchTableProps) {
   const [selectedBatch, setSelectedBatch] =
     useState<ProductBatchWithProduct | null>(null);
   const [units, setUnits] = useState<UnitWithCounts[]>([]);
+  const [categories, setCategories] = useState<
+    Array<{ id: string; name: string }>
+  >([]);
 
   // Fetch units when component mounts
   useEffect(() => {
@@ -304,8 +327,11 @@ export function BatchTable({ onSetRefresh }: BatchTableProps) {
       }
     };
 
-    fetchUnits();
-  }, []);
+    // Only fetch if component is active
+    if (isActive) {
+      fetchUnits();
+    }
+  }, [isActive]);
 
   // Handle expiry date range change
   const handleExpiryDateRangeChange = (range: DateRange | undefined) => {
@@ -325,6 +351,40 @@ export function BatchTable({ onSetRefresh }: BatchTableProps) {
     handleFilterChange('maxQuantity', value);
   };
 
+  // Handle include expired change
+  const handleIncludeExpiredChange = (value: boolean) => {
+    setIncludeExpired(value);
+    handleFilterChange('includeExpired', value);
+  };
+
+  // Handle include out of stock change
+  const handleIncludeOutOfStockChange = (value: boolean) => {
+    setIncludeOutOfStock(value);
+    handleFilterChange('includeOutOfStock', value);
+  };
+
+  // Handle category change
+  const handleCategoryChange = (value: string) => {
+    setCategoryId(value);
+    handleFilterChange('categoryId', value);
+  };
+
+  // Load data when tab becomes active
+  useEffect(() => {
+    if (isActive) {
+      // Mark that we're past initial load
+      setIsInitialLoad(false);
+      refresh();
+    }
+  }, [isActive, refresh]);
+
+  // Set refresh function if needed
+  useEffect(() => {
+    if (onSetRefresh) {
+      onSetRefresh(refresh);
+    }
+  }, [onSetRefresh, refresh]);
+
   // Create the filter toolbar element
   const filterToolbarElement = (
     <BatchFilterToolbar
@@ -334,6 +394,13 @@ export function BatchTable({ onSetRefresh }: BatchTableProps) {
       setMinQuantity={handleMinQuantityChange}
       maxQuantity={maxQuantity}
       setMaxQuantity={handleMaxQuantityChange}
+      includeExpired={includeExpired}
+      setIncludeExpired={handleIncludeExpiredChange}
+      includeOutOfStock={includeOutOfStock}
+      setIncludeOutOfStock={handleIncludeOutOfStockChange}
+      categoryId={categoryId}
+      setCategoryId={handleCategoryChange}
+      categories={categories}
     />
   );
 
