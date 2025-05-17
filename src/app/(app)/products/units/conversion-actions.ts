@@ -92,7 +92,7 @@ export async function getAllConversionsWithOptions(options?: {
     return {
       success: false,
       error: 'Failed to fetch unit conversions',
-      data: [],
+      data: [] as any[],
       totalRows: 0,
     };
   }
@@ -184,7 +184,7 @@ export async function createConversion(data: {
  */
 export async function updateConversion(
   id: string,
-  data: { conversionFactor: number },
+  data: { conversionFactor: number }
 ) {
   try {
     // Validate conversion factor
@@ -242,13 +242,13 @@ export async function deleteConversion(id: string) {
 export async function convertQuantity(
   fromUnitId: string,
   toUnitId: string,
-  quantity: number,
+  quantity: number
 ) {
   try {
     const result = await UnitService.convertQuantity(
       fromUnitId,
       toUnitId,
-      quantity,
+      quantity
     );
     return {
       success: true,

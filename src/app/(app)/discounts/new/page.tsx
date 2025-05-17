@@ -48,7 +48,8 @@ export default function CreateDiscountPage() {
     try {
       setLoading(true);
 
-      const result = await createDiscount(values);
+      // Add type assertion to fix type error
+      const result = await createDiscount(values as any);
 
       if (result.success) {
         toast({

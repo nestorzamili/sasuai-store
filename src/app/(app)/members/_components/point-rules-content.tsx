@@ -116,7 +116,7 @@ export default function PointRulesContent() {
 
   // Handle example amount change
   const handleExampleAmountChange = (
-    e: React.ChangeEvent<HTMLInputElement>,
+    e: React.ChangeEvent<HTMLInputElement>
   ) => {
     const value = parseInt(e.target.value);
     if (!isNaN(value) && value > 0) {
@@ -166,7 +166,11 @@ export default function PointRulesContent() {
     try {
       setIsSaving(true);
 
-      const { success, error } = await updatePointRuleSettings(values);
+      const { success, error } = await updatePointRuleSettings({
+        enabled: values.enabled,
+        baseAmount: values.baseAmount,
+        pointMultiplier: values.pointMultiplier,
+      });
 
       if (success) {
         toast({
@@ -216,10 +220,10 @@ export default function PointRulesContent() {
   const calculatePoints = (amount: number, tierMultiplier = 1) => {
     const basePoints = Math.floor(amount / form.watch('baseAmount'));
     const withGlobalMultiplier = Math.floor(
-      basePoints * form.watch('pointMultiplier'),
+      basePoints * form.watch('pointMultiplier')
     );
     const withTierMultiplier = Math.floor(
-      withGlobalMultiplier * tierMultiplier,
+      withGlobalMultiplier * tierMultiplier
     );
     return withTierMultiplier;
   };
@@ -426,7 +430,7 @@ export default function PointRulesContent() {
                               points
                             </div>
                           </div>
-                        ),
+                        )
                       )}
                     </div>
                   </AccordionContent>

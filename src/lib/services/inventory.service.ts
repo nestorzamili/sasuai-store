@@ -249,7 +249,7 @@ export class ProductBatchService {
       batchCode?: string;
       expiryDate?: Date;
       buyPrice?: number;
-    },
+    }
   ) {
     return prisma.productBatch.update({
       where: { id },
@@ -264,7 +264,7 @@ export class ProductBatchService {
     id: string,
     adjustment: number,
     reason: string,
-    unitId: string,
+    unitId: string
   ) {
     return prisma.$transaction(async (tx) => {
       // Get the current batch
@@ -314,7 +314,7 @@ export class ProductBatchService {
             quantity: adjustment,
             unitId: unitId,
             date: new Date(),
-            supplier: undefined, // No supplier for adjustments
+            // No supplier for adjustments
           },
         });
       } else if (adjustment < 0) {
@@ -358,7 +358,7 @@ export class ProductBatchService {
 
     if (!canDelete) {
       throw new Error(
-        'Cannot delete batch with existing stock movements or transactions',
+        'Cannot delete batch with existing stock movements or transactions'
       );
     }
 
