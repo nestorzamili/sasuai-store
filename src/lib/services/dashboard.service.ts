@@ -128,10 +128,13 @@ export class DashboardService {
 
       // Calculate total costs
       const currentTotalCost = currentItems.reduce(
-        (acc, item) => acc + item.cost,
+        (acc, item: { cost: number }) => acc + item.cost,
         0
       );
-      const prevTotalCost = prevItems.reduce((acc, item) => acc + item.cost, 0);
+      const prevTotalCost = prevItems.reduce(
+        (acc, item: { cost: number }) => acc + item.cost,
+        0
+      );
 
       // Extract current values with fallback to 0
       const currentTotalSalesValue = currentSales._sum.finalAmount || 0;
@@ -306,15 +309,17 @@ export class DashboardService {
 
       // Group transaction items by year and month for cost calculation
       const costsByMonth: { [key: string]: number } = {};
-      transactionItems.forEach((item) => {
-        const year = item.createdAt.getFullYear();
-        const month = item.createdAt.getMonth() + 1;
-        const key = `${year}-${month}`;
-        if (!costsByMonth[key]) {
-          costsByMonth[key] = 0;
+      transactionItems.forEach(
+        (item: { cost: number; quantity: number; createdAt: Date }) => {
+          const year = item.createdAt.getFullYear();
+          const month = item.createdAt.getMonth() + 1;
+          const key = `${year}-${month}`;
+          if (!costsByMonth[key]) {
+            costsByMonth[key] = 0;
+          }
+          costsByMonth[key] += item.cost * item.quantity;
         }
-        costsByMonth[key] += item.cost * item.quantity;
-      });
+      );
 
       interface GroupedSales {
         [key: string]: {
@@ -328,30 +333,42 @@ export class DashboardService {
         };
       }
 
-      const groupedData = sales.reduce<GroupedSales>((acc, curr) => {
-        const key = `${curr.year}-${curr.month}`; // Create a unique key for each year and month
-        if (!acc[key]) {
-          acc[key] = {
-            year: curr.year,
-            month: curr.month,
-            total_transactions: 0,
-            total_sales: 0,
-            avg_sales_per_month: 0,
-            total_cost: 0,
-            profit_margin: 0, // Initialize profit margin
-          };
-        }
-        acc[key].total_transactions += curr.total_transactions;
-        acc[key].total_sales += curr.total_sales || 0;
+      const groupedData = sales.reduce<GroupedSales>(
+        (
+          acc,
+          curr: {
+            year: number;
+            month: number;
+            avg_sales: number | null;
+            total_transactions: number;
+            total_sales: number | null;
+          }
+        ) => {
+          const key = `${curr.year}-${curr.month}`; // Create a unique key for each year and month
+          if (!acc[key]) {
+            acc[key] = {
+              year: curr.year,
+              month: curr.month,
+              total_transactions: 0,
+              total_sales: 0,
+              avg_sales_per_month: 0,
+              total_cost: 0,
+              profit_margin: 0, // Initialize profit margin
+            };
+          }
+          acc[key].total_transactions += curr.total_transactions;
+          acc[key].total_sales += curr.total_sales || 0;
 
-        // Add cost from our costsByMonth mapping
-        acc[key].total_cost = costsByMonth[key] || 0;
+          // Add cost from our costsByMonth mapping
+          acc[key].total_cost = costsByMonth[key] || 0;
 
-        // Calculate the profit margin (sales - cost)
-        acc[key].profit_margin = acc[key].total_sales - acc[key].total_cost;
+          // Calculate the profit margin (sales - cost)
+          acc[key].profit_margin = acc[key].total_sales - acc[key].total_cost;
 
-        return acc;
-      }, {});
+          return acc;
+        },
+        {}
+      );
 
       // Calculate average sales per month after all data is aggregated
       Object.keys(groupedData).forEach((key) => {

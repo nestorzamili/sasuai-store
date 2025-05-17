@@ -11,13 +11,22 @@ export const POST = withAuth(async (req: NextRequest) => {
     if (!amount || typeof amount !== 'number' || amount <= 0) {
       return NextResponse.json(
         { error: 'Valid amount is required' },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
     let member: MemberWithTier | null = null;
     if (memberId) {
-      member = await MemberService.getById(memberId);
+      const fetchedMember = await MemberService.getById(memberId);
+      // Add type verification before assigning
+      if (fetchedMember && typeof fetchedMember === 'object') {
+        // Create a proper MemberWithTier object, ensuring it has the required points property
+        member = {
+          ...fetchedMember,
+          // Add points property if it doesn't exist
+          points: (fetchedMember as any).points || 0,
+        } as MemberWithTier;
+      }
     }
 
     const points = await calculateMemberPoints(amount, member);
@@ -28,7 +37,7 @@ export const POST = withAuth(async (req: NextRequest) => {
     console.error('Error calculating points:', error);
     return NextResponse.json(
       { error: 'Failed to calculate points' },
-      { status: 500 },
+      { status: 500 }
     );
   }
 });
