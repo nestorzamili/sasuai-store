@@ -23,6 +23,7 @@ interface BatchGroupCount {
 interface SalesDataItem {
   year: number;
   month: number;
+  day: number;
   avg_sales: number | null;
   total_transactions: number;
   total_sales: number | null;
@@ -314,7 +315,7 @@ export class DashboardService {
       });
 
       // Map transactions to include date information
-      const sales = transactions.map(
+      const sales: SalesDataItem[] = transactions.map(
         (transaction: {
           createdAt: Date;
           _avg: { finalAmount: number | null };
@@ -361,7 +362,7 @@ export class DashboardService {
         };
       }
 
-      const groupedData = sales.reduce<GroupedSales>(
+      const groupedData = sales.reduce(
         (acc: GroupedSales, curr: SalesDataItem) => {
           const key = `${curr.year}-${curr.month}`; // Create a unique key for each year and month
           if (!acc[key]) {
@@ -386,7 +387,7 @@ export class DashboardService {
 
           return acc;
         },
-        {}
+        {} as GroupedSales
       );
 
       // Calculate average sales per month after all data is aggregated
