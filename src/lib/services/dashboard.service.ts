@@ -446,7 +446,7 @@ export class DashboardService {
             },
           },
         })
-        .then((results) =>
+        .then((results: PaymentMethodCount[]) =>
           results.map((item) => ({
             type: item.paymentMethod,
             total: item._count.paymentMethod,
