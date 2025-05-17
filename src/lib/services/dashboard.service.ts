@@ -7,6 +7,27 @@ type DateFilter = {
   to: string;
 };
 
+// Named interface for payment method count
+interface PaymentMethodCount {
+  paymentMethod: string;
+  _count: { paymentMethod: number };
+}
+
+// Named interface for batch group count
+interface BatchGroupCount {
+  batchId: string;
+  _count: { batchId: number };
+}
+
+// Define a type for the transaction item in the sales reducing operation
+interface SalesDataItem {
+  year: number;
+  month: number;
+  avg_sales: number | null;
+  total_transactions: number;
+  total_sales: number | null;
+}
+
 export class DashboardService {
   static async getPerformanceMetrics(dateFilter?: DateFilter) {
     // Default dates if no filter provided
@@ -341,16 +362,7 @@ export class DashboardService {
       }
 
       const groupedData = sales.reduce<GroupedSales>(
-        (
-          acc,
-          curr: {
-            year: number;
-            month: number;
-            avg_sales: number | null;
-            total_transactions: number;
-            total_sales: number | null;
-          }
-        ) => {
+        (acc: GroupedSales, curr: SalesDataItem) => {
           const key = `${curr.year}-${curr.month}`; // Create a unique key for each year and month
           if (!acc[key]) {
             acc[key] = {
