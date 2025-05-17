@@ -130,7 +130,6 @@ export default function EditDiscountPage() {
 
     try {
       setLoading(true);
-      console.log('Form values before submission:', values);
 
       // Always ensure global discounts use the ALL enum
       if (values.isGlobal) {
@@ -138,7 +137,6 @@ export default function EditDiscountPage() {
       }
 
       const result = await updateDiscount(discountId, values);
-      console.log('Update result:', result);
 
       if (result.success) {
         toast({
@@ -234,13 +232,7 @@ export default function EditDiscountPage() {
                 Cancel
               </Button>
             </Link>
-            <Button
-              type="submit"
-              disabled={loading}
-              onClick={() =>
-                console.log('Update button clicked', form.formState.errors)
-              }
-            >
+            <Button type="submit" disabled={loading}>
               {loading ? 'Updating...' : 'Update Discount'}
             </Button>
           </div>

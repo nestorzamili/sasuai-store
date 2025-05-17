@@ -1,147 +1,192 @@
 import prisma from '@/lib/prisma';
-import { Prisma } from '@prisma/client';
-import { buildQueryOptions } from '../common/query-options';
+import {
+  BatchPaginationParams,
+  ProductBatchWithDetails,
+} from '@/lib/types/product-batch';
 
 export class ProductBatchService {
-  /**
-   * Get all product batches
-   */
-  static async getAll(options?: {
-    includeProduct?: boolean;
-    includeStockMovements?: boolean;
-  }) {
-    return prisma.productBatch.findMany({
-      include: {
-        product: options?.includeProduct === true,
-        stockIns: options?.includeStockMovements === true,
-        stockOuts: options?.includeStockMovements === true,
-        transactionItems: options?.includeStockMovements === true,
-      },
-      orderBy: [
-        { expiryDate: 'asc' }, // Show closest expiry dates first
-        { createdAt: 'desc' },
-      ],
-    });
-  }
-  static async getAllOptimalize(queryOptions?: any) {
-    const options = buildQueryOptions(queryOptions);
-    const [batch, count] = await Promise.all([
+  static async getPaginated({
+    page = 1,
+    pageSize = 10,
+    sortField = 'createdAt',
+    sortDirection = 'desc',
+    search = '',
+    productId,
+    expiryDateStart,
+    expiryDateEnd,
+    minRemainingQuantity,
+    maxRemainingQuantity,
+    includeExpired = true,
+    includeOutOfStock = true,
+    categoryId,
+  }: BatchPaginationParams = {}) {
+    // Build where clause based on filters
+    const where: any = {};
+
+    // Add search filter across multiple fields
+    if (search) {
+      where.OR = [
+        { batchCode: { contains: search, mode: 'insensitive' } },
+        { product: { name: { contains: search, mode: 'insensitive' } } },
+        { product: { skuCode: { contains: search, mode: 'insensitive' } } },
+      ];
+    }
+
+    // Add product filter
+    if (productId) {
+      where.productId = productId;
+    }
+
+    // Add category filter
+    if (categoryId) {
+      where.product = {
+        ...where.product,
+        categoryId: categoryId,
+      };
+    }
+
+    // Handle expiry date range
+    if (expiryDateStart || expiryDateEnd) {
+      where.expiryDate = {};
+      if (expiryDateStart) where.expiryDate.gte = expiryDateStart;
+      if (expiryDateEnd) where.expiryDate.lte = expiryDateEnd;
+    }
+
+    // Filter expired items
+    if (!includeExpired) {
+      where.expiryDate = {
+        ...where.expiryDate,
+        gt: new Date(),
+      };
+    }
+
+    // Handle quantity range
+    if (
+      minRemainingQuantity !== undefined ||
+      maxRemainingQuantity !== undefined
+    ) {
+      where.remainingQuantity = {};
+      if (minRemainingQuantity !== undefined) {
+        where.remainingQuantity.gte = minRemainingQuantity;
+      }
+      if (maxRemainingQuantity !== undefined) {
+        where.remainingQuantity.lte = maxRemainingQuantity;
+      }
+    }
+
+    // Filter out of stock items
+    if (!includeOutOfStock) {
+      where.remainingQuantity = {
+        ...where.remainingQuantity,
+        gt: 0,
+      };
+    }
+
+    // Calculate pagination
+    const skip = (page - 1) * pageSize;
+
+    // Build order by
+    const orderBy: any = {};
+
+    // Handle nested fields for sorting
+    if (sortField.includes('.')) {
+      const [relation, field] = sortField.split('.');
+      orderBy[relation] = { [field]: sortDirection };
+    } else {
+      orderBy[sortField] = sortDirection;
+    }
+
+    // Execute query with count - HEAVILY optimized to fetch only what's needed
+    const [batches, totalCount] = await Promise.all([
       prisma.productBatch.findMany({
-        include: {
-          product: true,
+        where,
+        select: {
+          id: true,
+          batchCode: true,
+          expiryDate: true,
+          initialQuantity: true, // Needed for delete operation validation
+          remainingQuantity: true,
+          buyPrice: true,
+          productId: true, // Needed for linking
+          product: {
+            select: {
+              name: true, // Only need name for display
+              unitId: true, // Needed for edit operation
+            },
+          },
         },
-        ...options,
+        orderBy,
+        skip,
+        take: pageSize,
       }),
-      prisma.productBatch.count(),
+      prisma.productBatch.count({ where }),
     ]);
 
     return {
-      data: batch,
-      meta: {
-        ...options,
-        rowsCount: count,
+      data: batches,
+      pagination: {
+        totalCount,
+        totalPages: Math.ceil(totalCount / pageSize),
+        currentPage: page,
+        pageSize,
       },
     };
   }
-  /**
-   * Get all product batches for a specific product
-   */
-  static async getAllByProductId(
-    productId: string,
-    options?: {
-      includeStockMovements?: boolean;
-    },
-  ) {
-    return prisma.productBatch.findMany({
-      where: { productId },
-      include: {
-        stockIns: options?.includeStockMovements === true,
-        stockOuts: options?.includeStockMovements === true,
-        transactionItems: options?.includeStockMovements === true,
-      },
-      orderBy: [
-        { expiryDate: 'asc' }, // Show closest expiry dates first
-        { createdAt: 'desc' },
-      ],
-    });
-  }
 
-  /**
-   * Get a product batch by ID
-   */
-  static async getById(
-    id: string,
-    options?: {
-      includeProduct?: boolean;
-      includeStockMovements?: boolean;
-      includeProductDetails?: boolean;
-    },
-  ) {
-    return prisma.productBatch.findUnique({
-      where: { id },
-      include: {
-        product:
-          options?.includeProduct || options?.includeProductDetails
-            ? {
-                include: options?.includeProductDetails
-                  ? {
-                      category: true,
-                      unit: true,
-                    }
-                  : undefined,
-              }
-            : false,
-        stockIns: options?.includeStockMovements
-          ? {
-              include: {
-                unit: true,
-                supplier: true,
-              },
-              orderBy: {
-                date: 'desc',
-              },
-            }
-          : false,
-        stockOuts: options?.includeStockMovements
-          ? {
-              include: {
-                unit: true,
-              },
-              orderBy: {
-                date: 'desc',
-              },
-            }
-          : false,
-        transactionItems: options?.includeStockMovements
-          ? {
-              include: {
-                unit: true,
-              },
-            }
-          : false,
-      },
-    });
-  }
+  // Get detailed batch record for single batch view - with fixed return type
+  static async getById(id: string): Promise<ProductBatchWithDetails | null> {
+    try {
+      const includeOptions = {
+        // Always include product with its details as required by ProductBatchWithDetails
+        product: {
+          include: {
+            category: true,
+            unit: true,
+          },
+        },
 
-  /**
-   * Get a product batch by batch code
-   */
-  static async getByBatchCode(
-    batchCode: string,
-    options?: {
-      includeProduct?: boolean;
-      includeStockMovements?: boolean;
-    },
-  ) {
-    return prisma.productBatch.findFirst({
-      where: { batchCode },
-      include: {
-        product: options?.includeProduct === true,
-        stockIns: options?.includeStockMovements === true,
-        stockOuts: options?.includeStockMovements === true,
-        transactionItems: options?.includeStockMovements === true,
-      },
-    });
+        // Always include these as they're required by ProductBatchWithDetails interface
+        stockIns: {
+          include: {
+            supplier: true,
+            unit: true,
+          },
+        },
+
+        stockOuts: {
+          include: {
+            unit: true,
+          },
+        },
+
+        transactionItems: {
+          include: {
+            unit: true,
+            transaction: {
+              select: {
+                id: true,
+                createdAt: true,
+                finalAmount: true,
+              },
+            },
+          },
+        },
+      };
+
+      const result = await prisma.productBatch.findUnique({
+        where: { id },
+        include: includeOptions,
+      });
+
+      // If no result, return null
+      if (!result) return null;
+
+      // Ensure the result conforms to ProductBatchWithDetails interface structure
+      return result as unknown as ProductBatchWithDetails;
+    } catch (error) {
+      console.error('Error fetching batch details:', error);
+      return null;
+    }
   }
 
   /**
@@ -347,165 +392,5 @@ export class ProductBatchService {
         where: { id },
       });
     });
-  }
-
-  /**
-   * Get batches that are expiring soon (within the specified days)
-   */
-  static async getExpiringBatches(daysThreshold: number) {
-    const thresholdDate = new Date();
-    thresholdDate.setDate(thresholdDate.getDate() + daysThreshold);
-
-    return prisma.productBatch.findMany({
-      where: {
-        expiryDate: {
-          lte: thresholdDate,
-        },
-        remainingQuantity: {
-          gt: 0, // Only include batches that still have stock
-        },
-      },
-      include: {
-        product: true,
-      },
-      orderBy: {
-        expiryDate: 'asc',
-      },
-    });
-  }
-
-  /**
-   * Get batches that have already expired
-   */
-  static async getExpiredBatches() {
-    const today = new Date();
-
-    return prisma.productBatch.findMany({
-      where: {
-        expiryDate: {
-          lt: today,
-        },
-        remainingQuantity: {
-          gt: 0, // Only include batches that still have stock
-        },
-      },
-      include: {
-        product: true,
-      },
-      orderBy: {
-        expiryDate: 'asc',
-      },
-    });
-  }
-
-  /**
-   * Get batch statistics for a product
-   */
-  static async getProductBatchStats(productId: string) {
-    const today = new Date();
-
-    // Get all batches for the product that have remaining quantity
-    const batches = await prisma.productBatch.findMany({
-      where: {
-        productId,
-        remainingQuantity: {
-          gt: 0,
-        },
-      },
-      orderBy: {
-        expiryDate: 'asc',
-      },
-    });
-
-    // Calculate statistics
-    const totalBatches = batches.length;
-    const totalQuantity = batches.reduce(
-      (sum, batch) => sum + batch.remainingQuantity,
-      0,
-    );
-    const expiredBatches = batches.filter(
-      (batch) => batch.expiryDate < today,
-    ).length;
-    const expiredQuantity = batches
-      .filter((batch) => batch.expiryDate < today)
-      .reduce((sum, batch) => sum + batch.remainingQuantity, 0);
-
-    return {
-      totalBatches,
-      totalQuantity,
-      expiredBatches,
-      expiredQuantity,
-    };
-  }
-
-  /**
-   * Get a product batch with detailed product information and stock movements
-   */
-  static async getWithProductDetails(id: string) {
-    return prisma.productBatch.findUnique({
-      where: { id },
-      include: {
-        product: {
-          include: {
-            category: true, // Ensure category is loaded
-            unit: true, // Ensure unit is loaded
-          },
-        },
-        stockIns: {
-          include: {
-            unit: true,
-            supplier: true, // Ensure supplier is loaded for each stock-in
-          },
-          orderBy: {
-            date: 'desc',
-          },
-        },
-        stockOuts: {
-          include: {
-            unit: true,
-          },
-          orderBy: {
-            date: 'desc',
-          },
-        },
-        transactionItems: {
-          include: {
-            transaction: true,
-            unit: true,
-          },
-          orderBy: {
-            createdAt: 'desc',
-          },
-        },
-      },
-    });
-  }
-  // Batch Summary
-  static async getBatchSummary() {
-    const today = new Date();
-    const soonDate = new Date();
-    soonDate.setDate(today.getDate() + 30); // Consider 30 days as "soon"
-
-    const [total, inStock, outOfStock, expired, expiringSoon] =
-      await Promise.all([
-        prisma.productBatch.count(),
-        prisma.productBatch.count({ where: { remainingQuantity: { gt: 0 } } }),
-        prisma.productBatch.count({
-          where: { remainingQuantity: { equals: 0 } },
-        }),
-        prisma.productBatch.count({
-          where: {
-            expiryDate: { lt: today },
-          },
-        }),
-        prisma.productBatch.count({
-          where: {
-            expiryDate: { gte: today, lte: soonDate },
-            remainingQuantity: { gt: 0 },
-          },
-        }),
-      ]);
-
-    return { total, inStock, outOfStock, expired, expiringSoon };
   }
 }

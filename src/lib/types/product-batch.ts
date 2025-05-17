@@ -148,3 +148,22 @@ export interface ProductBatchFormInitialData {
   unitId: string;
   supplierId?: string;
 }
+
+/**
+ * Pagination parameters for product batches
+ */
+export interface BatchPaginationParams {
+  page?: number;
+  pageSize?: number;
+  sortField?: string;
+  sortDirection?: 'asc' | 'desc';
+  search?: string;
+  productId?: string;
+  expiryDateStart?: Date | string;
+  expiryDateEnd?: Date | string;
+  minRemainingQuantity?: number | string;
+  maxRemainingQuantity?: number | string;
+  includeExpired?: boolean | string;
+  includeOutOfStock?: boolean | string;
+  categoryId?: string;
+}
