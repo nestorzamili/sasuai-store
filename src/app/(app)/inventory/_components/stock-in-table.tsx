@@ -1,41 +1,23 @@
 'use client';
 
-import { useState } from 'react';
-import {
-  ColumnDef,
-  ColumnFiltersState,
-  SortingState,
-  VisibilityState,
-  flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
-} from '@tanstack/react-table';
-import { ArrowUpDown } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { DataTablePagination } from '@/components/ui/data-table-pagination';
-import { Input } from '@/components/ui/input';
+import { ColumnDef } from '@tanstack/react-table';
 import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
 import { StockInComplete } from '@/lib/types/stock-movement';
 import { format } from 'date-fns';
-import { SupplierWithCount } from '@/lib/types/supplier';
-import { Checkbox } from '@/components/ui/checkbox';
 import { TableLayout } from '@/components/layout/table-layout';
 import { useFetch } from '@/hooks/use-fetch';
-import { getAllOptimalizedStockIns } from '../stock-actions';
-export function StockInTable() {
-  // Table state
+import { getAllStockIns } from '../stock-actions';
+import { memo, useRef, useCallback, useEffect } from 'react';
+
+interface StockInTableProps {
+  isActive?: boolean;
+}
+
+export const StockInTable = memo(function StockInTable({
+  isActive = false,
+}: StockInTableProps) {
+  // Track if this is the initial render
+  const isInitialMount = useRef(true);
 
   // Format date function
   const formatDate = (date: Date | string) => {
@@ -76,7 +58,7 @@ export function StockInTable() {
         const quantity = row.getValue('quantity') as number;
         const unit = row.original.unit?.symbol || '';
         return (
-          <div className="text-center">
+          <div className="text-left">
             {quantity} {unit}
           </div>
         );
@@ -98,28 +80,39 @@ export function StockInTable() {
     },
   ];
 
-  const fetchDataTable = async (options: any) => {
+  // Memoize the fetch function to prevent it from changing on every render
+  const fetchDataTable = useCallback(async (options: any) => {
     try {
-      const response = await getAllOptimalizedStockIns({
+      const response = await getAllStockIns({
         page: options.page + 1,
         limit: options.limit,
-        sortBy: options.sortBy,
+        sortBy: options.sortBy?.id || 'date',
+        sortDirection: options.sortBy?.desc ? 'desc' : 'asc',
         search: options.search,
         columnFilter: ['batch.product.name', 'batch.batchCode'],
       });
+
+      // Better error logging
+      if (!response.success) {
+        console.error('Failed to fetch stock-in data:', response.error);
+        return { data: [], totalRows: 0 };
+      }
+
+      // Validate the response data
+      if (!response.data || !Array.isArray(response.data)) {
+        console.error('Invalid data structure received:', response);
+        return { data: [], totalRows: 0 };
+      }
 
       return {
         data: response.data,
         totalRows: response.meta?.rowsCount || 0,
       };
     } catch (error) {
-      console.log(error);
-      return {
-        data: [],
-        totalRows: 0,
-      };
+      console.error('Error fetching stock-in data:', error);
+      return { data: [], totalRows: 0 };
     }
-  };
+  }, []);
 
   const {
     data,
@@ -135,9 +128,17 @@ export function StockInTable() {
     fetchData: fetchDataTable,
     initialPageIndex: 0,
     initialPageSize: 10,
-    initialSortField: 'id',
-    initialSortDirection: false,
+    initialSortField: 'date', // Changed from 'id' to 'date'
+    initialSortDirection: true, // Changed to true for newest first
   });
+
+  // Refresh data when tab becomes active
+  useEffect(() => {
+    if (isActive) {
+      refresh();
+    }
+  }, [isActive, refresh]);
+
   const handlePaginationChange = (newPagination: {
     pageIndex: number;
     pageSize: number;
@@ -169,4 +170,4 @@ export function StockInTable() {
       />
     </div>
   );
-}
+});

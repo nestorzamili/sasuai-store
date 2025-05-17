@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { getTransactionById } from '../action';
 import { formatRupiah } from '@/lib/currency';
 import { Badge } from '@/components/ui/badge';
@@ -18,8 +18,8 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from '@/hooks/use-toast';
 import { IconDownload } from '@tabler/icons-react';
-import { BlobProvider } from '@react-pdf/renderer';
-import { TransactionPDF } from './transaction-genarate-pdf';
+import { pdf } from '@react-pdf/renderer';
+import { TransactionPDF } from './transaction-generate-pdf';
 
 interface TransactionDetailDialogProps {
   open: boolean;
@@ -34,7 +34,14 @@ export function TransactionDetailDialog({
 }: TransactionDetailDialogProps) {
   const [transaction, setTransaction] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [isPdfGenerating, setIsPdfGenerating] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const isMounted = useRef(true);
+
+  useEffect(() => {
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     const fetchTransactionDetails = async () => {
@@ -44,9 +51,9 @@ export function TransactionDetailDialog({
         setLoading(true);
         const result = await getTransactionById(transactionId);
 
-        if (result.success) {
+        if (result.success && isMounted.current) {
           setTransaction(result.data);
-        } else {
+        } else if (isMounted.current) {
           toast({
             title: 'Error',
             description: result.error || 'Failed to load transaction details',
@@ -54,13 +61,17 @@ export function TransactionDetailDialog({
           });
         }
       } catch (err) {
-        toast({
-          title: 'Error',
-          description: 'An unexpected error occurred',
-          variant: 'destructive',
-        });
+        if (isMounted.current) {
+          toast({
+            title: 'Error',
+            description: 'An unexpected error occurred',
+            variant: 'destructive',
+          });
+        }
       } finally {
-        setLoading(false);
+        if (isMounted.current) {
+          setLoading(false);
+        }
       }
     };
 
@@ -377,46 +388,49 @@ export function TransactionDetailDialog({
             Close
           </Button>
           {!loading && transaction && (
-            <>
-              {isPdfGenerating ? (
-                <BlobProvider
-                  document={<TransactionPDF transaction={transaction} />}
-                >
-                  {({ url, loading: pdfLoading, error }) => (
-                    <Button
-                      disabled={pdfLoading}
-                      onClick={() => {
-                        if (error) {
-                          toast({
-                            title: 'Error',
-                            description: 'Failed to generate PDF',
-                            variant: 'destructive',
-                          });
-                          setIsPdfGenerating(false);
-                          return;
-                        }
+            <Button
+              onClick={async () => {
+                try {
+                  setPdfLoading(true);
 
-                        if (url) {
-                          const link = document.createElement('a');
-                          link.href = url;
-                          link.download = `receipt-${transaction.tranId}.pdf`;
-                          link.click();
-                        }
-                        setIsPdfGenerating(false);
-                      }}
-                    >
-                      <IconDownload className="h-4 w-4 mr-2" />
-                      {pdfLoading ? 'Generating PDF...' : 'Download PDF'}
-                    </Button>
-                  )}
-                </BlobProvider>
-              ) : (
-                <Button onClick={() => setIsPdfGenerating(true)}>
-                  <IconDownload className="h-4 w-4 mr-2" />
-                  Download PDF
-                </Button>
-              )}
-            </>
+                  // Generate PDF blob
+                  const blob = await pdf(
+                    <TransactionPDF transaction={transaction} />,
+                  ).toBlob();
+
+                  // Create download link and trigger download
+                  const url = URL.createObjectURL(blob);
+                  const link = document.createElement('a');
+                  link.href = url;
+                  link.download = `Receipt-${transaction.tranId}.pdf`;
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+
+                  // Clean up
+                  setTimeout(() => URL.revokeObjectURL(url), 100);
+
+                  if (isMounted.current) {
+                    setPdfLoading(false);
+                  }
+                } catch (error) {
+                  console.error('Error generating PDF:', error);
+                  toast({
+                    title: 'Error',
+                    description: 'Failed to generate PDF',
+                    variant: 'destructive',
+                  });
+
+                  if (isMounted.current) {
+                    setPdfLoading(false);
+                  }
+                }
+              }}
+              disabled={pdfLoading}
+            >
+              <IconDownload className="h-4 w-4 mr-2" />
+              {pdfLoading ? 'Generating PDF...' : 'Download PDF'}
+            </Button>
           )}
         </DialogFooter>
       </DialogContent>

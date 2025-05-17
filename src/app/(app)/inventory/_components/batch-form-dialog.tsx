@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { getAllProducts } from '@/app/(app)/products/action';
 import { getAllUnits } from '@/app/(app)/products/units/action';
-import { getAllSuppliers, getSupplier } from '@/app/(app)/suppliers/action';
+import { getAllSuppliers } from '@/app/(app)/suppliers/action';
 import {
   Dialog,
   DialogContent,
