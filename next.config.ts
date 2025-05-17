@@ -15,6 +15,7 @@ const nextConfig: NextConfig = {
       hmrRefreshes: true,
     },
   },
+  output: 'standalone',
 };
 
 export default nextConfig;
