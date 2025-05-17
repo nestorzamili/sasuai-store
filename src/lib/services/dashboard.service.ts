@@ -7,6 +7,27 @@ type DateFilter = {
   to: string;
 };
 
+// Named interface for payment method count
+interface PaymentMethodCount {
+  paymentMethod: string;
+  _count: { paymentMethod: number };
+}
+
+// Named interface for batch group count
+interface BatchGroupCount {
+  batchId: string;
+  _count: { batchId: number };
+}
+
+// Define a type for the transaction item in the sales reducing operation
+interface SalesDataItem {
+  year: number;
+  month: number;
+  avg_sales: number | null;
+  total_transactions: number;
+  total_sales: number | null;
+}
+
 export class DashboardService {
   static async getPerformanceMetrics(dateFilter?: DateFilter) {
     // Default dates if no filter provided
@@ -341,16 +362,7 @@ export class DashboardService {
       }
 
       const groupedData = sales.reduce<GroupedSales>(
-        (
-          acc: GroupedSales,
-          curr: {
-            year: number;
-            month: number;
-            avg_sales: number | null;
-            total_transactions: number;
-            total_sales: number | null;
-          }
-        ) => {
+        (acc: GroupedSales, curr: SalesDataItem) => {
           const key = `${curr.year}-${curr.month}`; // Create a unique key for each year and month
           if (!acc[key]) {
             acc[key] = {
@@ -433,15 +445,10 @@ export class DashboardService {
           },
         })
         .then((results) =>
-          results.map(
-            (item: {
-              paymentMethod: string;
-              _count: { paymentMethod: number };
-            }) => ({
-              type: item.paymentMethod,
-              total: item._count.paymentMethod,
-            })
-          )
+          results.map((item: PaymentMethodCount) => ({
+            type: item.paymentMethod,
+            total: item._count.paymentMethod,
+          }))
         );
 
       return {
@@ -496,27 +503,25 @@ export class DashboardService {
         },
       });
       const categoryDetails = await Promise.all(
-        topCategories.map(
-          async (group: { batchId: string; _count: { batchId: number } }) => {
-            const batch = await prisma.productBatch.findUnique({
-              where: {
-                id: group.batchId,
-              },
-              include: {
-                product: {
-                  include: {
-                    category: true,
-                  },
+        topCategories.map(async (group: BatchGroupCount) => {
+          const batch = await prisma.productBatch.findUnique({
+            where: {
+              id: group.batchId,
+            },
+            include: {
+              product: {
+                include: {
+                  category: true,
                 },
               },
-            });
+            },
+          });
 
-            return {
-              categoryName: batch?.product.category.name || 'Unknown',
-              transactionCount: group._count.batchId,
-            };
-          }
-        )
+          return {
+            categoryName: batch?.product.category.name || 'Unknown',
+            transactionCount: group._count.batchId,
+          };
+        })
       );
       return {
         success: true,
