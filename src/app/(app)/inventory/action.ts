@@ -3,6 +3,10 @@
 import { revalidatePath } from 'next/cache';
 import { ProductBatchService } from '@/lib/services/inventory.service';
 import { z } from 'zod';
+import {
+  BatchPaginationParams,
+  ProductBatchWithDetails,
+} from '@/lib/types/product-batch';
 
 // Batch schema for validation
 const batchSchema = z.object({
@@ -42,29 +46,12 @@ const adjustmentSchema = z.object({
   unitId: z.string().uuid('Invalid unit ID'),
 });
 
-// Type definition for batch query options
-interface BatchQueryParams {
-  page?: number;
-  limit?: number;
-  sortField?: string;
-  sortDirection?: 'asc' | 'desc';
-  search?: string;
-  productId?: string;
-  expiryDateStart?: Date | string;
-  expiryDateEnd?: Date | string;
-  minRemainingQuantity?: number | string;
-  maxRemainingQuantity?: number | string;
-  includeExpired?: boolean | string;
-  includeOutOfStock?: boolean | string;
-  categoryId?: string;
-}
-
 /**
  * Get optimalized (paginated and filtered) product batches
  */
 export async function getAllBatches({
   page = 1,
-  limit = 10,
+  pageSize = 10,
   sortField = 'createdAt',
   sortDirection = 'desc',
   search = '',
@@ -76,12 +63,12 @@ export async function getAllBatches({
   includeExpired = true,
   includeOutOfStock = true,
   categoryId,
-}: BatchQueryParams = {}) {
+}: BatchPaginationParams = {}) {
   try {
     // Convert string values to their appropriate types
-    const processedOptions = {
+    const processedOptions: BatchPaginationParams = {
       page: Number(page),
-      limit: Number(limit),
+      pageSize: Number(pageSize),
       sortField,
       sortDirection,
       search,
@@ -107,18 +94,25 @@ export async function getAllBatches({
       categoryId,
     };
 
-    const batch = await ProductBatchService.getAllBatches(processedOptions);
+    const result = await ProductBatchService.getPaginated(processedOptions);
 
     return {
       success: true,
-      data: batch.data,
-      meta: batch.meta,
+      data: result.data,
+      meta: {
+        totalRows: result.pagination.totalCount,
+        totalPages: result.pagination.totalPages,
+        currentPage: result.pagination.currentPage,
+        pageSize: result.pagination.pageSize,
+      },
     };
   } catch (error) {
-    console.error('Error in getAllBatchesOptimalized:', error);
+    console.error('Error in getAllBatches:', error);
     return {
       success: false,
       error: 'Failed to fetch batch',
+      data: [],
+      meta: { totalRows: 0, totalPages: 0, currentPage: 1, pageSize: 10 },
     };
   }
 }
@@ -128,11 +122,7 @@ export async function getAllBatches({
  */
 export async function getBatchById(id: string) {
   try {
-    const batch = await ProductBatchService.getById(id, {
-      includeProduct: true,
-      includeStockMovements: true,
-      includeProductDetails: true, // Add this flag to include product details
-    });
+    const batch = await ProductBatchService.getById(id);
 
     if (!batch) {
       return {
@@ -143,9 +133,10 @@ export async function getBatchById(id: string) {
 
     return {
       success: true,
-      data: batch,
+      data: batch as ProductBatchWithDetails,
     };
   } catch (error) {
+    console.error('Error in getBatchById:', error);
     return {
       success: false,
       error: 'Failed to fetch batch',

@@ -5,13 +5,26 @@ import { DateRange } from 'react-day-picker';
 import { DateRangePickerWithPresets } from '@/components/ui/date-range-picker-with-presets';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { IconBox, IconFilterOff } from '@tabler/icons-react';
+import {
+  IconBox,
+  IconFilterOff,
+  IconPackage,
+  IconLayoutGrid,
+} from '@tabler/icons-react';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface BatchFilterToolbarProps {
   expiryDateRange: DateRange | undefined;
@@ -20,6 +33,13 @@ interface BatchFilterToolbarProps {
   setMinQuantity: (value: string) => void;
   maxQuantity: string;
   setMaxQuantity: (value: string) => void;
+  includeExpired?: boolean;
+  setIncludeExpired?: (value: boolean) => void;
+  includeOutOfStock?: boolean;
+  setIncludeOutOfStock?: (value: boolean) => void;
+  categoryId?: string;
+  setCategoryId?: (value: string) => void;
+  categories?: Array<{ id: string; name: string }>;
 }
 
 export default function BatchFilterToolbar({
@@ -29,14 +49,31 @@ export default function BatchFilterToolbar({
   setMinQuantity,
   maxQuantity,
   setMaxQuantity,
+  includeExpired = true,
+  setIncludeExpired,
+  includeOutOfStock = true,
+  setIncludeOutOfStock,
+  categoryId,
+  setCategoryId,
+  categories = [],
 }: BatchFilterToolbarProps) {
   // State for the quantity popover
   const [qtyOpen, setQtyOpen] = useState(false);
   const [tempMinQty, setTempMinQty] = useState(minQuantity);
   const [tempMaxQty, setTempMaxQty] = useState(maxQuantity);
 
+  // Advanced filter popover state
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+
   // Determine if any filters are active
-  const hasActiveFilters = !!(expiryDateRange || minQuantity || maxQuantity);
+  const hasActiveFilters = !!(
+    expiryDateRange ||
+    minQuantity ||
+    maxQuantity ||
+    !includeExpired ||
+    !includeOutOfStock ||
+    categoryId
+  );
 
   // Update temporary quantity values when main values change
   useEffect(() => {
@@ -77,6 +114,9 @@ export default function BatchFilterToolbar({
     setExpiryDateRange(undefined);
     setMinQuantity('');
     setMaxQuantity('');
+    if (setIncludeExpired) setIncludeExpired(true);
+    if (setIncludeOutOfStock) setIncludeOutOfStock(true);
+    if (setCategoryId) setCategoryId('');
   };
 
   return (
@@ -163,6 +203,89 @@ export default function BatchFilterToolbar({
               <Button className="w-full" onClick={handleApplyQtyFilter}>
                 Apply Filter
               </Button>
+            </div>
+          </PopoverContent>
+        </Popover>
+
+        {/* Category Filter */}
+        {categories.length > 0 && setCategoryId && (
+          <div className="w-[180px]">
+            <Select
+              value={categoryId || ''}
+              onValueChange={(value) => setCategoryId(value)}
+            >
+              <SelectTrigger
+                className={cn(categoryId && 'border-primary text-primary')}
+              >
+                <IconLayoutGrid size={16} className="mr-2" />
+                <SelectValue placeholder="All Categories" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">All Categories</SelectItem>
+                {categories.map((category) => (
+                  <SelectItem key={category.id} value={category.id}>
+                    {category.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
+        {/* Advanced Filters Button */}
+        <Popover open={advancedOpen} onOpenChange={setAdvancedOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              className={cn(
+                (!includeExpired || !includeOutOfStock) &&
+                  'border-primary text-primary',
+              )}
+            >
+              <IconPackage size={16} className="mr-2" />
+              Advanced Filters
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[300px] p-4">
+            <div className="space-y-4">
+              <h4 className="font-medium">Stock Status</h4>
+
+              {/* Stock Status Options */}
+              {setIncludeExpired && (
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="include-expired"
+                    checked={includeExpired}
+                    onCheckedChange={(checked) =>
+                      setIncludeExpired(checked === true)
+                    }
+                  />
+                  <label
+                    htmlFor="include-expired"
+                    className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    Include Expired Products
+                  </label>
+                </div>
+              )}
+
+              {setIncludeOutOfStock && (
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="include-out-of-stock"
+                    checked={includeOutOfStock}
+                    onCheckedChange={(checked) =>
+                      setIncludeOutOfStock(checked === true)
+                    }
+                  />
+                  <label
+                    htmlFor="include-out-of-stock"
+                    className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    Include Out of Stock Products
+                  </label>
+                </div>
+              )}
             </div>
           </PopoverContent>
         </Popover>
