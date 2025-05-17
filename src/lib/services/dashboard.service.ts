@@ -445,7 +445,7 @@ export class DashboardService {
           },
         })
         .then((results) =>
-          results.map((item: PaymentMethodCount) => ({
+          results.map((item) => ({
             type: item.paymentMethod,
             total: item._count.paymentMethod,
           }))
