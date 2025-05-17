@@ -1,4 +1,4 @@
-import { MemberTier } from '@prisma/client';
+import { MemberTier } from '@/lib/types/member';
 import { Badge } from '@/components/ui/badge';
 
 interface MemberTierBadgeProps {

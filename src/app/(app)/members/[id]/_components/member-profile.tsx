@@ -32,11 +32,18 @@ export default function MemberProfile({
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [tiers, setTiers] = useState<any[]>([]);
 
-  // Format date
-  const formattedJoinDate = format(new Date(member.joinDate), 'PPP');
-  const membershipDuration = Math.floor(
-    (Date.now() - new Date(member.joinDate).getTime()) / (1000 * 60 * 60 * 24),
-  );
+  // Format date with null check
+  const formattedJoinDate = member.joinDate
+    ? format(new Date(member.joinDate), 'PPP')
+    : 'Unknown';
+
+  // Calculate membership duration with null check
+  const membershipDuration = member.joinDate
+    ? Math.floor(
+        (Date.now() - new Date(member.joinDate).getTime()) /
+          (1000 * 60 * 60 * 24),
+      )
+    : 0;
 
   useEffect(() => {
     const fetchTiers = async () => {
@@ -227,7 +234,7 @@ export default function MemberProfile({
                 <div className="flex justify-between items-center mb-2">
                   <div className="text-sm">Available Points</div>
                   <div className="font-bold text-lg">
-                    {member.totalPoints.toLocaleString()}
+                    {member.totalPoints?.toLocaleString() || 0}
                   </div>
                 </div>
 
@@ -236,7 +243,7 @@ export default function MemberProfile({
                     Lifetime Points
                   </div>
                   <div className="text-muted-foreground">
-                    {member.totalPointsEarned.toLocaleString()}
+                    {member.totalPointsEarned?.toLocaleString() || 0}
                   </div>
                 </div>
               </div>

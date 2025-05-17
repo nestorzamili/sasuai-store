@@ -1,4 +1,4 @@
-import { Brand } from '@prisma/client';
+import { Brand } from '@/lib/types/base-types';
 
 export interface BrandWithCount extends Brand {
   _count?: {

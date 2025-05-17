@@ -1,6 +1,6 @@
 'use client';
 
-import { MemberPointHistoryItem } from '@/lib/types/member';
+import { MemberPointHistoryItem, MemberTier } from '@/lib/types/member';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Table,
@@ -19,7 +19,7 @@ import { formatRupiah } from '@/lib/currency';
 interface MemberPointHistoryProps {
   memberId: string;
   points: MemberPointHistoryItem[];
-  memberTier?: any; // Optional tier information
+  memberTier?: MemberTier; // Updated type annotation
 }
 
 export default function MemberPointHistory({
@@ -41,7 +41,7 @@ export default function MemberPointHistory({
               0,
             );
             const appropriateTier = result.data.find(
-              (t) => t.minPoints <= memberPoints,
+              (t: MemberTier) => t.minPoints <= memberPoints,
             );
             if (appropriateTier) {
               setTier(appropriateTier);
@@ -54,7 +54,7 @@ export default function MemberPointHistory({
 
       fetchMemberTier();
     }
-  }, []);
+  }, [tier, points]);
 
   return (
     <Card>
