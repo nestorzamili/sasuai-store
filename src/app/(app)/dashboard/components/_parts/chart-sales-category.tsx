@@ -2,6 +2,9 @@
 
 import { TrendingUp } from 'lucide-react';
 import { LabelList, Pie, PieChart } from 'recharts';
+import { getTopCategories } from '../../actions';
+import { UnavailableData } from '@/components/unavailable-data';
+import { LoaderCardContent } from '@/components/loader-card-content';
 
 import {
   Card,
@@ -17,78 +20,124 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
-const chartData = [
-  { browser: 'chrome', visitors: 275, fill: 'var(--color-chrome)' },
-  { browser: 'safari', visitors: 200, fill: 'var(--color-safari)' },
-  { browser: 'firefox', visitors: 187, fill: 'var(--color-firefox)' },
-  { browser: 'edge', visitors: 173, fill: 'var(--color-edge)' },
-  { browser: 'other', visitors: 90, fill: 'var(--color-other)' },
+import { useEffect, useState, useMemo } from 'react';
+
+// Basic chart config with just the visitors key
+const baseChartConfig = {
+  visitors: {
+    label: 'Transactions',
+  },
+} as ChartConfig;
+
+// Colors for chart segments
+const categoryColors = [
+  'hsl(var(--chart-1))',
+  'hsl(var(--chart-2))',
+  'hsl(var(--chart-3))',
+  'hsl(var(--chart-4))',
+  'hsl(var(--chart-5))',
+  'hsl(var(--chart-6))',
+  'hsl(var(--chart-7))',
 ];
 
-const chartConfig = {
-  visitors: {
-    label: 'Visitors',
-  },
-  chrome: {
-    label: 'Chrome',
-    color: 'hsl(var(--chart-1))',
-  },
-  safari: {
-    label: 'Safari',
-    color: 'hsl(var(--chart-2))',
-  },
-  firefox: {
-    label: 'Firefox',
-    color: 'hsl(var(--chart-3))',
-  },
-  edge: {
-    label: 'Edge',
-    color: 'hsl(var(--chart-4))',
-  },
-  other: {
-    label: 'Other',
-    color: 'hsl(var(--chart-5))',
-  },
-} satisfies ChartConfig;
+export function SalesCategory(filter?: any) {
+  const [chartData, setChartData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
 
-export function SalesCategory() {
+  // Dynamically generate chart config based on current data
+  const chartConfig = useMemo(() => {
+    const config = { ...baseChartConfig };
+
+    chartData.forEach((item, index) => {
+      config[item.browser] = {
+        label: item.browser,
+        color: categoryColors[index % categoryColors.length],
+      };
+    });
+
+    return config;
+  }, [chartData]);
+
+  const fetchTopCategories = async () => {
+    try {
+      setLoading(true);
+      const response = await getTopCategories(filter);
+      if (response.success && response.data) {
+        const formattedData = response.data.map((item: any, index: number) => ({
+          browser: item.categoryName, // Using browser key for consistency with chart component
+          visitors: item.transactionCount, // Using visitors key for consistency with chart component
+          fill: categoryColors[index % categoryColors.length],
+          label: item.categoryName, // Add label field for tooltip
+        }));
+        setChartData(formattedData);
+      } else {
+        console.log('dari fetch data', response);
+        setChartData([]);
+      }
+    } catch (error) {
+      console.error('Error fetching top categories:', error);
+      setChartData([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTopCategories();
+  }, [filter]);
+
   return (
     <Card className="flex flex-col">
-      <CardHeader className="items-center pb-0">
+      <CardHeader className="items-center pb-2">
         <CardTitle>Sales by Category</CardTitle>
-        <CardDescription>Filter Date</CardDescription>
+        <CardDescription className="text-muted-foreground">
+          Top categories by transaction count
+        </CardDescription>
       </CardHeader>
       <CardContent className="flex-1 pb-0">
-        <ChartContainer
-          config={chartConfig}
-          className="mx-auto aspect-square max-h-[250px] [&_.recharts-text]:fill-background"
-        >
-          <PieChart>
-            <ChartTooltip
-              content={<ChartTooltipContent nameKey="visitors" hideLabel />}
-            />
-            <Pie data={chartData} dataKey="visitors">
-              <LabelList
-                dataKey="browser"
-                className="fill-background"
-                stroke="none"
-                fontSize={12}
-                formatter={(value: keyof typeof chartConfig) =>
-                  chartConfig[value]?.label
-                }
+        {loading ? (
+          <div className="flex flex-col items-center justify-center h-[250px]">
+            <LoaderCardContent className="w-full h-full" />
+          </div>
+        ) : (
+          <>
+            {chartData.length === 0 ? (
+              <UnavailableData
+                title="No Category Data"
+                description="No category data available for the selected date range."
               />
-            </Pie>
-          </PieChart>
-        </ChartContainer>
+            ) : (
+              <ChartContainer
+                config={chartConfig}
+                className="mx-auto aspect-square max-h-[250px] [&_.recharts-text]:fill-background"
+              >
+                <PieChart>
+                  <ChartTooltip
+                    content={
+                      <ChartTooltipContent nameKey="browser" hideLabel />
+                    }
+                  />
+                  <Pie data={chartData} dataKey="visitors">
+                    <LabelList
+                      dataKey="browser"
+                      className="fill-background"
+                      stroke="none"
+                      fontSize={12}
+                      formatter={(value: string) => {
+                        // Short label for display inside chart
+                        if (value.length > 12) {
+                          return value.slice(0, 10) + '...';
+                        }
+                        return value;
+                      }}
+                    />
+                  </Pie>
+                </PieChart>
+              </ChartContainer>
+            )}
+          </>
+        )}
       </CardContent>
-      <CardFooter className="flex-col gap-2 text-sm">
-        <div className="flex items-center gap-2 font-medium leading-none">
-          Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
-        </div>
-        <div className="leading-none text-muted-foreground">
-          Showing total visitors for the last 6 months
-        </div>
-      </CardFooter>
     </Card>
   );
 }

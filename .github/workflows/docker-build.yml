@@ -1,0 +1,36 @@
+name: Docker Build and Push
+
+on:
+  workflow_dispatch:
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get Latest Tag
+        id: get-latest-tag
+        run: |
+          if git describe --tags --abbrev=0 > /dev/null 2>&1; then
+            echo "LATEST_TAG=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
+          else
+            echo "LATEST_TAG=0.0.1" >> $GITHUB_ENV  # Default jika belum ada tag
+          fi
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and Push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/sasuai-store:${{ env.LATEST_TAG }}
+          build-args: GIT_TAG=${{ env.LATEST_TAG }}
