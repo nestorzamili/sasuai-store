@@ -40,8 +40,16 @@ const categoryColors = [
   'hsl(var(--chart-7))',
 ];
 
+// Define interface for category data
+interface CategoryData {
+  browser: string;
+  visitors: number;
+  fill: string;
+  label: string;
+}
+
 export function SalesCategory(filter?: any) {
-  const [chartData, setChartData] = useState<any[]>([]);
+  const [chartData, setChartData] = useState<CategoryData[]>([]);
   const [loading, setLoading] = useState(false);
 
   // Dynamically generate chart config based on current data
@@ -63,12 +71,17 @@ export function SalesCategory(filter?: any) {
       setLoading(true);
       const response = await getTopCategories(filter);
       if (response.success && response.data) {
-        const formattedData = response.data.map((item: any, index: number) => ({
-          browser: item.categoryName, // Using browser key for consistency with chart component
-          visitors: item.transactionCount, // Using visitors key for consistency with chart component
-          fill: categoryColors[index % categoryColors.length],
-          label: item.categoryName, // Add label field for tooltip
-        }));
+        const formattedData = response.data.map(
+          (
+            item: { categoryName: string; transactionCount: number },
+            index: number
+          ) => ({
+            browser: item.categoryName, // Using browser key for consistency with chart component
+            visitors: item.transactionCount, // Using visitors key for consistency with chart component
+            fill: categoryColors[index % categoryColors.length],
+            label: item.categoryName, // Add label field for tooltip
+          })
+        );
         setChartData(formattedData);
       } else {
         console.log('dari fetch data', response);
