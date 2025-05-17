@@ -362,7 +362,7 @@ export class DashboardService {
       }
 
       const groupedData = sales.reduce<GroupedSales>(
-        (acc: GroupedSales, curr) => {
+        (acc: GroupedSales, curr: SalesDataItem) => {
           const key = `${curr.year}-${curr.month}`; // Create a unique key for each year and month
           if (!acc[key]) {
             acc[key] = {
