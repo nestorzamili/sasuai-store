@@ -14,7 +14,7 @@ export class DiscountService {
    * Create a new discount
    */
   static async createDiscount(
-    data: DiscountData,
+    data: DiscountData
   ): Promise<DiscountCreateResult> {
     try {
       const validation = await this.validateDiscount(data);
@@ -111,7 +111,7 @@ export class DiscountService {
    */
   static async updateDiscount(
     id: string,
-    data: Partial<DiscountData>,
+    data: Partial<DiscountData>
   ): Promise<DiscountUpdateResult> {
     try {
       const existingDiscount = await prisma.discount.findUnique({
@@ -389,7 +389,7 @@ export class DiscountService {
 
       // Process discounts to add validity info
       const now = new Date();
-      const processedDiscounts = discounts.map((discount) => {
+      const processedDiscounts = discounts.map((discount: any) => {
         const isValid =
           discount.isActive &&
           now >= discount.startDate &&
@@ -564,7 +564,7 @@ export class DiscountService {
    * Validate discount data
    */
   private static async validateDiscount(
-    data: DiscountData,
+    data: DiscountData
   ): Promise<DiscountValidationResult> {
     try {
       if (data.id && data.code) {
