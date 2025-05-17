@@ -142,16 +142,18 @@ export function SalesTrend() {
 
         // Convert the object data into array format for the chart
         Object.entries(response.data || {}).forEach(([key, value]) => {
-          const monthIndex = value.month - 1; // Convert to 0-based index
+          const typedValue = value as SalesDataItem; // Add type assertion here
+          const monthIndex = typedValue.month - 1; // Convert to 0-based index
           if (monthIndex >= 0 && monthIndex < updatedChartData.length) {
             // Calculate margin as sales minus cost
-            const margin = (value.total_sales || 0) - (value.total_cost || 0);
+            const margin =
+              (typedValue.total_sales || 0) - (typedValue.total_cost || 0);
 
             updatedChartData[monthIndex] = {
               ...updatedChartData[monthIndex],
-              sales: value.total_sales || 0,
-              avg: value.avg_sales_per_month || 0,
-              cost: value.total_cost || 0,
+              sales: typedValue.total_sales || 0,
+              avg: typedValue.avg_sales_per_month || 0,
+              cost: typedValue.total_cost || 0,
               margin: margin,
             };
           }
