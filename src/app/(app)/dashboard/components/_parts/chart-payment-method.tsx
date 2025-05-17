@@ -67,7 +67,7 @@ export function PaymentMethod(filter?: any) {
     <Card className="flex flex-col">
       <CardHeader className="items-center pb-0">
         <CardTitle>Payment Method</CardTitle>
-        <CardDescription>Filter Date</CardDescription>
+        <CardDescription>Showing of payment method</CardDescription>
       </CardHeader>
       <CardContent className="flex-1 pb-0">
         {loading ? (

@@ -63,3 +63,18 @@ export async function getTopPaymentMethod(filter: any) {
     };
   }
 }
+export async function getTopCategories(filter: any) {
+  try {
+    const response = await DashboardService.getTopCategories(filter);
+    return {
+      data: response.data,
+      success: response.success,
+    };
+  } catch (error) {
+    console.error('Error fetching top categories:', error);
+    return {
+      success: false,
+      error: 'Failed to fetch top categories' + error,
+    };
+  }
+}
