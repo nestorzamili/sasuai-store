@@ -1,15 +1,34 @@
 import prisma from '@/lib/prisma';
 import { format } from 'date-fns';
 import { dateToCompare } from '../date';
-export class DashboardService {
-  static async getPerformanceMetrics() {
-    // Current period
-    const startDate = '2024-09-01';
-    const endDate = '2024-09-02';
 
-    // Previous period for comparison
-    const prevStartDate = '2024-08-01';
-    const prevEndDate = '2024-08-02';
+type DateFilter = {
+  from: string;
+  to: string;
+};
+
+export class DashboardService {
+  static async getPerformanceMetrics(dateFilter?: DateFilter) {
+    // Default dates if no filter provided
+    const defaultStart = '2024-09-01';
+    const defaultEnd = '2024-09-02';
+    // console.log('dateFilter', dateFilter);
+    // Process dates - either use provided dates or defaults
+    const dates =
+      dateFilter?.from || dateFilter?.to
+        ? dateToCompare(
+            dateFilter.from || defaultStart,
+            dateFilter.to || defaultEnd
+          )
+        : dateToCompare(defaultStart, defaultEnd);
+    // Format all dates at once
+    const [startDate, endDate, prevStartDate, prevEndDate] = [
+      dates.current.startDate,
+      dates.current.endDate,
+      dates.previous.startDate,
+      dates.previous.endDate,
+    ].map((date) => format(date, 'yyyy-MM-dd'));
+
     try {
       // Run current period queries in parallel
       const [
@@ -352,6 +371,131 @@ export class DashboardService {
       return {
         success: false,
         error: 'Failed to retrieve sales statistics',
+      };
+    }
+  }
+  static async getTopPaymentMethods(dateFilter: any) {
+    // Default dates if no filter provided
+    const defaultStart = '2024-09-01';
+    const defaultEnd = '2024-09-02';
+    // Process dates - either use provided dates or defaults
+    const dates =
+      dateFilter?.filter.from || dateFilter?.filter.to
+        ? dateToCompare(
+            dateFilter.filter.from || defaultStart,
+            dateFilter.filter.to || defaultEnd
+          )
+        : dateToCompare(defaultStart, defaultEnd);
+
+    // Format all dates at once
+    const [startDate, endDate, prevStartDate, prevEndDate] = [
+      dates.current.startDate,
+      dates.current.endDate,
+      dates.previous.startDate,
+      dates.previous.endDate,
+    ].map((date) => format(date, 'yyyy-MM-dd'));
+    try {
+      const paymentMethods = await prisma.transaction
+        .groupBy({
+          by: ['paymentMethod'],
+          _count: {
+            paymentMethod: true,
+          },
+          where: {
+            createdAt: {
+              gte: new Date(startDate),
+              lte: new Date(endDate),
+            },
+          },
+        })
+        .then((results) =>
+          results.map((item) => ({
+            type: item.paymentMethod,
+            total: item._count.paymentMethod,
+          }))
+        );
+
+      return {
+        success: true,
+        data: paymentMethods,
+      };
+    } catch (error) {
+      console.error('Error getting top payment methods:', error);
+      return {
+        success: false,
+        error: error,
+      };
+    }
+  }
+  static async getTopCategories(dateFilter: any) {
+    // Default dates if no filter provided
+    const defaultStart = '2024-09-01';
+    const defaultEnd = '2024-09-02';
+    // Process dates - either use provided dates or defaults
+    const dates =
+      dateFilter?.filter.from || dateFilter?.filter.to
+        ? dateToCompare(
+            dateFilter.filter.from || defaultStart,
+            dateFilter.filter.to || defaultEnd
+          )
+        : dateToCompare(defaultStart, defaultEnd);
+
+    // Format all dates at once
+    const [startDate, endDate, prevStartDate, prevEndDate] = [
+      dates.current.startDate,
+      dates.current.endDate,
+      dates.previous.startDate,
+      dates.previous.endDate,
+    ].map((date) => format(date, 'yyyy-MM-dd'));
+    try {
+      const topCategories = await prisma.transactionItem.groupBy({
+        by: ['batchId'],
+        _count: {
+          batchId: true,
+        },
+        orderBy: {
+          _count: {
+            batchId: 'desc',
+          },
+        },
+        take: 5,
+        where: {
+          createdAt: {
+            gte: new Date(startDate),
+            lte: new Date(endDate),
+          },
+        },
+      });
+      const categoryDetails = await Promise.all(
+        topCategories.map(async (group) => {
+          const batch = await prisma.productBatch.findUnique({
+            where: {
+              id: group.batchId,
+            },
+            include: {
+              product: {
+                include: {
+                  category: true,
+                },
+              },
+            },
+          });
+
+          return {
+            categoryName: batch?.product.category.name || 'Unknown',
+            transactionCount: group._count.batchId,
+          };
+        })
+      );
+      return {
+        success: true,
+        data: categoryDetails,
+      };
+    } catch (error) {
+      console.error('Error getting top categories:', error);
+      return {
+        success: false,
+        error: error,
       };
     }
   }

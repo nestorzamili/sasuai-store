@@ -16,6 +16,8 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { getTopSellingProductsByQuantity } from '@/app/(app)/dashboard/actions';
+import { useEffect } from 'react';
 
 // Top selling products data
 const topProducts = [
@@ -61,7 +63,21 @@ const topProducts = [
   },
 ];
 
-export function TopSellingProduct() {
+export function TopSellingProduct(filter?: any) {
+  const fetchTopSellingProducts = async () => {
+    try {
+      const response = await getTopSellingProductsByQuantity(filter);
+    } catch (error) {
+      console.error('Error fetching top selling products:', error);
+      return {
+        success: false,
+        error: 'Failed to fetch top selling products',
+      };
+    }
+  };
+  useEffect(() => {
+    fetchTopSellingProducts();
+  }, [filter]);
   return (
     <Card className="h-full">
       <CardHeader className="pb-3">
