@@ -362,6 +362,7 @@ export class DashboardService {
         };
       }
 
+      // Remove the generic type parameter from reduce and use type assertion for the initial value
       const groupedData = sales.reduce(
         (acc: GroupedSales, curr: SalesDataItem) => {
           const key = `${curr.year}-${curr.month}`; // Create a unique key for each year and month
