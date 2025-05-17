@@ -1,21 +1,8 @@
 'use client';
-import * as React from 'react';
-import { useState } from 'react';
-import {
-  ColumnDef,
-  ColumnFiltersState,
-  SortingState,
-  VisibilityState,
-  flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
-} from '@tanstack/react-table';
+import { useState, useEffect } from 'react';
+import { ColumnDef } from '@tanstack/react-table';
 import { MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-
 import {
   IconTrash,
   IconEdit,
@@ -38,24 +25,40 @@ import { formatDate } from '@/lib/date';
 import { formatRupiah } from '@/lib/currency';
 import { useFetch } from '@/hooks/use-fetch';
 import { TableLayout } from '@/components/layout/table-layout';
-import { getAllBatchesOptimalized } from '../action';
+import { getAllBatches } from '../action';
 import { BatchAdjustmentDialog } from './batch-adjustment-dialog';
 import { UnitWithCounts } from '@/lib/types/unit';
-import BatchPrimaryButton from './batch-primary-button';
 import BatchFormDialog from './batch-form-dialog';
+import BatchFilterToolbar from './batch-filter-toolbar';
+import { DateRange } from 'react-day-picker';
+import { startOfDay, endOfDay } from 'date-fns';
+import { getAllUnits } from '@/app/(app)/products/units/action';
 
 interface BatchTableProps {
   onSetRefresh?: (refreshFn: () => void) => void;
+  isActive?: boolean;
 }
 
-export function BatchTable({ onSetRefresh }: BatchTableProps) {
+export function BatchTable({
+  onSetRefresh,
+  isActive = false,
+}: BatchTableProps) {
   const [selectedBatchForDelete, setSelectedBatchForDelete] =
     useState<ProductBatchWithProduct | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-
-  // New state for batch details dialog
   const [selectedBatchId, setSelectedBatchId] = useState<string | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+
+  // Filter states
+  const [expiryDateRange, setExpiryDateRange] = useState<DateRange | undefined>(
+    undefined,
+  );
+  const [minQuantity, setMinQuantity] = useState<string>('');
+  const [maxQuantity, setMaxQuantity] = useState<string>('');
+  const [includeExpired, setIncludeExpired] = useState<boolean>(true);
+  const [includeOutOfStock, setIncludeOutOfStock] = useState<boolean>(true);
+  const [categoryId, setCategoryId] = useState<string>('');
 
   // Handle delete click
   const handleDeleteClick = (batch: ProductBatchWithProduct) => {
@@ -91,7 +94,7 @@ export function BatchTable({ onSetRefresh }: BatchTableProps) {
       accessorKey: 'batchCode',
       header: 'batch code',
       cell: ({ row }) => {
-        return <div className="ml-4">{row.getValue('batchCode')}</div>;
+        return <div>{row.getValue('batchCode')}</div>;
       },
     },
 
@@ -103,7 +106,7 @@ export function BatchTable({ onSetRefresh }: BatchTableProps) {
         const expiryDate = new Date(row.getValue('expiryDate'));
         const expired = isExpired(expiryDate);
         return (
-          <div className="flex ml-4">
+          <div className="flex">
             <div className={expired ? 'text-destructive font-medium' : ''}>
               {formatDate(expiryDate)}
             </div>
@@ -123,7 +126,7 @@ export function BatchTable({ onSetRefresh }: BatchTableProps) {
       header: 'remaining quantity',
       cell: ({ row }) => {
         const quantity = row.getValue('remainingQuantity') as number;
-        return <div className="ml-4">{quantity.toLocaleString()}</div>;
+        return <div>{quantity.toLocaleString()}</div>;
       },
     },
 
@@ -133,7 +136,7 @@ export function BatchTable({ onSetRefresh }: BatchTableProps) {
       header: 'buy price',
       cell: ({ row }) => {
         const buyPrice = row.getValue('buyPrice') as number;
-        return <div className="ml-4 font-medium">{formatRupiah(buyPrice)}</div>;
+        return <div className="font-medium">{formatRupiah(buyPrice)}</div>;
       },
     },
 
@@ -190,6 +193,7 @@ export function BatchTable({ onSetRefresh }: BatchTableProps) {
       },
     },
   ];
+
   // handle pagination change
   const handlePaginationChange = (newPagination: {
     pageIndex: number;
@@ -198,50 +202,92 @@ export function BatchTable({ onSetRefresh }: BatchTableProps) {
     setPage(newPagination.pageIndex);
     setLimit(newPagination.pageSize);
   };
+
   // handle sorting change
   const handleSortingChange = (newSorting: any) => {
     setSortBy(newSorting);
   };
-  // handle page change
+
+  // handle search change
   const handleSearchChange = (search: string) => {
     setSearch(search);
   };
+
   // Handle adjust quantity
   const [adjustQtyDialog, setAdjustQtyDialog] = useState(false);
   const handleAdjust = (batch: ProductBatchWithProduct) => {
     setSelectedBatch(batch);
     setAdjustQtyDialog(true);
   };
-  // fetch data
+
+  // fetch data - optimized with select instead of include
   const fetchBatchData = async (options: any) => {
     try {
-      const response = await getAllBatchesOptimalized({
+      // Don't fetch if not active
+      if (!isActive && !isInitialLoad) {
+        return {
+          data: [],
+          totalRows: 0,
+        };
+      }
+
+      // Process filters
+      let expiryDateStart: Date | undefined;
+      let expiryDateEnd: Date | undefined;
+
+      if (options.filters?.expiryDateRange) {
+        const range = options.filters.expiryDateRange as DateRange;
+        if (range.from) {
+          expiryDateStart = startOfDay(range.from);
+        }
+        if (range.to) {
+          expiryDateEnd = endOfDay(range.to);
+        }
+      }
+
+      const response = await getAllBatches({
         page: options.page + 1,
-        limit: options.limit,
-        sortBy: options.sortBy,
+        pageSize: options.limit,
+        sortField: options.sortBy?.id || 'createdAt',
+        sortDirection: options.sortBy?.desc ? 'desc' : 'asc',
         search: options.search,
-        columnFilter: ['id', 'product.name', 'batchCode'],
+        expiryDateStart,
+        expiryDateEnd,
+        minRemainingQuantity: options.filters?.minQuantity,
+        maxRemainingQuantity: options.filters?.maxQuantity,
+        includeExpired: options.filters?.includeExpired,
+        includeOutOfStock: options.filters?.includeOutOfStock,
+        categoryId: options.filters?.categoryId,
       });
+
       return {
         data: response.data,
-        totalRows: response.meta?.rowsCount || 0,
+        totalRows: response.meta?.totalRows || 0,
       };
     } catch (error) {
-      console.log(error);
+      console.error('Error fetching batch data:', error);
       return {
         data: [],
         totalRows: 0,
       };
     }
   };
-  // const [selectedBatch, setSelectedBatch] =
-  // useState<ProductBatchWithProduct | null>(null);
+
+  // Handle filter changes
+  const handleFilterChange = (key: string, value: any) => {
+    setFilters((prev: any) => ({
+      ...prev,
+      [key]: value,
+    }));
+  };
+
   // Handle edit batch
   const [formDialog, setFormDialog] = useState(false);
   const handleEdit = (batch: ProductBatchWithProduct) => {
     setSelectedBatch(batch);
     setFormDialog(true);
   };
+
   const {
     data,
     isLoading,
@@ -250,16 +296,113 @@ export function BatchTable({ onSetRefresh }: BatchTableProps) {
     setLimit,
     setSortBy,
     setSearch,
+    setFilters,
     totalRows,
     refresh,
   } = useFetch({
     fetchData: fetchBatchData,
     initialPageIndex: 0,
+    initialPageSize: 10,
+    initialSortField: 'createdAt',
+    initialSortDirection: true,
   });
 
   const [selectedBatch, setSelectedBatch] =
     useState<ProductBatchWithProduct | null>(null);
   const [units, setUnits] = useState<UnitWithCounts[]>([]);
+  const [categories, setCategories] = useState<
+    Array<{ id: string; name: string }>
+  >([]);
+
+  // Fetch units when component mounts
+  useEffect(() => {
+    const fetchUnits = async () => {
+      try {
+        const response = await getAllUnits();
+        if (response.success && response.data) {
+          setUnits(response.data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch units:', error);
+      }
+    };
+
+    // Only fetch if component is active
+    if (isActive) {
+      fetchUnits();
+    }
+  }, [isActive]);
+
+  // Handle expiry date range change
+  const handleExpiryDateRangeChange = (range: DateRange | undefined) => {
+    setExpiryDateRange(range);
+    handleFilterChange('expiryDateRange', range);
+  };
+
+  // Handle min quantity change
+  const handleMinQuantityChange = (value: string) => {
+    setMinQuantity(value);
+    handleFilterChange('minQuantity', value);
+  };
+
+  // Handle max quantity change
+  const handleMaxQuantityChange = (value: string) => {
+    setMaxQuantity(value);
+    handleFilterChange('maxQuantity', value);
+  };
+
+  // Handle include expired change
+  const handleIncludeExpiredChange = (value: boolean) => {
+    setIncludeExpired(value);
+    handleFilterChange('includeExpired', value);
+  };
+
+  // Handle include out of stock change
+  const handleIncludeOutOfStockChange = (value: boolean) => {
+    setIncludeOutOfStock(value);
+    handleFilterChange('includeOutOfStock', value);
+  };
+
+  // Handle category change
+  const handleCategoryChange = (value: string) => {
+    setCategoryId(value);
+    handleFilterChange('categoryId', value);
+  };
+
+  // Load data when tab becomes active
+  useEffect(() => {
+    if (isActive) {
+      // Mark that we're past initial load
+      setIsInitialLoad(false);
+      refresh();
+    }
+  }, [isActive, refresh]);
+
+  // Set refresh function if needed
+  useEffect(() => {
+    if (onSetRefresh) {
+      onSetRefresh(refresh);
+    }
+  }, [onSetRefresh, refresh]);
+
+  // Create the filter toolbar element
+  const filterToolbarElement = (
+    <BatchFilterToolbar
+      expiryDateRange={expiryDateRange}
+      setExpiryDateRange={handleExpiryDateRangeChange}
+      minQuantity={minQuantity}
+      setMinQuantity={handleMinQuantityChange}
+      maxQuantity={maxQuantity}
+      setMaxQuantity={handleMaxQuantityChange}
+      includeExpired={includeExpired}
+      setIncludeExpired={handleIncludeExpiredChange}
+      includeOutOfStock={includeOutOfStock}
+      setIncludeOutOfStock={handleIncludeOutOfStockChange}
+      categoryId={categoryId}
+      setCategoryId={handleCategoryChange}
+      categories={categories}
+    />
+  );
 
   return (
     <>
@@ -273,8 +416,10 @@ export function BatchTable({ onSetRefresh }: BatchTableProps) {
         handleSearchChange={handleSearchChange}
         totalRows={totalRows}
         enableSelection={true}
+        filterToolbar={filterToolbarElement}
       />
-      {/* Delete dialog */}
+
+      {/* Dialogs */}
       {selectedBatchForDelete && (
         <BatchDeleteDialog
           open={isDeleteDialogOpen}
@@ -283,6 +428,7 @@ export function BatchTable({ onSetRefresh }: BatchTableProps) {
           onSuccess={refresh}
         />
       )}
+
       {isDetailDialogOpen && selectedBatchId && (
         <BatchDetailDialog
           open={isDetailDialogOpen}
@@ -307,7 +453,8 @@ export function BatchTable({ onSetRefresh }: BatchTableProps) {
           }}
         />
       )}
-      {/* Details dialog */}
+
+      {/* Edit batch dialog */}
       {formDialog && selectedBatch && (
         <BatchFormDialog
           open={formDialog}
@@ -333,7 +480,6 @@ export function BatchTable({ onSetRefresh }: BatchTableProps) {
           }}
         />
       )}
-      {/* Batch primary button */}
     </>
   );
 }

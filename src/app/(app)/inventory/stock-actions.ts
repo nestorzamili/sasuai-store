@@ -3,7 +3,6 @@
 import { revalidatePath } from 'next/cache';
 import { StockMovementService } from '@/lib/services/stock-movement.service';
 import { z } from 'zod';
-import { buildQueryOptions } from '@/lib/common/query-options';
 
 // Schema for stock-in creation
 const stockInSchema = z.object({
@@ -23,60 +22,38 @@ const stockOutSchema = z.object({
   reason: z.string().min(1, 'Reason is required'),
 });
 
-/**
- * Get all stock-in records
- */
-export async function getAllStockIns() {
+export async function getAllStockIns(options?: Record<string, any>) {
   try {
-    const stockIns = await StockMovementService.getAllStockIns({
-      includeBatch: true,
-      includeSupplier: true,
-      includeUnit: true,
-    });
+    const stockIns = await StockMovementService.getAllStockIns(options);
 
-    return {
-      success: true,
-      data: stockIns,
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: 'Failed to fetch stock-in records',
-    };
-  }
-}
-export async function getAllOptimalizedStockIns(options?: any) {
-  try {
-    const stockIns = await StockMovementService.getAllStockInsOptimalized(
-      options,
-    );
+    // Ensure the response has the expected structure
+    if (!stockIns || !Array.isArray(stockIns.data)) {
+      console.error(
+        'Invalid response format from getAllStockInsOptimalized',
+        stockIns,
+      );
+      return {
+        success: false,
+        error: 'Invalid response format from server',
+        data: [],
+        meta: { rowsCount: 0 },
+      };
+    }
+
     return {
       success: true,
       data: stockIns.data,
-      meta: stockIns.meta,
+      meta: stockIns.meta || { rowsCount: stockIns.data.length },
     };
   } catch (error) {
     return {
       success: false,
-      error: 'Failed to fetch stock-in records',
-    };
-  }
-}
-/**
- * Get stock-ins for a specific batch
- */
-export async function getStockInsByBatchId(batchId: string) {
-  try {
-    const stockIns = await StockMovementService.getStockInsByBatchId(batchId);
-
-    return {
-      success: true,
-      data: stockIns,
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: 'Failed to fetch stock-in records',
+      error:
+        error instanceof Error
+          ? error.message
+          : 'Failed to fetch stock-in records',
+      data: [],
+      meta: { rowsCount: 0 },
     };
   }
 }
@@ -131,63 +108,20 @@ export async function createStockIn(data: {
 }
 
 /**
- * Get all stock-out records
+ * Get all stock-out records with pagination support
  */
-export async function getAllStockOuts(includeTransactions: boolean = true) {
+export async function getAllStockOuts(options?: Record<string, any>) {
   try {
-    const stockOuts = await StockMovementService.getAllStockOuts({
-      includeBatch: true,
-      includeUnit: true,
-      includeTransactions,
-    });
-
+    const stockOuts = await StockMovementService.getAllStockOuts(options);
     return {
       success: true,
-      data: stockOuts,
+      data: stockOuts.data,
+      meta: stockOuts.meta,
     };
   } catch (error) {
     return {
       success: false,
       error: 'Failed to fetch stock-out records',
-    };
-  }
-}
-
-/**
- * Get stock-outs for a specific batch
- */
-export async function getStockOutsByBatchId(batchId: string) {
-  try {
-    const stockOuts = await StockMovementService.getStockOutsByBatchId(batchId);
-
-    return {
-      success: true,
-      data: stockOuts,
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: 'Failed to fetch stock-out records',
-    };
-  }
-}
-
-/**
- * Get transaction-related stock reductions for a specific batch
- */
-export async function getTransactionStockOutsByBatchId(batchId: string) {
-  try {
-    const transactionItems =
-      await StockMovementService.getTransactionStockOutsByBatchId(batchId);
-
-    return {
-      success: true,
-      data: transactionItems,
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: 'Failed to fetch transaction stock-out records',
     };
   }
 }
@@ -258,27 +192,6 @@ export async function getBatchStockMovementHistory(batchId: string) {
     return {
       success: false,
       error: 'Failed to fetch stock movement history',
-    };
-  }
-}
-
-/**
- * Get product stock movement history
- */
-export async function getProductStockMovementHistory(productId: string) {
-  try {
-    const movements = await StockMovementService.getProductStockMovementHistory(
-      productId,
-    );
-
-    return {
-      success: true,
-      data: movements,
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: 'Failed to fetch product stock movement history',
     };
   }
 }

@@ -5,7 +5,6 @@ import { ProductService } from '@/lib/services/product.service';
 import { CategoryService } from '@/lib/services/category.service';
 import { BrandService } from '@/lib/services/brand.service';
 import { UnitService } from '@/lib/services/unit.service';
-import { options } from '@/lib/types/table';
 import { z } from 'zod';
 
 // Product schema for validation
@@ -36,51 +35,6 @@ export async function getAllProducts() {
     return {
       success: false,
       error: 'Failed to fetch products',
-    };
-  }
-}
-
-/**
- * Get all active products with relations
- */
-export async function getActiveProducts() {
-  try {
-    const products = await ProductService.getActive();
-
-    return {
-      success: true,
-      data: products,
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: 'Failed to fetch active products',
-    };
-  }
-}
-
-/**
- * Get a product by ID with relations
- */
-export async function getProduct(id: string) {
-  try {
-    const product = await ProductService.getById(id);
-
-    if (!product) {
-      return {
-        success: false,
-        error: 'Product not found',
-      };
-    }
-
-    return {
-      success: true,
-      data: product,
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: 'Failed to fetch product',
     };
   }
 }
@@ -313,70 +267,6 @@ export async function getProductFormOptions() {
 }
 
 /**
- * Search products
- */
-export async function searchProducts(query: string) {
-  try {
-    if (!query || query.trim().length < 2) {
-      return {
-        success: true,
-        data: [],
-      };
-    }
-
-    const products = await ProductService.search(query.trim());
-
-    return {
-      success: true,
-      data: products,
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: 'Failed to search products',
-    };
-  }
-}
-
-/**
- * Get low stock products
- */
-export async function getLowStockProducts(threshold: number = 10) {
-  try {
-    const products = await ProductService.getLowStock(threshold);
-
-    return {
-      success: true,
-      data: products,
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: 'Failed to fetch low stock products',
-    };
-  }
-}
-
-/**
- * Get products by category
- */
-export async function getProductsByCategory(categoryId: string) {
-  try {
-    const products = await ProductService.getByCategory(categoryId);
-
-    return {
-      success: true,
-      data: products,
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: 'Failed to fetch products for this category',
-    };
-  }
-}
-
-/**
  * Get paginated products with filters and sorting
  */
 export async function getPaginatedProducts(params: {
@@ -414,19 +304,5 @@ export async function getPaginatedProducts(params: {
       success: false,
       error: 'Failed to fetch paginated products',
     };
-  }
-}
-
-export async function optimalizeGetProduct(options?: options) {
-  try {
-    const discount = await ProductService.getAllOptimized(options);
-
-    return {
-      success: true,
-      data: discount.data,
-      meta: discount.meta,
-    };
-  } catch (error) {
-    throw error;
   }
 }

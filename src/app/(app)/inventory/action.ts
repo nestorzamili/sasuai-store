@@ -3,6 +3,10 @@
 import { revalidatePath } from 'next/cache';
 import { ProductBatchService } from '@/lib/services/inventory.service';
 import { z } from 'zod';
+import {
+  BatchPaginationParams,
+  ProductBatchWithDetails,
+} from '@/lib/types/product-batch';
 
 // Batch schema for validation
 const batchSchema = z.object({
@@ -43,55 +47,72 @@ const adjustmentSchema = z.object({
 });
 
 /**
- * Get all product batches with product information
+ * Get optimalized (paginated and filtered) product batches
  */
-export async function getAllBatches() {
+export async function getAllBatches({
+  page = 1,
+  pageSize = 10,
+  sortField = 'createdAt',
+  sortDirection = 'desc',
+  search = '',
+  productId,
+  expiryDateStart,
+  expiryDateEnd,
+  minRemainingQuantity,
+  maxRemainingQuantity,
+  includeExpired = true,
+  includeOutOfStock = true,
+  categoryId,
+}: BatchPaginationParams = {}) {
   try {
-    const batches = await ProductBatchService.getAll({
-      includeProduct: true,
-    });
+    // Convert string values to their appropriate types
+    const processedOptions: BatchPaginationParams = {
+      page: Number(page),
+      pageSize: Number(pageSize),
+      sortField,
+      sortDirection,
+      search,
+      productId,
+      expiryDateStart: expiryDateStart ? new Date(expiryDateStart) : undefined,
+      expiryDateEnd: expiryDateEnd ? new Date(expiryDateEnd) : undefined,
+      minRemainingQuantity:
+        minRemainingQuantity !== undefined
+          ? Number(minRemainingQuantity)
+          : undefined,
+      maxRemainingQuantity:
+        maxRemainingQuantity !== undefined
+          ? Number(maxRemainingQuantity)
+          : undefined,
+      includeExpired:
+        typeof includeExpired === 'string'
+          ? includeExpired === 'true'
+          : includeExpired,
+      includeOutOfStock:
+        typeof includeOutOfStock === 'string'
+          ? includeOutOfStock === 'true'
+          : includeOutOfStock,
+      categoryId,
+    };
+
+    const result = await ProductBatchService.getPaginated(processedOptions);
 
     return {
       success: true,
-      data: batches,
+      data: result.data,
+      meta: {
+        totalRows: result.pagination.totalCount,
+        totalPages: result.pagination.totalPages,
+        currentPage: result.pagination.currentPage,
+        pageSize: result.pagination.pageSize,
+      },
     };
   } catch (error) {
-    return {
-      success: false,
-      error: 'Failed to fetch batches',
-    };
-  }
-}
-export async function getAllBatchesOptimalized(options?: any) {
-  try {
-    const batch = await ProductBatchService.getAllOptimalize(options);
-    return {
-      success: true,
-      data: batch.data,
-      meta: batch.meta,
-    };
-  } catch (error) {
+    console.error('Error in getAllBatches:', error);
     return {
       success: false,
       error: 'Failed to fetch batch',
-    };
-  }
-}
-/**
- * Get all batches for a specific product
- */
-export async function getBatchesByProductId(productId: string) {
-  try {
-    const batches = await ProductBatchService.getAllByProductId(productId);
-
-    return {
-      success: true,
-      data: batches,
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: 'Failed to fetch batches',
+      data: [],
+      meta: { totalRows: 0, totalPages: 0, currentPage: 1, pageSize: 10 },
     };
   }
 }
@@ -101,11 +122,7 @@ export async function getBatchesByProductId(productId: string) {
  */
 export async function getBatchById(id: string) {
   try {
-    const batch = await ProductBatchService.getById(id, {
-      includeProduct: true,
-      includeStockMovements: true,
-      includeProductDetails: true, // Add this flag to include product details
-    });
+    const batch = await ProductBatchService.getById(id);
 
     if (!batch) {
       return {
@@ -116,37 +133,10 @@ export async function getBatchById(id: string) {
 
     return {
       success: true,
-      data: batch,
+      data: batch as ProductBatchWithDetails,
     };
   } catch (error) {
-    return {
-      success: false,
-      error: 'Failed to fetch batch',
-    };
-  }
-}
-
-/**
- * Get a batch with product details
- */
-export async function getBatch(id: string) {
-  try {
-    // Get batch with product details and ensure full relationship loading
-    const batch = await ProductBatchService.getWithProductDetails(id);
-
-    if (!batch) {
-      return {
-        success: false,
-        error: 'Batch not found',
-      };
-    }
-
-    // Make sure we include all necessary related data
-    return {
-      success: true,
-      data: batch,
-    };
-  } catch (error) {
+    console.error('Error in getBatchById:', error);
     return {
       success: false,
       error: 'Failed to fetch batch',
@@ -348,77 +338,6 @@ export async function deleteBatch(id: string) {
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to delete batch',
-    };
-  }
-}
-
-/**
- * Get expiring batches
- */
-export async function getExpiringBatches(daysThreshold: number = 30) {
-  try {
-    const batches = await ProductBatchService.getExpiringBatches(daysThreshold);
-
-    return {
-      success: true,
-      data: batches,
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: 'Failed to fetch expiring batches',
-    };
-  }
-}
-
-/**
- * Get expired batches
- */
-export async function getExpiredBatches() {
-  try {
-    const batches = await ProductBatchService.getExpiredBatches();
-
-    return {
-      success: true,
-      data: batches,
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: 'Failed to fetch expired batches',
-    };
-  }
-}
-
-/**
- * Get batch statistics for a product
- */
-export async function getProductBatchStats(productId: string) {
-  try {
-    const stats = await ProductBatchService.getProductBatchStats(productId);
-
-    return {
-      success: true,
-      data: stats,
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: 'Failed to fetch batch statistics',
-    };
-  }
-}
-export async function getBatchSummary() {
-  try {
-    const summary = await ProductBatchService.getBatchSummary();
-    return {
-      success: true,
-      data: summary,
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: 'Failed to fetch batch summary',
     };
   }
 }
