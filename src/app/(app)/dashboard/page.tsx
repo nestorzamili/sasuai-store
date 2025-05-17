@@ -243,7 +243,7 @@ export default function Dashboard() {
             <section aria-label="Products and Categories">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <PaymentMethod filter={filter} />
-                <SalesCategory />
+                <SalesCategory filter={filter} />
                 <section aria-label="Time Analysis" className="space-y-4">
                   <Card>
                     <CardHeader className="pb-2">

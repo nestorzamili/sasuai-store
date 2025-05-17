@@ -427,4 +427,76 @@ export class DashboardService {
       };
     }
   }
+  static async getTopCategories(dateFilter: any) {
+    // Default dates if no filter provided
+    const defaultStart = '2024-09-01';
+    const defaultEnd = '2024-09-02';
+    // Process dates - either use provided dates or defaults
+    const dates =
+      dateFilter?.filter.from || dateFilter?.filter.to
+        ? dateToCompare(
+            dateFilter.filter.from || defaultStart,
+            dateFilter.filter.to || defaultEnd
+          )
+        : dateToCompare(defaultStart, defaultEnd);
+
+    // Format all dates at once
+    const [startDate, endDate, prevStartDate, prevEndDate] = [
+      dates.current.startDate,
+      dates.current.endDate,
+      dates.previous.startDate,
+      dates.previous.endDate,
+    ].map((date) => format(date, 'yyyy-MM-dd'));
+    try {
+      const topCategories = await prisma.transactionItem.groupBy({
+        by: ['batchId'],
+        _count: {
+          batchId: true,
+        },
+        orderBy: {
+          _count: {
+            batchId: 'desc',
+          },
+        },
+        take: 5,
+        where: {
+          createdAt: {
+            gte: new Date(startDate),
+            lte: new Date(endDate),
+          },
+        },
+      });
+      const categoryDetails = await Promise.all(
+        topCategories.map(async (group) => {
+          const batch = await prisma.productBatch.findUnique({
+            where: {
+              id: group.batchId,
+            },
+            include: {
+              product: {
+                include: {
+                  category: true,
+                },
+              },
+            },
+          });
+
+          return {
+            categoryName: batch?.product.category.name || 'Unknown',
+            transactionCount: group._count.batchId,
+          };
+        })
+      );
+      return {
+        success: true,
+        data: categoryDetails,
+      };
+    } catch (error) {
+      console.error('Error getting top categories:', error);
+      return {
+        success: false,
+        error: error,
+      };
+    }
+  }
 }
