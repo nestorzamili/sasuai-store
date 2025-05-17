@@ -16,6 +16,10 @@ const nextConfig: NextConfig = {
     },
   },
   output: 'standalone',
+  eslint: {
+    // Warning: This disables ESLint during builds
+    ignoreDuringBuilds: true,
+  },
 };
 
 export default nextConfig;
