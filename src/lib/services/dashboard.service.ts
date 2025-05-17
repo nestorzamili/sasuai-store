@@ -342,7 +342,7 @@ export class DashboardService {
 
       const groupedData = sales.reduce<GroupedSales>(
         (
-          acc,
+          acc: GroupedSales,
           curr: {
             year: number;
             month: number;
@@ -433,10 +433,15 @@ export class DashboardService {
           },
         })
         .then((results) =>
-          results.map((item) => ({
-            type: item.paymentMethod,
-            total: item._count.paymentMethod,
-          }))
+          results.map(
+            (item: {
+              paymentMethod: string;
+              _count: { paymentMethod: number };
+            }) => ({
+              type: item.paymentMethod,
+              total: item._count.paymentMethod,
+            })
+          )
         );
 
       return {
@@ -491,25 +496,27 @@ export class DashboardService {
         },
       });
       const categoryDetails = await Promise.all(
-        topCategories.map(async (group) => {
-          const batch = await prisma.productBatch.findUnique({
-            where: {
-              id: group.batchId,
-            },
-            include: {
-              product: {
-                include: {
-                  category: true,
+        topCategories.map(
+          async (group: { batchId: string; _count: { batchId: number } }) => {
+            const batch = await prisma.productBatch.findUnique({
+              where: {
+                id: group.batchId,
+              },
+              include: {
+                product: {
+                  include: {
+                    category: true,
+                  },
                 },
               },
-            },
-          });
+            });
 
-          return {
-            categoryName: batch?.product.category.name || 'Unknown',
-            transactionCount: group._count.batchId,
-          };
-        })
+            return {
+              categoryName: batch?.product.category.name || 'Unknown',
+              transactionCount: group._count.batchId,
+            };
+          }
+        )
       );
       return {
         success: true,
