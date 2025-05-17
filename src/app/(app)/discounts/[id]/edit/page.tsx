@@ -7,7 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Form } from '@/components/ui/form';
 import { toast } from '@/hooks/use-toast';
 import { discountSchema, DiscountFormValues } from '../../schema';
-import { DiscountType, DiscountApplyTo } from '@prisma/client';
+import { DiscountType, DiscountApplyTo } from '@/lib/types/discount';
 import { getDiscount, updateDiscount } from '../../action';
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
@@ -78,7 +78,7 @@ export default function EditDiscountPage() {
           name: discount.name,
           code: discount.code || null,
           description: discount.description || null,
-          type: discount.type,
+          type: discount.type as DiscountType, // Add type assertion here
           value: discount.value,
           minPurchase: discount.minPurchase || null,
           startDate: new Date(discount.startDate),
@@ -86,10 +86,14 @@ export default function EditDiscountPage() {
           isActive: discount.isActive,
           isGlobal: discount.isGlobal,
           maxUses: discount.maxUses || null,
-          applyTo: applyToValue,
-          productIds: discount.products?.map((product) => product.id) || [],
-          memberIds: discount.members?.map((member) => member.id) || [],
-          memberTierIds: discount.memberTiers?.map((tier) => tier.id) || [],
+          applyTo: applyToValue as DiscountApplyTo, // Add type assertion here
+          productIds:
+            discount.products?.map((product: { id: string }) => product.id) ||
+            [],
+          memberIds:
+            discount.members?.map((member: { id: string }) => member.id) || [],
+          memberTierIds:
+            discount.memberTiers?.map((tier: { id: string }) => tier.id) || [],
         };
 
         // Reset form with all values at once to avoid cascading updates

@@ -52,7 +52,7 @@ export function SupplierDetailDialog({
       try {
         const response = await getSupplierWithStockIns(supplierId);
         if (response.success) {
-          setSupplier(response.data as SupplierWithStockIns);
+          setSupplier(response.data as unknown as SupplierWithStockIns);
         }
       } catch (error) {
         toast({

@@ -1,14 +1,5 @@
-import {
-  ProductBatch,
-  StockIn,
-  StockOut,
-  Unit,
-  Supplier,
-} from '@prisma/client';
+import { ProductBatch, StockIn, StockOut, Unit, Supplier } from './base-types';
 import { ProductBatchWithProduct } from './product-batch';
-
-// Re-export types for convenience
-export type { StockIn, StockOut };
 
 /**
  * Stock-in with related entities
@@ -44,7 +35,7 @@ export interface StockMovement {
   quantity: number;
   unitId: string;
   date: Date;
-  reason?: string;
+  reason?: string | null;
   unit: Unit;
   batch?: {
     batchCode: string;
@@ -52,7 +43,7 @@ export interface StockMovement {
       name: string;
     };
   };
-  transactionId?: string;
+  transactionId?: string | null;
   createdAt: Date;
   updatedAt: Date;
   source: 'transaction' | 'manual';

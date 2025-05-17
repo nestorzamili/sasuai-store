@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { DiscountType, DiscountApplyTo } from '@prisma/client';
+import { DiscountType, DiscountApplyTo } from '@/lib/types/discount';
 
 // Base schema without refinement
 const baseDiscountSchema = z.object({

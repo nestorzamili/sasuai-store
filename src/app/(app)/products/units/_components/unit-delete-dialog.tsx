@@ -24,7 +24,7 @@ export function UnitDeleteDialog({
   const [isDeleting, setIsDeleting] = useState(false);
 
   const isInUse = !!(
-    (unit._count?.productVariants && unit._count.productVariants > 0) ||
+    (unit._count?.products && unit._count.products > 0) ||
     (unit._count?.stockIns && unit._count.stockIns > 0) ||
     (unit._count?.stockOuts && unit._count.stockOuts > 0) ||
     (unit._count?.transactionItems && unit._count.transactionItems > 0)
@@ -76,8 +76,8 @@ export function UnitDeleteDialog({
     const items = [];
     const counts = unit._count || {};
 
-    if (counts.productVariants && counts.productVariants > 0) {
-      items.push(`${counts.productVariants} product variants`);
+    if (counts.products && counts.products > 0) {
+      items.push(`${counts.products} products`);
     }
     if (counts.stockIns && counts.stockIns > 0) {
       items.push(`${counts.stockIns} stock-in records`);

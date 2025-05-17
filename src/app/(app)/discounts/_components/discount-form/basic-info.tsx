@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import {
   FormControl,
   FormDescription,
@@ -16,7 +15,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { DiscountType } from '@prisma/client';
+import { DiscountType } from '@/lib/types/discount';
 import { UseFormReturn } from 'react-hook-form';
 import { DiscountFormValues } from '../../schema';
 

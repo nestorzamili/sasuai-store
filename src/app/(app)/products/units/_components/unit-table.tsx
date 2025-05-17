@@ -86,7 +86,7 @@ export function UnitTable({ onEdit, onRefresh }: UnitTableProps) {
   // Calculate if a unit is in use
   const isUnitInUse = (unit: UnitWithCounts): boolean => {
     return !!(
-      (unit._count?.productVariants && unit._count.productVariants > 0) ||
+      (unit._count?.products && unit._count.products > 0) ||
       (unit._count?.stockIns && unit._count.stockIns > 0) ||
       (unit._count?.stockOuts && unit._count.stockOuts > 0) ||
       (unit._count?.transactionItems && unit._count.transactionItems > 0)
@@ -116,7 +116,7 @@ export function UnitTable({ onEdit, onRefresh }: UnitTableProps) {
       cell: ({ row }) => {
         const unit = row.original;
         const counts = unit._count || {};
-        const productVariants = counts.productVariants || 0;
+        const productVariants = counts.products || 0;
         const stockIns = counts.stockIns || 0;
         const stockOuts = counts.stockOuts || 0;
         const transactions = counts.transactionItems || 0;
