@@ -7,7 +7,7 @@ import { format } from 'date-fns';
 import { TableLayout } from '@/components/layout/table-layout';
 import { useFetch } from '@/hooks/use-fetch';
 import { getAllStockIns } from '../stock-actions';
-import { memo, useRef, useCallback, useEffect } from 'react';
+import { memo, useCallback, useEffect } from 'react';
 
 interface StockInTableProps {
   isActive?: boolean;
@@ -16,9 +16,6 @@ interface StockInTableProps {
 export const StockInTable = memo(function StockInTable({
   isActive = false,
 }: StockInTableProps) {
-  // Track if this is the initial render
-  const isInitialMount = useRef(true);
-
   // Format date function
   const formatDate = (date: Date | string) => {
     return format(new Date(date), 'PPP');
@@ -81,38 +78,46 @@ export const StockInTable = memo(function StockInTable({
   ];
 
   // Memoize the fetch function to prevent it from changing on every render
-  const fetchDataTable = useCallback(async (options: any) => {
-    try {
-      const response = await getAllStockIns({
-        page: options.page + 1,
-        limit: options.limit,
-        sortBy: options.sortBy?.id || 'date',
-        sortDirection: options.sortBy?.desc ? 'desc' : 'asc',
-        search: options.search,
-        columnFilter: ['batch.product.name', 'batch.batchCode'],
-      });
+  const fetchDataTable = useCallback(
+    async (options: any) => {
+      try {
+        // Don't fetch if component is not active
+        if (!isActive) {
+          return { data: [], totalRows: 0 };
+        }
 
-      // Better error logging
-      if (!response.success) {
-        console.error('Failed to fetch stock-in data:', response.error);
+        const response = await getAllStockIns({
+          page: options.page + 1,
+          limit: options.limit,
+          sortBy: options.sortBy?.id || 'date',
+          sortDirection: options.sortBy?.desc ? 'desc' : 'asc',
+          search: options.search,
+          columnFilter: ['batch.product.name', 'batch.batchCode'],
+        });
+
+        // Better error logging
+        if (!response.success) {
+          console.error('Failed to fetch stock-in data:', response.error);
+          return { data: [], totalRows: 0 };
+        }
+
+        // Validate the response data
+        if (!response.data || !Array.isArray(response.data)) {
+          console.error('Invalid data structure received:', response);
+          return { data: [], totalRows: 0 };
+        }
+
+        return {
+          data: response.data,
+          totalRows: response.meta?.rowsCount || 0,
+        };
+      } catch (error) {
+        console.error('Error fetching stock-in data:', error);
         return { data: [], totalRows: 0 };
       }
-
-      // Validate the response data
-      if (!response.data || !Array.isArray(response.data)) {
-        console.error('Invalid data structure received:', response);
-        return { data: [], totalRows: 0 };
-      }
-
-      return {
-        data: response.data,
-        totalRows: response.meta?.rowsCount || 0,
-      };
-    } catch (error) {
-      console.error('Error fetching stock-in data:', error);
-      return { data: [], totalRows: 0 };
-    }
-  }, []);
+    },
+    [isActive],
+  );
 
   const {
     data,
@@ -128,8 +133,8 @@ export const StockInTable = memo(function StockInTable({
     fetchData: fetchDataTable,
     initialPageIndex: 0,
     initialPageSize: 10,
-    initialSortField: 'date', // Changed from 'id' to 'date'
-    initialSortDirection: true, // Changed to true for newest first
+    initialSortField: 'date',
+    initialSortDirection: true,
   });
 
   // Refresh data when tab becomes active

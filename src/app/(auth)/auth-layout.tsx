@@ -39,11 +39,14 @@ export default function AuthLayout({
 
                 {/* Illustration */}
                 <div className="flex-1 flex items-center justify-center w-full">
-                  <img
+                  <Image
                     src={illustration}
                     alt={`${title} Illustration`}
                     className="max-h-[calc(100vh-120px)] w-auto object-contain drop-shadow-xl"
                     style={{ maxWidth: '95%' }}
+                    width={500}
+                    height={500}
+                    priority
                   />
                 </div>
 
