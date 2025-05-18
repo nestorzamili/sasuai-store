@@ -1,6 +1,9 @@
+Dockerfile
+.dockerignore
 node_modules
+npm-debug.log
+README.md
 .next
-out
-.DS_Store
+!.next/static
+!.next/standalone
 .git
-docker-compose.yml
