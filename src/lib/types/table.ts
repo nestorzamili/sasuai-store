@@ -14,7 +14,9 @@ export interface options {
   setSortBy?: (sortBy: string) => void;
   setSortOrder?: (sortOrder: string) => void;
 }
-export interface OptionReturn {}
+
+export type OptionReturn = object;
+
 export interface tableData<T> {
   data: T[];
   total: number;

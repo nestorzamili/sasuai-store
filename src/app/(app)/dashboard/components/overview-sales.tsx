@@ -1,9 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
-  IconBox,
   IconCash,
   IconCoin,
-  IconPackage,
   IconPercentage,
   IconReceipt2,
   IconScale,
@@ -26,7 +24,6 @@ export function OverviewSales({
     totalTransaction,
     averageTransaction,
     costProduct,
-    productOut,
     margin,
   } = metricPerformance;
 

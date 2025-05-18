@@ -65,7 +65,7 @@ export class TransactionService {
       }
 
       // Get applicable discount - only if specifically selected
-      let selectedDiscount = null;
+      let selectedDiscount = null as any;
       const now = new Date();
 
       if (cartItem.selectedDiscountId) {
@@ -172,13 +172,13 @@ export class TransactionService {
     );
 
     // Get member discount info if applicable
-    let memberInfo = null;
+    let memberInfo = null as any;
     if (memberId) {
       memberInfo = await this.getMemberInfo(memberId);
     }
 
     // Process discounts based on what was sent from frontend
-    let appliedDiscount = null;
+    let appliedDiscount = null as any;
     let discountSource: 'global' | 'member' | 'tier' | null = null;
 
     // 1. If global discount code provided, validate and apply it
@@ -585,7 +585,7 @@ export class TransactionService {
         }
 
         // First determine which discount ID to track
-        let transactionDiscountId = null;
+        let transactionDiscountId: string | null | undefined = null;
         if (
           transactionData.discountSource === 'global' &&
           transactionData.globalDiscount
@@ -680,8 +680,8 @@ export class TransactionService {
     change: number,
     items: any[],
   ) {
-    let discountId = null;
-    let discountAmount = null;
+    let discountId = null as string | null;
+    let discountAmount = null as number | null;
 
     if (
       transactionData.discountSource === 'global' &&

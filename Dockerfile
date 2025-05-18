@@ -1,7 +1,7 @@
 # syntax=docker.io/docker/dockerfile:1
 
-# Base image with Node.js
-FROM node:22-alpine AS base
+# Base image with Node.js (updated to v20 for compatibility with @simplewebauthn/server)
+FROM node:20-alpine AS base
 
 # Install libc6-compat for compatibility with certain binaries
 RUN apk add --no-cache libc6-compat
@@ -20,11 +20,40 @@ RUN if [ -f package-lock.json ]; then npm ci --legacy-peer-deps; \
     else echo "Lockfile not found." && exit 1; \
     fi
 
-# Set environment variables for runtime
-ENV NODE_ENV=production
-
 # Rebuild the source code only when needed
 FROM base AS builder
+
+# Define build arguments for environment variables
+ARG GIT_TAG
+ARG DATABASE_URL
+ARG DIRECT_URL
+ARG BETTER_AUTH_SECRET
+ARG BETTER_AUTH_URL
+ARG EMAIL_VERIFICATION_CALLBACK_URL
+ARG MAINTENANCE_MODE
+ARG NODE_ENV=production
+ARG EMAIL_SERVER_USER
+ARG EMAIL_SERVER_PASSWORD
+ARG EMAIL_FROM_ADDRESS
+ARG NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
+ARG NEXT_PUBLIC_CLOUDINARY_API_KEY
+ARG CLOUDINARY_API_SECRET
+
+# Set environment variables from build args
+ENV DATABASE_URL=${DATABASE_URL}
+ENV DIRECT_URL=${DIRECT_URL}
+ENV BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
+ENV BETTER_AUTH_URL=${BETTER_AUTH_URL}
+ENV EMAIL_VERIFICATION_CALLBACK_URL=${EMAIL_VERIFICATION_CALLBACK_URL}
+ENV MAINTENANCE_MODE=${MAINTENANCE_MODE}
+ENV NODE_ENV=${NODE_ENV}
+ENV EMAIL_SERVER_USER=${EMAIL_SERVER_USER}
+ENV EMAIL_SERVER_PASSWORD=${EMAIL_SERVER_PASSWORD}
+ENV EMAIL_FROM_ADDRESS=${EMAIL_FROM_ADDRESS}
+ENV NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=${NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}
+ENV NEXT_PUBLIC_CLOUDINARY_API_KEY=${NEXT_PUBLIC_CLOUDINARY_API_KEY}
+ENV CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
+ENV NEXT_TELEMETRY_DISABLED=1
 
 # Copy runtime dependencies
 COPY --from=deps /app/node_modules ./node_modules
@@ -38,28 +67,50 @@ RUN npx prisma generate
 # Copy the rest of the application source code
 COPY . .
 
-# Build the Next.js application
+# Build the Next.js application with standalone output
 RUN npm run build
 
-# Final production image
+# Production image, copy all the files and run next
 FROM base AS runner
 
-# Copy required files from the builder stage
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/.next ./.next
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package.json ./package.json
+# Set non-root user for better security
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
 
-# Expose port 3000
-EXPOSE 3000
+# Create necessary directories and set permissions before switching user
+RUN mkdir -p /app/.next/static && chown -R nextjs:nodejs /app
 
-# Set the port environment variable
-ENV PORT=3000
+# Switch to non-root user
+USER nextjs
 
-# Start the Next.js application
-CMD ["npm", "run", "start"]
+# Pass public environment variables and runtime configuration
+ARG NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
+ARG NEXT_PUBLIC_CLOUDINARY_API_KEY
+ARG MAINTENANCE_MODE
+ARG NODE_ENV=production
+ARG GIT_TAG
 
-# Add metadata to the image
-LABEL org.opencontainers.image.source="https://github.com/nestorzamili/sasuai-store" \
-      org.opencontainers.image.description="Production-ready Docker image for Next.js application" \
-    #   org.opencontainers.image.version=${GIT_TAG:-latest}
+# Set runtime environment variables
+ENV NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=${NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}
+ENV NEXT_PUBLIC_CLOUDINARY_API_KEY=${NEXT_PUBLIC_CLOUDINARY_API_KEY}
+ENV MAINTENANCE_MODE=${MAINTENANCE_MODE}
+ENV NODE_ENV=${NODE_ENV}
+ENV PORT=3113
+ENV NEXT_TELEMETRY_DISABLED=1
+
+WORKDIR /app
+
+# Copy necessary files for standalone mode
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+
+# Standalone output contains everything needed to run the application
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+# Expose port 3113
+EXPOSE 3113
+
+# Start the Next.js application using the standalone server.js
+CMD ["node", "server.js"]
+
+LABEL git.tag=${GIT_TAG}

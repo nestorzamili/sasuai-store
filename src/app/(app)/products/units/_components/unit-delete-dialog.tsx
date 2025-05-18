@@ -73,7 +73,7 @@ export function UnitDeleteDialog({
 
   // Calculate usage details for error message
   const usageDetails = () => {
-    const items = [];
+    const items: string[] = []; // Explicitly type the array as string[]
     const counts = unit._count || {};
 
     if (counts.products && counts.products > 0) {
