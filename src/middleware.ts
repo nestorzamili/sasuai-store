@@ -23,26 +23,38 @@ export async function middleware(request: NextRequest) {
   const isAuthPath = authPaths.includes(pathname);
   const isPublicPath = publicPaths.includes(pathname);
 
-  const { data: session } = await betterFetch<Session>(
-    '/api/auth/get-session',
-    {
-      baseURL: request.nextUrl.origin,
-      headers: {
-        cookie: request.headers.get('cookie') || '', // Forward the cookies from the request
+  try {
+    // Only run this in a browser environment (runtime) with a valid request
+    const { data: session } = await betterFetch<Session>(
+      '/api/auth/get-session',
+      {
+        baseURL:
+          process.env.NODE_ENV === 'production'
+            ? process.env.BETTER_AUTH_URL // Use the explicit URL from env in production
+            : request.nextUrl.origin, // Use origin in development
+        headers: {
+          cookie: request.headers.get('cookie') || '',
+        },
       },
-    },
-  );
+    );
 
-  if (session && isAuthPath) {
-    return NextResponse.redirect(new URL('/', request.url));
-  }
+    if (session && isAuthPath) {
+      return NextResponse.redirect(new URL('/', request.url));
+    }
 
-  if (!session && !isPublicPath) {
-    return NextResponse.redirect(new URL('/sign-in', request.url));
-  }
+    if (session && isAdminPath && session.user?.role !== 'admin') {
+      return NextResponse.redirect(new URL('/errors/403', request.url));
+    }
 
-  if (session && isAdminPath && session.user?.role !== 'admin') {
-    return NextResponse.redirect(new URL('/errors/403', request.url));
+    if (!session && !isPublicPath) {
+      return NextResponse.redirect(new URL('/sign-in', request.url));
+    }
+  } catch (error) {
+    console.error('Session fetch error:', error);
+    // If we can't verify the session, redirect to sign-in for protected routes
+    if (!isPublicPath) {
+      return NextResponse.redirect(new URL('/sign-in', request.url));
+    }
   }
 
   const isMaintenanceMode = process.env.MAINTENANCE_MODE === 'true';
