@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -180,29 +180,33 @@ export default function BatchFormDialog({
   const [loading, setLoading] = useState(false);
   const isEditing = Boolean(initialData?.id);
 
-  // Generate a batch code based on the selected product
-  const generateBatchCode = (productId: string) => {
-    if (!productId) return '';
-
-    const product = products.find((p) => p.id === productId);
-    if (!product) return '';
-
-    const prefix = product.name
-      .split(' ')
-      .map((word) => word[0])
-      .join('')
-      .toUpperCase()
-      .substring(0, 3);
-
-    const dateStr = format(new Date(), 'yyyyMMdd');
-    const randomSuffix = Math.floor(Math.random() * 900 + 100);
-
-    return `${prefix}-${dateStr}-${randomSuffix}`;
-  };
-  // State for data from APIs
+  // State for data from APIs - MOVED BEFORE generateBatchCode
   const [products, setProducts] = useState<Product[]>([]);
   const [units, setUnits] = useState<UnitWithCounts[]>([]);
   const [suppliers, setSuppliers] = useState<SupplierWithCount[]>([]);
+
+  // Generate a batch code based on the selected product
+  const generateBatchCode = useCallback(
+    (productId: string) => {
+      if (!productId) return '';
+
+      const product = products.find((p) => p.id === productId);
+      if (!product) return '';
+
+      const prefix = product.name
+        .split(' ')
+        .map((word) => word[0])
+        .join('')
+        .toUpperCase()
+        .substring(0, 3);
+
+      const dateStr = format(new Date(), 'yyyyMMdd');
+      const randomSuffix = Math.floor(Math.random() * 900 + 100);
+
+      return `${prefix}-${dateStr}-${randomSuffix}`;
+    },
+    [products],
+  );
 
   // Fetch data on component mount
   useEffect(() => {
@@ -229,7 +233,7 @@ export default function BatchFormDialog({
             _count: supplier._count || { products: 0 },
             createdAt: supplier.createdAt || new Date(),
             updatedAt: supplier.updatedAt || new Date(),
-          })) || []
+          })) || [],
         );
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -251,7 +255,7 @@ export default function BatchFormDialog({
         value: product.id,
         label: product.name,
       })),
-    [products]
+    [products],
   );
 
   const unitOptions = useMemo(
@@ -260,7 +264,7 @@ export default function BatchFormDialog({
         value: unit.id,
         label: `${unit.name} (${unit.symbol})`,
       })),
-    [units]
+    [units],
   );
 
   const supplierOptions = useMemo(
@@ -271,19 +275,22 @@ export default function BatchFormDialog({
         label: supplier.name,
       })),
     ],
-    [suppliers]
+    [suppliers],
   );
 
   // Default form values
-  const defaultValues: FormValues = {
-    productId: '',
-    batchCode: '',
-    expiryDate: addMonths(new Date(), 6),
-    initialQuantity: 0,
-    buyPrice: 0,
-    unitId: '',
-    supplierId: null,
-  };
+  const defaultValues = useMemo(
+    () => ({
+      productId: '',
+      batchCode: '',
+      expiryDate: addMonths(new Date(), 6),
+      initialQuantity: 0,
+      buyPrice: 0,
+      unitId: '',
+      supplierId: null,
+    }),
+    [],
+  ); // Empty dependency array since these values don't depend on any props or state
 
   // Initialize the form
   const form = useForm<FormValues>({
@@ -329,11 +336,14 @@ export default function BatchFormDialog({
     } else {
       form.reset(defaultValues);
     }
-  }, [form, initialData]);
+  }, [form, initialData, defaultValues]);
+
+  // Extract watched productId to a variable for dependency array
+  const watchedProductId = form.watch('productId');
 
   // Handle product selection
   useEffect(() => {
-    const productId = form.getValues('productId');
+    const productId = watchedProductId;
     if (!productId) return;
 
     const product = products.find((p) => p.id === productId);
@@ -350,7 +360,7 @@ export default function BatchFormDialog({
       const newBatchCode = generateBatchCode(productId);
       form.setValue('batchCode', newBatchCode);
     }
-  }, [form.watch('productId'), products, form, isEditing]);
+  }, [watchedProductId, products, form, isEditing, generateBatchCode]);
 
   // Handle form submission
   const onSubmit = async (values: FormValues) => {
@@ -382,7 +392,16 @@ export default function BatchFormDialog({
         });
 
         form.reset();
-        onSuccess?.();
+
+        // Close the dialog when successful
+        if (onOpenChange) {
+          onOpenChange(false);
+        }
+
+        // Call onSuccess after a short delay to allow the dialog to close
+        setTimeout(() => {
+          onSuccess?.();
+        }, 100);
       } else {
         toast({
           title: 'Error',
@@ -500,7 +519,7 @@ export default function BatchFormDialog({
                           variant="outline"
                           className={cn(
                             'w-full justify-start text-left font-normal',
-                            !field.value && 'text-muted-foreground'
+                            !field.value && 'text-muted-foreground',
                           )}
                         >
                           <CalendarIcon className="mr-2 h-4 w-4" />

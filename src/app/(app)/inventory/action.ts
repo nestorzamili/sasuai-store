@@ -215,7 +215,7 @@ export async function updateBatch(
     batchCode?: string;
     expiryDate?: Date;
     buyPrice?: number;
-  }
+  },
 ) {
   try {
     // Validate data
@@ -256,7 +256,7 @@ export async function adjustBatchQuantity(
     adjustment: number;
     reason: string;
     unitId: string;
-  }
+  },
 ) {
   try {
     // Validate data
@@ -267,7 +267,7 @@ export async function adjustBatchQuantity(
       id,
       validatedData.adjustment,
       validatedData.reason,
-      validatedData.unitId
+      validatedData.unitId,
     );
 
     // Revalidate inventory paths

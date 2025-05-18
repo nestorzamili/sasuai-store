@@ -1,4 +1,3 @@
-import { CircleArrowDown, CircleArrowUp } from 'lucide-react';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 
 export function ValuesMetric({ value }: { value: number }) {

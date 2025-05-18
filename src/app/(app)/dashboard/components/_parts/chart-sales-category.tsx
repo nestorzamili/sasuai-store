@@ -1,6 +1,5 @@
 'use client';
 
-import { TrendingUp } from 'lucide-react';
 import { LabelList, Pie, PieChart } from 'recharts';
 import { getTopCategories } from '../../actions';
 import { UnavailableData } from '@/components/unavailable-data';
@@ -10,7 +9,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -74,13 +72,13 @@ export function SalesCategory(filter?: any) {
         const formattedData = response.data.map(
           (
             item: { categoryName: string; transactionCount: number },
-            index: number
+            index: number,
           ) => ({
             browser: item.categoryName, // Using browser key for consistency with chart component
             visitors: item.transactionCount, // Using visitors key for consistency with chart component
             fill: categoryColors[index % categoryColors.length],
             label: item.categoryName, // Add label field for tooltip
-          })
+          }),
         );
         setChartData(formattedData);
       } else {

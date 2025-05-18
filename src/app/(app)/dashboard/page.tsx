@@ -8,75 +8,63 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { IconRefresh } from '@tabler/icons-react';
-import { useState, useEffect, useMemo, Suspense, lazy } from 'react';
-import { CalendarIcon, Download, Percent } from 'lucide-react';
-import { salesStatistics, metricPeformance } from './actions';
+import { useState, useEffect, useMemo, lazy } from 'react';
+import { Download } from 'lucide-react';
+import { metricPeformance } from './actions';
 import { useToast } from '@/hooks/use-toast';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { formatDate, formatTime } from '@/lib/date';
+import { formatDate } from '@/lib/date';
 import { DateFilter } from '@/lib/types/filter';
 import { DateRangePickerWithPresets } from '@/components/ui/date-range-picker-with-presets';
 // Lazy load components for better initial load time
 const SalesTrend = lazy(() =>
   import('./components/_parts/chart-sales-trend').then((mod) => ({
     default: mod.SalesTrend,
-  }))
+  })),
 );
 const TransactionTrend = lazy(() =>
   import('./components/_parts/chart-transaction-trend').then((mod) => ({
     default: mod.TransactionTrend,
-  }))
+  })),
 );
 const PaymentMethod = lazy(() =>
   import('./components/_parts/chart-payment-method').then((mod) => ({
     default: mod.PaymentMethod,
-  }))
+  })),
 );
 const SalesCategory = lazy(() =>
   import('./components/_parts/chart-sales-category').then((mod) => ({
     default: mod.SalesCategory,
-  }))
+  })),
 );
 const TopSellingProduct = lazy(() =>
   import('./components/_parts/top-selling-product').then((mod) => ({
     default: mod.TopSellingProduct,
-  }))
+  })),
 );
 const TopDiscount = lazy(() =>
   import('./components/_parts/top-discount').then((mod) => ({
     default: mod.TopDiscount,
-  }))
+  })),
 );
 const TopMember = lazy(() =>
   import('./components/_parts/top-member').then((mod) => ({
     default: mod.TopMember,
-  }))
+  })),
 );
 const LowProductStock = lazy(() =>
   import('./components/_parts/low-product-stock').then((mod) => ({
     default: mod.LowProductStock,
-  }))
+  })),
 );
 const MemberActivities = lazy(() =>
   import('./components/_parts/member-activities').then((mod) => ({
     default: mod.MemberActivities,
-  }))
+  })),
 );
 const OverviewSales = lazy(() =>
   import('./components/overview-sales').then((mod) => ({
     default: mod.OverviewSales,
-  }))
+  })),
 );
 
 // Loading fallback component
@@ -127,7 +115,7 @@ export default function Dashboard() {
       costProduct: { value: 0, growth: 0 },
       productOut: { value: 0, growth: 0 },
       margin: { value: 0, growth: 0 },
-    }
+    },
   );
   const [filter, setFilter] = useState<DateFilter>({
     from: new Date(currentDateTime.date),

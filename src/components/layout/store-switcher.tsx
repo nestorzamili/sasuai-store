@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { SidebarMenu, SidebarMenuButton } from '@/components/ui/sidebar';
+import Image from 'next/image';
 
 export function StoreSwitcher({
   stores,
@@ -20,9 +21,11 @@ export function StoreSwitcher({
       >
         <div className="flex aspect-square size-8 items-center justify-center rounded-lg text-sidebar-primary-foreground">
           {typeof activeStore.logo === 'string' ? (
-            <img
+            <Image
               src={activeStore.logo}
               alt={activeStore.name}
+              width={40}
+              height={40}
               className="size-10 object-contain"
             />
           ) : (

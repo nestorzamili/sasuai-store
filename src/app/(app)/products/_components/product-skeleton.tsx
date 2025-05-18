@@ -106,3 +106,5 @@ export const ProductTableSkeleton = React.memo(() => {
     </div>
   );
 });
+
+ProductTableSkeleton.displayName = 'ProductTableSkeleton';
