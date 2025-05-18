@@ -22,7 +22,17 @@ const stockOutSchema = z.object({
   reason: z.string().min(1, 'Reason is required'),
 });
 
-export async function getAllStockIns(options?: Record<string, any>) {
+interface StockInResponse {
+  success: boolean;
+  data: any[];
+  error?: string;
+  meta: { rowsCount: number };
+  validationErrors?: any[];
+}
+
+export async function getAllStockIns(
+  options?: Record<string, any>
+): Promise<StockInResponse> {
   try {
     const stockIns = await StockMovementService.getAllStockIns(options);
 
@@ -30,7 +40,7 @@ export async function getAllStockIns(options?: Record<string, any>) {
     if (!stockIns || !Array.isArray(stockIns.data)) {
       console.error(
         'Invalid response format from getAllStockInsOptimalized',
-        stockIns,
+        stockIns
       );
       return {
         success: false,
@@ -181,7 +191,7 @@ export async function createStockOut(data: {
 export async function getBatchStockMovementHistory(batchId: string) {
   try {
     const movements = await StockMovementService.getBatchStockMovementHistory(
-      batchId,
+      batchId
     );
 
     return {

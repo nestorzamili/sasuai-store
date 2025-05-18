@@ -45,8 +45,10 @@ export async function createDiscount(data: DiscountData) {
     // Validate data
     const validatedData = discountSchema.parse(data);
 
-    // Create discount
-    const result = await DiscountService.createDiscount(validatedData);
+    // Create discount - add type assertion to fix type error
+    const result = await DiscountService.createDiscount(
+      validatedData as DiscountData
+    );
 
     if (result.success) {
       // Revalidate discounts page

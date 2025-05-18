@@ -29,6 +29,12 @@ FROM base AS builder
 # Copy runtime dependencies
 COPY --from=deps /app/node_modules ./node_modules
 
+# Copy Prisma schema
+COPY prisma ./prisma
+
+# Generate Prisma Client
+RUN npx prisma generate
+
 # Copy the rest of the application source code
 COPY . .
 

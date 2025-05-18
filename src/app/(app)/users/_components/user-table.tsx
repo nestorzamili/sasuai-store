@@ -70,13 +70,13 @@ export function UserTable({
 
   // State for ban/unban dialog
   const [selectedUserForBan, setSelectedUserForBan] = useState<User | null>(
-    null,
+    null
   );
   const [isBanDialogOpen, setIsBanDialogOpen] = useState(false);
 
   // State for role dialog
   const [selectedUserForRole, setSelectedUserForRole] = useState<User | null>(
-    null,
+    null
   );
   const [isRoleDialogOpen, setIsRoleDialogOpen] = useState(false);
 
@@ -90,7 +90,7 @@ export function UserTable({
   // Table state
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    [],
+    []
   );
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
@@ -135,8 +135,11 @@ export function UserTable({
       header: ({ table }) => (
         <Checkbox
           checked={
-            table.getIsAllPageRowsSelected() ||
-            (table.getIsSomePageRowsSelected() && 'indeterminate')
+            table.getIsAllPageRowsSelected()
+              ? true
+              : table.getIsSomePageRowsSelected()
+              ? 'indeterminate'
+              : false
           }
           onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
           aria-label="Select all"
@@ -357,7 +360,7 @@ export function UserTable({
                         ? null
                         : flexRender(
                             header.column.columnDef.header,
-                            header.getContext(),
+                            header.getContext()
                           )}
                     </TableHead>
                   ))}
@@ -375,7 +378,7 @@ export function UserTable({
                       <TableCell key={cell.id}>
                         {flexRender(
                           cell.column.columnDef.cell,
-                          cell.getContext(),
+                          cell.getContext()
                         )}
                       </TableCell>
                     ))}

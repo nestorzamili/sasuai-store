@@ -64,7 +64,7 @@ export async function getAllSuppliersWithCount(options?: {
     return {
       success: false,
       error: 'Failed to fetch suppliers',
-      data: [],
+      data: [] as any[],
       totalRows: 0,
     };
   }
@@ -183,7 +183,7 @@ export async function createSupplier(data: { name: string; contact?: string }) {
  */
 export async function updateSupplier(
   id: string,
-  data: { name?: string; contact?: string },
+  data: { name?: string; contact?: string }
 ) {
   try {
     // Validate data

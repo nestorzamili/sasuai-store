@@ -45,20 +45,28 @@ export function NavGroup({ title, items }: NavGroup) {
 
           if (!item.items)
             return (
-              <SidebarMenuLink key={key} item={item} isActive={isActive} />
+              <SidebarMenuLink
+                key={key}
+                item={item as NavLink}
+                isActive={isActive}
+              />
             );
 
           if (state === 'collapsed')
             return (
               <SidebarMenuCollapsedDropdown
                 key={key}
-                item={item}
+                item={item as NavCollapsible}
                 isActive={isActive}
               />
             );
 
           return (
-            <SidebarMenuCollapsible key={key} item={item} isActive={isActive} />
+            <SidebarMenuCollapsible
+              key={key}
+              item={item as NavCollapsible}
+              isActive={isActive}
+            />
           );
         })}
       </SidebarMenu>
@@ -129,7 +137,7 @@ const SidebarMenuCollapsible = ({
               className={cn(
                 'ml-auto transition-transform duration-200',
                 isActive ? 'text-primary' : '',
-                'group-data-[state=open]/collapsible:rotate-90',
+                'group-data-[state=open]/collapsible:rotate-90'
               )}
             />
           </SidebarMenuButton>
@@ -238,7 +246,7 @@ const SidebarMenuCollapsedDropdown = ({
 function checkIsActive(
   currentPath: string,
   item: NavItem,
-  mainNav = false,
+  mainNav = false
 ): boolean {
   if (!currentPath) return false;
 

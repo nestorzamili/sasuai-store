@@ -52,7 +52,10 @@ export function CreateUnitDialog() {
   const onSubmit = async (values: FormValues) => {
     try {
       setLoading(true);
-      const result = await createUnit(values);
+      const result = await createUnit({
+        name: values.name,
+        symbol: values.symbol,
+      });
 
       if (result.success) {
         toast({
