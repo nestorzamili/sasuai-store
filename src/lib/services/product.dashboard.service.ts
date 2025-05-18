@@ -66,7 +66,9 @@ export class ProductDashboardService {
       });
 
       // Fetch batch details with product information separately
-      const batchIds = topProducts.map((item) => item.batchId);
+      const batchIds = topProducts.map(
+        (item: { batchId: string }) => item.batchId
+      );
       const batchDetails = await prisma.productBatch.findMany({
         where: {
           id: {

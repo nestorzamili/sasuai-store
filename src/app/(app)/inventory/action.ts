@@ -111,7 +111,7 @@ export async function getAllBatches({
     return {
       success: false,
       error: 'Failed to fetch batch',
-      data: [],
+      data: [] as any[],
       meta: { totalRows: 0, totalPages: 0, currentPage: 1, pageSize: 10 },
     };
   }
@@ -157,19 +157,28 @@ export async function createBatch(data: {
   supplierId?: string | null;
 }) {
   try {
-    // Validate data
-    const validatedData = batchSchema.parse(data);
+    // Validate data - strip null values before validation
+    const cleanedData = {
+      ...data,
+      supplierId: data.supplierId === null ? undefined : data.supplierId,
+    };
+    const validatedData = batchSchema.parse(cleanedData);
 
-    // Transform "none" value or null to undefined for supplierId
+    // Transform "none" value to undefined for supplierId
     const supplierId =
-      validatedData.supplierId === 'none' || validatedData.supplierId === null
+      validatedData.supplierId === 'none'
         ? undefined
         : validatedData.supplierId;
 
-    // Create batch
+    // Create batch with properly typed data
     const result = await ProductBatchService.create({
-      ...validatedData,
-      supplierId,
+      productId: validatedData.productId,
+      batchCode: validatedData.batchCode,
+      expiryDate: validatedData.expiryDate,
+      initialQuantity: validatedData.initialQuantity,
+      buyPrice: validatedData.buyPrice,
+      unitId: validatedData.unitId,
+      supplierId: supplierId,
     });
 
     // Revalidate inventory paths
@@ -206,7 +215,7 @@ export async function updateBatch(
     batchCode?: string;
     expiryDate?: Date;
     buyPrice?: number;
-  },
+  }
 ) {
   try {
     // Validate data
@@ -247,7 +256,7 @@ export async function adjustBatchQuantity(
     adjustment: number;
     reason: string;
     unitId: string;
-  },
+  }
 ) {
   try {
     // Validate data
@@ -258,7 +267,7 @@ export async function adjustBatchQuantity(
       id,
       validatedData.adjustment,
       validatedData.reason,
-      validatedData.unitId,
+      validatedData.unitId
     );
 
     // Revalidate inventory paths

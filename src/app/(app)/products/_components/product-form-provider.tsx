@@ -71,7 +71,7 @@ interface ProductFormContextProps {
 }
 
 export const ProductFormContext = createContext<ProductFormContextProps | null>(
-  null,
+  null
 );
 
 export const useProductForm = () => {
@@ -229,7 +229,7 @@ export function ProductFormProvider({
 
   const setTempPrimaryImage = (id: string) => {
     setTempImages((prev) =>
-      prev.map((img) => ({ ...img, isPrimary: img.id === id })),
+      prev.map((img) => ({ ...img, isPrimary: img.id === id }))
     );
   };
 
@@ -240,7 +240,7 @@ export function ProductFormProvider({
     try {
       // Sort images so primary is processed first
       const sortedImages = [...tempImages].sort((a, b) =>
-        a.isPrimary ? -1 : b.isPrimary ? 1 : 0,
+        a.isPrimary ? -1 : b.isPrimary ? 1 : 0
       );
 
       // Use Promise.all for parallel processing
@@ -250,8 +250,8 @@ export function ProductFormProvider({
             productId,
             imageUrl: image.imageUrl,
             isPrimary: image.isPrimary,
-          }),
-        ),
+          })
+        )
       );
 
       setTempImages([]);
@@ -300,7 +300,9 @@ export function ProductFormProvider({
         }
       } else {
         // Creating new product
-        const result = await createProduct(values);
+        const result = await createProduct(
+          values as Required<ProductFormValues>
+        );
 
         if (result.success && result.data) {
           // If we have temporary images, save them to the new product

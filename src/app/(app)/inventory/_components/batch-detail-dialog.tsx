@@ -123,7 +123,8 @@ export function BatchDetailDialog({
               batchId: id,
             }))
           : [];
-        setMovements(mappedMovements as StockMovement[]);
+        // Fix: Use type assertion with unknown as intermediate step
+        setMovements(mappedMovements as unknown as StockMovement[]);
       } else {
         console.error('Error fetching stock movements:', response.error);
       }
@@ -333,7 +334,7 @@ export function BatchDetailDialog({
                                 ((batch.initialQuantity -
                                   batch.remainingQuantity) /
                                   batch.initialQuantity) *
-                                  100,
+                                  100
                               )}% used`
                             : '0% used'}
                         </TableCell>

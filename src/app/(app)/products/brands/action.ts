@@ -63,7 +63,7 @@ export async function getAllBrandsWithCount(options?: {
     return {
       success: false,
       error: 'Failed to fetch brands',
-      data: [],
+      data: [] as any[],
       totalRows: 0,
     };
   }
