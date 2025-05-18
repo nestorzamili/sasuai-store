@@ -6,6 +6,7 @@ import {
   useState,
   useEffect,
   ReactNode,
+  useCallback,
 } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, FormProvider } from 'react-hook-form';
@@ -71,7 +72,7 @@ interface ProductFormContextProps {
 }
 
 export const ProductFormContext = createContext<ProductFormContextProps | null>(
-  null
+  null,
 );
 
 export const useProductForm = () => {
@@ -128,7 +129,7 @@ export function ProductFormProvider({
   });
 
   // Consolidated function to fetch all options (categories, brands, units)
-  const fetchOptions = async () => {
+  const fetchOptions = useCallback(async () => {
     try {
       const result = await getProductFormOptions();
       if (result.success && result.data) {
@@ -143,12 +144,12 @@ export function ProductFormProvider({
         variant: 'destructive',
       });
     }
-  };
+  }, [toast]);
 
   // Fetch options on initialization
   useEffect(() => {
     fetchOptions();
-  }, []);
+  }, [fetchOptions]);
 
   // Update form when initialData changes
   useEffect(() => {
@@ -229,7 +230,7 @@ export function ProductFormProvider({
 
   const setTempPrimaryImage = (id: string) => {
     setTempImages((prev) =>
-      prev.map((img) => ({ ...img, isPrimary: img.id === id }))
+      prev.map((img) => ({ ...img, isPrimary: img.id === id })),
     );
   };
 
@@ -240,7 +241,7 @@ export function ProductFormProvider({
     try {
       // Sort images so primary is processed first
       const sortedImages = [...tempImages].sort((a, b) =>
-        a.isPrimary ? -1 : b.isPrimary ? 1 : 0
+        a.isPrimary ? -1 : b.isPrimary ? 1 : 0,
       );
 
       // Use Promise.all for parallel processing
@@ -250,8 +251,8 @@ export function ProductFormProvider({
             productId,
             imageUrl: image.imageUrl,
             isPrimary: image.isPrimary,
-          })
-        )
+          }),
+        ),
       );
 
       setTempImages([]);
@@ -301,7 +302,7 @@ export function ProductFormProvider({
       } else {
         // Creating new product
         const result = await createProduct(
-          values as Required<ProductFormValues>
+          values as Required<ProductFormValues>,
         );
 
         if (result.success && result.data) {

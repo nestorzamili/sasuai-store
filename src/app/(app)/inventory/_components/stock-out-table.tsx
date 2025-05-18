@@ -7,7 +7,7 @@ import { format } from 'date-fns';
 import { TableLayout } from '@/components/layout/table-layout';
 import { useFetch } from '@/hooks/use-fetch';
 import { getAllStockOuts } from '../stock-actions';
-import { memo, useRef, useCallback, useEffect } from 'react';
+import { memo, useCallback, useEffect } from 'react';
 
 interface StockOutTableProps {
   isActive?: boolean;
@@ -16,9 +16,6 @@ interface StockOutTableProps {
 export const StockOutTable = memo(function StockOutTable({
   isActive = false,
 }: StockOutTableProps) {
-  // Track if this is the initial render
-  const isInitialMount = useRef(true);
-
   // Format date function
   const formatDate = (date: Date | string) => {
     return format(new Date(date), 'PPP');
@@ -104,31 +101,39 @@ export const StockOutTable = memo(function StockOutTable({
   ];
 
   // Memoize the fetch function to prevent it from changing on every render
-  const fetchStockOutData = useCallback(async (options: any) => {
-    try {
-      const response = await getAllStockOuts({
-        page: options.page + 1,
-        limit: options.limit,
-        sortBy: options.sortBy?.id || 'date',
-        sortDirection: options.sortBy?.desc ? 'desc' : 'asc',
-        search: options.search,
-        columnFilter: ['batch.product.name', 'batch.batchCode'],
-      });
+  const fetchStockOutData = useCallback(
+    async (options: any) => {
+      try {
+        // Don't fetch if component is not active
+        if (!isActive) {
+          return { data: [], totalRows: 0 };
+        }
 
-      if (!response.success) {
-        console.error('Failed to fetch stock-out data:', response.error);
+        const response = await getAllStockOuts({
+          page: options.page + 1,
+          limit: options.limit,
+          sortBy: options.sortBy?.id || 'date',
+          sortDirection: options.sortBy?.desc ? 'desc' : 'asc',
+          search: options.search,
+          columnFilter: ['batch.product.name', 'batch.batchCode'],
+        });
+
+        if (!response.success) {
+          console.error('Failed to fetch stock-out data:', response.error);
+          return { data: [], totalRows: 0 };
+        }
+
+        return {
+          data: response.data,
+          totalRows: response.meta?.rowsCount || 0,
+        };
+      } catch (error) {
+        console.error('Error fetching stock-out data:', error);
         return { data: [], totalRows: 0 };
       }
-
-      return {
-        data: response.data,
-        totalRows: response.meta?.rowsCount || 0,
-      };
-    } catch (error) {
-      console.error('Error fetching stock-out data:', error);
-      return { data: [], totalRows: 0 };
-    }
-  }, []);
+    },
+    [isActive],
+  );
 
   const {
     data,

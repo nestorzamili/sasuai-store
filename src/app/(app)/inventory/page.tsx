@@ -1,19 +1,43 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, lazy, Suspense, useRef } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { IconBox, IconLogout, IconLogin } from '@tabler/icons-react';
 import { BatchTable } from './_components/batch-table';
-import { StockInTable } from './_components/stock-in-table';
-import { StockOutTable } from './_components/stock-out-table';
 import BatchPrimaryButton from './_components/batch-primary-button';
+
+// Lazy load components that aren't immediately needed
+const LazyStockInTable = lazy(() =>
+  import('./_components/stock-in-table').then((module) => ({
+    default: module.StockInTable,
+  })),
+);
+
+const LazyStockOutTable = lazy(() =>
+  import('./_components/stock-out-table').then((module) => ({
+    default: module.StockOutTable,
+  })),
+);
 
 export default function InventoryPage() {
   const [activeTab, setActiveTab] = useState('batches');
   const [dialogOpen, setDialogOpen] = useState(false);
+  // Create a ref to store the refresh function from BatchTable
+  const batchTableRefreshFn = useRef<() => void>(() => {});
 
   const handleOpenForm = (state: boolean) => {
     setDialogOpen(state);
+  };
+
+  // Update handleSuccess to call the refresh function
+  const handleSuccess = () => {
+    // Call the batch table refresh function when a batch is created successfully
+    batchTableRefreshFn.current();
+  };
+
+  // Function to capture the refresh function from BatchTable
+  const setBatchTableRefresh = (refreshFn: () => void) => {
+    batchTableRefreshFn.current = refreshFn;
   };
 
   return (
@@ -45,7 +69,7 @@ export default function InventoryPage() {
           </TabsTrigger>
         </TabsList>
 
-        {/* Batches Tab Content */}
+        {/* Batches Tab Content - Always render this as it's the default tab */}
         <TabsContent value="batches" className="mt-6">
           <div className="space-y-6">
             <div className="flex items-center justify-between flex-wrap gap-x-4">
@@ -61,18 +85,21 @@ export default function InventoryPage() {
               <BatchPrimaryButton
                 open={dialogOpen}
                 onOpenChange={(state) => {
-                  handleOpenForm(state ? true : false);
+                  handleOpenForm(!!state);
                 }}
-                onSuccess={() => {}}
+                onSuccess={handleSuccess}
               />
             </div>
 
-            {/* Main batch table - now with isActive prop */}
-            <BatchTable isActive={activeTab === 'batches'} />
+            {/* Main batch table with isActive prop and onSetRefresh to capture the refresh function */}
+            <BatchTable
+              isActive={activeTab === 'batches'}
+              onSetRefresh={setBatchTableRefresh}
+            />
           </div>
         </TabsContent>
 
-        {/* Stock In Tab Content */}
+        {/* Stock In Tab Content - Lazy load */}
         <TabsContent value="stock-in" className="mt-6">
           <div className="space-y-6">
             <div>
@@ -82,12 +109,14 @@ export default function InventoryPage() {
               </p>
             </div>
 
-            {/* Stock In Table - already has isActive prop */}
-            <StockInTable isActive={activeTab === 'stock-in'} />
+            {/* Lazy loaded Stock In Table using TableLayout's loading state */}
+            <Suspense fallback={null}>
+              {activeTab === 'stock-in' && <LazyStockInTable isActive={true} />}
+            </Suspense>
           </div>
         </TabsContent>
 
-        {/* Stock Out Tab Content */}
+        {/* Stock Out Tab Content - Lazy load */}
         <TabsContent value="stock-out" className="mt-6">
           <div className="space-y-6">
             <div>
@@ -97,8 +126,12 @@ export default function InventoryPage() {
               </p>
             </div>
 
-            {/* Stock Out Table - already has isActive prop */}
-            <StockOutTable isActive={activeTab === 'stock-out'} />
+            {/* Lazy loaded Stock Out Table using TableLayout's loading state */}
+            <Suspense fallback={null}>
+              {activeTab === 'stock-out' && (
+                <LazyStockOutTable isActive={true} />
+              )}
+            </Suspense>
           </div>
         </TabsContent>
       </Tabs>

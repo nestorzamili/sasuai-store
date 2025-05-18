@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ColumnDef } from '@tanstack/react-table';
 import { MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -49,6 +49,7 @@ export function BatchTable({
   const [selectedBatchId, setSelectedBatchId] = useState<string | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Filter states
   const [expiryDateRange, setExpiryDateRange] = useState<DateRange | undefined>(
@@ -220,58 +221,67 @@ export function BatchTable({
     setAdjustQtyDialog(true);
   };
 
-  // fetch data - optimized with select instead of include
-  const fetchBatchData = async (options: any) => {
-    try {
-      // Don't fetch if not active
-      if (!isActive && !isInitialLoad) {
+  // Optimize fetchBatchData with useCallback to prevent unnecessary re-renders
+  const fetchBatchData = useCallback(
+    async (options: any) => {
+      try {
+        // Skip fetching when tab is not active, except during initial load
+        if (!isActive && !isInitialLoad) {
+          return {
+            data: [],
+            totalRows: 0,
+          };
+        }
+
+        // Add loading state indication
+        setIsLoading(true);
+
+        // Process filters
+        let expiryDateStart: Date | undefined;
+        let expiryDateEnd: Date | undefined;
+
+        if (options.filters?.expiryDateRange) {
+          const range = options.filters.expiryDateRange as DateRange;
+          if (range.from) {
+            expiryDateStart = startOfDay(range.from);
+          }
+          if (range.to) {
+            expiryDateEnd = endOfDay(range.to);
+          }
+        }
+
+        // Optimize by requesting only necessary fields
+        const response = await getAllBatches({
+          page: options.page + 1,
+          pageSize: options.limit,
+          sortField: options.sortBy?.id || 'createdAt',
+          sortDirection: options.sortBy?.desc ? 'desc' : 'asc',
+          search: options.search,
+          expiryDateStart,
+          expiryDateEnd,
+          minRemainingQuantity: options.filters?.minQuantity,
+          maxRemainingQuantity: options.filters?.maxQuantity,
+          includeExpired: options.filters?.includeExpired,
+          includeOutOfStock: options.filters?.includeOutOfStock,
+          categoryId: options.filters?.categoryId,
+        });
+
+        return {
+          data: response.data,
+          totalRows: response.meta?.totalRows || 0,
+        };
+      } catch (error) {
+        console.error('Error fetching batch data:', error);
         return {
           data: [],
           totalRows: 0,
         };
+      } finally {
+        setIsLoading(false);
       }
-
-      // Process filters
-      let expiryDateStart: Date | undefined;
-      let expiryDateEnd: Date | undefined;
-
-      if (options.filters?.expiryDateRange) {
-        const range = options.filters.expiryDateRange as DateRange;
-        if (range.from) {
-          expiryDateStart = startOfDay(range.from);
-        }
-        if (range.to) {
-          expiryDateEnd = endOfDay(range.to);
-        }
-      }
-
-      const response = await getAllBatches({
-        page: options.page + 1,
-        pageSize: options.limit,
-        sortField: options.sortBy?.id || 'createdAt',
-        sortDirection: options.sortBy?.desc ? 'desc' : 'asc',
-        search: options.search,
-        expiryDateStart,
-        expiryDateEnd,
-        minRemainingQuantity: options.filters?.minQuantity,
-        maxRemainingQuantity: options.filters?.maxQuantity,
-        includeExpired: options.filters?.includeExpired,
-        includeOutOfStock: options.filters?.includeOutOfStock,
-        categoryId: options.filters?.categoryId,
-      });
-
-      return {
-        data: response.data,
-        totalRows: response.meta?.totalRows || 0,
-      };
-    } catch (error) {
-      console.error('Error fetching batch data:', error);
-      return {
-        data: [],
-        totalRows: 0,
-      };
-    }
-  };
+    },
+    [isActive, isInitialLoad], // Only depend on these two variables
+  );
 
   // Handle filter changes
   const handleFilterChange = (key: string, value: any) => {
@@ -290,7 +300,6 @@ export function BatchTable({
 
   const {
     data,
-    isLoading,
     options,
     setPage,
     setLimit,
@@ -369,14 +378,14 @@ export function BatchTable({
     handleFilterChange('categoryId', value);
   };
 
-  // Load data when tab becomes active
+  // Optimize rendering by only refreshing data when tab becomes active
   useEffect(() => {
-    if (isActive) {
+    if (isActive || isInitialLoad) {
       // Mark that we're past initial load
       setIsInitialLoad(false);
       refresh();
     }
-  }, [isActive, refresh]);
+  }, [isActive, refresh, isInitialLoad]);
 
   // Set refresh function if needed
   useEffect(() => {

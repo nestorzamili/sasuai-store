@@ -114,7 +114,7 @@ const Loading = () => {
 const ChartContainer: React.FC<{
   children: React.ReactElement;
   config: ChartConfig;
-}> = ({ children, config }) => {
+}> = ({ children }) => {
   return (
     <div className="h-[300px] w-full">
       <ResponsiveContainer width="100%" height="100%">

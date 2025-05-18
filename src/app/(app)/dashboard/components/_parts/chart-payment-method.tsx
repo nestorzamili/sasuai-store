@@ -1,6 +1,5 @@
 'use client';
 
-import { TrendingUp } from 'lucide-react';
 import { LabelList, Pie, PieChart } from 'recharts';
 import { getTopPaymentMethod } from '../../actions';
 import { UnavailableData } from '@/components/unavailable-data';
@@ -9,7 +8,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -57,7 +55,7 @@ export function PaymentMethod(filter?: any) {
             total: item.total,
             fill:
               item.type === 'cash' ? 'var(--color-cash)' : 'var(--color-debit)',
-          })
+          }),
         );
         setChart(formattedData);
       }
