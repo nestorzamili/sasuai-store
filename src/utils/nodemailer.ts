@@ -4,7 +4,7 @@ import nodemailer from 'nodemailer';
 const createPrimaryTransporter = () => {
   // Verify auth credentials are available
   if (!process.env.EMAIL_SERVER_USER || !process.env.EMAIL_SERVER_PASSWORD) {
-    console.warn('Missing email credentials in environment variables');
+    throw new Error('Missing email credentials in environment variables. Please set EMAIL_SERVER_USER and EMAIL_SERVER_PASSWORD.');
   }
 
   return nodemailer.createTransport({
