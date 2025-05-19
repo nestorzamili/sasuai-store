@@ -11,13 +11,18 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Check if sign-up is disabled
+  if (pathname === '/sign-up' && process.env.ENABLE_SIGNUP !== 'true') {
+    return NextResponse.redirect(new URL('/errors/403', request.url));
+  }
+
   const authPaths = [
     '/sign-in',
     '/sign-up',
     '/forgot-password',
     '/reset-password',
   ];
-  const publicPaths = [...authPaths, '/errors/503'];
+  const publicPaths = [...authPaths, '/errors/503', '/errors/403'];
   const adminPaths = ['/users'];
   const isAdminPath = adminPaths.includes(pathname);
   const isAuthPath = authPaths.includes(pathname);

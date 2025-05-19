@@ -72,12 +72,14 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
       }
 
       if (result.success) {
+        // Show success toast first
         toast({
           title: 'Success',
           description: 'Logged in successfully',
         });
-        router.push('/');
-        router.refresh();
+
+        // Use a helper function to handle navigation logic
+        handleNavigation(router);
         return;
       }
 

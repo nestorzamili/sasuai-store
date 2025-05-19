@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { useSidebar } from '@/components/ui/sidebar';
 import { useMemo } from 'react';
+import { appInfo } from '@/lib/appInfo';
 
 type GitHubLinkProps = {
   username: string;
@@ -55,6 +56,9 @@ const BaseFooter = ({
         <p className="flex items-center" aria-label="Made with coffee">
           Made with <Coffee size={14} className="mx-1" />
           {showFullCoffeeText && 'coffee'}
+        </p>
+        <p className="text-center text-xs text-muted-foreground">
+          Version {appInfo.version}
         </p>
       </div>
     </footer>

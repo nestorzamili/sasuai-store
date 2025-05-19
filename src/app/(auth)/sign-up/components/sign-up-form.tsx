@@ -205,7 +205,7 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
             />
 
             <Button
-              className="mt-1 sm:mt-2 h-9 sm:h-11 text-sm sm:text-base font-medium w-full"
+              className="mt-1 mb-2 sm:mt-2 h-9 sm:h-11 text-sm sm:text-base font-medium w-full"
               disabled={isSubmitDisabled}
               type="submit"
             >
