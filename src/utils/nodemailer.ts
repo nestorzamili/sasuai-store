@@ -1,8 +1,13 @@
 import nodemailer from 'nodemailer';
 
 // Create transporters with different configurations for fallback
-const createPrimaryTransporter = () =>
-  nodemailer.createTransport({
+const createPrimaryTransporter = () => {
+  // Verify auth credentials are available
+  if (!process.env.EMAIL_SERVER_USER || !process.env.EMAIL_SERVER_PASSWORD) {
+    console.warn('Missing email credentials in environment variables');
+  }
+
+  return nodemailer.createTransport({
     service: 'gmail',
     host: 'smtp.gmail.com',
     port: 465,
@@ -11,19 +16,23 @@ const createPrimaryTransporter = () =>
       user: process.env.EMAIL_SERVER_USER,
       pass: process.env.EMAIL_SERVER_PASSWORD,
     },
-    // Ensure proper email delivery configuration
     tls: {
       rejectUnauthorized: true,
     },
-    // Add connection timeout settings
     connectionTimeout: 10000, // 10 seconds
     greetingTimeout: 5000, // 5 seconds
     socketTimeout: 10000, // 10 seconds
   });
+};
 
 // Fallback transporter using port 587 with STARTTLS
-const createFallbackTransporter = () =>
-  nodemailer.createTransport({
+const createFallbackTransporter = () => {
+  // Verify auth credentials are available
+  if (!process.env.EMAIL_SERVER_USER || !process.env.EMAIL_SERVER_PASSWORD) {
+    console.warn('Missing email credentials in environment variables');
+  }
+
+  return nodemailer.createTransport({
     service: 'gmail',
     host: 'smtp.gmail.com',
     port: 587,
@@ -39,8 +48,21 @@ const createFallbackTransporter = () =>
     greetingTimeout: 10000, // 10 seconds
     socketTimeout: 15000, // 15 seconds
   });
+};
 
-export const transporter = createPrimaryTransporter();
+// Create the transporter with explicit verification
+export const transporter = (() => {
+  const transport = createPrimaryTransporter();
+  // Verify connection and authentication on startup
+  transport.verify((error) => {
+    if (error) {
+      console.error('SMTP connection verification failed:', error);
+    } else {
+      console.log('SMTP server is ready to send emails');
+    }
+  });
+  return transport;
+})();
 
 export async function sendEmail({
   to,
