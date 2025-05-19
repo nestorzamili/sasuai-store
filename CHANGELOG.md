@@ -10,6 +10,13 @@
 
 - optimize states in users/tasks context (#71)
 
+## [1.1.1](https://github.com/nestorzamili/sasuai-store/compare/v1.1.0...v1.1.1) (2025-05-19)
+
+
+### Bug Fixes
+
+* **auth:** improve navigation after successful login ([b92278a](https://github.com/nestorzamili/sasuai-store/commit/b92278a7d8aaf835108ad469408c27db8b73b78e))
+
 ## [1.1.0](https://github.com/nestorzamili/sasuai-store/compare/v1.0.0...v1.1.0) (2025-05-19)
 
 
