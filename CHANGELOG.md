@@ -10,6 +10,48 @@
 
 - optimize states in users/tasks context (#71)
 
+## [1.1.0](https://github.com/nestorzamili/sasuai-store/compare/v1.0.0...v1.1.0) (2025-05-19)
+
+
+### Features
+
+* **auth:** enable or disable sign-up based on environment variable ([91f1e20](https://github.com/nestorzamili/sasuai-store/commit/91f1e203a007e490ad325fa608a97215be3c6acc))
+* **auth:** enhance login flow with success toast and improved navigation ([d7110d5](https://github.com/nestorzamili/sasuai-store/commit/d7110d52a6db43b608083b141041c2e4aad1c366))
+* **footer:** display app version in footer ([b106c6b](https://github.com/nestorzamili/sasuai-store/commit/b106c6b096ff1091502eccb2a8ce1aad044d155b))
+* **nodemailer:** implement fallback SMTP transporter and retry logic ([4007d7f](https://github.com/nestorzamili/sasuai-store/commit/4007d7fa5a3f9d83b8caa233dd95685ec21359b9))
+
+
+### Bug Fixes
+
+* **chart:** add type assertions for sales data in SalesTrend component ([9a81768](https://github.com/nestorzamili/sasuai-store/commit/9a817681d2babae3209d8e36fb90f032aa6221b2))
+* **dashboard:** correct SalesDataItem interface and improve type safety ([bcf5883](https://github.com/nestorzamili/sasuai-store/commit/bcf58837966c3b9cf0cce53973d872b7eb4fa3c0))
+* **dashboard:** improve type safety for batch group in sales statistics ([4f3901c](https://github.com/nestorzamili/sasuai-store/commit/4f3901c20b653d0f6a103cf6a0d7766173a134fb))
+* **dashboard:** improve type safety for payment method results ([4994a34](https://github.com/nestorzamili/sasuai-store/commit/4994a341eef7c228428b641510be67d7bcf6e1ab))
+* **docker:** update image tag for Docker build and push ([b56e489](https://github.com/nestorzamili/sasuai-store/commit/b56e489e4a87bfa7c15c32e42bd26b7b2704deb3))
+* **docker:** update Node.js base image to version 22-alpine ([4f3901c](https://github.com/nestorzamili/sasuai-store/commit/4f3901c20b653d0f6a103cf6a0d7766173a134fb))
+
+
+### Chores
+
+* add eslint and eslint-config-next for improved code quality ([e55ddac](https://github.com/nestorzamili/sasuai-store/commit/e55ddac0c8aea4002c6cd2f06df3065dbe986146))
+* update ESLint configuration and add TypeScript ESLint plugins ([1e3b5d8](https://github.com/nestorzamili/sasuai-store/commit/1e3b5d8740eabf13dc0748649c6ff1f231040351))
+* update ESLint rules and TypeScript configuration ([0a38669](https://github.com/nestorzamili/sasuai-store/commit/0a38669390cd56050ff6b910604ef7566a871276))
+
+
+### Code Refactoring
+
+* **chart:** add type definitions for payment method and sales category data ([c5d7a70](https://github.com/nestorzamili/sasuai-store/commit/c5d7a7049b11b70bf685f652f775e9d2bff67999))
+* **dashboard:** enhance type annotations for sales and category data processing ([31a7a3d](https://github.com/nestorzamili/sasuai-store/commit/31a7a3d32f76b4cc9d2e4feda17a067052ae8e31))
+* **dashboard:** enhance type definitions for sales mapping ([f02e316](https://github.com/nestorzamili/sasuai-store/commit/f02e3167a82f411f471dcef750f73e180f8c7690))
+* **dashboard:** improve type definitions for payment methods and sales data items ([5aa892f](https://github.com/nestorzamili/sasuai-store/commit/5aa892f825244ba0789d86f5fc63fbeb5104449a))
+* **dashboard:** simplify sales data grouping by removing generic type parameter ([4855f20](https://github.com/nestorzamili/sasuai-store/commit/4855f202039620cadceeb6a500db6ef3a8f3ec12))
+* **discount:** clean up parameter formatting and type annotations ([c60b390](https://github.com/nestorzamili/sasuai-store/commit/c60b39090456784f6fbbf76d4ca1504d6dd928eb))
+* **docker:** update Dockerfile and workflow for GitHub Packages ([fca317a](https://github.com/nestorzamili/sasuai-store/commit/fca317ab0f63c5994170187cef88c7b5f236de41))
+* **middleware:** improve session handling and error management ([f5d6dac](https://github.com/nestorzamili/sasuai-store/commit/f5d6dac7ade4171e6cf0c6a495a65973a627f509))
+* **nodemailer:** improve transporter creation and verification ([70e0860](https://github.com/nestorzamili/sasuai-store/commit/70e08600c08c2eff67b3596a60d3a17157fe494d))
+* simplify component props and remove unused imports ([1ec2007](https://github.com/nestorzamili/sasuai-store/commit/1ec200701fc37ed737a1aff3780d695752b24414))
+* update import path for ProductDashboardService and improve type annotations ([d04cdc4](https://github.com/nestorzamili/sasuai-store/commit/d04cdc4b08672bf94026ae0c70aa58af65be70d1))
+
 ## 1.0.0 (2025-05-17)
 
 
