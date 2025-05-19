@@ -78,8 +78,28 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
           description: 'Logged in successfully',
         });
 
-        // Use a helper function to handle navigation logic
-        handleNavigation(router);
+        // Use a small delay to ensure toast is shown and session is properly set
+        setTimeout(() => {
+          try {
+            // First refresh to ensure session is updated
+            router.refresh();
+
+            // Then navigate to home page
+            router.push('/');
+
+            // Add a fallback navigation in case Next.js router fails
+            setTimeout(() => {
+              if (window.location.pathname !== '/') {
+                window.location.href = '/';
+              }
+            }, 1000);
+          } catch (navigationError) {
+            console.error('Navigation error:', navigationError);
+            // Force navigation as last resort
+            window.location.href = '/';
+          }
+        }, 300);
+
         return;
       }
 
