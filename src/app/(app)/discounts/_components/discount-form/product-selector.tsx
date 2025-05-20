@@ -27,9 +27,12 @@ export default function ProductSelector({
 }: ProductSelectorProps) {
   const fetchProducts = async (
     search: string,
+    isIdSearch = false,
   ): Promise<{ success: boolean; data?: Product[] }> => {
     try {
-      const products = await getProductsForSelection(search);
+      // If this is an ID search, format the query appropriately
+      const searchParam = isIdSearch ? `id:${search}` : search;
+      const products = await getProductsForSelection(searchParam);
 
       if (Array.isArray(products)) {
         return {
@@ -45,6 +48,13 @@ export default function ProductSelector({
       console.error('Error fetching products:', error);
       return { success: false, data: [] };
     }
+  };
+
+  // Handle ID-based lookups separately from regular searches
+  const fetchItemById = async (
+    id: string,
+  ): Promise<{ success: boolean; data?: Product[] }> => {
+    return fetchProducts(id, true);
   };
 
   const renderProductDetails = (product: Product) => (
@@ -77,6 +87,7 @@ export default function ProductSelector({
       selectedIds={selectedIds}
       onChange={onChange}
       fetchItems={fetchProducts}
+      fetchItemById={fetchItemById}
       renderItemDetails={renderProductDetails}
       placeholder="Search products by name or barcode..."
       noSelectionText="No products selected"

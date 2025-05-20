@@ -47,7 +47,7 @@ export async function createDiscount(data: DiscountData) {
 
     // Create discount - add type assertion to fix type error
     const result = await DiscountService.createDiscount(
-      validatedData as DiscountData
+      validatedData as DiscountData,
     );
 
     if (result.success) {
@@ -146,8 +146,18 @@ export async function deleteDiscount(id: string) {
  */
 export async function getProductsForSelection(search?: string) {
   try {
+    // Check if this is an ID-specific search (format: "id:123456")
+    let idSearch: string | undefined;
+    let searchTerm = search || '';
+
+    if (searchTerm.startsWith('id:')) {
+      idSearch = searchTerm.substring(3);
+      searchTerm = '';
+    }
+
     const products = await ProductService.getProductFiltered({
-      search: search || '',
+      search: searchTerm,
+      exactId: idSearch,
       take: 10,
     });
 
