@@ -313,16 +313,30 @@ export class ProductService {
 
   static async getProductFiltered(options?: {
     search?: string;
+    exactId?: string;
     take?: number;
   }) {
+    // Build where conditions
+    const whereConditions: any = {
+      isActive: true,
+    };
+
+    // If we have an exact ID, use it directly
+    if (options?.exactId) {
+      whereConditions.id = options.exactId;
+    }
+    // Otherwise use the standard search conditions
+    else if (options?.search) {
+      whereConditions.OR = [
+        { name: { contains: options.search, mode: 'insensitive' } },
+        { barcode: { contains: options.search, mode: 'insensitive' } },
+        // Only include ID in general search, not for exact matches
+        { id: { contains: options.search, mode: 'insensitive' } },
+      ];
+    }
+
     return prisma.product.findMany({
-      where: {
-        OR: [
-          { name: { contains: options?.search, mode: 'insensitive' } },
-          { barcode: { contains: options?.search, mode: 'insensitive' } },
-        ],
-        isActive: true,
-      },
+      where: whereConditions,
       include: {
         batches: {
           where: {

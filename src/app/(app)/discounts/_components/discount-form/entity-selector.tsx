@@ -29,6 +29,7 @@ interface EntitySelectorProps<T extends Entity> {
   selectedIds: string[];
   onChange: (ids: string[]) => void;
   fetchItems: (search: string) => Promise<{ success: boolean; data?: T[] }>;
+  fetchItemById?: (id: string) => Promise<{ success: boolean; data?: T[] }>;
   renderItemDetails?: (item: T) => React.ReactNode;
   placeholder?: string;
   noSelectionText?: string;
@@ -43,6 +44,7 @@ export default function EntitySelector<T extends Entity>({
   selectedIds,
   onChange,
   fetchItems,
+  fetchItemById,
   renderItemDetails,
   placeholder = 'Search items...',
   noSelectionText = 'No items selected',
@@ -69,7 +71,9 @@ export default function EntitySelector<T extends Entity>({
     if (missingIds.length === 0) return [];
 
     const fetchPromises = missingIds.map(async (id) => {
-      const singleItemResponse = await fetchItems(id);
+      // Use fetchItemById if available, otherwise fall back to fetchItems
+      const fetchFn = fetchItemById || fetchItems;
+      const singleItemResponse = await fetchFn(id);
       if (
         singleItemResponse.success &&
         singleItemResponse.data &&
