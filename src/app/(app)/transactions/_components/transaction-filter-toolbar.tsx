@@ -73,21 +73,16 @@ export default function TransactionFilterToolbar({
 
   // Payment method options
   const paymentMethods = [
+    { value: 'cash', label: 'Cash', icon: <IconCash size={16} /> },
+    { value: 'debit', label: 'Debit', icon: <IconCreditCard size={16} /> },
+    { value: 'e_wallet', label: 'E-Wallet', icon: <IconWallet size={16} /> },
+    { value: 'qris', label: 'QRIS', icon: <IconQrcode size={16} /> },
     {
-      value: 'ALL_METHODS',
-      label: 'All Methods',
-      icon: <IconDots size={16} />,
-    },
-    { value: 'CASH', label: 'Cash', icon: <IconCash size={16} /> },
-    { value: 'DEBIT', label: 'Debit', icon: <IconCreditCard size={16} /> },
-    { value: 'E_WALLET', label: 'E-Wallet', icon: <IconWallet size={16} /> },
-    { value: 'QRIS', label: 'QRIS', icon: <IconQrcode size={16} /> },
-    {
-      value: 'TRANSFER',
+      value: 'transfer',
       label: 'Transfer',
       icon: <IconBuildingBank size={16} />,
     },
-    { value: 'OTHER', label: 'Other', icon: <IconDots size={16} /> },
+    { value: 'other', label: 'Other', icon: <IconDots size={16} /> },
   ];
 
   // Update temporary amount values when main values change
