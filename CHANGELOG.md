@@ -10,6 +10,24 @@
 
 - optimize states in users/tasks context (#71)
 
+## [1.1.2](https://github.com/nestorzamili/sasuai-store/compare/v1.1.1...v1.1.2) (2025-05-20)
+
+
+### Bug Fixes
+
+* **entity-selector, product-selector:** enhance item fetching with ID support ([81adfec](https://github.com/nestorzamili/sasuai-store/commit/81adfec56599326c08b800c32476ace0232298aa))
+
+
+### Chores
+
+* **favicon:** remove unused favicon.ico file ([a61559d](https://github.com/nestorzamili/sasuai-store/commit/a61559dfb65fc3e84865e1b11df499ec560fca5d))
+
+
+### Code Refactoring
+
+* **nodemailer:** simplify email transporter setup and remove retry logic ([e01c941](https://github.com/nestorzamili/sasuai-store/commit/e01c94135e21c8dac85d3939670900d0bb7dda7c))
+* **transaction-filter-toolbar:** simplify payment method options ([5de9b44](https://github.com/nestorzamili/sasuai-store/commit/5de9b448bea3c0589a8d8fe6874244b40615632c))
+
 ## [1.1.1](https://github.com/nestorzamili/sasuai-store/compare/v1.1.0...v1.1.1) (2025-05-19)
 
 
