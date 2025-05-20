@@ -10,6 +10,13 @@
 
 - optimize states in users/tasks context (#71)
 
+## [1.1.3](https://github.com/nestorzamili/sasuai-store/compare/v1.1.2...v1.1.3) (2025-05-20)
+
+
+### Code Refactoring
+
+* **nodemailer:** update email service configuration ([d9810ab](https://github.com/nestorzamili/sasuai-store/commit/d9810abb21b5a9a98b2bf2f40c4b6976ca9a3e7a))
+
 ## [1.1.2](https://github.com/nestorzamili/sasuai-store/compare/v1.1.1...v1.1.2) (2025-05-20)
 
 
