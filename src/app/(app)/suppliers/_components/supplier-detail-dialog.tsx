@@ -55,6 +55,7 @@ export function SupplierDetailDialog({
           setSupplier(response.data as unknown as SupplierWithStockIns);
         }
       } catch (error) {
+        console.error('Error fetching supplier details:', error);
         toast({
           title: 'Error fetching supplier details',
           description:

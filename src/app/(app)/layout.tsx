@@ -18,6 +18,13 @@ import { BreadCrumb } from '@/components/breadcrumb';
 // Create a type-safe context for breadcrumb labels
 export type BreadcrumbLabels = Record<string, string>;
 
+// Deklarasi type untuk global window object
+declare global {
+  interface Window {
+    __updateBreadcrumb: (id: string, label: string) => void;
+  }
+}
+
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const defaultOpen = Cookies.get('sidebar:state') !== 'false';
 
@@ -36,7 +43,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   // Add updateBreadcrumb to the window object so it can be accessed from any component
   if (typeof window !== 'undefined') {
-    (window as any).__updateBreadcrumb = updateBreadcrumb;
+    window.__updateBreadcrumb = updateBreadcrumb;
   }
 
   return (

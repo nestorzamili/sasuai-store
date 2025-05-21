@@ -25,6 +25,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
 import { AvatarUpload } from './avatar-upload';
+import { UserUpdateData } from '@/lib/types/user';
 
 const profileFormSchema = z.object({
   name: z
@@ -85,7 +86,7 @@ export default function ProfileForm() {
       formValues.email !== userProfile.email ||
       formValues.image !== userProfile.image
     );
-  }, [form.watch(), userProfile]);
+  }, [form, userProfile]);
 
   useEffect(() => {
     if (user) {
@@ -109,8 +110,7 @@ export default function ProfileForm() {
       const hasNameChanged = data.name !== userProfile?.name;
       const hasUsernameChanged = data.username !== userProfile?.username;
 
-      // Only update fields that have changed to avoid conflicts
-      const updateData: any = {};
+      const updateData: UserUpdateData = {};
 
       // Add fields that have changed
       if (hasNameChanged) updateData.name = data.name;
@@ -129,6 +129,7 @@ export default function ProfileForm() {
             image: data.image || null, // Send null explicitly when removing image
           });
         } catch (imageError) {
+          console.error('Error updating image:', imageError);
           toast({
             title: 'Profile Updated',
             description:
@@ -156,12 +157,17 @@ export default function ProfileForm() {
         await refreshSession();
         router.refresh();
       }
-    } catch (error: any) {
-      if (error?.message?.includes('username')) {
-        if (
-          error?.message?.includes('taken') ||
-          error?.message?.includes('exists')
-        ) {
+    } catch (error: unknown) {
+      // Type narrowing for safer error handling
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : typeof error === 'object' && error !== null && 'message' in error
+          ? String((error as { message: unknown }).message)
+          : 'An unknown error occurred';
+
+      if (errorMessage.includes('username')) {
+        if (errorMessage.includes('taken') || errorMessage.includes('exists')) {
           form.setError('username', {
             type: 'manual',
             message: 'This username is already taken. Please try another one.',
@@ -170,14 +176,14 @@ export default function ProfileForm() {
           form.setError('username', {
             type: 'manual',
             message:
-              error?.message || 'There was a problem updating your username.',
+              errorMessage || 'There was a problem updating your username.',
           });
         }
       } else {
         toast({
           title: 'Update Failed',
           description:
-            error?.message || 'There was a problem updating your profile.',
+            errorMessage || 'There was a problem updating your profile.',
           variant: 'destructive',
         });
       }
@@ -226,6 +232,7 @@ export default function ProfileForm() {
         },
       );
     } catch (error) {
+      console.error('Error changing email:', error);
       toast({
         title: 'Unexpected Error',
         description: 'An unexpected error occurred while changing email.',

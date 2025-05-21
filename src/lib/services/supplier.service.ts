@@ -1,4 +1,5 @@
 import prisma from '@/lib/prisma';
+import { SupplierQueryParams, SupplierWhereInput } from '@/lib/types/supplier';
 
 export class SupplierService {
   /**
@@ -18,12 +19,7 @@ export class SupplierService {
     orderBy,
     skip,
     take,
-  }: {
-    where?: any;
-    orderBy?: any;
-    skip?: number;
-    take?: number;
-  }) {
+  }: SupplierQueryParams) {
     return prisma.supplier.findMany({
       where,
       orderBy,
@@ -42,7 +38,7 @@ export class SupplierService {
   /**
    * Count suppliers with where clause (for pagination)
    */
-  static async countWithWhere(where?: any) {
+  static async countWithWhere(where?: SupplierWhereInput) {
     return prisma.supplier.count({ where });
   }
 
