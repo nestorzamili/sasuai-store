@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
-import { User } from './main-content';
+import { User } from '@/lib/types/user';
 import {
   Dialog,
   DialogContent,
@@ -133,6 +133,7 @@ export default function UserFormDialog({
         }
       }
     } catch (error) {
+      console.error('Error creating user:', error);
       toast({
         title: 'Error',
         description: 'An unexpected error occurred',

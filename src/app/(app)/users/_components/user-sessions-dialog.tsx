@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { toast } from '@/hooks/use-toast';
-import { User } from './main-content';
+import { User, UserSession } from '@/lib/types/user';
 import {
   Dialog,
   DialogContent,
@@ -28,20 +28,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 
-interface UserSession {
-  id: string;
-  userId: string;
-  expiresAt: string;
-  createdAt: string;
-  updatedAt: string;
-  userAgent?: string | null;
-  ipAddress?: string | null;
-  lastActiveAt?: string;
-  token: string;
-  current?: boolean;
-  impersonatedBy?: string | null;
-}
-
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -66,12 +52,7 @@ export function UserSessionsDialog({
       const result = await getUserSessions({ userId: user.id });
 
       if (result.success && result.sessions) {
-        if (result.sessions.data && result.sessions.data.sessions) {
-          const sessionsData = result.sessions.data.sessions;
-          setSessions(sessionsData as unknown as UserSession[]);
-        } else {
-          setSessions(result.sessions as unknown as UserSession[]);
-        }
+        setSessions(result.sessions);
       } else {
         toast({
           title: 'Error',
@@ -80,6 +61,7 @@ export function UserSessionsDialog({
         });
       }
     } catch (error) {
+      console.error('Error fetching sessions:', error);
       toast({
         title: 'Error',
         description: 'An unexpected error occurred',
@@ -94,6 +76,7 @@ export function UserSessionsDialog({
     if (open) {
       fetchSessions();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   const handleRevokeSession = async (sessionToken: string) => {
@@ -115,6 +98,7 @@ export function UserSessionsDialog({
         });
       }
     } catch (error) {
+      console.error('Error revoking session:', error);
       toast({
         title: 'Error',
         description: 'An unexpected error occurred',
@@ -145,6 +129,7 @@ export function UserSessionsDialog({
         });
       }
     } catch (error) {
+      console.error('Error revoking all sessions:', error);
       toast({
         title: 'Error',
         description: 'An unexpected error occurred',
@@ -179,7 +164,7 @@ export function UserSessionsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] h-[700px] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center">
             <IconDevices className="mr-2" size={18} />
@@ -190,44 +175,45 @@ export function UserSessionsDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="text-sm text-muted-foreground">
-              {sessions.length} active{' '}
-              {sessions.length === 1 ? 'session' : 'sessions'}
-            </div>
-            <div className="flex items-center space-x-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={fetchSessions}
-                disabled={loading}
-              >
-                <IconRefresh
-                  size={16}
-                  className={loading ? 'animate-spin' : ''}
-                />
-                <span className="ml-1">Refresh</span>
-              </Button>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={handleRevokeAllSessions}
-                disabled={loading || revokingAll || sessions.length === 0}
-              >
-                {revokingAll ? (
-                  <IconLoader2 size={16} className="mr-1 animate-spin" />
-                ) : (
-                  <IconX size={16} className="mr-1" />
-                )}
-                <span>Revoke All</span>
-              </Button>
-            </div>
+        <div className="flex items-center justify-between py-2">
+          <div className="text-sm text-muted-foreground">
+            {sessions.length} active{' '}
+            {sessions.length === 1 ? 'session' : 'sessions'}
           </div>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={fetchSessions}
+              disabled={loading}
+            >
+              <IconRefresh
+                size={16}
+                className={loading ? 'animate-spin' : ''}
+              />
+              <span className="ml-1">Refresh</span>
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleRevokeAllSessions}
+              disabled={loading || revokingAll || sessions.length === 0}
+            >
+              {revokingAll ? (
+                <IconLoader2 size={16} className="mr-1 animate-spin" />
+              ) : (
+                <IconX size={16} className="mr-1" />
+              )}
+              <span>Revoke All</span>
+            </Button>
+          </div>
+        </div>
 
+        {/* Always use ScrollArea, with different content based on loading state */}
+        <ScrollArea className="flex-1 border rounded-md p-1">
           {loading ? (
-            <div className="space-y-3">
-              {[1, 2, 3].map((i) => (
+            <div className="space-y-3 p-2">
+              {[1, 2, 3, 4, 5].map((i) => (
                 <div
                   key={i}
                   className="flex items-center justify-between p-3 border rounded-md"
@@ -244,72 +230,71 @@ export function UserSessionsDialog({
               ))}
             </div>
           ) : sessions.length === 0 ? (
-            <Alert>
-              <AlertDescription>
-                No active sessions found for this user.
-              </AlertDescription>
-            </Alert>
+            <div className="p-4 h-full flex items-center justify-center">
+              <Alert>
+                <AlertDescription>
+                  No active sessions found for this user.
+                </AlertDescription>
+              </Alert>
+            </div>
           ) : (
-            <ScrollArea className="max-h-[400px]">
-              <div className="space-y-3">
-                {sessions.map((session) => (
-                  <div
-                    key={session.id}
-                    className="flex items-center justify-between p-3 border rounded-md"
-                  >
-                    <div className="flex items-center space-x-3">
-                      <div className="flex items-center justify-center h-8 w-8 rounded-full bg-muted text-lg">
-                        {getDeviceIcon(session.userAgent)}
+            <div className="space-y-3 p-2">
+              {sessions.map((session) => (
+                <div
+                  key={session.id}
+                  className="flex items-center justify-between p-3 border rounded-md"
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className="flex items-center justify-center h-8 w-8 rounded-full bg-muted text-lg">
+                      {getDeviceIcon(session.userAgent)}
+                    </div>
+                    <div>
+                      <div className="font-medium flex items-center">
+                        {getBrowserIcon(session.userAgent)}
+                        {session.userAgent?.split(' ').slice(0, 3).join(' ') ||
+                          'Unknown browser'}
+                        {session.current && (
+                          <Badge
+                            variant="outline"
+                            className="ml-2 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                          >
+                            Current
+                          </Badge>
+                        )}
                       </div>
-                      <div>
-                        <div className="font-medium flex items-center">
-                          {getBrowserIcon(session.userAgent)}
-                          {session.userAgent
-                            ?.split(' ')
-                            .slice(0, 3)
-                            .join(' ') || 'Unknown browser'}
-                          {session.current && (
-                            <Badge
-                              variant="outline"
-                              className="ml-2 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                            >
-                              Current
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          {session.ipAddress || 'Unknown IP'} · Active{' '}
-                          {session.lastActiveAt
-                            ? formatDistanceToNow(
-                                new Date(session.lastActiveAt),
-                                { addSuffix: true },
-                              )
-                            : formatDistanceToNow(new Date(session.createdAt), {
-                                addSuffix: true,
-                              })}
-                        </div>
+                      <div className="text-sm text-muted-foreground">
+                        {session.ipAddress || 'Unknown IP'} · Active{' '}
+                        {session.lastActiveAt
+                          ? formatDistanceToNow(
+                              new Date(session.lastActiveAt),
+                              { addSuffix: true },
+                            )
+                          : formatDistanceToNow(new Date(session.createdAt), {
+                              addSuffix: true,
+                            })}
                       </div>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleRevokeSession(session.token)}
-                      disabled={
-                        revokingSession === session.token || session.current
-                      }
-                    >
-                      {revokingSession === session.token ? (
-                        <IconLoader2 size={16} className="animate-spin" />
-                      ) : (
-                        'Revoke'
-                      )}
-                    </Button>
                   </div>
-                ))}
-              </div>
-            </ScrollArea>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleRevokeSession(session.sessionToken)}
+                    disabled={
+                      revokingSession === session.sessionToken ||
+                      session.current
+                    }
+                  >
+                    {revokingSession === session.sessionToken ? (
+                      <IconLoader2 size={16} className="animate-spin" />
+                    ) : (
+                      'Revoke'
+                    )}
+                  </Button>
+                </div>
+              ))}
+            </div>
           )}
-        </div>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );

@@ -85,12 +85,7 @@ export default function ChangePasswordForm() {
       hasValues: Boolean(currentPassword && newPassword && confirmPassword),
       isValid: form.formState.isValid,
     };
-  }, [
-    form.watch('currentPassword'),
-    form.watch('newPassword'),
-    form.watch('confirmPassword'),
-    form.formState.isValid,
-  ]);
+  }, [form]);
 
   // Centralized error handling for password change
   const handlePasswordChangeError = (errorMessage: string) => {
@@ -138,11 +133,19 @@ export default function ChangePasswordForm() {
           },
         },
       );
-    } catch (error: any) {
+    } catch (error: unknown) {
+      // Extract error message safely with type narrowing
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : typeof error === 'object' && error !== null && 'message' in error
+          ? String((error as { message: unknown }).message)
+          : 'An unknown error occurred';
+
       toast({
         title: 'Password change failed',
         description:
-          error?.message || 'There was a problem changing your password.',
+          errorMessage || 'There was a problem changing your password.',
         variant: 'destructive',
       });
     } finally {

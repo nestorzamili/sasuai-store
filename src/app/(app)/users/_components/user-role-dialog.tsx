@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
-import { User } from './main-content';
+import { User, UserRole } from '@/lib/types/user';
 import {
   Dialog,
   DialogContent,
@@ -29,26 +29,33 @@ import { Label } from '@/components/ui/label';
 import { IconKey, IconShieldCheck, IconUser } from '@tabler/icons-react';
 
 const formSchema = z.object({
-  role: z.string().min(1, 'Role is required'),
+  role: z.enum(['user', 'admin'], {
+    required_error: 'Role is required',
+  }),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
-interface Props {
+interface UserRoleDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   user: User;
   onSuccess?: () => void;
 }
 
-export function UserRoleDialog({ open, onOpenChange, user, onSuccess }: Props) {
+export function UserRoleDialog({
+  open,
+  onOpenChange,
+  user,
+  onSuccess,
+}: UserRoleDialogProps) {
   const [loading, setLoading] = useState(false);
 
-  // Initialize the form
+  // Initialize the form with properly typed role value
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      role: user.role || 'user',
+      role: (user.role || 'user') as UserRole,
     },
   });
 
@@ -76,6 +83,7 @@ export function UserRoleDialog({ open, onOpenChange, user, onSuccess }: Props) {
         });
       }
     } catch (error) {
+      console.error('Error updating role:', error);
       toast({
         title: 'Error',
         description: 'An unexpected error occurred',
