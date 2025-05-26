@@ -2,6 +2,45 @@
  * Base types for member-related entities
  */
 
+// Base discount type that matches Prisma schema
+export interface BaseDiscount {
+  id: string;
+  name: string;
+  description?: string | null;
+  value: number;
+  type: 'PERCENTAGE' | 'FIXED';
+  minPurchase: number | null;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Member discount with mapped field names for internal use
+export interface MemberDiscount {
+  id: string;
+  name: string;
+  description?: string | null;
+  discountValue: number;
+  discountType: 'PERCENTAGE' | 'FIXED';
+  minPurchase: number;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+/**
+ * Member tier model
+ */
+export interface MemberTier {
+  id: string;
+  name: string;
+  minPoints: number;
+  multiplier: number;
+  createdAt?: Date;
+  updatedAt?: Date;
+  discounts?: MemberDiscount[];
+}
+
 /**
  * Transaction model
  */
@@ -65,18 +104,6 @@ export interface RewardClaim {
 }
 
 /**
- * Member tier model
- */
-export interface MemberTier {
-  id: string;
-  name: string;
-  minPoints: number;
-  multiplier: number;
-  createdAt?: Date;
-  updatedAt?: Date;
-}
-
-/**
  * Member model
  */
 export interface Member {
@@ -91,20 +118,12 @@ export interface Member {
   tier?: MemberTier | null;
   isBanned?: boolean;
   banReason?: string | null;
-  joinDate?: Date;
-  cardId?: string;
+  joinDate?: Date | null;
+  cardId?: string | null;
   address?: string | null;
   createdAt: Date;
   updatedAt: Date;
-}
-
-/**
- * Form values for member tiers
- */
-export interface MemberTierFormValues {
-  name: string;
-  minPoints: number;
-  multiplier: number;
+  discounts?: MemberDiscount[];
 }
 
 // Member with basic tier information
@@ -123,17 +142,21 @@ export type MemberWithRelations = Member & {
 // Type for member creation
 export type CreateMemberData = {
   name: string;
-  email?: string;
-  phone?: string;
-  tierId?: string;
+  email?: string | null;
+  phone?: string | null;
+  tierId?: string | null;
+  cardId?: string | null;
+  address?: string | null;
 };
 
 // Type for member update
 export type UpdateMemberData = {
   name?: string;
-  email?: string;
-  phone?: string;
-  tierId?: string;
+  email?: string | null;
+  phone?: string | null;
+  tierId?: string | null;
+  cardId?: string | null;
+  address?: string | null;
 };
 
 // Member search parameters
@@ -147,29 +170,196 @@ export type MemberSearchParams = {
   isBanned?: boolean;
 };
 
-// Paginated response for member search
+// Point rule settings
+export interface PointRuleSettings {
+  enabled: boolean;
+  baseAmount: number;
+  pointMultiplier: number;
+}
+
+// Filter options for tables
+export interface FilterOption {
+  value: string;
+  label: string;
+}
+
+// Table filter configuration - simplified to match actual usage
+export interface TableFilter {
+  id: string;
+  label: string;
+  type: 'select' | 'date' | 'number' | 'boolean';
+  options?: FilterOption[];
+  handleFilterChange: (value: string) => void;
+}
+
+// Action result types
+export interface ActionResult<T = unknown> {
+  success: boolean;
+  data?: T;
+  error?: string;
+  message?: string;
+  validationErrors?: Array<{
+    code: string;
+    message: string;
+    path: string[];
+  }>;
+}
+
+// Component props interfaces
+export interface MemberTableProps {
+  onEdit?: (member: MemberWithTier) => void;
+  onAwardPoints: (member: MemberWithTier) => void;
+}
+
+export interface MemberFormDialogProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  initialData?: MemberWithTier;
+  tiers: MemberTier[];
+  onSuccess?: () => void;
+}
+
+export interface TiersContentProps {
+  tiers: MemberTier[];
+  onSuccess?: () => void;
+  isLoading?: boolean;
+}
+
+export interface TierStyle {
+  bg: string;
+  border: string;
+  accent: string;
+}
+
+// Utility function for mapping Prisma discount to internal MemberDiscount
+export function mapDiscountToMemberDiscount(
+  discount: BaseDiscount,
+): MemberDiscount {
+  return {
+    id: discount.id,
+    name: discount.name,
+    description: discount.description,
+    discountValue: discount.value,
+    discountType: discount.type,
+    minPurchase: discount.minPurchase || 0,
+    isActive: discount.isActive,
+    createdAt: discount.createdAt,
+    updatedAt: discount.updatedAt,
+  };
+}
+
+// Type untuk response member dari Prisma/API
+export type MemberResponse = {
+  id: string;
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  totalPoints?: number;
+  totalPointsEarned?: number;
+  tierId?: string | null;
+  isBanned?: boolean;
+  banReason?: string | null;
+  joinDate?: Date | null;
+  cardId?: string | null;
+  address?: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  discounts?: BaseDiscount[];
+  tier?: {
+    id: string;
+    name: string;
+    minPoints: number;
+    multiplier: number;
+    createdAt?: Date;
+    updatedAt?: Date;
+    discounts?: BaseDiscount[];
+  } | null;
+  memberPoints?: MemberPoint[];
+  rewardClaims?: RewardClaim[];
+  transactions?: Transaction[];
+};
+
+// Utility function to map any member response to internal MemberWithRelations type
+export function mapToMemberWithRelations(
+  memberData: MemberResponse,
+): MemberWithRelations {
+  return {
+    id: memberData.id,
+    name: memberData.name,
+    email: memberData.email,
+    phone: memberData.phone,
+    points: memberData.totalPoints || 0,
+    totalPoints: memberData.totalPoints,
+    totalPointsEarned: memberData.totalPointsEarned,
+    tierId: memberData.tierId,
+    isBanned: memberData.isBanned,
+    banReason: memberData.banReason,
+    joinDate: memberData.joinDate,
+    cardId: memberData.cardId,
+    address: memberData.address,
+    createdAt: memberData.createdAt,
+    updatedAt: memberData.updatedAt,
+    discounts: memberData.discounts?.map(mapDiscountToMemberDiscount) || [],
+    tier: memberData.tier
+      ? {
+          id: memberData.tier.id,
+          name: memberData.tier.name,
+          minPoints: memberData.tier.minPoints,
+          multiplier: memberData.tier.multiplier,
+          createdAt: memberData.tier.createdAt,
+          updatedAt: memberData.tier.updatedAt,
+          discounts:
+            memberData.tier.discounts?.map(mapDiscountToMemberDiscount) || [],
+        }
+      : null,
+    memberPoints: memberData.memberPoints || [],
+    rewardClaims: memberData.rewardClaims || [],
+    transactions: memberData.transactions || [],
+  };
+}
+
+// Utility function to map any member response to internal MemberWithTier type
+export function mapToMemberWithTier(
+  memberData: MemberResponse,
+): MemberWithTier {
+  return {
+    id: memberData.id,
+    name: memberData.name,
+    email: memberData.email,
+    phone: memberData.phone,
+    points: memberData.totalPoints || 0,
+    totalPoints: memberData.totalPoints,
+    totalPointsEarned: memberData.totalPointsEarned,
+    tierId: memberData.tierId,
+    isBanned: memberData.isBanned,
+    banReason: memberData.banReason,
+    joinDate: memberData.joinDate,
+    cardId: memberData.cardId,
+    address: memberData.address,
+    createdAt: memberData.createdAt,
+    updatedAt: memberData.updatedAt,
+    discounts: memberData.discounts?.map(mapDiscountToMemberDiscount) || [],
+    tier: memberData.tier
+      ? {
+          id: memberData.tier.id,
+          name: memberData.tier.name,
+          minPoints: memberData.tier.minPoints,
+          multiplier: memberData.tier.multiplier,
+          createdAt: memberData.tier.createdAt,
+          updatedAt: memberData.tier.updatedAt,
+          discounts:
+            memberData.tier.discounts?.map(mapDiscountToMemberDiscount) || [],
+        }
+      : null,
+  };
+}
+
+// Re-export commonly used types
+export type MemberPointHistoryItem = MemberPoint;
+export type RewardClaimHistoryItem = RewardClaim;
 export type PaginatedMemberResponse = {
   members: MemberWithTier[];
   totalCount: number;
   totalPages: number;
   currentPage: number;
 };
-
-// Member tier data types
-export type CreateMemberTierData = {
-  name: string;
-  minPoints: number;
-  multiplier: number;
-};
-
-export type UpdateMemberTierData = {
-  name?: string;
-  minPoints?: number;
-  multiplier?: number;
-};
-
-// Member point history item
-export type MemberPointHistoryItem = MemberPoint;
-
-// Reward claim history item
-export type RewardClaimHistoryItem = RewardClaim;

@@ -1,5 +1,12 @@
 import prisma from '@/lib/prisma';
 import { calculateMemberPoints } from './setting.service';
+import {
+  CreateMemberData,
+  UpdateMemberData,
+  MemberSearchParams,
+  mapToMemberWithTier,
+  MemberResponse,
+} from '@/lib/types/member';
 
 // Custom where input type to replace Prisma dependency
 interface MemberWhereInput {
@@ -23,7 +30,7 @@ export class MemberService {
    * Get a member by ID
    */
   static async getById(id: string) {
-    return prisma.member.findUnique({
+    const result = await prisma.member.findUnique({
       where: { id },
       include: {
         tier: {
@@ -60,19 +67,15 @@ export class MemberService {
         },
       },
     });
+
+    // Return the raw result - type conversion will happen at the action level
+    return result;
   }
 
   /**
    * Create a new member
    */
-  static async create(data: {
-    name: string;
-    email?: string;
-    address?: string;
-    cardId: string;
-    phone?: string;
-    tierId?: string;
-  }) {
+  static async create(data: CreateMemberData & { cardId: string }) {
     return prisma.$transaction(async (tx) => {
       // If no tier is specified, assign the lowest tier
       let tierToAssign = data.tierId;
@@ -115,14 +118,7 @@ export class MemberService {
    */
   static async update(
     id: string,
-    data: {
-      name?: string;
-      address?: string;
-      cardId?: string;
-      email?: string;
-      phone?: string;
-      tierId?: string;
-    }
+    data: UpdateMemberData & { cardId?: string },
   ) {
     return prisma.member.update({
       where: { id },
@@ -145,23 +141,16 @@ export class MemberService {
   /**
    * Search members with pagination
    */
-  static async search({
-    query = '',
-    tier = '',
-    page = 1,
-    limit = 10,
-    sortBy = 'name',
-    sortDirection = 'asc',
-    isBanned,
-  }: {
-    query?: string;
-    tier?: string;
-    page?: number;
-    limit?: number;
-    sortBy?: string;
-    sortDirection?: 'asc' | 'desc';
-    isBanned?: boolean;
-  }) {
+  static async search(params: MemberSearchParams) {
+    const {
+      query = '',
+      tier = '',
+      page = 1,
+      limit = 10,
+      sortBy = 'name',
+      sortDirection = 'asc',
+      isBanned,
+    } = params;
     const skip = (page - 1) * limit;
 
     const where: MemberWhereInput = {};
@@ -251,7 +240,7 @@ export class MemberService {
     transactionId: string,
     points: number,
     notes?: string,
-    cashierId?: string
+    cashierId?: string,
   ) {
     return prisma.$transaction(async (tx) => {
       const isManualAward = notes !== undefined;
@@ -463,7 +452,7 @@ export class MemberService {
    */
   static async calculatePotentialPoints(
     memberId: string,
-    transactionAmount: number
+    transactionAmount: number,
   ): Promise<number> {
     const memberData = await this.getById(memberId);
 
@@ -471,12 +460,8 @@ export class MemberService {
       throw new Error('Member not found');
     }
 
-    // More explicit type assertion for the member object
-    const member = {
-      ...memberData,
-      points: memberData.totalPoints || 0,
-      tier: memberData.tier,
-    } as any; // Use stronger type assertion to bypass type checking
+    // Use utility function to map member response to internal type
+    const member = mapToMemberWithTier(memberData as MemberResponse);
 
     // Use the settings-based point calculation
     const points = await calculateMemberPoints(transactionAmount, member);
@@ -516,7 +501,7 @@ export class MemberService {
       name?: string;
       minPoints?: number;
       multiplier?: number;
-    }
+    },
   ) {
     return prisma.memberTier.update({
       where: { id },
@@ -535,7 +520,7 @@ export class MemberService {
 
     if (membersUsingTier > 0) {
       throw new Error(
-        `Cannot delete tier: ${membersUsingTier} members are using this tier`
+        `Cannot delete tier: ${membersUsingTier} members are using this tier`,
       );
     }
 

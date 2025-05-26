@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import {
@@ -50,7 +51,7 @@ import {
 import { formatRupiah } from '@/lib/currency';
 
 // Form schema for point rules
-const formSchema = z.object({
+const pointRulesSchema = z.object({
   enabled: z.boolean(),
   baseAmount: z.coerce
     .number()
@@ -61,7 +62,7 @@ const formSchema = z.object({
     .min(0.1, 'Multiplier must be at least 0.1'),
 });
 
-type FormValues = z.infer<typeof formSchema>;
+type FormValues = z.infer<typeof pointRulesSchema>;
 
 // Define tier multipliers
 const TIER_MULTIPLIERS = {
@@ -93,6 +94,7 @@ export default function PointRulesContent() {
 
   // Initialize the form
   const form = useForm<FormValues>({
+    resolver: zodResolver(pointRulesSchema),
     defaultValues: {
       enabled: true,
       baseAmount: 10000,
@@ -116,7 +118,7 @@ export default function PointRulesContent() {
 
   // Handle example amount change
   const handleExampleAmountChange = (
-    e: React.ChangeEvent<HTMLInputElement>
+    e: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const value = parseInt(e.target.value);
     if (!isNaN(value) && value > 0) {
@@ -148,6 +150,7 @@ export default function PointRulesContent() {
           });
         }
       } catch (error) {
+        console.error('Failed to load point rule settings:', error);
         toast({
           title: 'Error',
           description: 'Failed to load point rule settings',
@@ -187,6 +190,7 @@ export default function PointRulesContent() {
         });
       }
     } catch (error) {
+      console.error('Failed to update point rule settings:', error);
       toast({
         title: 'Error',
         description: 'Failed to update point rule settings',
@@ -220,10 +224,10 @@ export default function PointRulesContent() {
   const calculatePoints = (amount: number, tierMultiplier = 1) => {
     const basePoints = Math.floor(amount / form.watch('baseAmount'));
     const withGlobalMultiplier = Math.floor(
-      basePoints * form.watch('pointMultiplier')
+      basePoints * form.watch('pointMultiplier'),
     );
     const withTierMultiplier = Math.floor(
-      withGlobalMultiplier * tierMultiplier
+      withGlobalMultiplier * tierMultiplier,
     );
     return withTierMultiplier;
   };
@@ -430,7 +434,7 @@ export default function PointRulesContent() {
                               points
                             </div>
                           </div>
-                        )
+                        ),
                       )}
                     </div>
                   </AccordionContent>

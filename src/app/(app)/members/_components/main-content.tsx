@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { getAllMemberTiers, awardPointsToMember } from '../action';
-import { MemberWithTier } from '@/lib/types/member';
+import { MemberWithTier, MemberTier } from '@/lib/types/member';
 import MemberPrimaryButton from './member-primary-button';
 import { MemberTable } from './member-table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -30,16 +30,7 @@ export default function MainContent() {
     null,
   );
   const [activeTab, setActiveTab] = useState('members');
-  const [tiers, setTiers] = useState<
-    Array<{
-      name: string;
-      id: string;
-      createdAt: Date;
-      updatedAt: Date;
-      minPoints: number;
-      multiplier: number;
-    }>
-  >([]);
+  const [tiers, setTiers] = useState<MemberTier[]>([]);
 
   // Award points state
   const [isAwardPointsOpen, setIsAwardPointsOpen] = useState(false);
@@ -57,6 +48,7 @@ export default function MainContent() {
         setTiers(data);
       }
     } catch (error) {
+      console.error('Failed to fetch member tiers:', error);
       toast({
         title: 'Error',
         description: 'Failed to fetch member tiers',
@@ -153,6 +145,7 @@ export default function MainContent() {
         });
       }
     } catch (error) {
+      console.error('Failed to award points:', error);
       toast({
         title: 'Error',
         description: 'An unexpected error occurred',
