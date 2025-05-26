@@ -43,6 +43,7 @@ export default function TierDeleteDialog({
         });
       }
     } catch (error) {
+      console.error('Failed to delete member tier:', error);
       toast({
         title: 'Error',
         description: 'An unexpected error occurred',

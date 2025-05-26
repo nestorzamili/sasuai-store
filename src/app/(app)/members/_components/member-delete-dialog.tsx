@@ -43,6 +43,7 @@ export function MemberDeleteDialog({
         });
       }
     } catch (error) {
+      console.error('Failed to delete member:', error);
       toast({
         title: 'Error',
         description: 'An unexpected error occurred',

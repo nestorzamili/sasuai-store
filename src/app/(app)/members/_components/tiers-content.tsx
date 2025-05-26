@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { MemberTier } from '@/lib/types/member';
+import { MemberTier, TiersContentProps, TierStyle } from '@/lib/types/member';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -46,7 +46,7 @@ const TIER_STYLES = {
 };
 
 // Map tier names to specific styles
-const getTierStyle = (tier: MemberTier, index: number) => {
+const getTierStyle = (tier: MemberTier): TierStyle => {
   const tierName = tier.name.toLowerCase();
 
   if (tierName.includes('bronze')) return TIER_STYLES.bronze;
@@ -63,12 +63,6 @@ const getTierStyle = (tier: MemberTier, index: number) => {
     accent: `bg-[hsl(${hue},70%,50%)]`,
   };
 };
-
-interface TiersContentProps {
-  tiers: MemberTier[];
-  onSuccess?: () => void;
-  isLoading?: boolean;
-}
 
 export default function TiersContent({
   tiers,
@@ -204,7 +198,7 @@ function TierCard({
   onEdit: (tier: MemberTier) => void;
   onDelete: (tier: MemberTier) => void;
 }) {
-  const colors = getTierStyle(tier, index);
+  const colors = getTierStyle(tier);
 
   return (
     <Card

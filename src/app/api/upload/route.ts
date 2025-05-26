@@ -60,6 +60,7 @@ export async function POST(request: NextRequest) {
       url: optimizedUrl,
       publicId: uploadResult.public_id,
     });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.error('Upload error:', error);
     return Response.json(
