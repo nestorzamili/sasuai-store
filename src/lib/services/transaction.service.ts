@@ -6,12 +6,29 @@ import {
   PaymentValidationResult,
   TransactionSummary,
   TransactionPaginationParams,
+  TransactionPaginationResult,
+  TransactionDetailResult,
+  TransactionExecutionResult,
+  MemberBanCheckResult,
+  TransactionWhereInput,
   DiscountType,
+  MemberRecord,
+  MemberDiscountInfo,
+  DiscountInfo,
+  GlobalDiscountInfo,
+  PreparedTransactionItem,
+  AppliedDiscount,
+  MemberInfoForValidation,
 } from '@/lib/types/transaction';
 import prisma from '@/lib/prisma';
 import { calculateMemberPoints } from './setting.service';
 import { errorHandling } from '../common/response-formatter';
 import { format } from 'date-fns';
+
+// Add type for Prisma transaction context
+type PrismaTransactionContext = Parameters<
+  Parameters<typeof prisma.$transaction>[0]
+>[0];
 
 export class TransactionService {
   private static readonly STORE_PREFIX = 'SAS';
@@ -65,11 +82,11 @@ export class TransactionService {
       }
 
       // Get applicable discount - only if specifically selected
-      let selectedDiscount = null as any;
+      let selectedDiscount: AppliedDiscount | null = null;
       const now = new Date();
 
       if (cartItem.selectedDiscountId) {
-        selectedDiscount = product.discounts.find(
+        const discount = product.discounts.find(
           (discount) =>
             discount.id === cartItem.selectedDiscountId &&
             discount.isActive &&
@@ -78,11 +95,19 @@ export class TransactionService {
             (!discount.maxUses || discount.usedCount < discount.maxUses),
         );
 
-        if (cartItem.selectedDiscountId && !selectedDiscount) {
+        if (cartItem.selectedDiscountId && !discount) {
           errors.push(
             `Selected discount for product ${product.id} is not valid or has reached usage limit`,
           );
           continue;
+        }
+
+        if (discount) {
+          selectedDiscount = {
+            id: discount.id,
+            value: discount.value,
+            type: discount.type,
+          };
         }
       }
       // We're not auto-selecting any discount when none is chosen
@@ -90,13 +115,11 @@ export class TransactionService {
       // Calculate final price and subtotal
       const basicPrice = product.price;
       let discountValue = 0;
-      let discountType = null;
-      let discountId = null;
+      let discountType: string | null = null;
 
       if (selectedDiscount) {
         discountValue = selectedDiscount.value;
         discountType = selectedDiscount.type;
-        discountId = selectedDiscount.id;
       }
 
       const finalPrice = this.calculateDiscountedPrice(
@@ -118,7 +141,7 @@ export class TransactionService {
               id: selectedDiscount.id,
               value: selectedDiscount.value,
               type: selectedDiscount.type,
-              valueType: selectedDiscount.type,
+              valueType: selectedDiscount.type as DiscountType,
             }
           : null,
         discountedPrice: finalPrice,
@@ -172,13 +195,13 @@ export class TransactionService {
     );
 
     // Get member discount info if applicable
-    let memberInfo = null as any;
+    let memberInfo: MemberInfoForValidation | null = null;
     if (memberId) {
       memberInfo = await this.getMemberInfo(memberId);
     }
 
     // Process discounts based on what was sent from frontend
-    let appliedDiscount = null as any;
+    let appliedDiscount: DiscountInfo | GlobalDiscountInfo | null = null;
     let discountSource: 'global' | 'member' | 'tier' | null = null;
 
     // 1. If global discount code provided, validate and apply it
@@ -233,11 +256,14 @@ export class TransactionService {
               ...memberInfo,
               discount:
                 discountSource === 'member' || discountSource === 'tier'
-                  ? appliedDiscount
+                  ? (appliedDiscount as DiscountInfo)
                   : null,
             }
           : null,
-        globalDiscount: discountSource === 'global' ? appliedDiscount : null,
+        globalDiscount:
+          discountSource === 'global'
+            ? (appliedDiscount as GlobalDiscountInfo)
+            : null,
         discountSource,
         finalAmount,
       },
@@ -248,7 +274,7 @@ export class TransactionService {
     memberId: string | null | undefined,
     selectedMemberDiscountId: string | null,
     subtotal: number,
-  ) {
+  ): Promise<MemberDiscountInfo | null> {
     if (!memberId) return null;
 
     // Get member with discount relations
@@ -306,7 +332,9 @@ export class TransactionService {
   }
 
   // Get basic member info
-  private static async getMemberInfo(memberId: string) {
+  private static async getMemberInfo(
+    memberId: string,
+  ): Promise<MemberInfoForValidation | null> {
     const member = await prisma.member.findUnique({
       where: { id: memberId },
       include: {
@@ -320,7 +348,7 @@ export class TransactionService {
       id: memberId,
       name: member.name,
       tierId: member.tierId,
-      tierName: member.tier?.name,
+      tierName: member.tier?.name || null,
     };
   }
 
@@ -329,7 +357,7 @@ export class TransactionService {
     tierId: string,
     discountId: string,
     subtotal: number,
-  ) {
+  ): Promise<DiscountInfo | null> {
     // Get tier discount
     const tierDiscount = await prisma.discount.findFirst({
       where: {
@@ -376,7 +404,7 @@ export class TransactionService {
   private static async getGlobalDiscountInfo(
     discountCode: string,
     subtotal: number,
-  ) {
+  ): Promise<GlobalDiscountInfo | null> {
     // Get global discount by code
     const globalDiscount = await prisma.discount.findFirst({
       where: {
@@ -410,7 +438,7 @@ export class TransactionService {
     return discountAmount > 0
       ? {
           id: globalDiscount.id,
-          code: globalDiscount.code,
+          code: globalDiscount.code || '',
           value: globalDiscount.value,
           type: globalDiscount.type as DiscountType,
           amount: discountAmount,
@@ -546,12 +574,12 @@ export class TransactionService {
     validatedCart: ValidatedCartItem[],
     transactionData: TransactionSummary,
     change: number,
-  ) {
+  ): Promise<TransactionExecutionResult> {
     // Transform validated items into database format
     const items = this.prepareTransactionItems(validatedCart);
 
     // Execute database transaction
-    return await prisma.$transaction(async (tx) => {
+    return await prisma.$transaction(async (tx: PrismaTransactionContext) => {
       try {
         // Generate transaction ID
         const tranId = await this.generateTransactionId();
@@ -580,7 +608,7 @@ export class TransactionService {
             data.memberId,
             transaction.id,
             transactionData.subtotal,
-            transaction.tranId,
+            transaction.tranId || tranId, // Use fallback if tranId is null
           );
         }
 
@@ -630,10 +658,10 @@ export class TransactionService {
    */
   // Fix this method signature to accept either approach
   private static async incrementDiscountUsages(
-    tx: any,
+    tx: PrismaTransactionContext,
     validatedCart: ValidatedCartItem[],
     transactionDiscountId: string | null | undefined,
-  ) {
+  ): Promise<void> {
     // Get all product discount IDs
     const productDiscountIds = validatedCart
       .filter((item) => item.discount?.id)
@@ -656,7 +684,9 @@ export class TransactionService {
     }
   }
 
-  private static prepareTransactionItems(validatedCart: ValidatedCartItem[]) {
+  private static prepareTransactionItems(
+    validatedCart: ValidatedCartItem[],
+  ): PreparedTransactionItem[] {
     return validatedCart.map((item) => ({
       productId: item.productId,
       batchId: item.batchId,
@@ -672,13 +702,13 @@ export class TransactionService {
   }
 
   private static async createTransactionRecord(
-    tx: any,
+    tx: PrismaTransactionContext,
     tranId: string,
     data: TransactionData,
     transactionData: TransactionSummary,
     paymentAmount: number,
     change: number,
-    items: any[],
+    items: PreparedTransactionItem[],
   ) {
     let discountId = null as string | null;
     let discountAmount = null as number | null;
@@ -751,12 +781,12 @@ export class TransactionService {
   }
 
   private static async processMemberPoints(
-    tx: any,
+    tx: PrismaTransactionContext,
     memberId: string,
     transactionId: string,
     subtotal: number,
     tranId: string,
-  ) {
+  ): Promise<void> {
     // Get member data
     const member = await tx.member.findUnique({
       where: { id: memberId },
@@ -765,8 +795,28 @@ export class TransactionService {
 
     if (!member) return;
 
+    // Map database member to the expected type for calculateMemberPoints
+    const memberForPointsCalculation = {
+      id: member.id,
+      name: member.name,
+      points: member.totalPoints,
+      createdAt: member.createdAt,
+      updatedAt: member.updatedAt,
+      tier: member.tier
+        ? {
+            id: member.tier.id,
+            name: member.tier.name,
+            minPoints: member.tier.minPoints,
+            multiplier: member.tier.multiplier,
+          }
+        : null,
+    };
+
     // Calculate points
-    const pointsEarned = await calculateMemberPoints(subtotal, member);
+    const pointsEarned = await calculateMemberPoints(
+      subtotal,
+      memberForPointsCalculation,
+    );
     if (pointsEarned <= 0) return;
 
     // Create points record
@@ -790,11 +840,26 @@ export class TransactionService {
       include: { tier: true },
     });
 
+    // Map updatedMember to MemberRecord type
+    const memberRecord: MemberRecord = {
+      id: updatedMember.id,
+      name: updatedMember.name,
+      tierId: updatedMember.tierId,
+      totalPoints: updatedMember.totalPoints,
+      totalPointsEarned: updatedMember.totalPointsEarned,
+      isBanned: updatedMember.isBanned,
+      banReason: updatedMember.banReason,
+      tier: updatedMember.tier,
+    };
+
     // Check for tier upgrade eligibility
-    await this.checkAndUpdateMemberTier(tx, updatedMember);
+    await this.checkAndUpdateMemberTier(tx, memberRecord);
   }
 
-  private static async checkAndUpdateMemberTier(tx: any, member: any) {
+  private static async checkAndUpdateMemberTier(
+    tx: PrismaTransactionContext,
+    member: MemberRecord,
+  ): Promise<void> {
     const eligibleTier = await tx.memberTier.findFirst({
       where: {
         minPoints: { lte: member.totalPointsEarned },
@@ -810,7 +875,10 @@ export class TransactionService {
     }
   }
 
-  private static async updateInventory(tx: any, items: any[]) {
+  private static async updateInventory(
+    tx: PrismaTransactionContext,
+    items: PreparedTransactionItem[],
+  ): Promise<void> {
     for (const item of items) {
       // Get batch information
       const batch = await tx.productBatch.findUnique({
@@ -883,9 +951,9 @@ export class TransactionService {
     endDate,
     minAmount,
     maxAmount,
-  }: TransactionPaginationParams) {
+  }: TransactionPaginationParams): Promise<TransactionPaginationResult> {
     // Build where clause based on filters
-    const where: any = {};
+    const where: TransactionWhereInput = {};
 
     // Add search filter (search in transaction ID or member name)
     if (search) {
@@ -920,7 +988,9 @@ export class TransactionService {
     const skip = (page - 1) * pageSize;
 
     // Get order by field
-    const orderBy: any = {};
+    const orderBy:
+      | Record<string, 'asc' | 'desc'>
+      | Record<string, Record<string, 'asc' | 'desc'>> = {};
 
     // Handle nested fields
     if (sortField.includes('.')) {
@@ -1017,7 +1087,9 @@ export class TransactionService {
    * @returns Transaction details with discounts applied
    */
 
-  static async getTransactionById(id: string) {
+  static async getTransactionById(
+    id: string,
+  ): Promise<TransactionDetailResult> {
     try {
       const transaction = await prisma.transaction.findUnique({
         where: { id },
@@ -1068,7 +1140,7 @@ export class TransactionService {
         const appliedDiscount = item.discount;
 
         // Calculate discount amount for item
-        let discountAmount = item.discountAmount || 0;
+        const discountAmount = item.discountAmount || 0;
         productDiscounts += discountAmount;
 
         return {
@@ -1156,7 +1228,7 @@ export class TransactionService {
   }
 
   // Check if member is banned
-  static async isMemberBanned(memberId: string) {
+  static async isMemberBanned(memberId: string): Promise<MemberBanCheckResult> {
     const member = await prisma.member.findUnique({
       where: { id: memberId },
       select: { isBanned: true, banReason: true },
