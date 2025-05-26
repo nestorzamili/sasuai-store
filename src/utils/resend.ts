@@ -1,15 +1,3 @@
-import nodemailer from 'nodemailer';
-
-const transporter = nodemailer.createTransport({
-  host: 'smtp.resend.com',
-  port: 465,
-  secure: true,
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-});
-
 export async function sendEmail({
   to,
   subject,
@@ -28,15 +16,26 @@ export async function sendEmail({
   }
 
   try {
-    const info = await transporter.sendMail({
-      from,
-      to,
-      subject,
-      html,
+    const response = await fetch(`${process.env.BETTER_AUTH_URL}/api/mail`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        to,
+        subject,
+        html,
+        from,
+      }),
     });
 
-    console.log('Email sent successfully:', info.messageId);
-    return info;
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(`Email API error: ${errorData.error}`);
+    }
+
+    const result = await response.json();
+    return result;
   } catch (error) {
     console.error('Failed to send email:', error);
     throw error;
