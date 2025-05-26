@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { getTransactionById } from '../action';
 import { formatRupiah } from '@/lib/currency';
 import { Badge } from '@/components/ui/badge';
@@ -20,19 +20,20 @@ import { toast } from '@/hooks/use-toast';
 import { IconDownload } from '@tabler/icons-react';
 import { pdf } from '@react-pdf/renderer';
 import { TransactionPDF } from './transaction-generate-pdf';
-
-interface TransactionDetailDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  transactionId: string;
-}
+import {
+  TransactionDetailDialogProps,
+  TransactionDetail,
+  TransactionDetailItem,
+} from '@/lib/types/transaction';
 
 export function TransactionDetailDialog({
   open,
   onOpenChange,
   transactionId,
 }: TransactionDetailDialogProps) {
-  const [transaction, setTransaction] = useState<any>(null);
+  const [transaction, setTransaction] = useState<TransactionDetail | null>(
+    null,
+  );
   const [loading, setLoading] = useState(true);
   const [pdfLoading, setPdfLoading] = useState(false);
   const isMounted = useRef(true);
@@ -51,8 +52,58 @@ export function TransactionDetailDialog({
         setLoading(true);
         const result = await getTransactionById(transactionId);
 
-        if (result.success && isMounted.current) {
-          setTransaction(result.data);
+        if (result.success && result.data && isMounted.current) {
+          // Convert the API response to match the component's expected type
+          const transactionData: TransactionDetail = {
+            id: result.data.id,
+            tranId: result.data.tranId,
+            createdAt: result.data.createdAt.toString(), // Convert Date to string
+            cashier: {
+              name: result.data.cashier.name,
+            },
+            member: result.data.member
+              ? {
+                  id: result.data.member.id,
+                  name: result.data.member.name,
+                  tier: result.data.member.tier,
+                }
+              : null,
+            pricing: {
+              originalAmount: result.data.pricing.originalAmount,
+              finalAmount: result.data.pricing.finalAmount,
+              discounts: {
+                member: result.data.pricing.discounts.member,
+                products: result.data.pricing.discounts.products,
+                total: result.data.pricing.discounts.total,
+              },
+            },
+            payment: {
+              method: result.data.payment.method,
+              amount: result.data.payment.amount,
+              change: result.data.payment.change,
+            },
+            items: result.data.items.map((item) => ({
+              id: item.id,
+              product: {
+                name: item.product.name,
+                price: item.product.price,
+                unit: item.product.unit,
+                category: item.product.category,
+              },
+              quantity: item.quantity,
+              originalAmount: item.originalAmount,
+              discountApplied: item.discountApplied
+                ? {
+                    id: item.discountApplied.id,
+                    name: item.discountApplied.name,
+                    amount: item.discountApplied.amount,
+                  }
+                : null,
+            })),
+            pointsEarned: result.data.pointsEarned,
+          };
+
+          setTransaction(transactionData);
         } else if (isMounted.current) {
           toast({
             title: 'Error',
@@ -60,7 +111,8 @@ export function TransactionDetailDialog({
             variant: 'destructive',
           });
         }
-      } catch (err) {
+      } catch (error) {
+        console.error('Error fetching transaction details:', error);
         if (isMounted.current) {
           toast({
             title: 'Error',
@@ -77,6 +129,47 @@ export function TransactionDetailDialog({
 
     fetchTransactionDetails();
   }, [open, transactionId]);
+
+  // Memoize handlers
+  const handlePdfGeneration = useCallback(async () => {
+    if (!transaction) return;
+
+    try {
+      setPdfLoading(true);
+
+      // Generate PDF blob
+      const blob = await pdf(
+        <TransactionPDF transaction={transaction} />,
+      ).toBlob();
+
+      // Create download link and trigger download
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Receipt-${transaction.tranId}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // Clean up
+      setTimeout(() => URL.revokeObjectURL(url), 100);
+
+      if (isMounted.current) {
+        setPdfLoading(false);
+      }
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to generate PDF',
+        variant: 'destructive',
+      });
+    } finally {
+      if (isMounted.current) {
+        setPdfLoading(false);
+      }
+    }
+  }, [transaction, isMounted]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -175,7 +268,7 @@ export function TransactionDetailDialog({
                       </thead>
                       <tbody>
                         {(transaction?.items || []).map(
-                          (item: any, index: number) => (
+                          (item: TransactionDetailItem, index: number) => (
                             <tr
                               key={item?.id || index}
                               className="border-t hover:bg-muted/50 transition-colors"
@@ -323,7 +416,8 @@ export function TransactionDetailDialog({
                     </div>
 
                     {(transaction?.payment?.method === 'CASH' ||
-                      transaction?.payment?.change > 0) && (
+                      (transaction?.payment?.change !== null &&
+                        transaction?.payment?.change > 0)) && (
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Change</span>
                         <span className="font-medium">
@@ -388,46 +482,7 @@ export function TransactionDetailDialog({
             Close
           </Button>
           {!loading && transaction && (
-            <Button
-              onClick={async () => {
-                try {
-                  setPdfLoading(true);
-
-                  // Generate PDF blob
-                  const blob = await pdf(
-                    <TransactionPDF transaction={transaction} />,
-                  ).toBlob();
-
-                  // Create download link and trigger download
-                  const url = URL.createObjectURL(blob);
-                  const link = document.createElement('a');
-                  link.href = url;
-                  link.download = `Receipt-${transaction.tranId}.pdf`;
-                  document.body.appendChild(link);
-                  link.click();
-                  document.body.removeChild(link);
-
-                  // Clean up
-                  setTimeout(() => URL.revokeObjectURL(url), 100);
-
-                  if (isMounted.current) {
-                    setPdfLoading(false);
-                  }
-                } catch (error) {
-                  console.error('Error generating PDF:', error);
-                  toast({
-                    title: 'Error',
-                    description: 'Failed to generate PDF',
-                    variant: 'destructive',
-                  });
-
-                  if (isMounted.current) {
-                    setPdfLoading(false);
-                  }
-                }
-              }}
-              disabled={pdfLoading}
-            >
+            <Button onClick={handlePdfGeneration} disabled={pdfLoading}>
               <IconDownload className="h-4 w-4 mr-2" />
               {pdfLoading ? 'Generating PDF...' : 'Download PDF'}
             </Button>

@@ -7,6 +7,7 @@ import {
   Image,
 } from '@react-pdf/renderer';
 import { formatRupiah } from '@/lib/currency';
+import { PDFTransaction, PDFTransactionItem } from '@/lib/types/transaction';
 
 const STORE_LOGO =
   'https://res.cloudinary.com/samunu/image/upload/f_auto,q_auto/v1745953012/icon_z07a9i.png';
@@ -209,7 +210,11 @@ const styles = StyleSheet.create({
   },
 });
 
-export const TransactionPDF = ({ transaction }: { transaction: any }) => (
+export const TransactionPDF = ({
+  transaction,
+}: {
+  transaction: PDFTransaction;
+}) => (
   <Document>
     <Page size="A4" style={styles.page}>
       <View style={styles.header}>
@@ -260,7 +265,9 @@ export const TransactionPDF = ({ transaction }: { transaction: any }) => (
           <View style={styles.metaColumn}>
             <Text style={styles.metaLabel}>Payment Method</Text>
             <Text style={styles.metaValue}>
-              {transaction.paymentMethod || 'Cash'}
+              {transaction.payment?.method ||
+                transaction.paymentMethod ||
+                'Cash'}
             </Text>
           </View>
         </View>
@@ -276,7 +283,7 @@ export const TransactionPDF = ({ transaction }: { transaction: any }) => (
           <Text style={styles.col5}>Total</Text>
         </View>
 
-        {transaction.items?.map((item: any, index: number) => (
+        {transaction.items?.map((item: PDFTransactionItem, index: number) => (
           <View
             key={index}
             style={
@@ -348,16 +355,23 @@ export const TransactionPDF = ({ transaction }: { transaction: any }) => (
           <Text style={styles.summaryLabel}>Amount Paid</Text>
           <Text style={styles.summaryValue}>
             {formatRupiah(
-              transaction.amountPaid || transaction.pricing?.finalAmount || 0,
+              transaction.payment?.amount ||
+                transaction.amountPaid ||
+                transaction.pricing?.finalAmount ||
+                0,
             )}
           </Text>
         </View>
-        {transaction.amountPaid > transaction.pricing?.finalAmount && (
+        {(transaction.payment?.amount || transaction.amountPaid || 0) >
+          (transaction.pricing?.finalAmount || 0) && (
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Change</Text>
             <Text style={styles.summaryValue}>
               {formatRupiah(
-                transaction.amountPaid - transaction.pricing?.finalAmount,
+                transaction.payment?.change ||
+                  (transaction.payment?.amount || transaction.amountPaid || 0) -
+                    (transaction.pricing?.finalAmount || 0) ||
+                  0,
               )}
             </Text>
           </View>
