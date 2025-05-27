@@ -1,27 +1,16 @@
 import prisma from '@/lib/prisma';
-
-// Custom type definitions to replace Prisma imports
-interface RewardWhereInput {
-  isActive?: boolean;
-  OR?: Array<{
-    name?: { contains: string; mode?: 'insensitive' };
-    description?: { contains: string; mode?: 'insensitive' };
-  }>;
-  AND?: Array<
-    | {
-        OR?: Array<{ expiryDate: null } | { expiryDate: { gte: Date } }>;
-      }
-    | any
-  >;
-}
-
-interface RewardClaimWhereInput {
-  OR?: Array<{
-    member?: { name?: { contains: string; mode?: 'insensitive' } };
-    reward?: { name?: { contains: string; mode?: 'insensitive' } };
-  }>;
-  status?: string;
-}
+import {
+  CreateRewardData,
+  UpdateRewardData,
+  RewardSearchParams,
+  RewardClaimSearchParams,
+  PaginatedRewardResponse,
+  PaginatedClaimResponse,
+  RewardWithClaimCount,
+  RewardClaimWithRelations,
+  RewardWhereInput,
+  RewardClaimWhereInput,
+} from '@/lib/types/reward';
 
 export class RewardService {
   /**
@@ -36,15 +25,7 @@ export class RewardService {
   /**
    * Create a new reward
    */
-  static async create(data: {
-    name: string;
-    pointsCost: number;
-    stock: number;
-    isActive?: boolean;
-    description?: string;
-    imageUrl?: string;
-    expiryDate?: Date;
-  }) {
+  static async create(data: CreateRewardData) {
     let isActive = data.isActive ?? true;
 
     if (data.expiryDate) {
@@ -75,20 +56,9 @@ export class RewardService {
   /**
    * Update a reward
    */
-  static async update(
-    id: string,
-    data: {
-      name?: string;
-      pointsCost?: number;
-      stock?: number;
-      isActive?: boolean;
-      description?: string | null;
-      imageUrl?: string | null;
-      expiryDate?: Date | null;
-    },
-  ) {
+  static async update(id: string, data: UpdateRewardData) {
     // Jika tanggal kedaluwarsa diperbarui dan sudah lewat, otomatis nonaktifkan
-    let updatedData = { ...data };
+    const updatedData = { ...data };
 
     if (data.expiryDate) {
       // Bandingkan tanggal saja, tanpa waktu
@@ -122,7 +92,7 @@ export class RewardService {
   /**
    * Check if a reward has been claimed
    */
-  static async hasClaims(id: string) {
+  static async hasClaims(id: string): Promise<boolean> {
     const count = await prisma.rewardClaim.count({
       where: { rewardId: id },
     });
@@ -147,21 +117,18 @@ export class RewardService {
   /**
    * Search rewards with pagination
    */
-  static async search({
-    query = '',
-    page = 1,
-    limit = 10,
-    sortBy = 'name',
-    sortDirection = 'asc',
-    includeInactive = false,
-  }: {
-    query?: string;
-    page?: number;
-    limit?: number;
-    sortBy?: string;
-    sortDirection?: 'asc' | 'desc';
-    includeInactive?: boolean;
-  }) {
+  static async search(
+    params: RewardSearchParams,
+  ): Promise<PaginatedRewardResponse> {
+    const {
+      query = '',
+      page = 1,
+      limit = 10,
+      sortBy = 'name',
+      sortDirection = 'asc',
+      includeInactive = false,
+    } = params;
+
     const skip = (page - 1) * limit;
 
     const where: RewardWhereInput = {};
@@ -209,7 +176,7 @@ export class RewardService {
         },
         skip,
         take: limit,
-      }),
+      }) as Promise<RewardWithClaimCount[]>,
       prisma.reward.count({ where }),
     ]);
 
@@ -224,21 +191,18 @@ export class RewardService {
   /**
    * Get all reward claims with pagination
    */
-  static async getPaginatedClaims({
-    page = 1,
-    limit = 10,
-    sortBy = 'claimDate',
-    sortDirection = 'desc',
-    search = '',
-    status = '',
-  }: {
-    page?: number;
-    limit?: number;
-    sortBy?: string;
-    sortDirection?: 'asc' | 'desc';
-    search?: string;
-    status?: string;
-  }) {
+  static async getPaginatedClaims(
+    params: RewardClaimSearchParams,
+  ): Promise<PaginatedClaimResponse> {
+    const {
+      page = 1,
+      limit = 10,
+      sortBy = 'claimDate',
+      sortDirection = 'desc',
+      search = '',
+      status = '',
+    } = params;
+
     const skip = (page - 1) * limit;
 
     // Build where conditions
@@ -268,7 +232,7 @@ export class RewardService {
         },
         skip,
         take: limit,
-      }),
+      }) as Promise<RewardClaimWithRelations[]>,
       prisma.rewardClaim.count({ where }),
     ]);
 
@@ -283,7 +247,10 @@ export class RewardService {
   /**
    * Update reward claim status
    */
-  static async updateClaimStatus(id: string, status: string) {
+  static async updateClaimStatus(
+    id: string,
+    status: string,
+  ): Promise<RewardClaimWithRelations> {
     return prisma.rewardClaim.update({
       where: { id },
       data: { status },
@@ -291,6 +258,6 @@ export class RewardService {
         member: true,
         reward: true,
       },
-    });
+    }) as Promise<RewardClaimWithRelations>;
   }
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -28,6 +28,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Search, Loader2, X } from 'lucide-react';
+import { Member, RewardWithClaimCount, LoadingState } from '@/lib/types/reward';
 
 interface ClaimRewardDialogProps {
   open: boolean;
@@ -41,38 +42,147 @@ export function ClaimRewardDialog({
   onSuccess,
 }: ClaimRewardDialogProps) {
   // Main state
-  const [selectedRewardId, setSelectedRewardId] = useState('');
-  const [availableRewards, setAvailableRewards] = useState<any[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedMember, setSelectedMember] = useState<any>(null);
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [selectedRewardId, setSelectedRewardId] = useState<string>('');
+  const [availableRewards, setAvailableRewards] = useState<
+    RewardWithClaimCount[]
+  >([]);
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+  const [searchResults, setSearchResults] = useState<Member[]>([]);
 
   // UI state
-  const [isLoading, setIsLoading] = useState({
+  const [isLoading, setIsLoading] = useState<LoadingState>({
     rewards: false,
     search: false,
     claim: false,
   });
-  const [showResults, setShowResults] = useState(false);
+  const [showResults, setShowResults] = useState<boolean>(false);
 
   // Refs for click outside detection
   const inputRef = useRef<HTMLInputElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Selected reward details
   const selectedReward = useMemo(
-    () => availableRewards.find((r) => r.id === selectedRewardId),
+    (): RewardWithClaimCount | undefined =>
+      availableRewards.find((r) => r.id === selectedRewardId),
     [availableRewards, selectedRewardId],
   );
 
   // Check if member has enough points
   const hasEnoughPoints = useMemo(
-    () =>
+    (): boolean =>
       selectedMember && selectedReward
         ? selectedMember.totalPoints >= selectedReward.pointsCost
         : false,
     [selectedMember, selectedReward],
   );
+
+  // Memoized functions to prevent unnecessary re-renders
+  const fetchRewards = useCallback(async (): Promise<void> => {
+    setIsLoading((prev) => ({ ...prev, rewards: true }));
+
+    try {
+      const result = await getAllRewardsWithClaimCount({
+        limit: 100,
+        includeInactive: false,
+      });
+
+      if (result.success && result.data) {
+        const available = result.data.rewards.filter(
+          (reward: RewardWithClaimCount) => reward.isActive && reward.stock > 0,
+        );
+        setAvailableRewards(available);
+
+        if (available.length === 0) {
+          toast({
+            title: 'No rewards available',
+            description:
+              'There are currently no rewards available for claiming.',
+          });
+        }
+      } else {
+        toast({
+          title: 'Error',
+          description: result.error || 'Failed to fetch rewards',
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      console.error('Fetch rewards error:', error);
+      toast({
+        title: 'Error',
+        description: 'An unexpected error occurred',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading((prev) => ({ ...prev, rewards: false }));
+    }
+  }, []);
+
+  const searchMembersHandler = useCallback(
+    async (query: string): Promise<void> => {
+      if (query.trim().length < 3) return;
+
+      setIsLoading((prev) => ({ ...prev, search: true }));
+
+      try {
+        const result = await searchMembers({
+          query,
+          limit: 10,
+        });
+
+        if (result.success && result.data?.members) {
+          setSearchResults(result.data.members);
+          setShowResults(true);
+        } else {
+          setSearchResults([]);
+          setShowResults(true);
+        }
+      } catch (error) {
+        console.error('Search members error:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to search for members',
+          variant: 'destructive',
+        });
+        setSearchResults([]);
+      } finally {
+        setIsLoading((prev) => ({ ...prev, search: false }));
+      }
+    },
+    [],
+  );
+
+  const handleSelectMember = useCallback((member: Member): void => {
+    if (member.isBanned === true) {
+      toast({
+        title: 'Member is banned',
+        description: 'This member cannot claim rewards',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setSelectedMember(member);
+    setShowResults(false);
+    setSearchQuery('');
+  }, []);
+
+  const getTierBadgeVariant = useCallback((tierName?: string): string => {
+    if (!tierName) return 'secondary';
+
+    const lowerTier = tierName.toLowerCase();
+    if (lowerTier.includes('gold') || lowerTier.includes('premium'))
+      return 'default';
+    if (lowerTier.includes('silver') || lowerTier.includes('plus'))
+      return 'secondary';
+    if (lowerTier.includes('platinum') || lowerTier.includes('vip'))
+      return 'primary';
+
+    return 'secondary';
+  }, []);
 
   // Reset dialog state when closed
   useEffect(() => {
@@ -88,7 +198,7 @@ export function ClaimRewardDialog({
     } else if (open && availableRewards.length === 0) {
       fetchRewards();
     }
-  }, [open, availableRewards.length]);
+  }, [open, availableRewards.length, fetchRewards]);
 
   // Handle click outside search results
   useEffect(() => {
@@ -107,112 +217,31 @@ export function ClaimRewardDialog({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Debounced search effect
+  // Debounced search effect with cleanup
   useEffect(() => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
     if (searchQuery.trim().length < 3) {
       setShowResults(false);
       setSearchResults([]);
       return;
     }
 
-    const handler = setTimeout(() => {
+    searchTimeoutRef.current = setTimeout(() => {
       searchMembersHandler(searchQuery);
     }, 300);
 
-    return () => clearTimeout(handler);
-  }, [searchQuery]);
-
-  // Fetch available rewards
-  const fetchRewards = async () => {
-    setIsLoading((prev) => ({ ...prev, rewards: true }));
-
-    try {
-      const result = await getAllRewardsWithClaimCount({
-        limit: 100,
-        includeInactive: false,
-      });
-
-      if (result.success && result.data) {
-        // Filter active rewards with stock > 0
-        const available = result.data.rewards.filter(
-          (reward: any) => reward.isActive && reward.stock > 0,
-        );
-        setAvailableRewards(available);
-
-        if (available.length === 0) {
-          toast({
-            title: 'No rewards available',
-            description:
-              'There are currently no rewards available for claiming.',
-          });
-        }
-      } else {
-        toast({
-          title: 'Error',
-          description: 'Failed to fetch rewards',
-          variant: 'destructive',
-        });
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
       }
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'An unexpected error occurred',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading((prev) => ({ ...prev, rewards: false }));
-    }
-  };
-
-  // Search members
-  const searchMembersHandler = async (query: string) => {
-    if (query.trim().length < 3) return;
-
-    setIsLoading((prev) => ({ ...prev, search: true }));
-
-    try {
-      const result = await searchMembers({
-        query,
-        limit: 10,
-      });
-
-      if (result.success && result.data && result.data.members) {
-        setSearchResults(result.data.members);
-        setShowResults(true);
-      } else {
-        setSearchResults([]);
-        setShowResults(true);
-      }
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to search for members',
-        variant: 'destructive',
-      });
-      setSearchResults([]);
-    } finally {
-      setIsLoading((prev) => ({ ...prev, search: false }));
-    }
-  };
-
-  // Handle selecting a member
-  const handleSelectMember = (member: any) => {
-    if (member.isBanned) {
-      toast({
-        title: 'Member is banned',
-        description: 'This member cannot claim rewards',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setSelectedMember(member);
-    setShowResults(false);
-    setSearchQuery('');
-  };
+    };
+  }, [searchQuery, searchMembersHandler]);
 
   // Handle form submission
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
 
     if (!selectedRewardId || !selectedMember) return;
@@ -249,6 +278,7 @@ export function ClaimRewardDialog({
         });
       }
     } catch (error) {
+      console.error('Claim reward error:', error);
       toast({
         title: 'Error',
         description: 'An unexpected error occurred',
@@ -257,21 +287,6 @@ export function ClaimRewardDialog({
     } finally {
       setIsLoading((prev) => ({ ...prev, claim: false }));
     }
-  };
-
-  // Helper function to get tier badge variant
-  const getTierBadgeVariant = (tierName?: string) => {
-    if (!tierName) return 'secondary';
-
-    const lowerTier = tierName.toLowerCase();
-    if (lowerTier.includes('gold') || lowerTier.includes('premium'))
-      return 'default';
-    if (lowerTier.includes('silver') || lowerTier.includes('plus'))
-      return 'secondary';
-    if (lowerTier.includes('platinum') || lowerTier.includes('vip'))
-      return 'primary';
-
-    return 'secondary';
   };
 
   return (
@@ -402,19 +417,20 @@ export function ClaimRewardDialog({
                         <li
                           key={member.id}
                           className={`px-3 py-2 transition-colors ${
-                            member.isBanned
+                            member.isBanned === true
                               ? 'cursor-not-allowed opacity-70'
                               : 'cursor-pointer hover:bg-accent'
                           }`}
                           onClick={() =>
-                            !member.isBanned && handleSelectMember(member)
+                            member.isBanned !== true &&
+                            handleSelectMember(member)
                           }
                         >
                           <div className="flex flex-col sm:flex-row sm:justify-between">
                             <div className="flex-1">
                               <div className="flex items-center gap-2">
                                 <p className="font-medium">{member.name}</p>
-                                {member.isBanned && (
+                                {member.isBanned === true && (
                                   <Badge
                                     variant="destructive"
                                     className="text-xs"
