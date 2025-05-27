@@ -55,6 +55,7 @@ export function BrandDeleteDialog({
         });
       }
     } catch (error) {
+      console.error('Failed to delete brand:', error);
       toast({
         title: 'Error',
         description: 'An unexpected error occurred',
