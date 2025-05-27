@@ -44,6 +44,7 @@ export function ProductDeleteDialog({
         });
       }
     } catch (error) {
+      console.error('Error deleting product:', error);
       toast({
         title: 'Error',
         description: 'An unexpected error occurred',

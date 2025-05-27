@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { useState } from 'react';
 import { ColumnDef } from '@tanstack/react-table';
-import { MoreHorizontal, Eye } from 'lucide-react';
+import { MoreHorizontal } from 'lucide-react';
 import { IconTrash, IconEdit } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -65,27 +65,16 @@ export function ProductTable({
       ...options.filters, // Apply filters from the table
     });
 
-    // Add proper type checking to handle potentially undefined data
-    // Map API response to ensure it matches the ProductWithRelations type
-    const products =
-      response.success && response.data
-        ? (response.data.products.map(
-            (product: {
-              id: string;
-              name: string;
-              price: number;
-              [key: string]: any; // Allow other properties
-            }) => ({
-              ...product,
-              sellPrice: product.price, // Map price to sellPrice if it doesn't exist
-            }),
-          ) as ProductWithRelations[])
-        : [];
+    if (response.success && response.data) {
+      return {
+        data: response.data.products as ProductWithRelations[],
+        totalRows: response.data.totalCount,
+      };
+    }
 
     return {
-      data: products,
-      totalRows:
-        response.success && response.data ? response.data.totalCount : 0,
+      data: [],
+      totalRows: 0,
     };
   };
 
@@ -97,7 +86,6 @@ export function ProductTable({
     setLimit,
     setSortBy,
     setSearch,
-    setFilters,
     totalRows,
     refresh,
   } = useFetch<ProductWithRelations[]>({
@@ -118,21 +106,13 @@ export function ProductTable({
   };
 
   // Handle sorting change
-  const handleSortingChange = (newSorting: any) => {
+  const handleSortingChange = (newSorting: { id: string; desc: boolean }[]) => {
     setSortBy(newSorting);
   };
 
   // Handle search change
   const handleSearchChange = (newSearch: string) => {
     setSearch(newSearch);
-  };
-
-  // Handle filter change
-  const handleFilterChange = (key: string, value: any) => {
-    setFilters((prev: any) => ({
-      ...prev,
-      [key]: value,
-    }));
   };
 
   // Handle delete confirmation
@@ -205,8 +185,8 @@ export function ProductTable({
                 stock <= 5
                   ? 'destructive'
                   : stock <= 10
-                  ? 'secondary'
-                  : 'outline'
+                    ? 'secondary'
+                    : 'outline'
               }
             >
               {stock} {row.original.unit.symbol}

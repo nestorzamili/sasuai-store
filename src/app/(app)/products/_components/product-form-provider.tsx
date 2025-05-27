@@ -121,7 +121,7 @@ export function ProductFormProvider({
       brandId: initialData?.brand?.id || null,
       description: initialData?.description || '',
       unitId: initialData?.unitId || '',
-      price: initialData?.sellPrice || 0,
+      price: initialData?.price || 0,
       skuCode: initialData?.skuCode || '',
       barcode: initialData?.barcode || '',
       isActive: initialData?.isActive ?? true,
@@ -138,6 +138,7 @@ export function ProductFormProvider({
         setUnits(result.data.units || []);
       }
     } catch (error) {
+      console.error('Failed to fetch form options:', error);
       toast({
         title: 'Error',
         description: 'Failed to fetch form options',
@@ -160,7 +161,7 @@ export function ProductFormProvider({
         brandId: initialData.brand?.id || null,
         description: initialData.description || '',
         unitId: initialData.unitId || '',
-        price: initialData.sellPrice || 0,
+        price: initialData.price || 0,
         skuCode: initialData.skuCode || '',
         barcode: initialData.barcode || '',
         isActive: initialData.isActive ?? true,
@@ -196,6 +197,7 @@ export function ProductFormProvider({
         setImages([]);
       }
     } catch (error) {
+      console.error('Failed to fetch product images:', error);
       setImages([]);
     }
   };
@@ -328,6 +330,7 @@ export function ProductFormProvider({
         }
       }
     } catch (error) {
+      console.error('Error submitting product form:', error);
       toast({
         title: 'Error',
         description: 'An unexpected error occurred',
