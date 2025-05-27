@@ -57,6 +57,7 @@ export function RewardDeleteDialog({
         });
       }
     } catch (error) {
+      console.error('Delete reward error:', error);
       toast({
         title: 'Error',
         description: 'An unexpected error occurred',
