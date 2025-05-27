@@ -57,6 +57,7 @@ export function CategoryDeleteDialog({
         });
       }
     } catch (error) {
+      console.error('Category delete error:', error);
       toast({
         title: 'Error',
         description: 'An unexpected error occurred',

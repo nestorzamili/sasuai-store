@@ -112,6 +112,7 @@ export default function CategoryFormDialog({
         });
       }
     } catch (error) {
+      console.error('Category form submission error:', error);
       toast({
         title: 'Error',
         description: 'An unexpected error occurred',
