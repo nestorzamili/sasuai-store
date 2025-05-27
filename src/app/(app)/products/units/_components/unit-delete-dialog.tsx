@@ -60,6 +60,7 @@ export function UnitDeleteDialog({
         });
       }
     } catch (error) {
+      console.error('Unit delete error:', error);
       toast({
         title: 'Error',
         description: 'An unexpected error occurred',
