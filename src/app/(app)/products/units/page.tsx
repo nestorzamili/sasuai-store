@@ -23,12 +23,13 @@ export default function UnitsPage() {
 
   const fetchUnits = async () => {
     try {
-      const { data, success } = await getAllUnits();
-      if (success) {
-        const unitData = (data as UnitWithCounts[]) || [];
+      const result = await getAllUnits();
+      if (result.success && result.data) {
+        const unitData = result.data.units || [];
         setUnits(unitData);
       }
     } catch (error) {
+      console.error('Failed to fetch units:', error);
       toast({
         title: 'Error',
         description: 'Failed to fetch units. Please try again later.',

@@ -43,6 +43,7 @@ export function UnitConversionDeleteDialog({
         });
       }
     } catch (error) {
+      console.error('Unit conversion delete error:', error);
       toast({
         title: 'Error',
         description: 'An unexpected error occurred',

@@ -141,6 +141,7 @@ export default function UnitConversionFormDialog({
         });
       }
     } catch (error) {
+      console.error('Unit conversion form submission error:', error);
       toast({
         title: 'Error',
         description: 'An unexpected error occurred',

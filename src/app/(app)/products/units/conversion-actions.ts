@@ -3,6 +3,19 @@
 import { revalidatePath } from 'next/cache';
 import { UnitService } from '@/lib/services/unit.service';
 import { z } from 'zod';
+import {
+  CreateUnitConversionData,
+  UpdateUnitConversionData,
+  UnitConversionSearchParams,
+  GetConversionsResponse,
+  CreateConversionResponse,
+  UpdateConversionResponse,
+  DeleteConversionResponse,
+  ConvertQuantityResponse,
+  UnitFetchResult,
+  UnitConversionWithUnits,
+  ConversionForUnit,
+} from '@/lib/types/unit';
 
 // Unit conversion schema for validation
 const unitConversionSchema = z.object({
@@ -14,85 +27,47 @@ const unitConversionSchema = z.object({
 /**
  * Get all unit conversions
  */
-export async function getAllConversions() {
+export async function getAllConversions(): Promise<GetConversionsResponse> {
   try {
     const conversions = await UnitService.getAllConversions();
-
     return {
       success: true,
-      data: conversions,
+      data: {
+        conversions,
+        totalCount: conversions.length,
+        totalPages: 1,
+        currentPage: 1,
+      },
     };
   } catch (error) {
-    return {
-      success: false,
-      error: 'Failed to fetch unit conversions',
-    };
+    console.error('Failed to fetch unit conversions:', error);
+    return { success: false, error: 'Failed to fetch unit conversions' };
   }
 }
 
 /**
  * Get all unit conversions with pagination, sorting and filtering
  */
-export async function getAllConversionsWithOptions(options?: {
-  page?: number;
-  limit?: number;
-  sortBy?: { id: string; desc: boolean };
-  search?: string;
-  columnFilter?: string[];
-}) {
+export async function getAllConversionsWithOptions(
+  params: UnitConversionSearchParams = {},
+): Promise<UnitFetchResult<UnitConversionWithUnits[]>> {
   try {
-    // Default values
-    const page = options?.page ?? 1;
-    const limit = options?.limit ?? 10;
-    const sortBy = options?.sortBy ?? { id: 'fromUnit.name', desc: false };
-    const search = options?.search ?? '';
-
-    // Build where clause for search
-    let where: any = {};
-    if (search) {
-      where.OR = [
-        { fromUnit: { name: { contains: search, mode: 'insensitive' } } },
-        { fromUnit: { symbol: { contains: search, mode: 'insensitive' } } },
-        { toUnit: { name: { contains: search, mode: 'insensitive' } } },
-        { toUnit: { symbol: { contains: search, mode: 'insensitive' } } },
-      ];
-    }
-
-    // Build orderBy
-    let orderBy: any = {};
-    if (sortBy && sortBy.id) {
-      if (sortBy.id === 'fromUnit') {
-        orderBy = { fromUnit: { name: sortBy.desc ? 'desc' : 'asc' } };
-      } else if (sortBy.id === 'toUnit') {
-        orderBy = { toUnit: { name: sortBy.desc ? 'desc' : 'asc' } };
-      } else {
-        orderBy[sortBy.id] = sortBy.desc ? 'desc' : 'asc';
-      }
-    } else {
-      orderBy = { fromUnit: { name: 'asc' } };
-    }
-
-    // Count total rows
-    const totalRows = await UnitService.countConversionsWithWhere(where);
-
-    // Query data with pagination
-    const conversions = await UnitService.getAllConversionsWithOptions({
-      where,
-      orderBy,
-      skip: (page - 1) * limit,
-      take: limit,
+    const result = await UnitService.searchConversions({
+      page: params.page ?? 1,
+      limit: params.limit ?? 10,
+      sortBy: params.sortBy ?? 'fromUnit',
+      sortDirection: params.sortDirection ?? 'asc',
+      query: params.query ?? '',
     });
 
     return {
-      success: true,
-      data: conversions,
-      totalRows,
+      data: result.conversions,
+      totalRows: result.totalCount,
     };
   } catch (error) {
+    console.error('Failed to fetch unit conversions with options:', error);
     return {
-      success: false,
-      error: 'Failed to fetch unit conversions',
-      data: [] as any[],
+      data: [],
       totalRows: 0,
     };
   }
@@ -101,34 +76,24 @@ export async function getAllConversionsWithOptions(options?: {
 /**
  * Get conversions for a specific unit
  */
-export async function getConversionsForUnit(unitId: string) {
+export async function getConversionsForUnit(
+  unitId: string,
+): Promise<{ success: boolean; data?: ConversionForUnit; error?: string }> {
   try {
-    const fromConversions = await UnitService.getConversionsFromUnit(unitId);
-    const toConversions = await UnitService.getConversionsToUnit(unitId);
-
-    return {
-      success: true,
-      data: {
-        fromConversions,
-        toConversions,
-      },
-    };
+    const data = await UnitService.getConversionsForUnit(unitId);
+    return { success: true, data };
   } catch (error) {
-    return {
-      success: false,
-      error: 'Failed to fetch unit conversions',
-    };
+    console.error('Failed to fetch conversions for unit:', error);
+    return { success: false, error: 'Failed to fetch unit conversions' };
   }
 }
 
 /**
  * Create a new unit conversion
  */
-export async function createConversion(data: {
-  fromUnitId: string;
-  toUnitId: string;
-  conversionFactor: number;
-}) {
+export async function createConversion(
+  data: CreateUnitConversionData,
+): Promise<CreateConversionResponse> {
   try {
     // Validate data
     const validatedData = unitConversionSchema.parse(data);
@@ -151,10 +116,7 @@ export async function createConversion(data: {
     // Revalidate units path
     revalidatePath('/products/units');
 
-    return {
-      success: true,
-      data: conversion,
-    };
+    return { success: true, data: conversion };
   } catch (error) {
     if (error instanceof z.ZodError) {
       return {
@@ -184,8 +146,8 @@ export async function createConversion(data: {
  */
 export async function updateConversion(
   id: string,
-  data: { conversionFactor: number }
-) {
+  data: UpdateUnitConversionData,
+): Promise<UpdateConversionResponse> {
   try {
     // Validate conversion factor
     if (data.conversionFactor <= 0) {
@@ -203,36 +165,26 @@ export async function updateConversion(
     // Revalidate units path
     revalidatePath('/products/units');
 
-    return {
-      success: true,
-      data: conversion,
-    };
+    return { success: true, data: conversion };
   } catch (error) {
-    return {
-      success: false,
-      error: 'Failed to update unit conversion',
-    };
+    console.error('Failed to update unit conversion:', error);
+    return { success: false, error: 'Failed to update unit conversion' };
   }
 }
 
 /**
  * Delete a unit conversion
  */
-export async function deleteConversion(id: string) {
+export async function deleteConversion(
+  id: string,
+): Promise<DeleteConversionResponse> {
   try {
     await UnitService.deleteConversion(id);
-
-    // Revalidate units path
     revalidatePath('/products/units');
-
-    return {
-      success: true,
-    };
+    return { success: true };
   } catch (error) {
-    return {
-      success: false,
-      error: 'Failed to delete unit conversion',
-    };
+    console.error('Failed to delete unit conversion:', error);
+    return { success: false, error: 'Failed to delete unit conversion' };
   }
 }
 
@@ -242,18 +194,15 @@ export async function deleteConversion(id: string) {
 export async function convertQuantity(
   fromUnitId: string,
   toUnitId: string,
-  quantity: number
-) {
+  quantity: number,
+): Promise<ConvertQuantityResponse> {
   try {
     const result = await UnitService.convertQuantity(
       fromUnitId,
       toUnitId,
-      quantity
+      quantity,
     );
-    return {
-      success: true,
-      data: result,
-    };
+    return { success: true, data: result };
   } catch (error) {
     return {
       success: false,
