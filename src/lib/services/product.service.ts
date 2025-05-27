@@ -1,10 +1,28 @@
 import prisma from '@/lib/prisma';
+import {
+  CreateProductData,
+  UpdateProductData,
+  CreateProductImageData,
+  UpdateProductImageData,
+  ProductSearchParams,
+  ProductPaginationParams,
+  ProductFilterOptions,
+  PaginatedProductResponse,
+  ProductWithRelations,
+  ProductListItem,
+  ProductImageWithUrl,
+  ProductWhereInput,
+  ProductOrderByInput,
+  GetProductsWithOptionsParams,
+  ProductForTransaction,
+} from '@/lib/types/product';
+
 export class ProductService {
   /**
-   * Get all products
+   * Get all products with basic relations
    */
-  static async getAll() {
-    return prisma.product.findMany({
+  static async getAll(): Promise<ProductWithRelations[]> {
+    const products = await prisma.product.findMany({
       include: {
         category: true,
         brand: true,
@@ -13,30 +31,50 @@ export class ProductService {
       },
       orderBy: { name: 'asc' },
     });
+
+    return products as ProductWithRelations[];
+  }
+
+  /**
+   * Get product by ID with full relations
+   */
+  static async getById(id: string): Promise<ProductWithRelations | null> {
+    const product = await prisma.product.findUnique({
+      where: { id },
+      include: {
+        category: true,
+        brand: true,
+        unit: true,
+        images: true,
+        batches: true,
+        discounts: {
+          where: { isActive: true },
+        },
+      },
+    });
+
+    return product as ProductWithRelations | null;
   }
 
   /**
    * Create a new product
    */
-  static async create(data: {
-    name: string;
-    categoryId: string;
-    brandId?: string | null;
-    description?: string | null;
-    unitId: string;
-    price: number;
-    skuCode?: string | null;
-    barcode?: string | null;
-    isActive?: boolean;
-  }) {
-    return prisma.product.create({
-      data,
+  static async create(data: CreateProductData): Promise<ProductWithRelations> {
+    const product = await prisma.product.create({
+      data: {
+        ...data,
+        cost: data.cost ?? 0,
+        isActive: data.isActive ?? true,
+      },
       include: {
         category: true,
         brand: true,
         unit: true,
+        images: true,
       },
     });
+
+    return product as ProductWithRelations;
   }
 
   /**
@@ -44,19 +82,9 @@ export class ProductService {
    */
   static async update(
     id: string,
-    data: {
-      name?: string;
-      categoryId?: string;
-      brandId?: string | null;
-      description?: string | null;
-      unitId?: string;
-      price?: number;
-      skuCode?: string | null;
-      barcode?: string | null;
-      isActive?: boolean;
-    },
-  ) {
-    return prisma.product.update({
+    data: UpdateProductData,
+  ): Promise<ProductWithRelations> {
+    const product = await prisma.product.update({
       where: { id },
       data,
       include: {
@@ -66,13 +94,15 @@ export class ProductService {
         images: true,
       },
     });
+
+    return product as ProductWithRelations;
   }
 
   /**
-   * Delete a product
+   * Delete a product and its related data
    */
-  static async delete(id: string) {
-    // First delete related images and batches
+  static async delete(id: string): Promise<void> {
+    // Delete in correct order to respect foreign key constraints
     await prisma.productImage.deleteMany({
       where: { productId: id },
     });
@@ -81,8 +111,7 @@ export class ProductService {
       where: { productId: id },
     });
 
-    // Then delete the product
-    return prisma.product.delete({
+    await prisma.product.delete({
       where: { id },
     });
   }
@@ -90,11 +119,9 @@ export class ProductService {
   /**
    * Add product image
    */
-  static async addImage(data: {
-    productId: string;
-    imageUrl: string;
-    isPrimary: boolean;
-  }) {
+  static async addImage(
+    data: CreateProductImageData,
+  ): Promise<ProductImageWithUrl> {
     // If this is a primary image, make all other images non-primary
     if (data.isPrimary) {
       await prisma.productImage.updateMany({
@@ -103,15 +130,23 @@ export class ProductService {
       });
     }
 
-    return prisma.productImage.create({
+    const image = await prisma.productImage.create({
       data,
     });
+
+    return {
+      ...image,
+      fullUrl: this.formatImageUrl(image.imageUrl),
+    };
   }
 
   /**
    * Update product image
    */
-  static async updateImage(id: string, data: { isPrimary?: boolean }) {
+  static async updateImage(
+    id: string,
+    data: UpdateProductImageData,
+  ): Promise<ProductImageWithUrl> {
     // If making this image primary, update all other images
     if (data.isPrimary) {
       const image = await prisma.productImage.findUnique({
@@ -126,21 +161,26 @@ export class ProductService {
       }
     }
 
-    return prisma.productImage.update({
+    const updatedImage = await prisma.productImage.update({
       where: { id },
       data,
     });
+
+    return {
+      ...updatedImage,
+      fullUrl: this.formatImageUrl(updatedImage.imageUrl),
+    };
   }
 
   /**
    * Delete product image
    */
-  static async deleteImage(id: string) {
+  static async deleteImage(id: string): Promise<void> {
     const image = await prisma.productImage.findUnique({
       where: { id },
     });
 
-    const result = await prisma.productImage.delete({
+    await prisma.productImage.delete({
       where: { id },
     });
 
@@ -157,40 +197,30 @@ export class ProductService {
         });
       }
     }
-
-    return result;
   }
 
   /**
    * Get paginated products with filters and sorting
    */
-  static async getPaginated({
-    page = 1,
-    pageSize = 10,
-    sortField = 'name',
-    sortDirection = 'asc',
-    search = '',
-    categoryId,
-    brandId,
-    isActive,
-    minPrice,
-    maxPrice,
-  }: {
-    page?: number;
-    pageSize?: number;
-    sortField?: string;
-    sortDirection?: 'asc' | 'desc';
-    search?: string;
-    categoryId?: string;
-    brandId?: string;
-    isActive?: boolean;
-    minPrice?: number;
-    maxPrice?: number;
-  }) {
-    // Build where clause based on filters
-    const where: any = {};
+  static async getPaginated(
+    params: ProductPaginationParams,
+  ): Promise<PaginatedProductResponse> {
+    const {
+      page = 1,
+      pageSize = 10,
+      sortField = 'name',
+      sortDirection = 'asc',
+      search = '',
+      categoryId,
+      brandId,
+      isActive,
+      minPrice,
+      maxPrice,
+    } = params;
 
-    // Add search filter
+    // Build where clause
+    const where: ProductWhereInput = {};
+
     if (search) {
       where.OR = [
         { name: { contains: search, mode: 'insensitive' } },
@@ -200,12 +230,10 @@ export class ProductService {
       ];
     }
 
-    // Add other filters
     if (categoryId) where.categoryId = categoryId;
     if (brandId) where.brandId = brandId;
     if (isActive !== undefined) where.isActive = isActive;
 
-    // Add price filters
     if (minPrice !== undefined || maxPrice !== undefined) {
       where.price = {};
       if (minPrice !== undefined) where.price.gte = minPrice;
@@ -215,10 +243,8 @@ export class ProductService {
     // Calculate pagination
     const skip = (page - 1) * pageSize;
 
-    // Get order by field - handle nested fields like 'category.name'
-    const orderBy: any = {};
-
-    // Handle nested fields
+    // Build order by
+    const orderBy: ProductOrderByInput = {};
     if (sortField.includes('.')) {
       const [relation, field] = sortField.split('.');
       orderBy[relation] = { [field]: sortDirection };
@@ -226,7 +252,7 @@ export class ProductService {
       orderBy[sortField] = sortDirection;
     }
 
-    // Execute query with count
+    // Execute query
     const [products, totalCount] = await Promise.all([
       prisma.product.findMany({
         where,
@@ -252,47 +278,79 @@ export class ProductService {
       prisma.product.count({ where }),
     ]);
 
-    // Process product data to include primary image URL and other calculated fields
-    const processedProducts = products.map((product) => ({
+    // Process products
+    const processedProducts: ProductListItem[] = products.map((product) => ({
       ...product,
       primaryImage: product.images?.[0]?.imageUrl || null,
       batchCount: product._count?.batches || 0,
-    }));
-
-    // Calculate total pages
-    const totalPages = Math.ceil(totalCount / pageSize);
+      batches: undefined, // Remove batches from list view for performance
+    })) as ProductListItem[];
 
     return {
       products: processedProducts,
       totalCount,
-      totalPages,
+      totalPages: Math.ceil(totalCount / pageSize),
       currentPage: page,
     };
   }
 
   /**
-   * Get product images for a specific product
-   * Returns images with fullUrl property for frontend display
+   * Search products with pagination
    */
-  static async getProductImages(productId: string) {
+  static async search(
+    params: ProductSearchParams,
+  ): Promise<PaginatedProductResponse> {
+    const {
+      page = 1,
+      limit = 10,
+      sortBy = 'name',
+      sortDirection = 'asc',
+      query = '',
+      categoryId,
+      brandId,
+      isActive,
+      minPrice,
+      maxPrice,
+    } = params;
+
+    return this.getPaginated({
+      page,
+      pageSize: limit,
+      sortField: sortBy,
+      sortDirection,
+      search: query,
+      categoryId,
+      brandId,
+      isActive,
+      minPrice,
+      maxPrice,
+    });
+  }
+
+  /**
+   * Get product images for a specific product
+   */
+  static async getProductImages(
+    productId: string,
+  ): Promise<ProductImageWithUrl[]> {
     const images = await prisma.productImage.findMany({
       where: { productId },
       orderBy: [{ isPrimary: 'desc' }, { createdAt: 'asc' }],
     });
 
-    // Format the images to include the full URL with f_auto,q_auto parameters
     return images.map((image) => ({
       ...image,
-      fullUrl: image.imageUrl.includes('cloudinary.com')
-        ? image.imageUrl.replace('/upload/', '/upload/f_auto,q_auto/')
-        : image.imageUrl,
+      fullUrl: this.formatImageUrl(image.imageUrl),
     }));
   }
 
   /**
    * Set primary product image
    */
-  static async setPrimaryImage(imageId: string, productId: string) {
+  static async setPrimaryImage(
+    imageId: string,
+    productId: string,
+  ): Promise<ProductImageWithUrl> {
     // First unset any existing primary image
     await prisma.productImage.updateMany({
       where: {
@@ -305,37 +363,51 @@ export class ProductService {
     });
 
     // Then set the new primary image
-    return prisma.productImage.update({
+    const updatedImage = await prisma.productImage.update({
       where: { id: imageId },
       data: { isPrimary: true },
     });
+
+    return {
+      ...updatedImage,
+      fullUrl: this.formatImageUrl(updatedImage.imageUrl),
+    };
   }
 
-  static async getProductFiltered(options?: {
-    search?: string;
-    exactId?: string;
-    take?: number;
-  }) {
+  /**
+   * Get filtered products for transactions/POS
+   */
+  static async getProductFiltered(
+    options: ProductFilterOptions = {},
+  ): Promise<ProductForTransaction[]> {
+    const {
+      search,
+      exactId,
+      take = 10,
+      categoryId,
+      brandId,
+      isActive = true,
+    } = options;
+
     // Build where conditions
-    const whereConditions: any = {
-      isActive: true,
+    const whereConditions: ProductWhereInput = {
+      isActive,
     };
 
-    // If we have an exact ID, use it directly
-    if (options?.exactId) {
-      whereConditions.id = options.exactId;
-    }
-    // Otherwise use the standard search conditions
-    else if (options?.search) {
+    if (exactId) {
+      whereConditions.id = exactId;
+    } else if (search) {
       whereConditions.OR = [
-        { name: { contains: options.search, mode: 'insensitive' } },
-        { barcode: { contains: options.search, mode: 'insensitive' } },
-        // Only include ID in general search, not for exact matches
-        { id: { contains: options.search, mode: 'insensitive' } },
+        { name: { contains: search, mode: 'insensitive' } },
+        { barcode: { contains: search, mode: 'insensitive' } },
+        { id: { contains: search, mode: 'insensitive' } },
       ];
     }
 
-    return prisma.product.findMany({
+    if (categoryId) whereConditions.categoryId = categoryId;
+    if (brandId) whereConditions.brandId = brandId;
+
+    const products = await prisma.product.findMany({
       where: whereConditions,
       include: {
         batches: {
@@ -345,7 +417,6 @@ export class ProductService {
           orderBy: {
             expiryDate: 'asc',
           },
-          take: 1,
         },
         discounts: {
           where: {
@@ -357,7 +428,76 @@ export class ProductService {
         brand: true,
       },
       orderBy: { name: 'asc' },
-      take: options?.take || 10,
+      take,
     });
+
+    return products as ProductForTransaction[];
+  }
+
+  /**
+   * Count products with where clause
+   */
+  static async countWithWhere(where?: ProductWhereInput): Promise<number> {
+    return prisma.product.count({ where });
+  }
+
+  /**
+   * Get products with custom options
+   */
+  static async getProductsWithOptions(
+    params: GetProductsWithOptionsParams,
+  ): Promise<ProductWithRelations[]> {
+    const { where, orderBy, skip, take, include } = params;
+
+    const defaultInclude = {
+      category: true,
+      brand: true,
+      unit: true,
+      images: true,
+    };
+
+    const products = await prisma.product.findMany({
+      where,
+      orderBy,
+      skip,
+      take,
+      include: include || defaultInclude,
+    });
+
+    return products as ProductWithRelations[];
+  }
+
+  /**
+   * Check if product has batches
+   */
+  static async hasBatches(id: string): Promise<boolean> {
+    const count = await prisma.productBatch.count({
+      where: { productId: id },
+    });
+    return count > 0;
+  }
+
+  /**
+   * Check if product is in use (has transaction items)
+   */
+  static async isInUse(id: string): Promise<boolean> {
+    const count = await prisma.transactionItem.count({
+      where: {
+        batch: {
+          productId: id,
+        },
+      },
+    });
+    return count > 0;
+  }
+
+  /**
+   * Helper method to format image URL with optimization parameters
+   */
+  private static formatImageUrl(imageUrl: string): string {
+    if (imageUrl.includes('cloudinary.com')) {
+      return imageUrl.replace('/upload/', '/upload/f_auto,q_auto/');
+    }
+    return imageUrl;
   }
 }
