@@ -3,125 +3,98 @@
 import { revalidatePath } from 'next/cache';
 import { CategoryService } from '@/lib/services/category.service';
 import { z } from 'zod';
+import {
+  CreateCategoryData,
+  UpdateCategoryData,
+  CategorySearchParams,
+  GetCategoriesResponse,
+  GetCategoryResponse,
+  CreateCategoryResponse,
+  UpdateCategoryResponse,
+  DeleteCategoryResponse,
+  CategoryFetchResult,
+  CategoryWithCount,
+} from '@/lib/types/category';
 
 // Category schema for validation
 const categorySchema = z.object({
-  name: z.string().min(1, 'Category name is required'),
+  name: z
+    .string()
+    .min(1, 'Category name is required')
+    .max(100, 'Name too long'),
   description: z.string().optional(),
 });
 
 /**
  * Get all categories with product count, support pagination/sort/search/filter
  */
-export async function getAllCategoriesWithCount(options?: {
-  page?: number;
-  limit?: number;
-  sortBy?: { id: string; desc: boolean };
-  search?: string;
-  columnFilter?: string[];
-}) {
+export async function getAllCategoriesWithCount(
+  params: CategorySearchParams = {},
+): Promise<CategoryFetchResult<CategoryWithCount[]>> {
   try {
-    // Default values
-    const page = options?.page ?? 1;
-    const limit = options?.limit ?? 10;
-    const sortBy = options?.sortBy ?? { id: 'name', desc: false };
-    const search = options?.search ?? '';
-    const columnFilter = options?.columnFilter ?? ['name', 'description'];
-
-    // Build where clause for search
-    let where: any = {};
-    if (search && columnFilter.length > 0) {
-      where.OR = columnFilter.map((col) => ({
-        [col]: { contains: search, mode: 'insensitive' },
-      }));
-    }
-
-    // Build orderBy
-    let orderBy: any = {};
-    if (sortBy && sortBy.id) {
-      orderBy[sortBy.id] = sortBy.desc ? 'desc' : 'asc';
-    } else {
-      orderBy = { name: 'asc' };
-    }
-
-    // Count total rows
-    const totalRows = await CategoryService.countWithWhere(where);
-
-    // Query data with pagination
-    const categories = await CategoryService.getAllCategoriesWithCount({
-      where,
-      orderBy,
-      skip: (page - 1) * limit,
-      take: limit,
+    const result = await CategoryService.search({
+      page: params.page ?? 1,
+      limit: params.limit ?? 10,
+      sortBy: params.sortBy ?? 'name',
+      sortDirection: params.sortDirection ?? 'asc',
+      query: params.query ?? '',
     });
 
     return {
-      success: true,
-      data: categories,
-      totalRows,
+      data: result.categories,
+      totalRows: result.totalCount,
     };
   } catch (error) {
+    console.error('Failed to fetch categories:', error);
     return {
-      success: false,
-      error: 'Failed to fetch categories',
-      data: [] as any[], // Explicitly type the empty array
+      data: [],
       totalRows: 0,
     };
   }
 }
 
 /**
- * Get all categories
+ * Get all categories (simple list)
  */
-export async function getAllCategories() {
+export async function getAllCategories(): Promise<GetCategoriesResponse> {
   try {
     const categories = await CategoryService.getAll();
-
     return {
       success: true,
-      data: categories,
+      data: {
+        categories,
+        totalCount: categories.length,
+        totalPages: 1,
+        currentPage: 1,
+      },
     };
   } catch (error) {
-    return {
-      success: false,
-      error: 'Failed to fetch categories',
-    };
+    console.error('Failed to fetch categories:', error);
+    return { success: false, error: 'Failed to fetch categories' };
   }
 }
 
 /**
  * Get a category by ID
  */
-export async function getCategory(id: string) {
+export async function getCategory(id: string): Promise<GetCategoryResponse> {
   try {
     const category = await CategoryService.getById(id);
+    if (!category) return { success: false, error: 'Category not found' };
 
-    if (!category) {
-      return {
-        success: false,
-        error: 'Category not found',
-      };
-    }
-
-    return {
-      success: true,
-      data: category,
-    };
+    return { success: true, data: category };
   } catch (error) {
-    return {
-      success: false,
-      error: 'Failed to fetch category',
-    };
+    console.error('Failed to fetch category:', error);
+    return { success: false, error: 'Failed to fetch category' };
   }
 }
 
 /**
  * Create a new category
  */
-export async function createCategory(data: {
-  name: string;
-  description?: string;
-}) {
+export async function createCategory(
+  data: CreateCategoryData,
+): Promise<CreateCategoryResponse> {
   try {
     // Validate data
     const validatedData = categorySchema.parse(data);
@@ -135,10 +108,7 @@ export async function createCategory(data: {
     // Revalidate categories page
     revalidatePath('/products/categories');
 
-    return {
-      success: true,
-      data: category,
-    };
+    return { success: true, data: category };
   } catch (error) {
     if (error instanceof z.ZodError) {
       return {
@@ -148,10 +118,8 @@ export async function createCategory(data: {
       };
     }
 
-    return {
-      success: false,
-      error: 'Failed to create category',
-    };
+    console.error('Failed to create category:', error);
+    return { success: false, error: 'Failed to create category' };
   }
 }
 
@@ -160,25 +128,19 @@ export async function createCategory(data: {
  */
 export async function updateCategory(
   id: string,
-  data: { name?: string; description?: string }
-) {
+  data: UpdateCategoryData,
+): Promise<UpdateCategoryResponse> {
   try {
     // Validate data
     const validatedData = categorySchema.partial().parse(data);
 
     // Update category
-    const category = await CategoryService.update(id, {
-      name: validatedData.name,
-      description: validatedData.description,
-    });
+    const category = await CategoryService.update(id, validatedData);
 
     // Revalidate categories page
     revalidatePath('/products/categories');
 
-    return {
-      success: true,
-      data: category,
-    };
+    return { success: true, data: category };
   } catch (error) {
     if (error instanceof z.ZodError) {
       return {
@@ -188,21 +150,20 @@ export async function updateCategory(
       };
     }
 
-    return {
-      success: false,
-      error: 'Failed to update category',
-    };
+    console.error('Failed to update category:', error);
+    return { success: false, error: 'Failed to update category' };
   }
 }
 
 /**
  * Delete a category
  */
-export async function deleteCategory(id: string) {
+export async function deleteCategory(
+  id: string,
+): Promise<DeleteCategoryResponse> {
   try {
     // Check if category has products
     const hasProducts = await CategoryService.hasProducts(id);
-
     if (hasProducts) {
       return {
         success: false,
@@ -212,17 +173,25 @@ export async function deleteCategory(id: string) {
 
     // Delete category
     await CategoryService.delete(id);
-
-    // Revalidate categories page
     revalidatePath('/products/categories');
-
-    return {
-      success: true,
-    };
+    return { success: true };
   } catch (error) {
-    return {
-      success: false,
-      error: 'Failed to delete category',
-    };
+    console.error('Failed to delete category:', error);
+    return { success: false, error: 'Failed to delete category' };
+  }
+}
+
+/**
+ * Check if category has products
+ */
+export async function checkCategoryHasProducts(
+  id: string,
+): Promise<{ hasProducts: boolean }> {
+  try {
+    const hasProducts = await CategoryService.hasProducts(id);
+    return { hasProducts };
+  } catch (error) {
+    console.error('Failed to check category products:', error);
+    return { hasProducts: false };
   }
 }

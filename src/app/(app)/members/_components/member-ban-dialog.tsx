@@ -62,6 +62,7 @@ export function MemberBanDialog({
         });
       }
     } catch (error) {
+      console.error('Failed to ban member:', error);
       toast({
         title: 'Error',
         description: 'An unexpected error occurred',

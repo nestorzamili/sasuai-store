@@ -158,6 +158,7 @@ export default function EditDiscountPage() {
         });
       }
     } catch (error) {
+      console.error('Error updating discount:', error);
       toast({
         title: 'Error',
         description: 'An unexpected error occurred',
@@ -169,7 +170,7 @@ export default function EditDiscountPage() {
   };
 
   // Add an onError handler for form validation errors
-  const onError = (errors: any) => {
+  const onError = () => {
     toast({
       title: 'Validation Error',
       description: 'Please check the form for errors',

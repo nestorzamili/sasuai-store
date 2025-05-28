@@ -20,7 +20,6 @@ import { PasswordInput } from '@/components/password-input';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { signInWithEmail, signInWithUsername } from './actions';
-import { extractErrorMessage } from '@/lib/error-handler';
 import { AuthLink } from '@/components/auth/auth-footers';
 
 type UserAuthFormProps = HTMLAttributes<HTMLDivElement>;
@@ -119,7 +118,7 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
         variant: 'destructive',
       });
     } catch (error) {
-      // Reset password field but preserve identifier
+      console.error('Login error:', error);
       form.setValue('password', '');
 
       toast({

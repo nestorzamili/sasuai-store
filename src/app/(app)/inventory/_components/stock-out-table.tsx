@@ -1,13 +1,16 @@
 'use client';
 
 import { ColumnDef } from '@tanstack/react-table';
-import { Badge } from '@/components/ui/badge';
-import { StockOutComplete, StockMovement } from '@/lib/types/stock-movement';
+import {
+  StockOutComplete,
+  TableFetchOptions,
+  TableFetchResult,
+} from '@/lib/types/inventory';
 import { format } from 'date-fns';
 import { TableLayout } from '@/components/layout/table-layout';
 import { useFetch } from '@/hooks/use-fetch';
 import { getAllStockOuts } from '../stock-actions';
-import { memo, useCallback, useEffect } from 'react';
+import { memo, useCallback, useEffect, useMemo } from 'react';
 
 interface StockOutTableProps {
   isActive?: boolean;
@@ -16,102 +19,78 @@ interface StockOutTableProps {
 export const StockOutTable = memo(function StockOutTable({
   isActive = false,
 }: StockOutTableProps) {
-  // Format date function
-  const formatDate = (date: Date | string) => {
-    return format(new Date(date), 'PPP');
-  };
-
-  // Define columns with proper type handling and improved UX
-  const columns: ColumnDef<StockOutComplete | StockMovement>[] = [
-    // Date column
-    {
-      accessorKey: 'date',
-      header: 'date',
-      cell: ({ row }) => formatDate(row.original.date),
-    },
-
-    // Product and Batch column
-    {
-      id: 'product',
-      header: 'product name',
-      cell: ({ row }) => {
-        const productName = row.original.batch?.product?.name;
-        return <div className="font-medium">{productName || 'Unknown'}</div>;
+  // Memoized columns
+  const columns = useMemo(
+    (): ColumnDef<StockOutComplete>[] => [
+      {
+        accessorKey: 'batch.product.name',
+        header: 'Product',
+        cell: ({ row }) => {
+          const stockOut = row.original;
+          return (
+            <div className="font-medium">{stockOut.batch.product.name}</div>
+          );
+        },
+        enableSorting: true,
       },
-      accessorFn: (row) => row.batch?.product?.name || '',
-    },
-
-    // Batch Code column
-    {
-      id: 'batchCode',
-      header: 'batch code',
-      cell: ({ row }) => {
-        const batchCode = row.original.batch?.batchCode;
-        return <div>{batchCode || 'N/A'}</div>;
+      {
+        accessorKey: 'batch.batchCode',
+        header: 'Batch Code',
+        cell: ({ row }) => {
+          const stockOut = row.original;
+          return <div>{stockOut.batch.batchCode}</div>;
+        },
+        enableSorting: true,
       },
-      accessorFn: (row) => row.batch?.batchCode || '',
-    },
-
-    // Quantity column
-    {
-      accessorKey: 'quantity',
-      header: 'quantity',
-      cell: ({ row }) => {
-        const quantity = row.getValue('quantity') as number;
-        const unit = row.original.unit?.symbol || '';
-        return (
-          <div className="text-left">
-            {quantity} {unit}
-          </div>
-        );
+      {
+        accessorKey: 'quantity',
+        header: 'Quantity Out',
+        cell: ({ row }) => {
+          const stockOut = row.original;
+          return (
+            <div className="text-red-600 font-medium">
+              -{stockOut.quantity.toLocaleString()} {stockOut.unit.symbol}
+            </div>
+          );
+        },
+        enableSorting: true,
       },
-    },
-
-    // Source/Type column with badges
-    {
-      id: 'source',
-      header: 'source',
-      cell: ({ row }) => {
-        // Determine if it's a transaction or manual stock out
-        const isTransaction =
-          'transactionId' in row.original && row.original.transactionId;
-        return isTransaction ? (
-          <div>
-            <Badge
-              variant="secondary"
-              className="bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400"
-            >
-              Transaction
-            </Badge>
-          </div>
-        ) : (
-          <div>
-            <Badge
-              variant="outline"
-              className="border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800"
-            >
-              Manual
-            </Badge>
-          </div>
-        );
+      {
+        accessorKey: 'reason',
+        header: 'Reason',
+        cell: ({ row }) => {
+          return <div>{row.getValue('reason')}</div>;
+        },
+        enableSorting: false,
       },
-      accessorFn: (row) =>
-        'transactionId' in row && row.transactionId ? 'Transaction' : 'Manual',
-    },
-  ];
+      {
+        accessorKey: 'date',
+        header: 'Date',
+        cell: ({ row }) => {
+          const date = new Date(row.getValue('date'));
+          return (
+            <div className="text-sm">{format(date, 'dd MMM yyyy HH:mm')}</div>
+          );
+        },
+        enableSorting: true,
+      },
+    ],
+    [],
+  );
 
   // Memoize the fetch function to prevent it from changing on every render
   const fetchStockOutData = useCallback(
-    async (options: any) => {
+    async (
+      options: TableFetchOptions,
+    ): Promise<TableFetchResult<StockOutComplete[]>> => {
       try {
-        // Don't fetch if component is not active
         if (!isActive) {
           return { data: [], totalRows: 0 };
         }
 
         const response = await getAllStockOuts({
-          page: options.page + 1,
-          limit: options.limit,
+          page: (options.page || 0) + 1,
+          limit: options.limit || 10,
           sortBy: options.sortBy?.id || 'date',
           sortDirection: options.sortBy?.desc ? 'desc' : 'asc',
           search: options.search,
@@ -124,7 +103,7 @@ export const StockOutTable = memo(function StockOutTable({
         }
 
         return {
-          data: response.data,
+          data: response.data || [],
           totalRows: response.meta?.rowsCount || 0,
         };
       } catch (error) {
@@ -168,7 +147,7 @@ export const StockOutTable = memo(function StockOutTable({
     setLimit(newPagination.pageSize);
   };
 
-  const handleSortingChange = (newSorting: any) => {
+  const handleSortingChange = (newSorting: { id: string; desc: boolean }[]) => {
     setSortBy(newSorting);
   };
 

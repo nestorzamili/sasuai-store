@@ -3,7 +3,7 @@ import { nextCookies } from 'better-auth/next-js';
 import { admin, openAPI, username, bearer } from 'better-auth/plugins';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
 import prisma from './prisma';
-import { sendEmail } from '@/utils/nodemailer';
+import { sendEmail } from '@/utils/resend';
 import {
   getVerificationEmailTemplate,
   getPasswordResetEmailTemplate,
@@ -44,7 +44,7 @@ export const auth = betterAuth({
     requireEmailVerification: true,
     disableSignUp: process.env.ENABLE_SIGNUP !== 'true',
 
-    sendResetPassword: async ({ user, url, token }, request) => {
+    sendResetPassword: async ({ user, url }) => {
       try {
         await sendEmail({
           to: user.email,
@@ -60,7 +60,7 @@ export const auth = betterAuth({
   emailVerification: {
     sendOnSignUp: true,
     autoSignInAfterVerification: true,
-    sendVerificationEmail: async ({ user, url, token }, request) => {
+    sendVerificationEmail: async ({ user, url }) => {
       try {
         await sendEmail({
           to: user.email,
@@ -76,10 +76,7 @@ export const auth = betterAuth({
   user: {
     changeEmail: {
       enabled: true,
-      sendChangeEmailVerification: async (
-        { user, newEmail, url, token },
-        request,
-      ) => {
+      sendChangeEmailVerification: async ({ user, newEmail, url }) => {
         try {
           await sendEmail({
             to: user.email,

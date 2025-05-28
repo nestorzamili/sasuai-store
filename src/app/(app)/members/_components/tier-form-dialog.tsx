@@ -28,7 +28,7 @@ import { toast } from '@/hooks/use-toast';
 import { createMemberTier, updateMemberTier } from '../action';
 
 // Form schema for tier
-const formSchema = z.object({
+const tierFormSchema = z.object({
   name: z.string().min(1, 'Tier name is required'),
   minPoints: z.coerce
     .number()
@@ -37,7 +37,7 @@ const formSchema = z.object({
   multiplier: z.coerce.number().min(0.1, 'Multiplier must be at least 0.1'),
 });
 
-type FormValues = z.infer<typeof formSchema>;
+type FormValues = z.infer<typeof tierFormSchema>;
 
 interface TierFormDialogProps {
   open?: boolean;
@@ -57,7 +57,7 @@ export default function TierFormDialog({
 
   // Initialize the form
   const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(tierFormSchema),
     defaultValues: {
       name: initialData?.name || '',
       minPoints: initialData?.minPoints || 0,
@@ -118,6 +118,7 @@ export default function TierFormDialog({
         });
       }
     } catch (error) {
+      console.error('Failed to save member tier:', error);
       toast({
         title: 'Error',
         description: 'An unexpected error occurred',

@@ -5,7 +5,7 @@ import { MemberService } from '@/lib/services/member.service';
 import { z } from 'zod';
 import { headers } from 'next/headers';
 import { auth } from '@/lib/auth';
-import { options } from '@/lib/types/table';
+
 // Member schema for validation
 const memberSchema = z.object({
   name: z.string().min(1, 'Member name is required'),
@@ -43,6 +43,7 @@ export async function getMember(id: string) {
       data: member,
     };
   } catch (error) {
+    console.error('Error fetching member:', error);
     return {
       success: false,
       error: 'Failed to fetch member',
@@ -167,6 +168,7 @@ export async function deleteMember(id: string) {
       success: true,
     };
   } catch (error) {
+    console.error('Error deleting member:', error);
     return {
       success: false,
       error: 'Failed to delete member',
@@ -190,6 +192,7 @@ export async function banMember(id: string, reason: string) {
       message: 'Member has been banned successfully',
     };
   } catch (error) {
+    console.error('Error banning member:', error);
     return {
       success: false,
       error: 'Failed to ban member',
@@ -213,6 +216,7 @@ export async function unbanMember(id: string) {
       message: 'Member has been unbanned successfully',
     };
   } catch (error) {
+    console.error('Error unbanning member:', error);
     return {
       success: false,
       error: 'Failed to unban member',
@@ -259,6 +263,7 @@ export async function searchMembers({
       currentPage: result.currentPage,
     };
   } catch (error) {
+    console.error('Error searching members:', error);
     return {
       success: false,
       error: 'Failed to search members',
@@ -278,6 +283,7 @@ export async function getMemberPointHistory(memberId: string) {
       data: history,
     };
   } catch (error) {
+    console.error('Error fetching point history:', error);
     return {
       success: false,
       error: 'Failed to fetch point history',
@@ -346,6 +352,7 @@ export async function getMemberRewardClaimHistory(memberId: string) {
       data: claims,
     };
   } catch (error) {
+    console.error('Error fetching reward claim history:', error);
     return {
       success: false,
       error: 'Failed to fetch reward claim history',
@@ -371,6 +378,7 @@ export async function calculatePotentialPoints(
       data: points,
     };
   } catch (error) {
+    console.error('Error calculating potential points:', error);
     return {
       success: false,
       error: 'Failed to calculate potential points',
@@ -394,6 +402,7 @@ export async function getAllMemberTiers() {
       data: tiers,
     };
   } catch (error) {
+    console.error('Error fetching member tiers:', error);
     return {
       success: false,
       error: 'Failed to fetch member tiers',
@@ -501,10 +510,12 @@ export async function deleteMemberTier(id: string) {
     return {
       success: true,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage =
+      error instanceof Error ? error.message : 'Failed to delete member tier';
     return {
       success: false,
-      error: error.message || 'Failed to delete member tier',
+      error: errorMessage,
     };
   }
 }

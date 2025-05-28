@@ -1,10 +1,22 @@
 'use client';
-import * as React from 'react';
+
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { format } from 'date-fns';
 import { ColumnDef } from '@tanstack/react-table';
 import { MoreHorizontal } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 
+// UI Components
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+
+// Icons
 import {
   IconTrash,
   IconEdit,
@@ -13,38 +25,45 @@ import {
   IconBan,
   IconShieldCheck,
 } from '@tabler/icons-react';
+
+// Custom Components
 import { MemberTierBadge } from './member-tier-badge';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { MemberWithTier } from '@/lib/types/member';
 import { MemberDeleteDialog } from './member-delete-dialog';
 import { MemberBanDialog } from './member-ban-dialog';
-import { useRouter } from 'next/navigation';
-import { format } from 'date-fns';
-import { useFetch } from '@/hooks/use-fetch';
-import { searchMembers, getAllMemberTiers, unbanMember } from '../action';
 import { TableLayout } from '@/components/layout/table-layout';
-import { Badge } from '@/components/ui/badge';
+
+// Hooks
+import { useFetch } from '@/hooks/use-fetch';
 import { toast } from '@/hooks/use-toast';
 
-interface MemberTableProps {
-  onEdit?: (member: MemberWithTier) => void;
-  onAwardPoints: (member: MemberWithTier) => void;
-}
+// Types
+import type {
+  MemberWithTier,
+  MemberTableProps,
+  FilterOption,
+  TableFilter,
+  MemberTier,
+  MemberResponse,
+} from '@/lib/types/member';
+import { mapToMemberWithTier } from '@/lib/types/member';
+import type { SortByOptions, TableFetchOptions } from '@/hooks/use-fetch';
+
+// Actions
+import { searchMembers, getAllMemberTiers, unbanMember } from '../action';
 
 export function MemberTable({ onEdit, onAwardPoints }: MemberTableProps) {
   const router = useRouter();
+
+  // State for dialogs
   const [selectedMemberForDelete, setSelectedMemberForDelete] =
     useState<MemberWithTier | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedMemberForBan, setSelectedMemberForBan] =
     useState<MemberWithTier | null>(null);
   const [isBanDialogOpen, setIsBanDialogOpen] = useState(false);
-  const [memberTiers, setMemberTiers] = useState<any[]>([]);
+
+  // State for filters
+  const [memberTiers, setMemberTiers] = useState<MemberTier[]>([]);
 
   // Fetch member tiers for filters
   useEffect(() => {
@@ -62,7 +81,7 @@ export function MemberTable({ onEdit, onAwardPoints }: MemberTableProps) {
     fetchTiers();
   }, []);
 
-  // Handlers
+  // Event handlers
   const handleDeleteClick = (member: MemberWithTier) => {
     setSelectedMemberForDelete(member);
     setIsDeleteDialogOpen(true);
@@ -89,6 +108,7 @@ export function MemberTable({ onEdit, onAwardPoints }: MemberTableProps) {
         });
       }
     } catch (error) {
+      console.error('Failed to unban member:', error);
       toast({
         title: 'Error',
         description: 'An unexpected error occurred',
@@ -97,70 +117,63 @@ export function MemberTable({ onEdit, onAwardPoints }: MemberTableProps) {
     }
   };
 
-  // Define columns
+  // Table columns definition
   const columns: ColumnDef<MemberWithTier>[] = [
     {
       accessorKey: 'cardId',
       header: 'Card ID',
-      cell: ({ row }) => {
-        return <div className="font-medium">{row.getValue('cardId')}</div>;
-      },
+      cell: ({ row }) => (
+        <div className="font-medium">{row.getValue('cardId')}</div>
+      ),
     },
     {
       accessorKey: 'name',
       header: 'Name',
-      cell: ({ row }) => {
-        return (
-          <div className="font-medium uppercase">{row.getValue('name')}</div>
-        );
-      },
+      cell: ({ row }) => (
+        <div className="font-medium uppercase">{row.getValue('name')}</div>
+      ),
     },
     {
       accessorKey: 'phone',
       header: 'Phone',
-      cell: ({ row }) => {
-        return (
-          <div className="font-medium text-xs text-muted-foreground">
-            {row.getValue('phone')}
-          </div>
-        );
-      },
+      cell: ({ row }) => (
+        <div className="font-medium text-xs text-muted-foreground">
+          {row.getValue('phone')}
+        </div>
+      ),
     },
     {
       accessorKey: 'address',
       header: 'Address',
-      cell: ({ row }) => {
-        return (
-          <span className="text-muted-foreground text-xs uppercase">
-            {row.original.address}
-          </span>
-        );
-      },
+      cell: ({ row }) => (
+        <span className="text-muted-foreground text-xs uppercase">
+          {row.original.address}
+        </span>
+      ),
     },
     {
       id: 'tier',
       header: 'Membership Tier',
       cell: ({ row }) => {
         const tier = row.original.tier;
-        if (!tier)
+        if (!tier) {
           return (
             <span className="text-xs italic text-muted-foreground">
               No tier
             </span>
           );
+        }
         return <MemberTierBadge tier={tier} />;
       },
     },
     {
       accessorKey: 'totalPoints',
       header: 'Total Point',
-      cell: ({ row }) => {
-        return (
-          <div className="font-medium ml-4">
-            {Number(row.original.totalPoints).toLocaleString()}
-          </div>
-        );
-      },
+      cell: ({ row }) => (
+        <div className="font-medium ml-4">
+          {Number(row.original.totalPoints).toLocaleString()}
+        </div>
+      ),
     },
     {
       accessorKey: 'joinDate',
@@ -258,39 +271,43 @@ export function MemberTable({ onEdit, onAwardPoints }: MemberTableProps) {
     },
   ];
 
-  // Fetch data using searchMembers instead of optimalizeGetMember
-  const fetchData = async (options: any) => {
+  // Data fetching function
+  const fetchData = async (options: TableFetchOptions) => {
     try {
       const response = await searchMembers({
         query: options.search || '',
-        page: options.page + 1,
-        limit: options.limit,
+        page: (options.page ?? 0) + 1,
+        limit: options.limit ?? 10,
         sortBy: options.sortBy?.id || 'name',
         sortDirection: options.sortBy?.desc ? 'desc' : 'asc',
-        tier: options.filters?.tier || '',
-        isBanned: options.filters?.isBanned,
+        tier: (options.filters?.tier as string) || '',
+        isBanned: options.filters?.isBanned as boolean | undefined,
       });
 
       if (response.success) {
+        const mappedMembers = (response.members || []).map((member) =>
+          mapToMemberWithTier(member as MemberResponse),
+        );
         return {
-          data: response.members || [],
-          totalRows: response.totalCount || 0, // Ensure totalRows is always a number
+          data: mappedMembers,
+          totalRows: response.totalCount || 0,
         };
       }
 
       return {
         data: [],
-        totalRows: 0, // Return 0 instead of undefined
+        totalRows: 0,
       };
     } catch (error) {
       console.error('Error fetching members:', error);
       return {
         data: [],
-        totalRows: 0, // Always return a number for totalRows
+        totalRows: 0,
       };
     }
   };
 
+  // Use fetch hook
   const {
     data: members,
     isLoading,
@@ -303,13 +320,14 @@ export function MemberTable({ onEdit, onAwardPoints }: MemberTableProps) {
     totalRows,
     refresh,
   } = useFetch({
-    fetchData: fetchData,
+    fetchData,
     initialPageIndex: 0,
     initialPageSize: 10,
     initialSortField: 'name',
     initialSortDirection: false,
   });
 
+  // Event handlers for table interactions
   const handlePaginationChange = (newPagination: {
     pageIndex: number;
     pageSize: number;
@@ -318,7 +336,7 @@ export function MemberTable({ onEdit, onAwardPoints }: MemberTableProps) {
     setLimit(newPagination.pageSize);
   };
 
-  const handleSortingChange = (newSorting: any) => {
+  const handleSortingChange = (newSorting: SortByOptions[]) => {
     setSortBy(newSorting);
   };
 
@@ -326,11 +344,11 @@ export function MemberTable({ onEdit, onAwardPoints }: MemberTableProps) {
     setSearch(search);
   };
 
-  // Handle filter changes
-  const handleFilterChange = (key: string, value: any) => {
+  // Filter handling with proper types
+  const handleFilterChange = (key: string, value: string) => {
     if (key === 'tier') {
       if (value === 'ALL_TIERS') {
-        setFilters((prev: any) => {
+        setFilters((prev) => {
           const newFilters = { ...prev };
           delete newFilters[key];
           return newFilters;
@@ -340,30 +358,30 @@ export function MemberTable({ onEdit, onAwardPoints }: MemberTableProps) {
     }
 
     if (key === 'isBanned') {
-      const actualValue =
+      const actualValue: boolean | undefined =
         value === 'ALL_STATUS'
           ? undefined
           : value === 'true'
-          ? true
-          : value === 'false'
-          ? false
-          : undefined;
+            ? true
+            : value === 'false'
+              ? false
+              : undefined;
 
-      setFilters((prev: any) => ({
+      setFilters((prev) => ({
         ...prev,
         [key]: actualValue,
       }));
       return;
     }
 
-    setFilters((prev: any) => ({
+    setFilters((prev) => ({
       ...prev,
       [key]: value,
     }));
   };
 
-  // Define filter options
-  const tierFilterOptions = [
+  // Filter options
+  const tierFilterOptions: FilterOption[] = [
     { value: 'ALL_TIERS', label: 'All Tiers' },
     ...memberTiers.map((tier) => ({
       value: tier.name,
@@ -371,10 +389,27 @@ export function MemberTable({ onEdit, onAwardPoints }: MemberTableProps) {
     })),
   ];
 
-  const statusOptions = [
+  const statusOptions: FilterOption[] = [
     { value: 'ALL_STATUS', label: 'All Status' },
     { value: 'false', label: 'Active' },
     { value: 'true', label: 'Banned' },
+  ];
+
+  const filters: TableFilter[] = [
+    {
+      id: 'tier',
+      label: 'Tier',
+      type: 'select',
+      options: tierFilterOptions,
+      handleFilterChange: (value) => handleFilterChange('tier', value),
+    },
+    {
+      id: 'isBanned',
+      label: 'Status',
+      type: 'select',
+      options: statusOptions,
+      handleFilterChange: (value) => handleFilterChange('isBanned', value),
+    },
   ];
 
   return (
@@ -389,23 +424,7 @@ export function MemberTable({ onEdit, onAwardPoints }: MemberTableProps) {
         handleSearchChange={handleSearchChange}
         totalRows={totalRows}
         enableSelection={true}
-        filters={[
-          {
-            id: 'tier',
-            label: 'Tier',
-            type: 'select',
-            options: tierFilterOptions,
-            handleFilterChange: (value) => handleFilterChange('tier', value),
-          },
-          {
-            id: 'isBanned',
-            label: 'Status',
-            type: 'select',
-            options: statusOptions,
-            handleFilterChange: (value) =>
-              handleFilterChange('isBanned', value),
-          },
-        ]}
+        filters={filters}
       />
 
       {selectedMemberForDelete && (

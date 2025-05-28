@@ -4,7 +4,11 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { toast } from '@/hooks/use-toast';
 import { getMember } from '../action';
-import { MemberWithRelations } from '@/lib/types/member';
+import {
+  MemberWithRelations,
+  mapToMemberWithRelations,
+  MemberResponse,
+} from '@/lib/types/member';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import MemberProfile from './_components/member-profile';
 import MemberPointHistory from './_components/member-point-history';
@@ -23,12 +27,6 @@ export default function MemberDetailsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [member, setMember] = useState<MemberWithRelations | null>(null);
 
-  // Set breadcrumb loading state immediately on component mount
-  useEffect(() => {
-    // Don't set the breadcrumb when loading - remove initial null label setup
-    // The breadcrumb will only appear when we have the actual member data
-  }, []);
-
   // Fetch member data
   const fetchMember = useCallback(async () => {
     if (!memberId.current) {
@@ -46,21 +44,16 @@ export default function MemberDetailsPage() {
       const result = await getMember(memberId.current);
 
       if (result.success && result.data) {
-        // Map the API response to match our MemberWithRelations type
-        const memberData = {
-          ...result.data,
-          // Map totalPoints to points if it exists, or default to 0
-          points: result.data.totalPoints || 0,
-        } as MemberWithRelations;
+        // Use the simplified mapping utility with proper type
+        const memberData = mapToMemberWithRelations(
+          result.data as MemberResponse,
+        );
 
         setMember(memberData);
 
         // Update breadcrumb only when we have the actual member name
-        if (
-          typeof window !== 'undefined' &&
-          (window as any).__updateBreadcrumb
-        ) {
-          (window as any).__updateBreadcrumb(memberId.current, memberData.name);
+        if (typeof window !== 'undefined' && window.__updateBreadcrumb) {
+          window.__updateBreadcrumb(memberId.current, memberData.name);
         }
       } else {
         toast({
@@ -71,6 +64,7 @@ export default function MemberDetailsPage() {
         router.push('/members');
       }
     } catch (error) {
+      console.error('Failed to fetch member:', error);
       toast({
         title: 'Error',
         description: 'An unexpected error occurred',

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { MemberWithRelations } from '@/lib/types/member';
+import { MemberWithRelations, MemberTier } from '@/lib/types/member';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -30,7 +30,7 @@ export default function MemberProfile({
   onUpdate,
 }: MemberProfileProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [tiers, setTiers] = useState<any[]>([]);
+  const [tiers, setTiers] = useState<MemberTier[]>([]);
 
   // Format date with null check
   const formattedJoinDate = member.joinDate
@@ -187,6 +187,7 @@ export default function MemberProfile({
                             });
                           }
                         } catch (error) {
+                          console.error('Failed to unban member:', error);
                           toast({
                             title: 'Error',
                             description: 'An unexpected error occurred',

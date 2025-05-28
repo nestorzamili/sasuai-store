@@ -1,14 +1,14 @@
 'use client';
 
 import MemberFormDialog from './member-form-dialog';
-import { MemberWithTier } from '@/lib/types/member';
+import { MemberWithTier, MemberTier } from '@/lib/types/member';
 
 // Define props type
 interface MemberPrimaryButtonProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   initialData?: MemberWithTier;
-  tiers: any[];
+  tiers: MemberTier[];
   onSuccess?: () => void;
 }
 

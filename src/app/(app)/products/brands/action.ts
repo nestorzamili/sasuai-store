@@ -3,137 +3,110 @@
 import { revalidatePath } from 'next/cache';
 import { BrandService } from '@/lib/services/brand.service';
 import { z } from 'zod';
+import {
+  CreateBrandData,
+  UpdateBrandData,
+  BrandSearchParams,
+  GetBrandsResponse,
+  GetBrandResponse,
+  CreateBrandResponse,
+  UpdateBrandResponse,
+  DeleteBrandResponse,
+  BrandFetchResult,
+  BrandWithCount,
+} from '@/lib/types/brand';
 
-// Brand schema for validation - removed logoUrl
+// Brand validation schema
 const brandSchema = z.object({
-  name: z.string().min(1, 'Brand name is required'),
+  name: z.string().min(1, 'Brand name is required').max(100, 'Name too long'),
+  description: z.string().optional(),
 });
 
 /**
- * Get all brands with product count, support pagination/sort/search/filter
+ * Get all brands with count and pagination
  */
-export async function getAllBrandsWithCount(options?: {
-  page?: number;
-  limit?: number;
-  sortBy?: { id: string; desc: boolean };
-  search?: string;
-  columnFilter?: string[];
-}) {
+export async function getAllBrandsWithCount(
+  params: BrandSearchParams = {},
+): Promise<BrandFetchResult<BrandWithCount[]>> {
   try {
-    // Default values
-    const page = options?.page ?? 1;
-    const limit = options?.limit ?? 10;
-    const sortBy = options?.sortBy ?? { id: 'name', desc: false };
-    const search = options?.search ?? '';
-    const columnFilter = options?.columnFilter ?? ['name'];
-
-    // Build where clause for search
-    let where: any = {};
-    if (search && columnFilter.length > 0) {
-      where.OR = columnFilter.map((col) => ({
-        [col]: { contains: search, mode: 'insensitive' },
-      }));
-    }
-
-    // Build orderBy
-    let orderBy: any = {};
-    if (sortBy && sortBy.id) {
-      orderBy[sortBy.id] = sortBy.desc ? 'desc' : 'asc';
-    } else {
-      orderBy = { name: 'asc' };
-    }
-
-    // Count total rows
-    const totalRows = await BrandService.countWithWhere(where);
-
-    // Query data with pagination
-    const brands = await BrandService.getAllBrandsWithCount({
-      where,
-      orderBy,
-      skip: (page - 1) * limit,
-      take: limit,
+    const result = await BrandService.search({
+      page: params.page ?? 1,
+      limit: params.limit ?? 10,
+      sortBy: params.sortBy ?? 'name',
+      sortDirection: params.sortDirection ?? 'asc',
+      query: params.query ?? '',
     });
 
     return {
-      success: true,
-      data: brands,
-      totalRows,
+      data: result.brands,
+      totalRows: result.totalCount,
     };
   } catch (error) {
+    console.error('Failed to fetch brands:', error);
     return {
-      success: false,
-      error: 'Failed to fetch brands',
-      data: [] as any[],
+      data: [],
       totalRows: 0,
     };
   }
 }
 
 /**
- * Get all brands
+ * Get all brands (simple list)
  */
-export async function getAllBrands() {
+export async function getAllBrands(): Promise<GetBrandsResponse> {
   try {
     const brands = await BrandService.getAll();
-
     return {
       success: true,
-      data: brands,
+      data: {
+        brands,
+        totalCount: brands.length,
+        totalPages: 1,
+        currentPage: 1,
+      },
     };
   } catch (error) {
-    return {
-      success: false,
-      error: 'Failed to fetch brands',
-    };
+    console.error('Failed to fetch brands:', error);
+    return { success: false, error: 'Failed to fetch brands' };
   }
 }
 
 /**
  * Get a brand by ID
  */
-export async function getBrand(id: string) {
+export async function getBrand(id: string): Promise<GetBrandResponse> {
   try {
     const brand = await BrandService.getById(id);
+    if (!brand) return { success: false, error: 'Brand not found' };
 
-    if (!brand) {
-      return {
-        success: false,
-        error: 'Brand not found',
-      };
-    }
-
-    return {
-      success: true,
-      data: brand,
-    };
+    // Return brand directly since Brand interface matches what we need
+    return { success: true, data: brand };
   } catch (error) {
-    return {
-      success: false,
-      error: 'Failed to fetch brand',
-    };
+    console.error('Failed to fetch brand:', error);
+    return { success: false, error: 'Failed to fetch brand' };
   }
 }
 
 /**
  * Create a new brand
  */
-export async function createBrand(data: { name: string }) {
+export async function createBrand(
+  data: CreateBrandData,
+): Promise<CreateBrandResponse> {
   try {
-    // Validate data
+    // Validate data using full schema (not partial) for create operations
     const validatedData = brandSchema.parse(data);
 
     // Create brand
     const brand = await BrandService.create({
-      name: validatedData.name,
+      name: validatedData.name, // Now guaranteed to be string
     });
 
     // Revalidate brands page
     revalidatePath('/products/brands');
 
-    return {
-      success: true,
-      data: brand,
-    };
+    // Return brand directly
+    return { success: true, data: brand };
   } catch (error) {
     if (error instanceof z.ZodError) {
       return {
@@ -143,33 +116,30 @@ export async function createBrand(data: { name: string }) {
       };
     }
 
-    return {
-      success: false,
-      error: 'Failed to create brand',
-    };
+    console.error('Failed to create brand:', error);
+    return { success: false, error: 'Failed to create brand' };
   }
 }
 
 /**
  * Update a brand
  */
-export async function updateBrand(id: string, data: { name?: string }) {
+export async function updateBrand(
+  id: string,
+  data: UpdateBrandData,
+): Promise<UpdateBrandResponse> {
   try {
     // Validate data
     const validatedData = brandSchema.partial().parse(data);
 
     // Update brand
-    const brand = await BrandService.update(id, {
-      name: validatedData.name,
-    });
+    const brand = await BrandService.update(id, validatedData);
 
     // Revalidate brands page
     revalidatePath('/products/brands');
 
-    return {
-      success: true,
-      data: brand,
-    };
+    // Return brand directly
+    return { success: true, data: brand };
   } catch (error) {
     if (error instanceof z.ZodError) {
       return {
@@ -179,41 +149,46 @@ export async function updateBrand(id: string, data: { name?: string }) {
       };
     }
 
-    return {
-      success: false,
-      error: 'Failed to update brand',
-    };
+    console.error('Failed to update brand:', error);
+    return { success: false, error: 'Failed to update brand' };
   }
 }
 
 /**
  * Delete a brand
  */
-export async function deleteBrand(id: string) {
+export async function deleteBrand(id: string): Promise<DeleteBrandResponse> {
   try {
     // Check if brand has products
     const hasProducts = await BrandService.hasProducts(id);
-
     if (hasProducts) {
       return {
         success: false,
-        error: 'Cannot delete brand with associated products',
+        error: 'Cannot delete brand that has associated products',
       };
     }
 
     // Delete brand
     await BrandService.delete(id);
-
-    // Revalidate brands page
     revalidatePath('/products/brands');
-
-    return {
-      success: true,
-    };
+    return { success: true };
   } catch (error) {
-    return {
-      success: false,
-      error: 'Failed to delete brand',
-    };
+    console.error('Failed to delete brand:', error);
+    return { success: false, error: 'Failed to delete brand' };
+  }
+}
+
+/**
+ * Check if brand has products
+ */
+export async function checkBrandHasProducts(
+  id: string,
+): Promise<{ hasProducts: boolean }> {
+  try {
+    const hasProducts = await BrandService.hasProducts(id);
+    return { hasProducts };
+  } catch (error) {
+    console.error('Failed to check brand products:', error);
+    return { hasProducts: false };
   }
 }

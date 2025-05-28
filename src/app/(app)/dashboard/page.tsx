@@ -8,22 +8,16 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { IconRefresh } from '@tabler/icons-react';
-import { useState, useEffect, useMemo, lazy } from 'react';
+import { useState, useMemo, lazy, useCallback } from 'react';
 import { Download } from 'lucide-react';
-import { metricPeformance } from './actions';
-import { useToast } from '@/hooks/use-toast';
+import { useMetricPerformance } from './hooks/useMetricPerformance';
 import { formatDate } from '@/lib/date';
-import { DateFilter } from '@/lib/types/filter';
+import { DateFilter as FilterDateFilter } from '@/lib/types/filter';
 import { DateRangePickerWithPresets } from '@/components/ui/date-range-picker-with-presets';
 // Lazy load components for better initial load time
 const SalesTrend = lazy(() =>
   import('./components/_parts/chart-sales-trend').then((mod) => ({
     default: mod.SalesTrend,
-  })),
-);
-const TransactionTrend = lazy(() =>
-  import('./components/_parts/chart-transaction-trend').then((mod) => ({
-    default: mod.TransactionTrend,
   })),
 );
 const PaymentMethod = lazy(() =>
@@ -56,22 +50,10 @@ const LowProductStock = lazy(() =>
     default: mod.LowProductStock,
   })),
 );
-const MemberActivities = lazy(() =>
-  import('./components/_parts/member-activities').then((mod) => ({
-    default: mod.MemberActivities,
-  })),
-);
 const OverviewSales = lazy(() =>
   import('./components/overview-sales').then((mod) => ({
     default: mod.OverviewSales,
   })),
-);
-
-// Loading fallback component
-const LoadingComponent = () => (
-  <div className="w-full h-full bg-muted/30 animate-pulse rounded-xl border min-h-[200px]">
-    Loading..
-  </div>
 );
 
 export interface MetricPerformance {
@@ -106,59 +88,30 @@ export default function Dashboard() {
         }) + ' WIB',
     };
   }, []);
-  const [isLoading, setIsLoading] = useState(false);
-  const [metricPerformance, setMetricPerformance] = useState<MetricPerformance>(
-    {
-      totalSales: { value: 0, growth: 0 },
-      totalTransaction: { value: 0, growth: 0 },
-      averageTransaction: { value: 0, growth: 0 },
-      costProduct: { value: 0, growth: 0 },
-      productOut: { value: 0, growth: 0 },
-      margin: { value: 0, growth: 0 },
-    },
-  );
-  const [filter, setFilter] = useState<DateFilter>({
+  const [filter, setFilter] = useState<FilterDateFilter>({
     from: new Date(currentDateTime.date),
     to: new Date(currentDateTime.date),
   });
-  const { toast } = useToast();
-  const fetchMetricPerformance = async () => {
-    try {
-      setIsLoading(true);
-      const response = await metricPeformance(filter);
-      // Transform the response data to match the MetricPerformance interface
-      const transformedData: MetricPerformance = {
-        totalSales: response?.data?.totalSales || { value: 0, growth: 0 },
-        totalTransaction: response?.data?.totalTransaction || {
-          value: 0,
-          growth: 0,
-        },
-        averageTransaction: response?.data?.avgSales || { value: 0, growth: 0 },
-        costProduct: response?.data?.totalCost || { value: 0, growth: 0 },
-        productOut: response?.data?.profit || { value: 0, growth: 0 },
-        margin: response?.data?.profit || { value: 0, growth: 0 },
-      };
-      // set to metric performance
-      setMetricPerformance(transformedData);
-      setIsLoading(false);
-      return transformedData;
-    } catch (error) {
-      console.error('Error fetching metric performance:', error);
-      setIsLoading(false);
-    }
-  };
-  const handleRefresh = () => {
-    fetchMetricPerformance();
-  };
 
-  useEffect(() => {
-    // Use AbortController for fetch cleanup
-    const abortController = new AbortController();
-    fetchMetricPerformance();
-    return () => {
-      abortController.abort(); // Cancel any in-flight requests when component unmounts
-    };
-  }, [filter]);
+  // Use custom hook
+  const { metricPerformance, isLoading, refetch } =
+    useMetricPerformance(filter);
+
+  const handleRefresh = useCallback(() => {
+    refetch();
+  }, [refetch]);
+
+  const handleFilterChange = useCallback(
+    (val: { from?: Date; to?: Date } | undefined) => {
+      if (val?.from && val?.to) {
+        setFilter({
+          from: val.from,
+          to: val.to,
+        });
+      }
+    },
+    [],
+  );
 
   return (
     <div className="space-y-6 relative">
@@ -179,14 +132,7 @@ export default function Dashboard() {
         <div className="flex items-center space-x-2">
           <DateRangePickerWithPresets
             value={{ from: new Date(filter.from), to: new Date(filter.to) }}
-            onChange={(val) => {
-              if (val?.from && val?.to) {
-                setFilter({
-                  from: new Date(val.from),
-                  to: new Date(val.to),
-                });
-              }
-            }}
+            onChange={handleFilterChange}
           />
           <Button variant="outline" size="sm" className="h-9 gap-2">
             <Download className="h-4 w-4" />

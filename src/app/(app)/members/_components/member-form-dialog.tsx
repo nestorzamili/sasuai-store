@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
-import { MemberWithTier } from '@/lib/types/member';
+import { MemberFormDialogProps } from '@/lib/types/member';
 import {
   Dialog,
   DialogContent,
@@ -36,24 +36,16 @@ import { IconPlus } from '@tabler/icons-react';
 import { createMember, updateMember } from '../action';
 
 // Define the form schema
-const formSchema = z.object({
-  cardId: z.string().nonempty('Card ID is required'),
+const memberFormSchema = z.object({
+  cardId: z.string().min(1, 'Card ID is required'),
   name: z.string().min(1, 'Member name is required'),
-  email: z.string().email('Invalid email format').optional().nullable(),
-  address: z.string().optional().nullable(),
-  phone: z.string().optional().nullable(),
-  tierId: z.string().optional().nullable(),
+  email: z.string().email('Invalid email format').optional().or(z.literal('')),
+  address: z.string().optional().or(z.literal('')),
+  phone: z.string().optional().or(z.literal('')),
+  tierId: z.string().optional().or(z.literal('')),
 });
 
-type FormValues = z.infer<typeof formSchema>;
-
-interface MemberFormDialogProps {
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
-  initialData?: MemberWithTier;
-  tiers: any[];
-  onSuccess?: () => void;
-}
+type FormValues = z.infer<typeof memberFormSchema>;
 
 export default function MemberFormDialog({
   open,
@@ -67,12 +59,14 @@ export default function MemberFormDialog({
 
   // Initialize the form
   const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(memberFormSchema),
     defaultValues: {
       name: initialData?.name || '',
-      email: initialData?.email || null,
-      phone: initialData?.phone || null,
-      tierId: initialData?.tierId || null,
+      cardId: initialData?.cardId || '',
+      email: initialData?.email || '',
+      address: initialData?.address || '',
+      phone: initialData?.phone || '',
+      tierId: initialData?.tierId || '',
     },
   });
 
@@ -82,19 +76,19 @@ export default function MemberFormDialog({
       form.reset({
         cardId: initialData.cardId || '',
         name: initialData.name || '',
-        email: initialData.email || null,
-        address: initialData.address || null,
-        phone: initialData.phone || null,
-        tierId: initialData.tierId || null,
+        email: initialData.email || '',
+        address: initialData.address || '',
+        phone: initialData.phone || '',
+        tierId: initialData.tierId || '',
       });
     } else {
       form.reset({
         name: '',
         cardId: '',
-        address: null,
-        email: null,
-        phone: null,
-        tierId: null,
+        address: '',
+        email: '',
+        phone: '',
+        tierId: '',
       });
     }
   }, [form, initialData]);
@@ -108,19 +102,19 @@ export default function MemberFormDialog({
         isEditing && initialData
           ? await updateMember(initialData.id, {
               name: values.name,
-              cardId: values.cardId,
-              address: values.address,
-              email: values.email,
-              phone: values.phone,
-              tierId: values.tierId,
+              cardId: values.cardId || null,
+              address: values.address || null,
+              email: values.email || null,
+              phone: values.phone || null,
+              tierId: values.tierId || null,
             })
           : await createMember({
               name: values.name,
-              email: values.email,
-              cardId: values.cardId,
-              address: values.address,
-              phone: values.phone,
-              tierId: values.tierId,
+              email: values.email || null,
+              cardId: values.cardId || null,
+              address: values.address || null,
+              phone: values.phone || null,
+              tierId: values.tierId || null,
             });
 
       if (result.success) {
@@ -141,6 +135,7 @@ export default function MemberFormDialog({
         });
       }
     } catch (error) {
+      console.error('Failed to submit member form:', error);
       toast({
         title: 'Error',
         description: 'An unexpected error occurred',

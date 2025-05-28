@@ -1,128 +1,155 @@
 import prisma from '@/lib/prisma';
+import {
+  StockMovementSearchParams,
+  StockInComplete,
+  StockOutComplete,
+  CreateStockInData,
+  CreateStockOutData,
+  StockMovement,
+  PaginatedResponse,
+  ProductBatchWithProduct,
+} from '@/lib/types/inventory';
 
 export class StockMovementService {
-  static async getAllStockIns(queryBuild?: any) {
-    try {
-      // Build query options directly instead of using buildQueryOptions
-      const options: any = {};
+  static async getAllStockIns(
+    params: StockMovementSearchParams = {},
+  ): Promise<PaginatedResponse<StockInComplete>> {
+    const {
+      page = 1,
+      limit = 10,
+      sortBy = 'date',
+      sortDirection = 'desc',
+      search = '',
+    } = params;
 
-      // Handle pagination
-      if (queryBuild?.page && queryBuild?.limit) {
-        const page = Number(queryBuild.page) || 1;
-        const limit = Number(queryBuild.limit) || 10;
-        options.skip = (page - 1) * limit;
-        options.take = limit;
-      }
+    const skip = (page - 1) * limit;
 
-      // Handle sorting
-      if (queryBuild?.sortBy) {
-        const sortField = queryBuild.sortBy;
-        const sortDirection = queryBuild.sortDirection?.toLowerCase() || 'desc';
+    const where: Record<string, unknown> = {};
 
-        options.orderBy = { [sortField]: sortDirection };
-      } else {
-        options.orderBy = { date: 'desc' }; // Default sort
-      }
+    if (search) {
+      where.OR = [
+        {
+          batch: {
+            product: { name: { contains: search, mode: 'insensitive' } },
+          },
+        },
+        { batch: { batchCode: { contains: search, mode: 'insensitive' } } },
+      ];
+    }
 
-      // Handle search with column filtering
-      if (queryBuild?.search && queryBuild.search.trim() !== '') {
-        const search = queryBuild.search.trim();
-        const columnFilters = queryBuild.columnFilter || [];
+    const orderBy: Record<string, unknown> = {};
+    if (sortBy.includes('.')) {
+      const [relation, field] = sortBy.split('.');
+      orderBy[relation] = { [field]: sortDirection };
+    } else {
+      orderBy[sortBy] = sortDirection;
+    }
 
-        if (columnFilters.length > 0) {
-          options.where = {
-            OR: columnFilters.map((field: string) => {
-              // Handle nested properties (e.g. 'batch.product.name')
-              if (field.includes('.')) {
-                const parts = field.split('.');
-                let filter: any = {};
-                let current = filter;
-
-                // Build nested filter structure
-                for (let i = 0; i < parts.length - 1; i++) {
-                  current[parts[i]] = {};
-                  current = current[parts[i]];
-                }
-
-                current[parts[parts.length - 1]] = {
-                  contains: search,
-                  mode: 'insensitive',
-                };
-
-                return filter;
-              } else {
-                return {
-                  [field]: {
-                    contains: search,
-                    mode: 'insensitive',
-                  },
-                };
-              }
-            }),
-          };
-        }
-      }
-
-      // Execute the database queries
-      const [stockIns, count] = await Promise.all([
-        prisma.stockIn.findMany({
-          include: {
-            batch: {
-              include: {
-                product: true,
+    const [data, totalCount] = await Promise.all([
+      prisma.stockIn.findMany({
+        where,
+        include: {
+          batch: {
+            include: {
+              product: {
+                include: {
+                  category: true,
+                  unit: true,
+                },
               },
             },
-            supplier: true,
-            unit: true,
           },
-          ...options,
-        }),
-        prisma.stockIn.count(
-          options.where ? { where: options.where } : undefined
-        ),
-      ]);
+          supplier: true,
+          unit: true,
+        },
+        orderBy,
+        skip,
+        take: limit,
+      }),
+      prisma.stockIn.count({ where }),
+    ]);
 
-      return {
-        data: stockIns,
-        meta: {
-          ...options,
-          rowsCount: count,
-        },
-      };
-    } catch (error) {
-      return {
-        data: [],
-        meta: {
-          rowsCount: 0,
-        },
-      };
-    }
+    return {
+      data: data as StockInComplete[],
+      meta: {
+        totalRows: totalCount,
+        totalPages: Math.ceil(totalCount / limit),
+        currentPage: page,
+        pageSize: limit,
+      },
+    };
   }
 
-  /**
-   * Create a new stock-in record
-   */
-  static async createStockIn(data: {
-    batchId: string;
-    quantity: number;
-    unitId: string;
-    date: Date;
-    supplierId?: string;
-  }) {
-    return prisma.$transaction(async (tx) => {
-      // Get the current batch
-      const batch = await tx.productBatch.findUnique({
-        where: { id: data.batchId },
-        include: {
-          product: true,
+  static async getAllStockOuts(
+    params: StockMovementSearchParams = {},
+  ): Promise<PaginatedResponse<StockOutComplete>> {
+    const {
+      page = 1,
+      limit = 10,
+      sortBy = 'date',
+      sortDirection = 'desc',
+      search = '',
+    } = params;
+
+    const skip = (page - 1) * limit;
+
+    const where: Record<string, unknown> = {};
+
+    if (search) {
+      where.OR = [
+        {
+          batch: {
+            product: { name: { contains: search, mode: 'insensitive' } },
+          },
         },
-      });
+        { batch: { batchCode: { contains: search, mode: 'insensitive' } } },
+      ];
+    }
 
-      if (!batch) {
-        throw new Error('Product batch not found');
-      }
+    const orderBy: Record<string, unknown> = {};
+    if (sortBy.includes('.')) {
+      const [relation, field] = sortBy.split('.');
+      orderBy[relation] = { [field]: sortDirection };
+    } else {
+      orderBy[sortBy] = sortDirection;
+    }
 
-      // Create the stock-in record
+    const [data, totalCount] = await Promise.all([
+      prisma.stockOut.findMany({
+        where,
+        include: {
+          batch: {
+            include: {
+              product: {
+                include: {
+                  category: true,
+                  unit: true,
+                },
+              },
+            },
+          },
+          unit: true,
+        },
+        orderBy,
+        skip,
+        take: limit,
+      }),
+      prisma.stockOut.count({ where }),
+    ]);
+
+    return {
+      data: data as StockOutComplete[],
+      meta: {
+        totalRows: totalCount,
+        totalPages: Math.ceil(totalCount / limit),
+        currentPage: page,
+        pageSize: limit,
+      },
+    };
+  }
+
+  static async createStockIn(data: CreateStockInData) {
+    return prisma.$transaction(async (tx) => {
       const stockIn = await tx.stockIn.create({
         data: {
           batchId: data.batchId,
@@ -131,160 +158,54 @@ export class StockMovementService {
           date: data.date,
           supplierId: data.supplierId,
         },
-      });
-
-      // Update the batch's remaining quantity
-      await tx.productBatch.update({
-        where: { id: data.batchId },
-        data: {
-          remainingQuantity: {
-            increment: data.quantity,
+        include: {
+          batch: {
+            include: {
+              product: {
+                include: {
+                  category: true,
+                  unit: true,
+                },
+              },
+            },
           },
+          unit: true,
+          supplier: true,
         },
       });
 
-      // Update the product's current stock
+      const batch = await tx.productBatch.update({
+        where: { id: data.batchId },
+        data: {
+          remainingQuantity: { increment: data.quantity },
+        },
+      });
+
       await tx.product.update({
         where: { id: batch.productId },
         data: {
-          currentStock: {
-            increment: data.quantity,
-          },
+          currentStock: { increment: data.quantity },
         },
       });
 
-      return stockIn;
+      return stockIn as StockInComplete;
     });
   }
 
-  /**
-   * Get optimalized stock-out records with pagination support
-   */
-  static async getAllStockOuts(queryBuild?: any) {
-    try {
-      const options: any = {};
-
-      // Handle pagination
-      if (queryBuild?.page && queryBuild?.limit) {
-        const page = Number(queryBuild.page) || 1;
-        const limit = Number(queryBuild.limit) || 10;
-        options.skip = (page - 1) * limit;
-        options.take = limit;
-      }
-
-      // Handle sorting
-      if (queryBuild?.sortBy) {
-        const sortField = queryBuild.sortBy;
-        const sortDirection = queryBuild.sortDirection?.toLowerCase() || 'desc';
-
-        options.orderBy = { [sortField]: sortDirection };
-      } else {
-        options.orderBy = { date: 'desc' }; // Default sort
-      }
-
-      // Handle search with column filtering
-      if (queryBuild?.search && queryBuild.search.trim() !== '') {
-        const search = queryBuild.search.trim();
-        const columnFilters = queryBuild.columnFilter || [];
-
-        if (columnFilters.length > 0) {
-          options.where = {
-            OR: columnFilters.map((field: string) => {
-              // Handle nested properties (e.g. 'batch.product.name')
-              if (field.includes('.')) {
-                const parts = field.split('.');
-                let filter: any = {};
-                let current = filter;
-
-                // Build nested filter structure
-                for (let i = 0; i < parts.length - 1; i++) {
-                  current[parts[i]] = {};
-                  current = current[parts[i]];
-                }
-
-                current[parts[parts.length - 1]] = {
-                  contains: search,
-                  mode: 'insensitive',
-                };
-
-                return filter;
-              } else {
-                return {
-                  [field]: {
-                    contains: search,
-                    mode: 'insensitive',
-                  },
-                };
-              }
-            }),
-          };
-        }
-      }
-
-      // Get paginated manual stock outs
-      const [stockOuts, count] = await Promise.all([
-        prisma.stockOut.findMany({
-          include: {
-            batch: {
-              include: {
-                product: true,
-              },
-            },
-            unit: true,
-          },
-          ...options,
-        }),
-        prisma.stockOut.count(
-          options.where ? { where: options.where } : undefined
-        ),
-      ]);
-
-      return {
-        data: stockOuts,
-        meta: {
-          ...options,
-          rowsCount: count,
-        },
-      };
-    } catch (error) {
-      return {
-        data: [],
-        meta: {
-          rowsCount: 0,
-        },
-      };
-    }
-  }
-
-  /**
-   * Create a new stock-out record
-   */
-  static async createStockOut(data: {
-    batchId: string;
-    quantity: number;
-    unitId: string;
-    date: Date;
-    reason: string;
-  }) {
+  static async createStockOut(data: CreateStockOutData) {
     return prisma.$transaction(async (tx) => {
-      // Get the current batch
       const batch = await tx.productBatch.findUnique({
         where: { id: data.batchId },
-        include: {
-          product: true,
-        },
       });
 
       if (!batch) {
         throw new Error('Product batch not found');
       }
 
-      // Validate that there's enough stock in the batch
       if (batch.remainingQuantity < data.quantity) {
-        throw new Error('Insufficient quantity in the batch');
+        throw new Error('Insufficient stock for this operation');
       }
 
-      // Create the stock-out record
       const stockOut = await tx.stockOut.create({
         data: {
           batchId: data.batchId,
@@ -293,124 +214,107 @@ export class StockMovementService {
           date: data.date,
           reason: data.reason,
         },
+        include: {
+          batch: {
+            include: {
+              product: {
+                include: {
+                  category: true,
+                  unit: true,
+                },
+              },
+            },
+          },
+          unit: true,
+        },
       });
 
-      // Update the batch's remaining quantity
       await tx.productBatch.update({
         where: { id: data.batchId },
         data: {
-          remainingQuantity: {
-            decrement: data.quantity,
-          },
+          remainingQuantity: { decrement: data.quantity },
         },
       });
 
-      // Update the product's current stock
       await tx.product.update({
         where: { id: batch.productId },
         data: {
-          currentStock: {
-            decrement: data.quantity,
-          },
+          currentStock: { decrement: data.quantity },
         },
       });
 
-      return stockOut;
+      return stockOut as StockOutComplete;
     });
   }
 
-  /**
-   * Get the stock movement history for a batch
-   */
-  static async getBatchStockMovementHistory(batchId: string) {
-    // Get all stock-ins for the batch
-    const stockIns = await prisma.stockIn.findMany({
-      where: { batchId },
-      include: {
-        supplier: true,
-        unit: true,
-      },
-    });
-
-    // Get all manual stock-outs for the batch
-    const stockOuts = await prisma.stockOut.findMany({
-      where: { batchId },
-      include: {
-        unit: true,
-      },
-    });
-
-    // Get transaction items related to the batch
-    const transactionItems = await prisma.transactionItem.findMany({
-      where: { batchId },
-      include: {
-        unit: true,
-        transaction: {
-          select: {
-            id: true,
-            createdAt: true,
+  static async getBatchStockMovementHistory(
+    batchId: string,
+  ): Promise<StockMovement[]> {
+    const [stockIns, stockOuts] = await Promise.all([
+      prisma.stockIn.findMany({
+        where: { batchId },
+        include: {
+          unit: true,
+          supplier: true,
+          batch: {
+            include: {
+              product: {
+                include: {
+                  category: true,
+                  unit: true,
+                },
+              },
+            },
           },
         },
-      },
-    });
+        orderBy: { date: 'desc' },
+      }),
+      prisma.stockOut.findMany({
+        where: { batchId },
+        include: {
+          unit: true,
+          batch: {
+            include: {
+              product: {
+                include: {
+                  category: true,
+                  unit: true,
+                },
+              },
+            },
+          },
+        },
+        orderBy: { date: 'desc' },
+      }),
+    ]);
 
-    // Define the movement item type
-    type MovementItem = {
-      id: string;
-      date: Date;
-      type: 'IN' | 'OUT';
-      quantity: number;
-      unit: {
-        id: string;
-        name: string;
-        [key: string]: any;
-      };
-      supplier: {
-        id: string;
-        name: string;
-        [key: string]: any;
-      } | null;
-      reason: string | null;
-      transactionId: string | null;
-    };
-
-    // Combine and sort by date
-    const movements: MovementItem[] = [
-      ...stockIns.map((stockIn) => ({
-        id: stockIn.id,
-        date: stockIn.date,
+    const movements: StockMovement[] = [
+      ...stockIns.map((item) => ({
+        id: item.id,
+        date: item.date,
         type: 'IN' as const,
-        quantity: stockIn.quantity,
-        unit: stockIn.unit,
-        supplier: stockIn.supplier,
-        reason: null as any,
-        transactionId: null as any,
+        quantity: item.quantity,
+        batchId: item.batchId,
+        reason: null,
+        supplier: item.supplier,
+        unit: item.unit,
+        batch: item.batch as ProductBatchWithProduct,
       })),
-      ...stockOuts.map((stockOut) => ({
-        id: stockOut.id,
-        date: stockOut.date,
-        type: 'OUT' as const,
-        quantity: stockOut.quantity,
-        unit: stockOut.unit,
-        supplier: null as any,
-        reason: stockOut.reason,
-        transactionId: null as any,
-      })),
-      ...transactionItems.map((item) => ({
-        id: `tr-${item.id}`,
-        date: item.transaction?.createdAt || new Date(), // Add null check
+      ...stockOuts.map((item) => ({
+        id: item.id,
+        date: item.date,
         type: 'OUT' as const,
         quantity: item.quantity,
-        unit: item.unit || { id: '', name: '' }, // Provide default if null
-        supplier: null as any,
-        reason: 'Sale',
-        transactionId: item.transaction.id,
+        batchId: item.batchId,
+        reason: item.reason,
+        supplier: null,
+        unit: item.unit,
+        batch: item.batch as ProductBatchWithProduct,
       })),
     ];
 
-    // Sort by date (newest first)
     return movements.sort(
-      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
     );
   }
 }

@@ -6,7 +6,6 @@ import {
   eachMonthOfInterval,
   eachHourOfInterval,
   addDays,
-  addWeeks,
   startOfWeek,
   endOfWeek,
   startOfMonth,
@@ -33,7 +32,7 @@ export type DateMapping = {
  */
 export function createDateMappings(
   startDate: string,
-  endDate: string
+  endDate: string,
 ): DateMapping[] {
   const start = parseISO(startDate);
   const end = parseISO(endDate);
@@ -97,7 +96,7 @@ function createWeeklyMapping(start: Date, end: Date): DateMapping[] {
     return {
       label: `${format(weekStart, 'dd MMM')} - ${format(
         weekEnd,
-        'dd MMM yyyy'
+        'dd MMM yyyy',
       )}`,
       start: weekStart,
       end: weekEnd,

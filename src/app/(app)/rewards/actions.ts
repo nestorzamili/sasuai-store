@@ -4,6 +4,22 @@ import { revalidatePath } from 'next/cache';
 import { RewardService } from '@/lib/services/reward.service';
 import { MemberService } from '@/lib/services/member.service';
 import { z } from 'zod';
+import {
+  CreateRewardData,
+  UpdateRewardData,
+  RewardSearchParams,
+  MemberSearchParams,
+  RewardClaimSearchParams,
+  GetRewardsResponse,
+  GetRewardResponse,
+  CreateRewardResponse,
+  UpdateRewardResponse,
+  DeleteRewardResponse,
+  SearchMembersResponse,
+  ClaimRewardResponse,
+  GetClaimsResponse,
+  UpdateClaimStatusResponse,
+} from '@/lib/types/reward';
 
 // Simplified reward schema - removed unnecessary validations
 const rewardSchema = z.object({
@@ -19,29 +35,17 @@ const rewardSchema = z.object({
 /**
  * Get all rewards with claim count
  */
-export async function getAllRewardsWithClaimCount({
-  page = 1,
-  limit = 10,
-  sortBy = 'name',
-  sortDirection = 'asc',
-  search = '',
-  includeInactive = true,
-}: {
-  page?: number;
-  limit?: number;
-  sortBy?: string;
-  sortDirection?: 'asc' | 'desc';
-  search?: string;
-  includeInactive?: boolean;
-} = {}) {
+export async function getAllRewardsWithClaimCount(
+  params: RewardSearchParams = {},
+): Promise<GetRewardsResponse> {
   try {
     const result = await RewardService.search({
-      query: search,
-      page,
-      limit,
-      sortBy,
-      sortDirection,
-      includeInactive,
+      page: params.page ?? 1,
+      limit: params.limit ?? 10,
+      sortBy: params.sortBy ?? 'name',
+      sortDirection: params.sortDirection ?? 'asc',
+      query: params.query ?? '',
+      includeInactive: params.includeInactive ?? true,
     });
 
     return {
@@ -54,6 +58,7 @@ export async function getAllRewardsWithClaimCount({
       },
     };
   } catch (error) {
+    console.error('Failed to fetch rewards:', error);
     return { success: false, error: 'Failed to fetch rewards' };
   }
 }
@@ -61,12 +66,13 @@ export async function getAllRewardsWithClaimCount({
 /**
  * Get a reward by ID
  */
-export async function getReward(id: string) {
+export async function getReward(id: string): Promise<GetRewardResponse> {
   try {
     const reward = await RewardService.getById(id);
     if (!reward) return { success: false, error: 'Reward not found' };
     return { success: true, data: reward };
   } catch (error) {
+    console.error('Failed to fetch reward:', error);
     return { success: false, error: 'Failed to fetch reward' };
   }
 }
@@ -74,15 +80,9 @@ export async function getReward(id: string) {
 /**
  * Create a new reward
  */
-export async function createReward(data: {
-  name: string;
-  pointsCost: number;
-  stock: number;
-  isActive?: boolean;
-  description?: string | null;
-  imageUrl?: string | null;
-  expiryDate?: Date | null;
-}) {
+export async function createReward(
+  data: CreateRewardData,
+): Promise<CreateRewardResponse> {
   try {
     // Validate data
     const validatedData = rewardSchema.parse(data);
@@ -120,16 +120,8 @@ export async function createReward(data: {
  */
 export async function updateReward(
   id: string,
-  data: {
-    name?: string;
-    pointsCost?: number;
-    stock?: number;
-    isActive?: boolean;
-    description?: string | null;
-    imageUrl?: string | null;
-    expiryDate?: Date | null;
-  },
-) {
+  data: UpdateRewardData,
+): Promise<UpdateRewardResponse> {
   try {
     // Validate data - removed expiry date check
     const validatedData = rewardSchema.partial().parse(data);
@@ -157,7 +149,7 @@ export async function updateReward(
 /**
  * Delete a reward
  */
-export async function deleteReward(id: string) {
+export async function deleteReward(id: string): Promise<DeleteRewardResponse> {
   try {
     // Check if reward has been claimed
     const hasClaims = await RewardService.hasClaims(id);
@@ -173,6 +165,7 @@ export async function deleteReward(id: string) {
     revalidatePath('/rewards');
     return { success: true };
   } catch (error) {
+    console.error('Failed to delete reward:', error);
     return { success: false, error: 'Failed to delete reward' };
   }
 }
@@ -180,15 +173,20 @@ export async function deleteReward(id: string) {
 /**
  * Claim a reward for a member
  */
-export async function claimRewardForMember(memberId: string, rewardId: string) {
+export async function claimRewardForMember(
+  memberId: string,
+  rewardId: string,
+): Promise<ClaimRewardResponse> {
   try {
     const claim = await MemberService.claimReward(memberId, rewardId);
     revalidatePath('/rewards');
     return { success: true, data: claim };
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage =
+      error instanceof Error ? error.message : 'Failed to claim reward';
     return {
       success: false,
-      error: error.message || 'Failed to claim reward',
+      error: errorMessage,
     };
   }
 }
@@ -196,23 +194,18 @@ export async function claimRewardForMember(memberId: string, rewardId: string) {
 /**
  * Search members with pagination
  */
-export async function searchMembers({
-  query = '',
-  page = 1,
-  limit = 10,
-}: {
-  query?: string;
-  page?: number;
-  limit?: number;
-}) {
+export async function searchMembers(
+  params: MemberSearchParams,
+): Promise<SearchMembersResponse> {
   try {
     const result = await MemberService.search({
-      query,
-      page,
-      limit,
+      query: params.query ?? '',
+      page: params.page ?? 1,
+      limit: params.limit ?? 10,
     });
     return { success: true, data: result };
   } catch (error) {
+    console.error('Failed to search members:', error);
     return { success: false, error: 'Failed to search members' };
   }
 }
@@ -220,32 +213,21 @@ export async function searchMembers({
 /**
  * Get all reward claims with pagination
  */
-export async function getAllRewardClaims({
-  page = 1,
-  limit = 10,
-  sortBy = 'claimDate',
-  sortDirection = 'desc',
-  search = '',
-  status = '',
-}: {
-  page?: number;
-  limit?: number;
-  sortBy?: string;
-  sortDirection?: 'asc' | 'desc';
-  search?: string;
-  status?: string;
-}) {
+export async function getAllRewardClaims(
+  params: RewardClaimSearchParams,
+): Promise<GetClaimsResponse> {
   try {
     const data = await RewardService.getPaginatedClaims({
-      page,
-      limit,
-      sortBy,
-      sortDirection,
-      search,
-      status,
+      page: params.page ?? 1,
+      limit: params.limit ?? 10,
+      sortBy: params.sortBy ?? 'claimDate',
+      sortDirection: params.sortDirection ?? 'desc',
+      search: params.search ?? '',
+      status: params.status ?? '',
     });
     return { success: true, data };
   } catch (error) {
+    console.error('Failed to fetch reward claims:', error);
     return { success: false, error: 'Failed to fetch reward claims' };
   }
 }
@@ -253,12 +235,16 @@ export async function getAllRewardClaims({
 /**
  * Update reward claim status
  */
-export async function updateClaimStatus(id: string, status: string) {
+export async function updateClaimStatus(
+  id: string,
+  status: string,
+): Promise<UpdateClaimStatusResponse> {
   try {
     const claim = await RewardService.updateClaimStatus(id, status);
     revalidatePath('/rewards');
     return { success: true, data: claim };
   } catch (error) {
+    console.error('Failed to update claim status:', error);
     return { success: false, error: 'Failed to update claim status' };
   }
 }

@@ -2,6 +2,12 @@
 
 import { revalidatePath } from 'next/cache';
 import { SupplierService } from '@/lib/services/supplier.service';
+import {
+  SupplierOrderByInput,
+  SupplierSortOption,
+  SupplierWhereInput,
+  SupplierWithCount,
+} from '@/lib/types/supplier';
 import { z } from 'zod';
 
 // Supplier schema for validation
@@ -16,7 +22,7 @@ const supplierSchema = z.object({
 export async function getAllSuppliersWithCount(options?: {
   page?: number;
   limit?: number;
-  sortBy?: { id: string; desc: boolean };
+  sortBy?: SupplierSortOption;
   search?: string;
   columnFilter?: string[];
 }) {
@@ -29,7 +35,7 @@ export async function getAllSuppliersWithCount(options?: {
     const columnFilter = options?.columnFilter ?? ['name', 'contact'];
 
     // Build where clause for search
-    let where: any = {};
+    const where: SupplierWhereInput = {};
     if (search && columnFilter.length > 0) {
       where.OR = columnFilter.map((col) => ({
         [col]: { contains: search, mode: 'insensitive' },
@@ -37,7 +43,7 @@ export async function getAllSuppliersWithCount(options?: {
     }
 
     // Build orderBy
-    let orderBy: any = {};
+    let orderBy: SupplierOrderByInput = {};
     if (sortBy && sortBy.id) {
       orderBy[sortBy.id] = sortBy.desc ? 'desc' : 'asc';
     } else {
@@ -61,10 +67,11 @@ export async function getAllSuppliersWithCount(options?: {
       totalRows,
     };
   } catch (error) {
+    console.error('Error fetching suppliers:', error);
     return {
       success: false,
       error: 'Failed to fetch suppliers',
-      data: [] as any[],
+      data: [] as SupplierWithCount[],
       totalRows: 0,
     };
   }
@@ -82,6 +89,7 @@ export async function getAllSuppliers() {
       data: suppliers,
     };
   } catch (error) {
+    console.error('Error fetching suppliers:', error);
     return {
       success: false,
       error: 'Failed to fetch suppliers',
@@ -108,6 +116,7 @@ export async function getSupplier(id: string) {
       data: supplier,
     };
   } catch (error) {
+    console.error('Error fetching supplier:', error);
     return {
       success: false,
       error: 'Failed to fetch supplier',
@@ -134,6 +143,7 @@ export async function getSupplierWithStockIns(id: string) {
       data: supplier,
     };
   } catch (error) {
+    console.error('Error fetching supplier details:', error);
     return {
       success: false,
       error: 'Failed to fetch supplier details',
@@ -183,7 +193,7 @@ export async function createSupplier(data: { name: string; contact?: string }) {
  */
 export async function updateSupplier(
   id: string,
-  data: { name?: string; contact?: string }
+  data: { name?: string; contact?: string },
 ) {
   try {
     // Validate data
@@ -230,6 +240,7 @@ export async function canDeleteSupplier(id: string) {
       canDelete,
     };
   } catch (error) {
+    console.error('Error checking if supplier can be deleted:', error);
     return {
       success: false,
       error: 'Failed to check if supplier can be deleted',

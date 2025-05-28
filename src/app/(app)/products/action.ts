@@ -32,6 +32,7 @@ export async function getAllProducts() {
       data: products,
     };
   } catch (error) {
+    console.error('Failed to fetch products:', error);
     return {
       success: false,
       error: 'Failed to fetch products',
@@ -108,7 +109,7 @@ export async function updateProduct(
     skuCode?: string | null;
     barcode?: string | null;
     isActive?: boolean;
-  }
+  },
 ) {
   try {
     // Validate data
@@ -155,6 +156,7 @@ export async function deleteProduct(id: string) {
       success: true,
     };
   } catch (error) {
+    console.error('Failed to delete product:', error);
     return {
       success: false,
       error: 'Failed to delete product',
@@ -174,6 +176,7 @@ export async function getProductImages(productId: string) {
       data: images,
     };
   } catch (error) {
+    console.error('Failed to fetch product images:', error);
     return {
       success: false,
       error: 'Failed to fetch product images',
@@ -195,6 +198,7 @@ export async function setPrimaryImage(imageId: string, productId: string) {
       success: true,
     };
   } catch (error) {
+    console.error('Failed to set primary image:', error);
     return {
       success: false,
       error: 'Failed to set primary image',
@@ -221,6 +225,7 @@ export async function addProductImage(data: {
       data: image,
     };
   } catch (error) {
+    console.error('Failed to add product image:', error);
     return {
       success: false,
       error: 'Failed to add product image',
@@ -242,6 +247,7 @@ export async function deleteProductImage(id: string, productId: string) {
       success: true,
     };
   } catch (error) {
+    console.error('Failed to delete product image:', error);
     return {
       success: false,
       error: 'Failed to delete product image',
@@ -269,6 +275,7 @@ export async function getProductFormOptions() {
       },
     };
   } catch (error) {
+    console.error('Failed to fetch form options:', error);
     return {
       success: false,
       error: 'Failed to fetch form options',
@@ -310,6 +317,7 @@ export async function getPaginatedProducts(params: {
       data: result,
     };
   } catch (error) {
+    console.error('Failed to fetch paginated products:', error);
     return {
       success: false,
       error: 'Failed to fetch paginated products',

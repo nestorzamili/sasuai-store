@@ -2,58 +2,23 @@
 
 import { revalidatePath } from 'next/cache';
 import { StockMovementService } from '@/lib/services/stock-movement.service';
-import { z } from 'zod';
+import {
+  StockMovementSearchParams,
+  CreateStockInData,
+  CreateStockOutData,
+  CreateStockInResponse,
+  CreateStockOutResponse,
+  GetStockMovementHistoryResponse,
+} from '@/lib/types/inventory';
 
-// Schema for stock-in creation
-const stockInSchema = z.object({
-  batchId: z.string().uuid('Invalid batch ID'),
-  quantity: z.number().int().positive('Quantity must be positive'),
-  unitId: z.string().uuid('Invalid unit ID'),
-  date: z.coerce.date(),
-  supplierId: z.string().uuid('Invalid supplier ID').optional(),
-});
-
-// Schema for stock-out creation
-const stockOutSchema = z.object({
-  batchId: z.string().uuid('Invalid batch ID'),
-  quantity: z.number().int().positive('Quantity must be positive'),
-  unitId: z.string().uuid('Invalid unit ID'),
-  date: z.coerce.date(),
-  reason: z.string().min(1, 'Reason is required'),
-});
-
-interface StockInResponse {
-  success: boolean;
-  data: any[];
-  error?: string;
-  meta: { rowsCount: number };
-  validationErrors?: any[];
-}
-
-export async function getAllStockIns(
-  options?: Record<string, any>
-): Promise<StockInResponse> {
+export async function getAllStockIns(params: StockMovementSearchParams = {}) {
   try {
-    const stockIns = await StockMovementService.getAllStockIns(options);
-
-    // Ensure the response has the expected structure
-    if (!stockIns || !Array.isArray(stockIns.data)) {
-      console.error(
-        'Invalid response format from getAllStockInsOptimalized',
-        stockIns
-      );
-      return {
-        success: false,
-        error: 'Invalid response format from server',
-        data: [],
-        meta: { rowsCount: 0 },
-      };
-    }
+    const result = await StockMovementService.getAllStockIns(params);
 
     return {
       success: true,
-      data: stockIns.data,
-      meta: stockIns.meta || { rowsCount: stockIns.data.length },
+      data: result.data,
+      meta: { rowsCount: result.meta.totalRows },
     };
   } catch (error) {
     return {
@@ -68,140 +33,100 @@ export async function getAllStockIns(
   }
 }
 
-/**
- * Create a new stock-in record
- */
-export async function createStockIn(data: {
-  batchId: string;
-  quantity: number;
-  unitId: string;
-  date: Date;
-  supplierId?: string;
-}) {
+export async function getAllStockOuts(params: StockMovementSearchParams = {}) {
   try {
-    // Validate data
-    const validatedData = stockInSchema.parse(data);
+    const result = await StockMovementService.getAllStockOuts(params);
 
-    // Create stock-in record
-    const stockIn = await StockMovementService.createStockIn({
-      batchId: validatedData.batchId,
-      quantity: validatedData.quantity,
-      unitId: validatedData.unitId,
-      date: validatedData.date,
-      supplierId: validatedData.supplierId,
-    });
+    return {
+      success: true,
+      data: result.data,
+      meta: { rowsCount: result.meta.totalRows },
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : 'Failed to fetch stock-out records',
+      data: [],
+      meta: { rowsCount: 0 },
+    };
+  }
+}
 
-    // Revalidate paths
+/**
+ * Create a new stock in record
+ */
+export async function createStockIn(
+  data: CreateStockInData,
+): Promise<CreateStockInResponse> {
+  try {
+    const stockIn = await StockMovementService.createStockIn(data);
+
+    // Revalidate inventory and products pages
     revalidatePath('/inventory');
+    revalidatePath('/products');
 
     return {
       success: true,
       data: stockIn,
     };
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return {
-        success: false,
-        error: 'Validation error',
-        validationErrors: error.errors,
-      };
-    }
-
+    console.error('Failed to create stock in:', error);
     return {
       success: false,
       error:
-        error instanceof Error
-          ? error.message
-          : 'Failed to create stock-in record',
+        error instanceof Error ? error.message : 'Failed to create stock in',
     };
   }
 }
 
 /**
- * Get all stock-out records with pagination support
+ * Create a new stock out record
  */
-export async function getAllStockOuts(options?: Record<string, any>) {
+export async function createStockOut(
+  data: CreateStockOutData,
+): Promise<CreateStockOutResponse> {
   try {
-    const stockOuts = await StockMovementService.getAllStockOuts(options);
-    return {
-      success: true,
-      data: stockOuts.data,
-      meta: stockOuts.meta,
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: 'Failed to fetch stock-out records',
-    };
-  }
-}
+    const stockOut = await StockMovementService.createStockOut(data);
 
-/**
- * Create a new stock-out record
- */
-export async function createStockOut(data: {
-  batchId: string;
-  quantity: number;
-  unitId: string;
-  date: Date;
-  reason: string;
-}) {
-  try {
-    // Validate data
-    const validatedData = stockOutSchema.parse(data);
-
-    // Create stock-out record
-    const stockOut = await StockMovementService.createStockOut({
-      batchId: validatedData.batchId,
-      quantity: validatedData.quantity,
-      unitId: validatedData.unitId,
-      date: validatedData.date,
-      reason: validatedData.reason,
-    });
-
-    // Revalidate paths
+    // Revalidate inventory and products pages
     revalidatePath('/inventory');
+    revalidatePath('/products');
 
     return {
       success: true,
       data: stockOut,
     };
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return {
-        success: false,
-        error: 'Validation error',
-        validationErrors: error.errors,
-      };
-    }
-
+    console.error('Failed to create stock out:', error);
     return {
       success: false,
       error:
-        error instanceof Error
-          ? error.message
-          : 'Failed to create stock-out record',
+        error instanceof Error ? error.message : 'Failed to create stock out',
     };
   }
 }
 
 /**
- * Get batch stock movement history
+ * Get stock movement history for a batch
  */
-export async function getBatchStockMovementHistory(batchId: string) {
+export async function getBatchStockMovementHistory(
+  batchId: string,
+): Promise<GetStockMovementHistoryResponse> {
   try {
-    const movements = await StockMovementService.getBatchStockMovementHistory(
-      batchId
-    );
-
+    const movements =
+      await StockMovementService.getBatchStockMovementHistory(batchId);
     return {
       success: true,
       data: movements,
     };
   } catch (error) {
+    console.error('Failed to get batch stock movement history:', error);
     return {
       success: false,
-      error: 'Failed to fetch stock movement history',
+      error: 'Failed to get stock movement history',
     };
   }
 }

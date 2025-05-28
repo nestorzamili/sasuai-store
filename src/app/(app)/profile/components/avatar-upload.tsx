@@ -32,7 +32,7 @@ export function AvatarUpload({
   name = '',
   onImageChange,
 }: AvatarUploadProps) {
-  const [isUploading, setIsUploading] = useState(false);
+  const [isUploading] = useState(false);
   const [image, setImage] = useState(currentImage || '');
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);

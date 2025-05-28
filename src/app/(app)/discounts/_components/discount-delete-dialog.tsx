@@ -6,11 +6,12 @@ import { toast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { deleteDiscount } from '../action';
+import { DiscountWithCounts } from '@/lib/types/discount';
 
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  discount: any;
+  discount: DiscountWithCounts;
   onSuccess?: () => void;
 }
 
@@ -47,6 +48,7 @@ export function DiscountDeleteDialog({
         });
       }
     } catch (error) {
+      console.error('Error deleting discount:', error);
       toast({
         title: 'Error',
         description: 'An unexpected error occurred',

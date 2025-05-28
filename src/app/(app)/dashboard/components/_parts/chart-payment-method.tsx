@@ -17,7 +17,8 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+import { DateFilter as FilterDateFilter } from '@/lib/types/filter';
 
 const chartConfig = {
   cash: {
@@ -37,20 +38,55 @@ interface PaymentMethodData {
   fill: string;
 }
 
-export function PaymentMethod(filter?: any) {
+// Define props interface
+interface PaymentMethodProps {
+  filter?: FilterDateFilter;
+}
+
+// Define API response interface
+interface PaymentMethodApiItem {
+  type: string;
+  total: number;
+}
+
+export function PaymentMethod({ filter }: PaymentMethodProps) {
   const [chart, setChart] = useState<PaymentMethodData[]>([
     { type: 'cash', total: 275, fill: 'var(--color-cash)' },
     { type: 'debit', total: 200, fill: 'var(--color-debit)' },
   ]);
   const [loading, setLoading] = useState(false);
 
-  const fetchPaymentMethod = async () => {
+  const fetchPaymentMethod = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await getTopPaymentMethod(filter);
+
+      // Convert FilterDateFilter to ExtendedDateFilter format expected by the API
+      // Provide default values if filter is not provided
+      const defaultStart = new Date();
+      defaultStart.setDate(defaultStart.getDate() - 7); // Last 7 days
+      const defaultEnd = new Date();
+
+      const apiFilter = {
+        filter: {
+          from:
+            filter?.from instanceof Date
+              ? filter.from.toISOString().split('T')[0]
+              : filter?.from
+                ? String(filter.from)
+                : defaultStart.toISOString().split('T')[0],
+          to:
+            filter?.to instanceof Date
+              ? filter.to.toISOString().split('T')[0]
+              : filter?.to
+                ? String(filter.to)
+                : defaultEnd.toISOString().split('T')[0],
+        },
+      };
+
+      const response = await getTopPaymentMethod(apiFilter);
       if (response.success && response.data) {
         const formattedData = response.data.map(
-          (item: { type: string; total: number }) => ({
+          (item: PaymentMethodApiItem) => ({
             type: item.type,
             total: item.total,
             fill:
@@ -64,11 +100,11 @@ export function PaymentMethod(filter?: any) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filter]); // Include filter as dependency
 
   useEffect(() => {
     fetchPaymentMethod();
-  }, [filter]);
+  }, [fetchPaymentMethod]); // Now fetchPaymentMethod is stable
 
   return (
     <Card className="flex flex-col">

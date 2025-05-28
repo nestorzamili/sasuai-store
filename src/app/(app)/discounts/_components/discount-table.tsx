@@ -22,24 +22,39 @@ import { format } from 'date-fns';
 import { DiscountDeleteDialog } from './discount-delete-dialog';
 import { DiscountDetailDialog } from './discount-detail-dialog';
 import { toast } from '@/hooks/use-toast';
-import { DiscountApplyTo, DiscountType } from '@/lib/types/discount';
+import { useRouter } from 'next/navigation';
+import {
+  DiscountApplyTo,
+  DiscountType,
+  DiscountWithCounts,
+  DiscountTableProps,
+  DiscountFetchOptions,
+} from '@/lib/types/discount';
+import { TableFetchOptions, TableFetchResult } from '@/lib/types/inventory';
 import {
   formatDiscountValue,
   formatApplyTo,
 } from '@/lib/common/discount-utils';
-import { useRouter } from 'next/navigation';
+import type {
+  DiscountType as PrismaDiscountType,
+  DiscountApplyTo as PrismaDiscountApplyTo,
+} from '@prisma/client';
 
-interface DiscountTableProps {
-  onRefresh?: () => void;
+interface FetchOptions extends TableFetchOptions {
+  filters?: DiscountFetchOptions['filters'];
 }
+
+type FetchResult = TableFetchResult<DiscountWithCounts[]>;
 
 export function DiscountTable({ onRefresh }: DiscountTableProps) {
   const router = useRouter();
 
-  const fetchDiscounts = async (options: any) => {
+  const fetchDiscounts = async (
+    options: FetchOptions,
+  ): Promise<FetchResult> => {
     const response = await getAllDiscounts({
-      page: options.page + 1,
-      pageSize: options.limit,
+      page: (options.page ?? 0) + 1,
+      pageSize: options.limit ?? 10,
       sortField: options.sortBy?.id || 'createdAt',
       sortDirection: options.sortBy?.desc ? 'desc' : 'asc',
       search: options.search,
@@ -73,7 +88,7 @@ export function DiscountTable({ onRefresh }: DiscountTableProps) {
     setFilters,
     totalRows,
     refresh,
-  } = useFetch<any[]>({
+  } = useFetch<DiscountWithCounts[]>({
     fetchData: fetchDiscounts,
     initialPageIndex: 0,
     initialPageSize: 10,
@@ -89,7 +104,7 @@ export function DiscountTable({ onRefresh }: DiscountTableProps) {
     setLimit(newPagination.pageSize);
   };
 
-  const handleSortingChange = (newSorting: any) => {
+  const handleSortingChange = (newSorting: { id: string; desc: boolean }[]) => {
     setSortBy(newSorting);
   };
 
@@ -97,19 +112,22 @@ export function DiscountTable({ onRefresh }: DiscountTableProps) {
     setSearch(newSearch);
   };
 
-  const handleFilterChange = (key: string, value: any) => {
+  const handleFilterChange = (
+    key: string,
+    value: string | boolean | undefined,
+  ) => {
     // For the status filter
     if (key === 'isActive') {
       const actualValue =
         value === 'ALL_STATUSES'
           ? undefined
           : value === 'true'
-          ? true
-          : value === 'false'
-          ? false
-          : undefined;
+            ? true
+            : value === 'false'
+              ? false
+              : undefined;
 
-      setFilters((prev: any) => ({
+      setFilters((prev: FetchOptions['filters']) => ({
         ...prev,
         [key]: actualValue,
       }));
@@ -118,16 +136,23 @@ export function DiscountTable({ onRefresh }: DiscountTableProps) {
 
     // For type and applyTo filters
     if (value === 'ALL_TYPES' || value === 'ALL_APPLICATIONS') {
-      setFilters((prev: any) => {
+      setFilters((prev: FetchOptions['filters']) => {
+        if (!prev) return {};
         const newFilters = { ...prev };
-        delete newFilters[key];
+        if (key === 'type') {
+          delete newFilters.type;
+        } else if (key === 'applyTo') {
+          delete newFilters.applyTo;
+        } else if (key === 'isGlobal') {
+          delete newFilters.isGlobal;
+        }
         return newFilters;
       });
       return;
     }
 
     // Normal case
-    setFilters((prev: any) => ({
+    setFilters((prev: FetchOptions['filters']) => ({
       ...prev,
       [key]: value,
     }));
@@ -136,10 +161,10 @@ export function DiscountTable({ onRefresh }: DiscountTableProps) {
   const [deleteDialog, setDeleteDialog] = useState(false);
   const [detailDialog, setDetailDialog] = useState(false);
   const [detailId, setDetailId] = useState<string | null>(null);
-  const [deleteData, setDeleteData] = useState<any | null>(null);
+  const [deleteData, setDeleteData] = useState<DiscountWithCounts | null>(null);
 
   // Handle toggle discount status
-  const handleToggleStatus = async (discount: any) => {
+  const handleToggleStatus = async (discount: DiscountWithCounts) => {
     try {
       const result = await toggleDiscountStatus(discount.id);
       if (result.success) {
@@ -157,6 +182,7 @@ export function DiscountTable({ onRefresh }: DiscountTableProps) {
         });
       }
     } catch (error) {
+      console.error('Error toggling discount status:', error);
       toast({
         title: 'Error',
         description: 'An unexpected error occurred',
@@ -171,11 +197,11 @@ export function DiscountTable({ onRefresh }: DiscountTableProps) {
     onRefresh?.();
   };
 
-  const handleEdit = (discount: any) => {
+  const handleEdit = (discount: DiscountWithCounts) => {
     router.push(`/discounts/${discount.id}/edit`);
   };
 
-  const columns: ColumnDef<any>[] = [
+  const columns: ColumnDef<DiscountWithCounts>[] = [
     {
       header: 'Name',
       accessorKey: 'name',
@@ -188,7 +214,7 @@ export function DiscountTable({ onRefresh }: DiscountTableProps) {
       header: 'Code',
       accessorKey: 'code',
       cell: ({ row }) => {
-        const code = row.getValue('code') as string;
+        const code = row.getValue('code') as string | null;
         return code ? (
           <Badge variant="outline" className="font-mono">
             {code}
@@ -202,11 +228,11 @@ export function DiscountTable({ onRefresh }: DiscountTableProps) {
       header: 'Type & Value',
       accessorKey: 'type',
       cell: ({ row }) => {
-        const type = row.getValue('type') as DiscountType;
+        const type = row.getValue('type') as PrismaDiscountType;
         const value = row.original.value as number;
         return (
           <Badge variant={type === 'PERCENTAGE' ? 'default' : 'secondary'}>
-            {formatDiscountValue(type, value)}
+            {formatDiscountValue(type as DiscountType, value)}
           </Badge>
         );
       },
@@ -231,12 +257,12 @@ export function DiscountTable({ onRefresh }: DiscountTableProps) {
       header: 'Applies To',
       accessorKey: 'applyTo',
       cell: ({ row }) => {
-        const applyTo = row.getValue('applyTo') as DiscountApplyTo;
-        const relationCounts = row.original.relationCounts || {};
+        const applyTo = row.getValue('applyTo') as PrismaDiscountApplyTo | null;
+        const relationCounts = row.original.relationCounts;
 
         return (
           <div>
-            <div>{formatApplyTo(applyTo)}</div>
+            <div>{formatApplyTo(applyTo as DiscountApplyTo)}</div>
             {applyTo === 'SPECIFIC_PRODUCTS' && relationCounts.products > 0 && (
               <div className="text-xs text-muted-foreground">
                 {relationCounts.products} products
@@ -394,25 +420,24 @@ export function DiscountTable({ onRefresh }: DiscountTableProps) {
             label: 'Type',
             type: 'select',
             options: discountTypeOptions,
-            handleFilterChange: (value) => handleFilterChange('type', value),
+            handleFilterChange: (value: string) =>
+              handleFilterChange('type', value),
           },
           {
             id: 'applyTo',
             label: 'Applies To',
             type: 'select',
             options: applyToOptions,
-            handleFilterChange: (value) => handleFilterChange('applyTo', value),
+            handleFilterChange: (value: string) =>
+              handleFilterChange('applyTo', value),
           },
           {
             id: 'isActive',
             label: 'Status',
             type: 'select',
             options: statusOptions,
-            handleFilterChange: (value) =>
-              handleFilterChange(
-                'isActive',
-                value === 'true' ? true : value === 'false' ? false : undefined,
-              ),
+            handleFilterChange: (value: string) =>
+              handleFilterChange('isActive', value),
           },
         ]}
       />

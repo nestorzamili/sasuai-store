@@ -1,29 +1,36 @@
 import prisma from '@/lib/prisma';
 import {
   BatchPaginationParams,
+  ProductBatchWithProduct,
   ProductBatchWithDetails,
-} from '@/lib/types/product-batch';
+  CreateBatchData,
+  UpdateBatchData,
+  PaginatedResponse,
+} from '@/lib/types/inventory';
 
 export class ProductBatchService {
-  static async getPaginated({
-    page = 1,
-    pageSize = 10,
-    sortField = 'createdAt',
-    sortDirection = 'desc',
-    search = '',
-    productId,
-    expiryDateStart,
-    expiryDateEnd,
-    minRemainingQuantity,
-    maxRemainingQuantity,
-    includeExpired = true,
-    includeOutOfStock = true,
-    categoryId,
-  }: BatchPaginationParams = {}) {
-    // Build where clause based on filters
-    const where: any = {};
+  static async getPaginated(
+    params: BatchPaginationParams = {},
+  ): Promise<PaginatedResponse<ProductBatchWithProduct>> {
+    const {
+      page = 1,
+      pageSize = 10,
+      sortField = 'createdAt',
+      sortDirection = 'desc',
+      search = '',
+      productId,
+      expiryDateStart,
+      expiryDateEnd,
+      minRemainingQuantity,
+      maxRemainingQuantity,
+      includeExpired = true,
+      includeOutOfStock = true,
+      categoryId,
+    } = params;
 
-    // Add search filter across multiple fields
+    // Build where clause
+    const where: Record<string, unknown> = {};
+
     if (search) {
       where.OR = [
         { batchCode: { contains: search, mode: 'insensitive' } },
@@ -32,63 +39,56 @@ export class ProductBatchService {
       ];
     }
 
-    // Add product filter
-    if (productId) {
-      where.productId = productId;
-    }
+    if (productId) where.productId = productId;
 
-    // Add category filter
     if (categoryId) {
       where.product = {
-        ...where.product,
+        ...((where.product as Record<string, unknown>) || {}),
         categoryId: categoryId,
       };
     }
 
-    // Handle expiry date range
     if (expiryDateStart || expiryDateEnd) {
       where.expiryDate = {};
-      if (expiryDateStart) where.expiryDate.gte = expiryDateStart;
-      if (expiryDateEnd) where.expiryDate.lte = expiryDateEnd;
+      if (expiryDateStart)
+        (where.expiryDate as Record<string, unknown>).gte = expiryDateStart;
+      if (expiryDateEnd)
+        (where.expiryDate as Record<string, unknown>).lte = expiryDateEnd;
     }
 
-    // Filter expired items
     if (!includeExpired) {
       where.expiryDate = {
-        ...where.expiryDate,
+        ...((where.expiryDate as Record<string, unknown>) || {}),
         gt: new Date(),
       };
     }
 
-    // Handle quantity range
     if (
       minRemainingQuantity !== undefined ||
       maxRemainingQuantity !== undefined
     ) {
       where.remainingQuantity = {};
       if (minRemainingQuantity !== undefined) {
-        where.remainingQuantity.gte = minRemainingQuantity;
+        (where.remainingQuantity as Record<string, unknown>).gte =
+          minRemainingQuantity;
       }
       if (maxRemainingQuantity !== undefined) {
-        where.remainingQuantity.lte = maxRemainingQuantity;
+        (where.remainingQuantity as Record<string, unknown>).lte =
+          maxRemainingQuantity;
       }
     }
 
-    // Filter out of stock items
     if (!includeOutOfStock) {
       where.remainingQuantity = {
-        ...where.remainingQuantity,
+        ...((where.remainingQuantity as Record<string, unknown>) || {}),
         gt: 0,
       };
     }
 
-    // Calculate pagination
     const skip = (page - 1) * pageSize;
 
     // Build order by
-    const orderBy: any = {};
-
-    // Handle nested fields for sorting
+    const orderBy: Record<string, unknown> = {};
     if (sortField.includes('.')) {
       const [relation, field] = sortField.split('.');
       orderBy[relation] = { [field]: sortDirection };
@@ -96,7 +96,6 @@ export class ProductBatchService {
       orderBy[sortField] = sortDirection;
     }
 
-    // Execute query with count - HEAVILY optimized to fetch only what's needed
     const [batches, totalCount] = await Promise.all([
       prisma.productBatch.findMany({
         where,
@@ -104,14 +103,34 @@ export class ProductBatchService {
           id: true,
           batchCode: true,
           expiryDate: true,
-          initialQuantity: true, // Needed for delete operation validation
+          initialQuantity: true,
           remainingQuantity: true,
           buyPrice: true,
-          productId: true, // Needed for linking
+          productId: true,
+          createdAt: true,
+          updatedAt: true,
           product: {
             select: {
-              name: true, // Only need name for display
-              unitId: true, // Needed for edit operation
+              id: true,
+              name: true,
+              unitId: true,
+              category: {
+                select: {
+                  id: true,
+                  name: true,
+                  createdAt: true,
+                  updatedAt: true,
+                },
+              },
+              unit: {
+                select: {
+                  id: true,
+                  name: true,
+                  symbol: true,
+                  createdAt: true,
+                  updatedAt: true,
+                },
+              },
             },
           },
         },
@@ -123,9 +142,9 @@ export class ProductBatchService {
     ]);
 
     return {
-      data: batches,
-      pagination: {
-        totalCount,
+      data: batches as ProductBatchWithProduct[],
+      meta: {
+        totalRows: totalCount,
         totalPages: Math.ceil(totalCount / pageSize),
         currentPage: page,
         pageSize,
@@ -133,89 +152,83 @@ export class ProductBatchService {
     };
   }
 
-  // Get detailed batch record for single batch view - with fixed return type
   static async getById(id: string): Promise<ProductBatchWithDetails | null> {
     try {
-      const includeOptions = {
-        // Always include product with its details as required by ProductBatchWithDetails
-        product: {
-          include: {
-            category: true,
-            unit: true,
+      const result = await prisma.productBatch.findUnique({
+        where: { id },
+        include: {
+          product: {
+            include: {
+              category: true,
+              unit: true,
+            },
           },
-        },
-
-        // Always include these as they're required by ProductBatchWithDetails interface
-        stockIns: {
-          include: {
-            supplier: true,
-            unit: true,
+          stockIns: {
+            include: {
+              supplier: true,
+              unit: true,
+              batch: {
+                include: {
+                  product: {
+                    include: {
+                      category: true,
+                      unit: true,
+                    },
+                  },
+                },
+              },
+            },
           },
-        },
-
-        stockOuts: {
-          include: {
-            unit: true,
+          stockOuts: {
+            include: {
+              unit: true,
+              batch: {
+                include: {
+                  product: {
+                    include: {
+                      category: true,
+                      unit: true,
+                    },
+                  },
+                },
+              },
+            },
           },
-        },
-
-        transactionItems: {
-          include: {
-            unit: true,
-            transaction: {
-              select: {
-                id: true,
-                createdAt: true,
-                finalAmount: true,
+          transactionItems: {
+            include: {
+              unit: true,
+              transaction: {
+                select: {
+                  id: true,
+                  createdAt: true,
+                  finalAmount: true,
+                },
               },
             },
           },
         },
-      };
-
-      const result = await prisma.productBatch.findUnique({
-        where: { id },
-        include: includeOptions,
       });
 
-      // If no result, return null
-      if (!result) return null;
-
-      // Ensure the result conforms to ProductBatchWithDetails interface structure
-      return result as unknown as ProductBatchWithDetails;
+      return result as ProductBatchWithDetails | null;
     } catch (error) {
       console.error('Error fetching batch details:', error);
       return null;
     }
   }
 
-  /**
-   * Create a new product batch
-   */
-  static async create(data: {
-    productId: string;
-    batchCode: string;
-    expiryDate: Date;
-    initialQuantity: number;
-    buyPrice: number;
-    unitId: string;
-    supplierId?: string;
-  }) {
-    // Start a transaction to create the batch and the initial stock-in record
+  static async create(data: CreateBatchData) {
     return prisma.$transaction(async (tx) => {
-      // Create the batch with full initial quantity
       const batch = await tx.productBatch.create({
         data: {
           productId: data.productId,
           batchCode: data.batchCode,
           expiryDate: data.expiryDate,
           initialQuantity: data.initialQuantity,
-          remainingQuantity: data.initialQuantity, // Initially, remaining = initial
+          remainingQuantity: data.initialQuantity,
           buyPrice: data.buyPrice,
         },
       });
 
-      // Create a corresponding stock-in record
       const stockIn = await tx.stockIn.create({
         data: {
           batchId: batch.id,
@@ -226,7 +239,6 @@ export class ProductBatchService {
         },
       });
 
-      // Update the product's current stock
       await tx.product.update({
         where: { id: data.productId },
         data: {
@@ -240,85 +252,57 @@ export class ProductBatchService {
     });
   }
 
-  /**
-   * Update a product batch
-   */
-  static async update(
-    id: string,
-    data: {
-      batchCode?: string;
-      expiryDate?: Date;
-      buyPrice?: number;
-    }
-  ) {
+  static async update(id: string, data: UpdateBatchData) {
     return prisma.productBatch.update({
       where: { id },
       data,
     });
   }
 
-  /**
-   * Adjust the quantity of a batch (for inventory corrections)
-   */
   static async adjustQuantity(
     id: string,
     adjustment: number,
     reason: string,
-    unitId: string
+    unitId: string,
   ) {
     return prisma.$transaction(async (tx) => {
-      // Get the current batch
       const batch = await tx.productBatch.findUnique({
         where: { id },
-        include: {
-          product: true,
-        },
+        include: { product: true },
       });
 
       if (!batch) {
         throw new Error('Product batch not found');
       }
 
-      // Calculate new remaining quantity
       const newQuantity = batch.remainingQuantity + adjustment;
 
-      // Ensure quantity doesn't go negative
       if (newQuantity < 0) {
         throw new Error('Quantity adjustment would result in negative stock');
       }
 
-      // Update the batch
       const updatedBatch = await tx.productBatch.update({
         where: { id },
-        data: {
-          remainingQuantity: newQuantity,
-        },
+        data: { remainingQuantity: newQuantity },
       });
 
-      // Update the product's current stock
       await tx.product.update({
         where: { id: batch.productId },
         data: {
-          currentStock: {
-            increment: adjustment,
-          },
+          currentStock: { increment: adjustment },
         },
       });
 
-      // Create a stock movement record based on the adjustment direction
       if (adjustment > 0) {
-        // Positive adjustment = stock in
         await tx.stockIn.create({
           data: {
             batchId: id,
             quantity: adjustment,
             unitId: unitId,
             date: new Date(),
-            // No supplier for adjustments
           },
         });
       } else if (adjustment < 0) {
-        // Negative adjustment = stock out
         await tx.stockOut.create({
           data: {
             batchId: id,
@@ -334,36 +318,26 @@ export class ProductBatchService {
     });
   }
 
-  /**
-   * Check if a batch can be safely deleted
-   */
   static async canDelete(id: string): Promise<boolean> {
-    // Check for any stock movements or transactions
     const [stockIns, stockOuts, transactions] = await Promise.all([
       prisma.stockIn.count({ where: { batchId: id } }),
       prisma.stockOut.count({ where: { batchId: id } }),
       prisma.transactionItem.count({ where: { batchId: id } }),
     ]);
 
-    // Can only delete if there are no transactions and at most 1 stock-in (the initial one)
     return transactions === 0 && stockOuts === 0 && stockIns <= 1;
   }
 
-  /**
-   * Delete a product batch (only if it has no transactions)
-   */
   static async delete(id: string) {
-    // First check if the batch can be deleted
     const canDelete = await this.canDelete(id);
 
     if (!canDelete) {
       throw new Error(
-        'Cannot delete batch with existing stock movements or transactions'
+        'Cannot delete batch with existing stock movements or transactions',
       );
     }
 
     return prisma.$transaction(async (tx) => {
-      // Get the batch details
       const batch = await tx.productBatch.findUnique({
         where: { id },
       });
@@ -372,12 +346,10 @@ export class ProductBatchService {
         throw new Error('Product batch not found');
       }
 
-      // Delete the related stock-in record (should be only one)
       await tx.stockIn.deleteMany({
         where: { batchId: id },
       });
 
-      // Update the product's current stock
       await tx.product.update({
         where: { id: batch.productId },
         data: {
@@ -387,7 +359,6 @@ export class ProductBatchService {
         },
       });
 
-      // Delete the batch
       return tx.productBatch.delete({
         where: { id },
       });
