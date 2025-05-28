@@ -1,4 +1,7 @@
+import { Resend } from 'resend';
 import { NextRequest } from 'next/server';
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,20 +14,6 @@ export async function POST(request: NextRequest) {
         { status: 400 },
       );
     }
-
-    // Check if API key is available
-    const apiKey = process.env.RESEND_API_KEY;
-    if (!apiKey) {
-      console.error('RESEND_API_KEY environment variable is not set');
-      return Response.json(
-        { error: 'Email service not configured' },
-        { status: 500 },
-      );
-    }
-
-    // Dynamic import of Resend to avoid build-time initialization
-    const { Resend } = await import('resend');
-    const resend = new Resend(apiKey);
 
     const { data, error } = await resend.emails.send({
       from: from || `Sasuai Store <${process.env.EMAIL_USER}>`,
