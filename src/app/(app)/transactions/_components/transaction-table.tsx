@@ -217,11 +217,15 @@ export function TransactionTable({}: TransactionTableProps) {
   ) => {
     if (key === 'paymentMethod') {
       if (value === 'ALL_METHODS') {
-        setFilters((prev: Record<string, unknown>) => {
-          const newFilters = { ...prev };
-          delete newFilters[key];
-          return newFilters;
-        });
+        setFilters(
+          (
+            prev: Record<string, string | number | boolean | null | undefined>,
+          ) => {
+            const newFilters = { ...prev };
+            delete newFilters[key];
+            return newFilters;
+          },
+        );
         return;
       }
     }
@@ -237,10 +241,12 @@ export function TransactionTable({}: TransactionTableProps) {
       filters.setMaxAmount(value as string);
     }
 
-    setFilters((prev: Record<string, unknown>) => ({
-      ...prev,
-      [key]: value,
-    }));
+    setFilters(
+      (prev: Record<string, string | number | boolean | null | undefined>) => ({
+        ...prev,
+        [key]: value as string | number | boolean | null | undefined,
+      }),
+    );
   };
 
   const handleMinAmountChange = (value: string) => {
@@ -257,11 +263,15 @@ export function TransactionTable({}: TransactionTableProps) {
     filters.setPaymentMethod(value);
 
     if (value === 'ALL_METHODS') {
-      setFilters((prev: Record<string, unknown>) => {
-        const newFilters = { ...prev };
-        delete newFilters['paymentMethod'];
-        return newFilters;
-      });
+      setFilters(
+        (
+          prev: Record<string, string | number | boolean | null | undefined>,
+        ) => {
+          const newFilters = { ...prev };
+          delete newFilters['paymentMethod'];
+          return newFilters;
+        },
+      );
     } else {
       handleFilterChange('paymentMethod', value);
     }

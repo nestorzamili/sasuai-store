@@ -224,8 +224,10 @@ export type CreateStockInResponse = ApiResponse<StockInComplete>;
 export type CreateStockOutResponse = ApiResponse<StockOutComplete>;
 
 // API Response types for units and suppliers - match actual paginated implementation
-export type GetUnitsResponse = ApiResponse<unknown>;
-export type GetSuppliersResponse = ApiResponse<unknown>;
+export type GetUnitsResponse = ApiResponse<Unit[] | PaginatedResponse<Unit>>;
+export type GetSuppliersResponse = ApiResponse<
+  Supplier[] | PaginatedResponse<Supplier>
+>;
 export type GetProductsResponse = ApiResponse<Product[]>;
 
 // Utility types for handling flexible response structures
@@ -300,20 +302,37 @@ export function extractArrayFromResponse<T>(
   return [];
 }
 
-// Table fetch options
+// Table fetch options - more specific types
 export interface TableFetchOptions {
   page?: number;
   limit?: number;
   search?: string;
   sortBy?: { id: string; desc: boolean };
   filters?: Record<string, string | number | boolean | null | undefined>;
-  pagination?: unknown;
+  pagination?: {
+    pageIndex: number;
+    pageSize: number;
+  };
+  sorting?: Array<{
+    id: string;
+    desc: boolean;
+  }>;
+  columnFilters?: Array<{
+    id: string;
+    value: unknown;
+  }>;
   [key: string]: unknown;
 }
 
 export interface TableFetchResult<T = unknown> {
   data: T;
   totalRows: number;
+  pagination?: {
+    totalCount: number;
+    totalPages: number;
+    currentPage: number;
+    pageSize: number;
+  };
   [key: string]: unknown;
 }
 

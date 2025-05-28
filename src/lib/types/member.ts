@@ -6,11 +6,15 @@
 export interface BaseDiscount {
   id: string;
   name: string;
+  code?: string | null;
   description?: string | null;
   value: number;
-  type: 'PERCENTAGE' | 'FIXED';
+  type: 'PERCENTAGE' | 'FIXED_AMOUNT';
   minPurchase: number | null;
+  startDate?: Date;
+  endDate?: Date | null;
   isActive: boolean;
+  applyTo?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -21,7 +25,7 @@ export interface MemberDiscount {
   name: string;
   description?: string | null;
   discountValue: number;
-  discountType: 'PERCENTAGE' | 'FIXED';
+  discountType: 'PERCENTAGE' | 'FIXED_AMOUNT';
   minPurchase: number;
   isActive: boolean;
   createdAt: Date;
@@ -257,7 +261,7 @@ export type MemberResponse = {
   totalPoints?: number;
   totalPointsEarned?: number;
   tierId?: string | null;
-  isBanned?: boolean;
+  isBanned?: boolean | null;
   banReason?: string | null;
   joinDate?: Date | null;
   cardId?: string | null;
@@ -292,7 +296,7 @@ export function mapToMemberWithRelations(
     totalPoints: memberData.totalPoints,
     totalPointsEarned: memberData.totalPointsEarned,
     tierId: memberData.tierId,
-    isBanned: memberData.isBanned,
+    isBanned: memberData.isBanned ?? false,
     banReason: memberData.banReason,
     joinDate: memberData.joinDate,
     cardId: memberData.cardId,
@@ -331,7 +335,7 @@ export function mapToMemberWithTier(
     totalPoints: memberData.totalPoints,
     totalPointsEarned: memberData.totalPointsEarned,
     tierId: memberData.tierId,
-    isBanned: memberData.isBanned,
+    isBanned: memberData.isBanned ?? false,
     banReason: memberData.banReason,
     joinDate: memberData.joinDate,
     cardId: memberData.cardId,

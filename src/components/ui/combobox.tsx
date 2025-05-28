@@ -20,14 +20,14 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { cn } from '@/lib/utils';
 import { debounce } from '@/lib/common/debounce-effect';
 
-export type ComboBoxOption = {
+export type ComboBoxOption<T = unknown> = {
   value: string;
   label: string;
-  data?: any; // Optional data field for custom data
+  data?: T; // Generic data field for custom data
 };
 
-interface ComboBoxProps {
-  options: ComboBoxOption[];
+interface ComboBoxProps<T = unknown> {
+  options: ComboBoxOption<T>[];
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
@@ -41,7 +41,7 @@ interface ComboBoxProps {
   customEmptyComponent?: React.ReactNode;
 }
 
-export function ComboBox({
+export function ComboBox<T = unknown>({
   options,
   value,
   onChange,
@@ -54,11 +54,11 @@ export function ComboBox({
   customSearchFunction,
   customSelectedRenderer,
   customEmptyComponent,
-}: ComboBoxProps) {
+}: ComboBoxProps<T>) {
   const [open, setOpen] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [filteredOptions, setFilteredOptions] = React.useState<
-    ComboBoxOption[]
+    ComboBoxOption<T>[]
   >([]);
   const parentRef = React.useRef<HTMLDivElement>(null);
 
@@ -157,8 +157,8 @@ export function ComboBox({
           {customSelectedRenderer
             ? customSelectedRenderer()
             : selectedOption
-            ? selectedOption.label
-            : placeholder}
+              ? selectedOption.label
+              : placeholder}
           <IconSelector className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>

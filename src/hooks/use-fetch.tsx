@@ -70,6 +70,14 @@ export interface HookOptions {
 }
 
 export function useFetch<T>(fetchOptions: FetchOptions<T>) {
+  // Destructure stable parts of fetchOptions
+  const {
+    fetchData: fetchDataFn,
+    onSuccess,
+    onError,
+    debounceTime = 500,
+  } = fetchOptions;
+
   const [data, setData] = useState<T | undefined>();
   const [isLoading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
@@ -143,8 +151,8 @@ export function useFetch<T>(fetchOptions: FetchOptions<T>) {
       debounce((newSearch: string) => {
         setOptions((prev) => ({ ...prev, search: newSearch }));
         resetPagination();
-      }, fetchOptions.debounceTime || 500),
-    [resetPagination, fetchOptions.debounceTime],
+      }, debounceTime),
+    [resetPagination, debounceTime],
   );
 
   const setSortBy = useCallback((newSortBy: SortByOptions[]) => {
@@ -206,34 +214,37 @@ export function useFetch<T>(fetchOptions: FetchOptions<T>) {
     [],
   );
 
-  const fetchData = useCallback(async (options: TableFetchOptions) => {
-    try {
-      setLoading(true);
-      setError(null);
-      const result = await fetchOptions.fetchData(options);
-      setData(result.data);
-      setTotalRows(result.totalRows);
+  const fetchData = useCallback(
+    async (options: TableFetchOptions) => {
+      try {
+        setLoading(true);
+        setError(null);
+        const result = await fetchDataFn(options);
+        setData(result.data);
+        setTotalRows(result.totalRows);
 
-      if (fetchOptions.onSuccess) {
-        fetchOptions.onSuccess(result);
+        if (onSuccess) {
+          onSuccess(result);
+        }
+
+        return result;
+      } catch (error) {
+        const errorObj =
+          error instanceof Error ? error : new Error(String(error));
+        setError(errorObj);
+        console.error('Error fetching data:', errorObj);
+
+        if (onError) {
+          onError(errorObj);
+        }
+
+        return { data: undefined as T, totalRows: 0 };
+      } finally {
+        setLoading(false);
       }
-
-      return result;
-    } catch (error) {
-      const errorObj =
-        error instanceof Error ? error : new Error(String(error));
-      setError(errorObj);
-      console.error('Error fetching data:', errorObj);
-
-      if (fetchOptions.onError) {
-        fetchOptions.onError(errorObj);
-      }
-
-      return { data: undefined as T, totalRows: 0 };
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    },
+    [fetchDataFn, onSuccess, onError],
+  ); // Include the destructured dependencies
 
   const formattedOptions = useMemo(
     () => ({

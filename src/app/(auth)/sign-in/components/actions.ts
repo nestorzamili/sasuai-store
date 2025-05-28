@@ -2,6 +2,12 @@
 
 import { auth } from '@/lib/auth';
 
+interface AuthError {
+  statusCode?: number;
+  status?: number;
+  message?: string;
+}
+
 export async function signInWithEmail(email: string, password: string) {
   try {
     await auth.api.signInEmail({
@@ -14,18 +20,20 @@ export async function signInWithEmail(email: string, password: string) {
     return {
       success: true,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const authError = error as AuthError;
+
     // Extract only necessary information and safe error message
-    let statusCode = error?.statusCode || error?.status;
+    const statusCode = authError?.statusCode || authError?.status;
     let errorMessage = 'Invalid credentials';
 
     // Only extract message if it's a simple string
     if (
-      error &&
-      typeof error.message === 'string' &&
-      !error.message.includes('Server Components render')
+      authError &&
+      typeof authError.message === 'string' &&
+      !authError.message.includes('Server Components render')
     ) {
-      errorMessage = error.message;
+      errorMessage = authError.message;
     }
 
     return {
@@ -48,18 +56,20 @@ export async function signInWithUsername(username: string, password: string) {
     return {
       success: true,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const authError = error as AuthError;
+
     // Extract only necessary information and safe error message
-    let statusCode = error?.statusCode || error?.status;
+    const statusCode = authError?.statusCode || authError?.status;
     let errorMessage = 'Invalid credentials';
 
     // Only extract message if it's a simple string
     if (
-      error &&
-      typeof error.message === 'string' &&
-      !error.message.includes('Server Components render')
+      authError &&
+      typeof authError.message === 'string' &&
+      !authError.message.includes('Server Components render')
     ) {
-      errorMessage = error.message;
+      errorMessage = authError.message;
     }
 
     return {

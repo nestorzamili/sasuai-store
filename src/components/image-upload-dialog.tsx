@@ -83,11 +83,14 @@ export function ImageUploadDialog({
       } else {
         throw new Error(result.error || 'Upload failed');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : 'An error occurred while uploading the image.';
       toast({
         title: 'Upload failed',
-        description:
-          error.message || 'An error occurred while uploading the image.',
+        description: errorMessage,
         variant: 'destructive',
       });
     } finally {
