@@ -165,7 +165,7 @@ export default function BasicInfo({ form }: BasicInfoProps) {
                         max={100}
                         step={0.01}
                         {...restField}
-                        value={value === 0 ? '' : (value ?? '')}
+                        value={value ?? ''}
                         onChange={(e) => {
                           const inputValue = e.target.value;
                           if (inputValue === '') {
