@@ -48,8 +48,26 @@ export default function CreateDiscountPage() {
     try {
       setLoading(true);
 
-      // Add type assertion to fix type error
-      const result = await createDiscount(values as any);
+      // Convert form values to the expected service type
+      const discountData = {
+        name: values.name,
+        code: values.code,
+        description: values.description,
+        type: values.type,
+        value: values.value,
+        minPurchase: values.minPurchase,
+        startDate: values.startDate,
+        endDate: values.endDate,
+        isActive: values.isActive,
+        isGlobal: values.isGlobal,
+        maxUses: values.maxUses,
+        applyTo: values.applyTo,
+        productIds: values.productIds,
+        memberIds: values.memberIds,
+        memberTierIds: values.memberTierIds,
+      };
+
+      const result = await createDiscount(discountData);
 
       if (result.success) {
         toast({
@@ -80,7 +98,7 @@ export default function CreateDiscountPage() {
   };
 
   // Form error event handler to catch validation errors
-  const onError = (errors: any) => {
+  const onError = (errors: unknown) => {
     console.error('Form validation errors:', errors);
     toast({
       title: 'Validation Error',

@@ -2,18 +2,11 @@
 
 import { getMemberTiersForSelection } from '../../action';
 import EntitySelector from './entity-selector';
-
-interface MemberTier {
-  id: string;
-  name: string;
-  minPoints: number;
-  multiplier: number;
-}
-
-interface TierSelectorProps {
-  selectedIds: string[];
-  onChange: (ids: string[]) => void;
-}
+import {
+  MemberTierForSelection,
+  TierSelectorProps,
+  Column,
+} from '@/lib/types/discount';
 
 export default function TierSelector({
   selectedIds,
@@ -21,13 +14,23 @@ export default function TierSelector({
 }: TierSelectorProps) {
   const fetchMemberTiers = async (
     search: string,
-  ): Promise<{ success: boolean; data?: MemberTier[] }> => {
+  ): Promise<{ success: boolean; data?: MemberTierForSelection[] }> => {
     try {
       const response = await getMemberTiersForSelection(search);
       if (response.success && response.tiers) {
+        // Transform the response to match our interface
+        const transformedTiers: MemberTierForSelection[] = response.tiers.map(
+          (tier) => ({
+            id: tier.id,
+            name: tier.name,
+            minPoints: tier.minPoints,
+            multiplier: tier.multiplier,
+          }),
+        );
+
         return {
           success: true,
-          data: response.tiers,
+          data: transformedTiers,
         };
       }
       return {
@@ -40,7 +43,7 @@ export default function TierSelector({
     }
   };
 
-  const renderTierDetails = (tier: MemberTier) => (
+  const renderTierDetails = (tier: MemberTierForSelection) => (
     <>
       <span>Min Points: {tier.minPoints}</span>
       <span>Multiplier: {tier.multiplier}x</span>
@@ -48,20 +51,21 @@ export default function TierSelector({
   );
 
   // Define columns for the selected tiers table
-  const tierColumns = [
+  const tierColumns: Column<MemberTierForSelection>[] = [
     { header: 'Tier Name', accessor: 'name' },
     {
       header: 'Min. Points',
-      accessor: (tier: MemberTier) => tier.minPoints.toLocaleString(),
+      accessor: (tier: MemberTierForSelection) =>
+        tier.minPoints.toLocaleString(),
     },
     {
       header: 'Points Multiplier',
-      accessor: (tier: MemberTier) => `${tier.multiplier}x`,
+      accessor: (tier: MemberTierForSelection) => `${tier.multiplier}x`,
     },
   ];
 
   return (
-    <EntitySelector<MemberTier>
+    <EntitySelector<MemberTierForSelection>
       selectedIds={selectedIds}
       onChange={onChange}
       fetchItems={fetchMemberTiers}

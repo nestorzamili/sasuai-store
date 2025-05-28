@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { X, Search, Loader2 } from 'lucide-react';
+import { X, Search, Loader2, ChevronsUpDown } from 'lucide-react';
 import {
   Command,
   CommandEmpty,
@@ -18,27 +18,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import SelectedItemsTable from './selected-items-table';
-
-interface Entity {
-  id: string;
-  name: string;
-  [key: string]: any;
-}
-
-interface EntitySelectorProps<T extends Entity> {
-  selectedIds: string[];
-  onChange: (ids: string[]) => void;
-  fetchItems: (search: string) => Promise<{ success: boolean; data?: T[] }>;
-  fetchItemById?: (id: string) => Promise<{ success: boolean; data?: T[] }>;
-  renderItemDetails?: (item: T) => React.ReactNode;
-  placeholder?: string;
-  noSelectionText?: string;
-  columns?: {
-    header: string;
-    accessor: string | ((item: any) => React.ReactNode);
-    className?: string;
-  }[];
-}
+import { Entity, EntitySelectorProps } from '@/lib/types/discount';
 
 export default function EntitySelector<T extends Entity>({
   selectedIds,
@@ -66,27 +46,30 @@ export default function EntitySelector<T extends Entity>({
     [columns],
   );
 
-  // Helper function to fetch missing items by ID
-  const fetchMissingItems = async (missingIds: string[]): Promise<T[]> => {
-    if (missingIds.length === 0) return [];
+  // Helper function to fetch missing items by ID - memoized with useCallback
+  const fetchMissingItems = useCallback(
+    async (missingIds: string[]): Promise<T[]> => {
+      if (missingIds.length === 0) return [];
 
-    const fetchPromises = missingIds.map(async (id) => {
-      // Use fetchItemById if available, otherwise fall back to fetchItems
-      const fetchFn = fetchItemById || fetchItems;
-      const singleItemResponse = await fetchFn(id);
-      if (
-        singleItemResponse.success &&
-        singleItemResponse.data &&
-        singleItemResponse.data.length > 0
-      ) {
-        return singleItemResponse.data;
-      }
-      return [];
-    });
+      const fetchPromises = missingIds.map(async (id) => {
+        // Use fetchItemById if available, otherwise fall back to fetchItems
+        const fetchFn = fetchItemById || fetchItems;
+        const singleItemResponse = await fetchFn(id);
+        if (
+          singleItemResponse.success &&
+          singleItemResponse.data &&
+          singleItemResponse.data.length > 0
+        ) {
+          return singleItemResponse.data;
+        }
+        return [];
+      });
 
-    const results = await Promise.all(fetchPromises);
-    return results.flat();
-  };
+      const results = await Promise.all(fetchPromises);
+      return results.flat();
+    },
+    [fetchItems, fetchItemById], // Include dependencies
+  );
 
   // Compare selected IDs to see if they've changed
   const selectedIdsChanged = useMemo(() => {
@@ -149,7 +132,7 @@ export default function EntitySelector<T extends Entity>({
     };
 
     fetchInitialItems();
-  }, [fetchItems, selectedIds, selectedIdsChanged]);
+  }, [fetchItems, selectedIds, selectedIdsChanged, fetchMissingItems]); // Include fetchMissingItems
 
   // Handle search input change - memoize to avoid unnecessary re-renders
   const handleSearchChange = useMemo(
@@ -173,43 +156,6 @@ export default function EntitySelector<T extends Entity>({
     },
     [fetchItems],
   );
-
-  // Function to handle barcode search on Enter key
-  const handleKeyDown = async (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && search.trim() !== '') {
-      e.preventDefault();
-      setLoading(true);
-
-      try {
-        const response = await fetchItems(search);
-        if (response.success && response.data && response.data.length > 0) {
-          setItems(response.data);
-
-          // Auto-select the first item for barcode searches (assuming barcode is unique)
-          if (response.data.length === 1) {
-            const item = response.data[0];
-            if (!selectedIds.includes(item.id)) {
-              const newSelectedIds = [...selectedIds, item.id];
-              const newSelectedItems = [...selectedItems, item];
-              setSelectedItems(newSelectedItems);
-              onChange(newSelectedIds);
-
-              // Clear search and close popover after auto-selecting
-              setSearch('');
-              setOpen(false);
-            }
-          }
-        } else {
-          setItems([]);
-        }
-      } catch (error) {
-        console.error('Error with barcode search:', error);
-        setItems([]);
-      } finally {
-        setLoading(false);
-      }
-    }
-  };
 
   // Toggle item selection
   const toggleItem = (item: T) => {
@@ -251,7 +197,6 @@ export default function EntitySelector<T extends Entity>({
   // If search value changes, do the search
   useEffect(() => {
     if (search !== '') {
-      // Using a reference to avoid stale closures
       const currentSearch = search;
       const timer = setTimeout(() => {
         if (currentSearch === search) {
@@ -269,7 +214,9 @@ export default function EntitySelector<T extends Entity>({
           <PopoverTrigger asChild>
             <Button
               variant="outline"
-              className="justify-start flex-1"
+              role="combobox"
+              aria-expanded={open}
+              className="justify-between min-h-10"
               disabled={loading && initialLoad}
             >
               {loading && initialLoad ? (
@@ -278,61 +225,62 @@ export default function EntitySelector<T extends Entity>({
                 <Search className="mr-2 h-4 w-4" />
               )}
               {placeholder}
+              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="p-0 w-96" align="start">
-            <Command shouldFilter={false}>
+          <PopoverContent className="w-full min-w-[400px] p-0" align="start">
+            <Command>
               <CommandInput
                 placeholder={placeholder}
                 value={search}
-                onValueChange={setSearch}
-                onKeyDown={handleKeyDown}
+                onValueChange={handleSearchChange}
                 ref={searchInputRef}
               />
-              {loading && (
-                <div className="py-6 text-center">
-                  <Loader2 className="h-6 w-6 animate-spin mx-auto" />
-                  <p className="text-sm text-muted-foreground mt-2">
-                    Loading...
-                  </p>
-                </div>
-              )}
-              {!loading && (
-                <CommandList>
-                  {items.length === 0 ? (
-                    <CommandEmpty>No items found</CommandEmpty>
-                  ) : (
-                    <CommandGroup>
-                      {items.map((item) => (
-                        <CommandItem
-                          key={item.id}
-                          onSelect={() => {
-                            toggleItem(item);
-                            setOpen(false);
-                          }}
-                          className="cursor-pointer"
-                        >
-                          <div className="flex items-center justify-between w-full">
-                            <div className="flex-1">
-                              <span className="font-medium">{item.name}</span>
-                              {renderItemDetails && (
-                                <div className="text-xs text-muted-foreground flex flex-wrap gap-2 mt-1">
-                                  {renderItemDetails(item)}
-                                </div>
-                              )}
+              <CommandList>
+                <CommandEmpty>
+                  {loading ? 'Loading...' : 'No items found.'}
+                </CommandEmpty>
+                <CommandGroup>
+                  {items.map((item) => (
+                    <CommandItem
+                      key={item.id}
+                      value={item.id}
+                      onSelect={() => {
+                        toggleItem(item);
+                        // Don't close the popover to allow multiple selections
+                      }}
+                      className="cursor-pointer"
+                    >
+                      <div className="flex items-center justify-between w-full">
+                        <div className="flex-1">
+                          <span className="font-medium">{item.name}</span>
+                          {renderItemDetails && (
+                            <div className="text-xs text-muted-foreground flex flex-wrap gap-2 mt-1">
+                              {renderItemDetails(item)}
                             </div>
-                            <Checkbox
-                              checked={selectedIds.includes(item.id)}
-                              onCheckedChange={() => toggleItem(item)}
-                            />
-                          </div>
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  )}
-                </CommandList>
-              )}
+                          )}
+                        </div>
+                        <Checkbox
+                          checked={selectedIds.includes(item.id)}
+                          onCheckedChange={() => toggleItem(item)}
+                        />
+                      </div>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
             </Command>
+            {/* Add a close button at the bottom */}
+            <div className="p-2 border-t">
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full"
+                onClick={() => setOpen(false)}
+              >
+                Done ({selectedIds.length} selected)
+              </Button>
+            </div>
           </PopoverContent>
         </Popover>
 

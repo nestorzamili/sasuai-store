@@ -8,25 +8,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
-
-interface Entity {
-  id: string;
-  name: string;
-  [key: string]: any;
-}
-
-interface Column {
-  header: string;
-  accessor: string | ((item: any) => React.ReactNode);
-  className?: string;
-}
-
-interface SelectedItemsTableProps<T extends Entity> {
-  items: T[];
-  columns: Column[];
-  onRemove: (id: string) => void;
-  emptyMessage?: string;
-}
+import { Entity, SelectedItemsTableProps } from '@/lib/types/discount';
 
 export default function SelectedItemsTable<T extends Entity>({
   items,
@@ -63,7 +45,7 @@ export default function SelectedItemsTable<T extends Entity>({
                   <TableCell key={index} className={column.className}>
                     {typeof column.accessor === 'function'
                       ? column.accessor(item)
-                      : item[column.accessor]}
+                      : String(item[column.accessor as keyof T] ?? '')}
                   </TableCell>
                 ))}
                 <TableCell className="text-right">

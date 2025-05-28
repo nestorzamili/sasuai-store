@@ -41,19 +41,25 @@ import {
   formatApplyTo,
 } from '@/lib/common/discount-utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
-
-interface DiscountDetailDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  discountId: string;
-}
+import {
+  DiscountDetailDialogProps,
+  DiscountDetailWithValidation,
+  ProductForDiscount,
+  MemberForDiscount,
+  MemberTierForDiscount,
+  StatusInfo,
+  DiscountType,
+  DiscountApplyTo,
+} from '@/lib/types/discount';
 
 export function DiscountDetailDialog({
   open,
   onOpenChange,
   discountId,
 }: DiscountDetailDialogProps) {
-  const [discount, setDiscount] = useState<any | null>(null);
+  const [discount, setDiscount] = useState<DiscountDetailWithValidation | null>(
+    null,
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
 
@@ -69,7 +75,7 @@ export function DiscountDetailDialog({
       try {
         const response = await getDiscount(discountId);
         if (response.success && response.discount) {
-          setDiscount(response.discount);
+          setDiscount(response.discount as DiscountDetailWithValidation);
 
           // Set active tab based on discount type
           if (response.discount.applyTo === 'SPECIFIC_PRODUCTS') {
@@ -89,6 +95,7 @@ export function DiscountDetailDialog({
           });
         }
       } catch (error) {
+        console.error('Error fetching discount details:', error);
         toast({
           title: 'Error fetching discount details',
           description:
@@ -124,7 +131,7 @@ export function DiscountDetailDialog({
     : 0;
 
   // Get status label and badge variant
-  const getStatusInfo = () => {
+  const getStatusInfo = (): StatusInfo => {
     if (!discount) return { label: 'Unavailable', variant: 'outline' };
     if (!discount.isActive) return { label: 'Inactive', variant: 'outline' };
     if (isExpired) return { label: 'Expired', variant: 'destructive' };
@@ -134,7 +141,7 @@ export function DiscountDetailDialog({
   const statusInfo = getStatusInfo();
 
   // Format date range to be more readable
-  const formatDateRange = () => {
+  const formatDateRange = (): string => {
     if (!discount) return '';
     const start = new Date(discount.startDate);
     const end = new Date(discount.endDate);
@@ -153,7 +160,7 @@ export function DiscountDetailDialog({
                 ) : discount ? (
                   <>
                     {discount.name}
-                    <Badge variant={statusInfo.variant as any}>
+                    <Badge variant={statusInfo.variant}>
                       {statusInfo.label}
                     </Badge>
                   </>
@@ -170,7 +177,10 @@ export function DiscountDetailDialog({
                     }
                     className="text-lg px-3 py-1"
                   >
-                    {formatDiscountValue(discount.type, discount.value)}
+                    {formatDiscountValue(
+                      discount.type as DiscountType,
+                      discount.value,
+                    )}
                   </Badge>
                 </div>
               )}
@@ -217,19 +227,22 @@ export function DiscountDetailDialog({
                     Overview
                   </TabsTrigger>
                   {discount.applyTo === 'SPECIFIC_PRODUCTS' &&
-                    discount.products?.length > 0 && (
+                    discount.products?.length &&
+                    discount.products.length > 0 && (
                       <TabsTrigger value="products" className="flex-1">
                         Products ({discount.products.length})
                       </TabsTrigger>
                     )}
                   {discount.applyTo === 'SPECIFIC_MEMBERS' &&
-                    discount.members?.length > 0 && (
+                    discount.members?.length &&
+                    discount.members.length > 0 && (
                       <TabsTrigger value="members" className="flex-1">
                         Members ({discount.members.length})
                       </TabsTrigger>
                     )}
                   {discount.applyTo === 'SPECIFIC_MEMBER_TIERS' &&
-                    discount.memberTiers?.length > 0 && (
+                    discount.memberTiers?.length &&
+                    discount.memberTiers.length > 0 && (
                       <TabsTrigger value="tiers" className="flex-1">
                         Member Tiers ({discount.memberTiers.length})
                       </TabsTrigger>
@@ -285,14 +298,16 @@ export function DiscountDetailDialog({
                             <p className="font-medium">
                               {discount.isGlobal
                                 ? 'Global Discount'
-                                : formatApplyTo(discount.applyTo)}
+                                : formatApplyTo(
+                                    discount.applyTo as DiscountApplyTo,
+                                  )}
                             </p>
                           </div>
                         </div>
                       </CardContent>
                     </Card>
 
-                    {discount.maxUses > 0 && (
+                    {discount.maxUses && discount.maxUses > 0 && (
                       <Card>
                         <CardContent className="p-4">
                           <div className="flex items-center gap-2 text-muted-foreground mb-2">
@@ -344,22 +359,24 @@ export function DiscountDetailDialog({
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            {discount.products.map((product: any) => (
-                              <TableRow key={product.id}>
-                                <TableCell className="font-medium">
-                                  {product.name}
-                                </TableCell>
-                                <TableCell className="font-mono text-xs">
-                                  {product.barcode || 'N/A'}
-                                </TableCell>
-                                <TableCell>
-                                  {product.category?.name || 'N/A'}
-                                </TableCell>
-                                <TableCell>
-                                  {product.brand?.name || 'N/A'}
-                                </TableCell>
-                              </TableRow>
-                            ))}
+                            {discount.products.map(
+                              (product: ProductForDiscount) => (
+                                <TableRow key={product.id}>
+                                  <TableCell className="font-medium">
+                                    {product.name}
+                                  </TableCell>
+                                  <TableCell className="font-mono text-xs">
+                                    {product.barcode || 'N/A'}
+                                  </TableCell>
+                                  <TableCell>
+                                    {product.category?.name || 'N/A'}
+                                  </TableCell>
+                                  <TableCell>
+                                    {product.brand?.name || 'N/A'}
+                                  </TableCell>
+                                </TableRow>
+                              ),
+                            )}
                           </TableBody>
                         </Table>
                       </div>
@@ -382,24 +399,22 @@ export function DiscountDetailDialog({
                           <TableHeader className="sticky top-0 bg-background z-10">
                             <TableRow>
                               <TableHead className="w-1/3">Member</TableHead>
-                              <TableHead>Email</TableHead>
-                              <TableHead>Phone</TableHead>
                               <TableHead>Tier</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            {discount.members.map((member: any) => (
-                              <TableRow key={member.id}>
-                                <TableCell className="font-medium">
-                                  {member.name}
-                                </TableCell>
-                                <TableCell>{member.email || 'N/A'}</TableCell>
-                                <TableCell>{member.phone || 'N/A'}</TableCell>
-                                <TableCell>
-                                  {member.tier?.name || 'N/A'}
-                                </TableCell>
-                              </TableRow>
-                            ))}
+                            {discount.members.map(
+                              (member: MemberForDiscount) => (
+                                <TableRow key={member.id}>
+                                  <TableCell className="font-medium">
+                                    {member.name}
+                                  </TableCell>
+                                  <TableCell>
+                                    {member.tier?.name || 'N/A'}
+                                  </TableCell>
+                                </TableRow>
+                              ),
+                            )}
                           </TableBody>
                         </Table>
                       </div>
@@ -424,20 +439,20 @@ export function DiscountDetailDialog({
                               <TableHead className="w-1/3">Tier Name</TableHead>
                               <TableHead>Min. Points</TableHead>
                               <TableHead>Multiplier</TableHead>
-                              <TableHead>Members Count</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            {discount.memberTiers.map((tier: any) => (
-                              <TableRow key={tier.id}>
-                                <TableCell className="font-medium">
-                                  {tier.name}
-                                </TableCell>
-                                <TableCell>{tier.minPoints}</TableCell>
-                                <TableCell>{tier.multiplier}x</TableCell>
-                                <TableCell>{tier.membersCount || 0}</TableCell>
-                              </TableRow>
-                            ))}
+                            {discount.memberTiers.map(
+                              (tier: MemberTierForDiscount) => (
+                                <TableRow key={tier.id}>
+                                  <TableCell className="font-medium">
+                                    {tier.name}
+                                  </TableCell>
+                                  <TableCell>{tier.minPoints}</TableCell>
+                                  <TableCell>{tier.multiplier}x</TableCell>
+                                </TableRow>
+                              ),
+                            )}
                           </TableBody>
                         </Table>
                       </div>
