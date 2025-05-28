@@ -2,20 +2,11 @@
 
 import { getMembersForSelection } from '../../action';
 import EntitySelector from './entity-selector';
-
-interface Member {
-  id: string;
-  name: string;
-  tier?: {
-    name: string;
-  } | null;
-  cardId?: string;
-}
-
-interface MemberSelectorProps {
-  selectedIds: string[];
-  onChange: (ids: string[]) => void;
-}
+import {
+  MemberForSelection,
+  MemberSelectorProps,
+  Column,
+} from '@/lib/types/discount';
 
 export default function MemberSelector({
   selectedIds,
@@ -23,13 +14,23 @@ export default function MemberSelector({
 }: MemberSelectorProps) {
   const fetchMembers = async (
     search: string,
-  ): Promise<{ success: boolean; data?: Member[] }> => {
+  ): Promise<{ success: boolean; data?: MemberForSelection[] }> => {
     try {
       const response = await getMembersForSelection(search);
       if (response.success && response.members) {
+        // Transform the response to match our interface
+        const transformedMembers: MemberForSelection[] = response.members.map(
+          (member) => ({
+            id: member.id,
+            name: member.name,
+            tier: member.tier,
+            cardId: member.cardId,
+          }),
+        );
+
         return {
           success: true,
-          data: response.members,
+          data: transformedMembers,
         };
       }
       return {
@@ -45,7 +46,7 @@ export default function MemberSelector({
     }
   };
 
-  const renderMemberDetails = (member: Member) => (
+  const renderMemberDetails = (member: MemberForSelection) => (
     <>
       {member.tier && <span>{member.tier.name}</span>}
       {member.cardId && <span>Card: {member.cardId}</span>}
@@ -53,20 +54,20 @@ export default function MemberSelector({
   );
 
   // Define columns for the selected members table
-  const memberColumns = [
+  const memberColumns: Column<MemberForSelection>[] = [
     { header: 'Member Name', accessor: 'name' },
     {
       header: 'Membership Tier',
-      accessor: (member: Member) => member.tier?.name || 'N/A',
+      accessor: (member: MemberForSelection) => member.tier?.name || 'N/A',
     },
     {
       header: 'Card ID',
-      accessor: (member: Member) => member.cardId || 'N/A',
+      accessor: (member: MemberForSelection) => member.cardId || 'N/A',
     },
   ];
 
   return (
-    <EntitySelector<Member>
+    <EntitySelector<MemberForSelection>
       selectedIds={selectedIds}
       onChange={onChange}
       fetchItems={fetchMembers}
