@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import Image from 'next/image';
 import { useProductForm } from './product-form-provider';
 import { Button } from '@/components/ui/button';
@@ -58,19 +58,16 @@ export function ProductImagesSection() {
   const { toast } = useToast();
 
   // Helper function to check if URL is valid
-  const isValidImageUrl = useCallback(
-    (url: string | null | undefined): boolean => {
-      if (!url) return false;
-      try {
-        new URL(url);
-        return true;
-      } catch (error) {
-        console.error('Invalid URL:', url, error);
-        return false;
-      }
-    },
-    [],
-  );
+  const isValidImageUrl = (url: string | null | undefined): boolean => {
+    if (!url) return false;
+    try {
+      new URL(url);
+      return true;
+    } catch (error) {
+      console.error('Invalid URL:', url, error);
+      return false;
+    }
+  };
 
   // We'll treat both types of images consistently with a unified interface - simplified
   const displayImages = isEditing ? images : tempImages;

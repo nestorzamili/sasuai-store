@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { IconAlertTriangle } from '@tabler/icons-react';
 import { toast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -27,7 +27,7 @@ export function CategoryDeleteDialog({
     category._count?.products && category._count.products > 0
   );
 
-  const handleDelete = async () => {
+  const handleDelete = useCallback(async () => {
     try {
       setIsDeleting(true);
 
@@ -67,7 +67,7 @@ export function CategoryDeleteDialog({
       setIsDeleting(false);
       onOpenChange(false);
     }
-  };
+  }, [category, hasProducts, onOpenChange, onSuccess]);
 
   return (
     <ConfirmDialog

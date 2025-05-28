@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -85,29 +85,29 @@ export default function TransactionFilterToolbar({
     return 'Amount Range';
   };
 
-  // Handle amount filter apply
-  const handleApplyAmountFilter = () => {
+  // Handle amount filter apply - stabilize with useCallback
+  const handleApplyAmountFilter = useCallback(() => {
     setMinAmount(tempMinAmount);
     setMaxAmount(tempMaxAmount);
     setAmountOpen(false);
-  };
+  }, [tempMinAmount, tempMaxAmount, setMinAmount, setMaxAmount]);
 
-  // Reset amount filter
-  const handleResetAmountFilter = () => {
+  // Reset amount filter - stabilize with useCallback
+  const handleResetAmountFilter = useCallback(() => {
     setTempMinAmount('');
     setTempMaxAmount('');
     setMinAmount('');
     setMaxAmount('');
     setAmountOpen(false);
-  };
+  }, [setMinAmount, setMaxAmount]);
 
-  // Handle clearing all filters
-  const handleClearAllFilters = () => {
+  // Handle clearing all filters - stabilize with useCallback
+  const handleClearAllFilters = useCallback(() => {
     setDateRange(undefined);
     setMinAmount('');
     setMaxAmount('');
     setPaymentMethod('ALL_METHODS');
-  };
+  }, [setDateRange, setMinAmount, setMaxAmount, setPaymentMethod]);
 
   return (
     <div className="flex flex-col gap-2">

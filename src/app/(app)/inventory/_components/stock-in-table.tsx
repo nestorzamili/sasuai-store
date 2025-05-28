@@ -11,7 +11,7 @@ import { format } from 'date-fns';
 import { TableLayout } from '@/components/layout/table-layout';
 import { useFetch } from '@/hooks/use-fetch';
 import { getAllStockIns } from '../stock-actions';
-import { memo, useCallback, useEffect } from 'react';
+import { memo, useEffect, useCallback, useMemo, useRef } from 'react';
 
 interface StockInTableProps {
   isActive?: boolean;
@@ -20,68 +20,65 @@ interface StockInTableProps {
 export const StockInTable = memo(function StockInTable({
   isActive = false,
 }: StockInTableProps) {
-  // Format date function
-  const formatDate = (date: Date | string) => {
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Format date function - memoized
+  const formatDate = useCallback((date: Date | string) => {
     return format(new Date(date), 'PPP');
-  };
+  }, []);
 
-  // Define columns
-  const columns: ColumnDef<StockInComplete>[] = [
-    {
-      accessorKey: 'date',
-      header: 'date',
-      cell: ({ row }) => formatDate(row.original.date),
-    },
-
-    // Product column
-    {
-      accessorKey: 'batch.product.name',
-      header: 'product name',
-      cell: ({ row }) => {
-        return (
-          <div className="font-medium">{row.original.batch.product.name}</div>
-        );
+  // Memoize columns to prevent unnecessary re-renders
+  const columns = useMemo(
+    (): ColumnDef<StockInComplete>[] => [
+      {
+        accessorKey: 'date',
+        header: 'date',
+        cell: ({ row }) => formatDate(row.original.date),
       },
-    },
-
-    // Batch Code column
-    {
-      accessorKey: 'batch.batchCode',
-      header: 'batch code',
-      cell: ({ row }) => <div>{row.original.batch.batchCode}</div>,
-    },
-
-    // Quantity column
-    {
-      accessorKey: 'quantity',
-      header: 'quantity',
-      cell: ({ row }) => {
-        const quantity = row.getValue('quantity') as number;
-        const unit = row.original.unit?.symbol || '';
-        return (
-          <div className="text-left">
-            {quantity} {unit}
-          </div>
-        );
+      {
+        accessorKey: 'batch.product.name',
+        header: 'product name',
+        cell: ({ row }) => {
+          return (
+            <div className="font-medium">{row.original.batch.product.name}</div>
+          );
+        },
       },
-    },
-
-    // Supplier column
-    {
-      accessorKey: 'supplier.name',
-      header: 'supplier',
-      cell: ({ row }) => {
-        const supplier = row.original.supplier;
-        return supplier ? (
-          <div>{supplier.name}</div>
-        ) : (
-          <Badge variant="outline">No Supplier</Badge>
-        );
+      {
+        accessorKey: 'batch.batchCode',
+        header: 'batch code',
+        cell: ({ row }) => <div>{row.original.batch.batchCode}</div>,
       },
-    },
-  ];
+      {
+        accessorKey: 'quantity',
+        header: 'quantity',
+        cell: ({ row }) => {
+          const quantity = row.getValue('quantity') as number;
+          const unit = row.original.unit?.symbol || '';
+          return (
+            <div className="text-left">
+              {quantity} {unit}
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: 'supplier.name',
+        header: 'supplier',
+        cell: ({ row }) => {
+          const supplier = row.original.supplier;
+          return supplier ? (
+            <div>{supplier.name}</div>
+          ) : (
+            <Badge variant="outline">No Supplier</Badge>
+          );
+        },
+      },
+    ],
+    [formatDate],
+  );
 
-  // Memoize the fetch function to prevent it from changing on every render
+  // Stabilize fetchDataTable with abort controller
   const fetchDataTable = useCallback(
     async (
       options: TableFetchOptions,
@@ -91,6 +88,13 @@ export const StockInTable = memo(function StockInTable({
           return { data: [], totalRows: 0 };
         }
 
+        // Cancel previous request
+        if (abortControllerRef.current) {
+          abortControllerRef.current.abort();
+        }
+
+        abortControllerRef.current = new AbortController();
+
         const response = await getAllStockIns({
           page: (options.page || 0) + 1,
           limit: options.limit || 10,
@@ -99,6 +103,10 @@ export const StockInTable = memo(function StockInTable({
           search: options.search,
           columnFilter: ['batch.product.name', 'batch.batchCode'],
         });
+
+        if (abortControllerRef.current?.signal.aborted) {
+          return { data: [], totalRows: 0 };
+        }
 
         if (!response.success) {
           console.error('Failed to fetch stock-in data:', response.error);
@@ -115,7 +123,9 @@ export const StockInTable = memo(function StockInTable({
           totalRows: response.meta?.rowsCount || 0,
         };
       } catch (error) {
-        console.error('Error fetching stock-in data:', error);
+        if (error instanceof Error && error.name !== 'AbortError') {
+          console.error('Error fetching stock-in data:', error);
+        }
         return { data: [], totalRows: 0 };
       }
     },
@@ -145,23 +155,36 @@ export const StockInTable = memo(function StockInTable({
     if (isActive) {
       refresh();
     }
+
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
   }, [isActive, refresh]);
 
-  const handlePaginationChange = (newPagination: {
-    pageIndex: number;
-    pageSize: number;
-  }) => {
-    setPage(newPagination.pageIndex);
-    setLimit(newPagination.pageSize);
-  };
+  // Memoize handlers to prevent unnecessary re-renders
+  const handlePaginationChange = useCallback(
+    (newPagination: { pageIndex: number; pageSize: number }) => {
+      setPage(newPagination.pageIndex);
+      setLimit(newPagination.pageSize);
+    },
+    [setPage, setLimit],
+  );
 
-  const handleSortingChange = (newSorting: { id: string; desc: boolean }[]) => {
-    setSortBy(newSorting);
-  };
+  const handleSortingChange = useCallback(
+    (newSorting: { id: string; desc: boolean }[]) => {
+      setSortBy(newSorting);
+    },
+    [setSortBy],
+  );
 
-  const handleSearchChange = (search: string) => {
-    setSearch(search);
-  };
+  const handleSearchChange = useCallback(
+    (search: string) => {
+      setSearch(search);
+    },
+    [setSearch],
+  );
 
   return (
     <div className="space-y-4">

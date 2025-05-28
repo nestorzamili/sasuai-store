@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { UserRoleFilter, UserStatusFilter } from '@/lib/types/user';
+import { useCallback } from 'react';
 
 interface UserFilterToolbarProps {
   role: UserRoleFilter;
@@ -47,11 +48,11 @@ export default function UserFilterToolbar({
     { value: 'banned', label: 'Banned', icon: <IconUserCancel size={16} /> },
   ];
 
-  // Handle clearing all filters
-  const handleClearAllFilters = () => {
+  // Handle clearing all filters - stabilize with useCallback
+  const handleClearAllFilters = useCallback(() => {
     setRole('ALL_ROLES');
     setStatus('ALL');
-  };
+  }, [setRole, setStatus]);
 
   return (
     <div className="flex flex-wrap items-center gap-3">

@@ -241,53 +241,63 @@ export function ClaimRewardDialog({
   }, [searchQuery, searchMembersHandler]);
 
   // Handle form submission
-  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
-    e.preventDefault();
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent): Promise<void> => {
+      e.preventDefault();
 
-    if (!selectedRewardId || !selectedMember) return;
+      if (!selectedRewardId || !selectedMember) return;
 
-    if (!hasEnoughPoints) {
-      toast({
-        title: 'Insufficient points',
-        description: 'Member does not have enough points to claim this reward',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setIsLoading((prev) => ({ ...prev, claim: true }));
-
-    try {
-      const result = await claimRewardForMember(
-        selectedMember.id,
-        selectedRewardId,
-      );
-
-      if (result.success) {
+      if (!hasEnoughPoints) {
         toast({
-          title: 'Reward claimed',
-          description: 'The reward has been successfully claimed',
-        });
-        onSuccess();
-        onOpenChange(false);
-      } else {
-        toast({
-          title: 'Error',
-          description: result.error || 'Failed to claim reward',
+          title: 'Insufficient points',
+          description:
+            'Member does not have enough points to claim this reward',
           variant: 'destructive',
         });
+        return;
       }
-    } catch (error) {
-      console.error('Claim reward error:', error);
-      toast({
-        title: 'Error',
-        description: 'An unexpected error occurred',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading((prev) => ({ ...prev, claim: false }));
-    }
-  };
+
+      setIsLoading((prev) => ({ ...prev, claim: true }));
+
+      try {
+        const result = await claimRewardForMember(
+          selectedMember.id,
+          selectedRewardId,
+        );
+
+        if (result.success) {
+          toast({
+            title: 'Reward claimed',
+            description: 'The reward has been successfully claimed',
+          });
+          onSuccess();
+          onOpenChange(false);
+        } else {
+          toast({
+            title: 'Error',
+            description: result.error || 'Failed to claim reward',
+            variant: 'destructive',
+          });
+        }
+      } catch (error) {
+        console.error('Claim reward error:', error);
+        toast({
+          title: 'Error',
+          description: 'An unexpected error occurred',
+          variant: 'destructive',
+        });
+      } finally {
+        setIsLoading((prev) => ({ ...prev, claim: false }));
+      }
+    },
+    [
+      selectedRewardId,
+      selectedMember,
+      hasEnoughPoints,
+      onSuccess,
+      onOpenChange,
+    ],
+  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

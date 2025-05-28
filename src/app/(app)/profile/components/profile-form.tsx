@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { authClient } from '@/lib/auth-client';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Card,
   CardContent,
@@ -102,149 +102,162 @@ export default function ProfileForm() {
     }
   }, [user, form]);
 
-  const handleProfileUpdate = async (data: ProfileFormValues) => {
-    setIsUpdating(true);
-
-    try {
-      const hasImageChanged = data.image !== userProfile?.image;
-      const hasNameChanged = data.name !== userProfile?.name;
-      const hasUsernameChanged = data.username !== userProfile?.username;
-
-      const updateData: UserUpdateData = {};
-
-      // Add fields that have changed
-      if (hasNameChanged) updateData.name = data.name;
-      if (hasUsernameChanged && data.username !== '')
-        updateData.username = data.username;
-
-      // Update name and username only if they've changed
-      if (Object.keys(updateData).length > 0) {
-        await authClient.updateUser(updateData);
-      }
-
-      // Handle image separately to avoid username conflicts
-      if (hasImageChanged) {
-        try {
-          await authClient.updateUser({
-            image: data.image || null, // Send null explicitly when removing image
-          });
-        } catch (imageError) {
-          console.error('Error updating image:', imageError);
-          toast({
-            title: 'Profile Updated',
-            description:
-              'Profile updated but there was an issue with the profile picture.',
-            variant: 'default',
-          });
-        }
-      }
-
-      // Handle email change
-      if (data.email !== userProfile?.email) {
-        await handleEmailChange(data.email);
-      } else {
+  const handleEmailChange = useCallback(
+    async (newEmail: string) => {
+      try {
+        await authClient.changeEmail(
+          {
+            newEmail,
+            callbackURL: '/',
+          },
+          {
+            onSuccess: () => {
+              toast({
+                title: 'Verification Required',
+                description:
+                  'Please check your email to confirm the email change.',
+              });
+              router.refresh();
+            },
+            onError: (ctx) => {
+              const errorMessage = ctx.error?.message || '';
+              if (
+                errorMessage.includes('Email already exists') ||
+                errorMessage.includes("Couldn't update your email")
+              ) {
+                form.setValue('email', userProfile?.email || '');
+                toast({
+                  title: 'Email Change Failed',
+                  description:
+                    'This email address is already registered with another account.',
+                  variant: 'destructive',
+                });
+              } else {
+                toast({
+                  title: 'Email Change Failed',
+                  description: errorMessage,
+                  variant: 'destructive',
+                });
+              }
+            },
+          },
+        );
+      } catch (error) {
+        console.error('Error changing email:', error);
         toast({
-          title: 'Profile Updated',
-          description: 'Your profile information has been updated.',
-        });
-        setUserProfile({
-          name: data.name,
-          username: data.username,
-          email: data.email,
-          image: data.image || '',
-        });
-
-        await refreshSession();
-        router.refresh();
-      }
-    } catch (error: unknown) {
-      // Type narrowing for safer error handling
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : typeof error === 'object' && error !== null && 'message' in error
-          ? String((error as { message: unknown }).message)
-          : 'An unknown error occurred';
-
-      if (errorMessage.includes('username')) {
-        if (errorMessage.includes('taken') || errorMessage.includes('exists')) {
-          form.setError('username', {
-            type: 'manual',
-            message: 'This username is already taken. Please try another one.',
-          });
-        } else {
-          form.setError('username', {
-            type: 'manual',
-            message:
-              errorMessage || 'There was a problem updating your username.',
-          });
-        }
-      } else {
-        toast({
-          title: 'Update Failed',
-          description:
-            errorMessage || 'There was a problem updating your profile.',
+          title: 'Unexpected Error',
+          description: 'An unexpected error occurred while changing email.',
           variant: 'destructive',
         });
       }
-    } finally {
-      setIsUpdating(false);
-    }
-  };
+    },
+    [form, router, userProfile?.email],
+  );
 
-  const handleEmailChange = async (newEmail: string) => {
-    try {
-      await authClient.changeEmail(
-        {
-          newEmail,
-          callbackURL: '/',
-        },
-        {
-          onSuccess: () => {
-            toast({
-              title: 'Verification Required',
-              description:
-                'Please check your email to confirm the email change.',
+  const handleImageChange = useCallback(
+    (imageUrl: string) => {
+      form.setValue('image', imageUrl);
+      form.trigger('image');
+    },
+    [form],
+  );
+
+  const handleProfileUpdate = useCallback(
+    async (data: ProfileFormValues) => {
+      setIsUpdating(true);
+
+      try {
+        const hasImageChanged = data.image !== userProfile?.image;
+        const hasNameChanged = data.name !== userProfile?.name;
+        const hasUsernameChanged = data.username !== userProfile?.username;
+
+        const updateData: UserUpdateData = {};
+
+        // Add fields that have changed
+        if (hasNameChanged) updateData.name = data.name;
+        if (hasUsernameChanged && data.username !== '')
+          updateData.username = data.username;
+
+        // Update name and username only if they've changed
+        if (Object.keys(updateData).length > 0) {
+          await authClient.updateUser(updateData);
+        }
+
+        // Handle image separately to avoid username conflicts
+        if (hasImageChanged) {
+          try {
+            await authClient.updateUser({
+              image: data.image || null, // Send null explicitly when removing image
             });
-            router.refresh();
-          },
-          onError: (ctx) => {
-            const errorMessage = ctx.error?.message || '';
-            if (
-              errorMessage.includes('Email already exists') ||
-              errorMessage.includes("Couldn't update your email")
-            ) {
-              form.setValue('email', userProfile?.email || '');
-              toast({
-                title: 'Email Change Failed',
-                description:
-                  'This email address is already registered with another account.',
-                variant: 'destructive',
-              });
-            } else {
-              toast({
-                title: 'Email Change Failed',
-                description: errorMessage,
-                variant: 'destructive',
-              });
-            }
-          },
-        },
-      );
-    } catch (error) {
-      console.error('Error changing email:', error);
-      toast({
-        title: 'Unexpected Error',
-        description: 'An unexpected error occurred while changing email.',
-        variant: 'destructive',
-      });
-    }
-  };
+          } catch (imageError) {
+            console.error('Error updating image:', imageError);
+            toast({
+              title: 'Profile Updated',
+              description:
+                'Profile updated but there was an issue with the profile picture.',
+              variant: 'default',
+            });
+          }
+        }
 
-  const handleImageChange = (imageUrl: string) => {
-    form.setValue('image', imageUrl);
-    form.trigger('image');
-  };
+        // Handle email change
+        if (data.email !== userProfile?.email) {
+          await handleEmailChange(data.email);
+        } else {
+          toast({
+            title: 'Profile Updated',
+            description: 'Your profile information has been updated.',
+          });
+          setUserProfile({
+            name: data.name,
+            username: data.username,
+            email: data.email,
+            image: data.image || '',
+          });
+
+          await refreshSession();
+          router.refresh();
+        }
+      } catch (error: unknown) {
+        // Type narrowing for safer error handling
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : typeof error === 'object' && error !== null && 'message' in error
+              ? String((error as { message: unknown }).message)
+              : 'An unknown error occurred';
+
+        if (errorMessage.includes('username')) {
+          if (
+            errorMessage.includes('taken') ||
+            errorMessage.includes('exists')
+          ) {
+            form.setError('username', {
+              type: 'manual',
+              message:
+                'This username is already taken. Please try another one.',
+            });
+          } else {
+            form.setError('username', {
+              type: 'manual',
+              message:
+                errorMessage || 'There was a problem updating your username.',
+            });
+          }
+        } else {
+          toast({
+            title: 'Update Failed',
+            description:
+              errorMessage || 'There was a problem updating your profile.',
+            variant: 'destructive',
+          });
+        }
+      } finally {
+        setIsUpdating(false);
+      }
+    },
+    [userProfile, handleEmailChange, refreshSession, router, form],
+  );
 
   if (isAuthLoading) {
     return (

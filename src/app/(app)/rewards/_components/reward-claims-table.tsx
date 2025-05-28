@@ -105,7 +105,7 @@ export function RewardClaimsTable({
     },
   });
 
-  // Memoized handlers
+  // Memoized handlers - stabilize with useCallback
   const handlePaginationChange = React.useCallback(
     (newPagination: { pageIndex: number; pageSize: number }): void => {
       setPage(newPagination.pageIndex);
@@ -128,7 +128,7 @@ export function RewardClaimsTable({
     [setSearch],
   );
 
-  // Optimized status change handler with error boundary
+  // Optimized status change handler with error boundary - stabilize with useCallback
   const handleStatusChange = React.useCallback(
     async (id: string, status: string): Promise<void> => {
       try {
@@ -161,7 +161,7 @@ export function RewardClaimsTable({
     [refresh, onRefresh, onStatusChange],
   );
 
-  // Memoized status badge component
+  // Memoized status badge component - stabilize with useCallback
   const getStatusBadge = React.useCallback(
     (status: string): React.ReactElement => {
       const statusConfig = {

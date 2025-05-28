@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { getTopSellingProductsByQuantity } from '@/app/(app)/dashboard/actions';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { DateFilter as FilterDateFilter } from '@/lib/types/filter';
 import { LoaderCardContent } from '@/components/loader-card-content';
 import { UnavailableData } from '@/components/unavailable-data';
@@ -45,32 +45,45 @@ interface ProductData {
 export function TopSellingProduct({ filter }: TopSellingProductProps) {
   const [products, setProducts] = useState<ProductData[]>([]);
   const [loading, setLoading] = useState(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Memoize the API filter to prevent unnecessary recreations
+  const apiFilter = useMemo(() => {
+    const defaultStart = new Date();
+    defaultStart.setDate(defaultStart.getDate() - 7);
+    const defaultEnd = new Date();
+
+    return {
+      startDate:
+        filter?.from instanceof Date
+          ? filter.from.toISOString().split('T')[0]
+          : filter?.from
+            ? String(filter.from)
+            : defaultStart.toISOString().split('T')[0],
+      endDate:
+        filter?.to instanceof Date
+          ? filter.to.toISOString().split('T')[0]
+          : filter?.to
+            ? String(filter.to)
+            : defaultEnd.toISOString().split('T')[0],
+    };
+  }, [filter?.from, filter?.to]);
 
   const fetchTopSellingProducts = useCallback(async () => {
     try {
+      // Cancel previous request
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+
+      abortControllerRef.current = new AbortController();
       setLoading(true);
 
-      // Convert FilterDateFilter to ExtendedDateFilter format expected by the API
-      const defaultStart = new Date();
-      defaultStart.setDate(defaultStart.getDate() - 7); // Last 7 days
-      const defaultEnd = new Date();
-
-      const apiFilter = {
-        startDate:
-          filter?.from instanceof Date
-            ? filter.from.toISOString().split('T')[0]
-            : filter?.from
-              ? String(filter.from)
-              : defaultStart.toISOString().split('T')[0],
-        endDate:
-          filter?.to instanceof Date
-            ? filter.to.toISOString().split('T')[0]
-            : filter?.to
-              ? String(filter.to)
-              : defaultEnd.toISOString().split('T')[0],
-      };
-
       const response = await getTopSellingProductsByQuantity(apiFilter);
+
+      if (abortControllerRef.current?.signal.aborted) {
+        return;
+      }
 
       if (response.success && response.data) {
         setProducts(response.data);
@@ -78,35 +91,47 @@ export function TopSellingProduct({ filter }: TopSellingProductProps) {
         setProducts([]);
       }
     } catch (error) {
-      console.error('Error fetching top selling products:', error);
+      if (error instanceof Error && error.name !== 'AbortError') {
+        console.error('Error fetching top selling products:', error);
+      }
       setProducts([]);
     } finally {
       setLoading(false);
     }
-  }, [filter]);
+  }, [apiFilter]);
 
   useEffect(() => {
     fetchTopSellingProducts();
+
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
   }, [fetchTopSellingProducts]);
 
-  // Calculate totals
-  const totalUnits = products.reduce(
-    (sum, product) => sum + (product._sum.quantity || 0),
-    0,
-  );
-  const totalRevenue = products.reduce((sum, product) => {
-    const quantity = product._sum.quantity || 0;
-    const price = product.batch?.product.price || 0;
-    return sum + quantity * price;
-  }, 0);
+  // Calculate totals - memoized to prevent recalculation on every render
+  const { totalUnits, totalRevenue } = useMemo(() => {
+    const units = products.reduce(
+      (sum, product) => sum + (product._sum.quantity || 0),
+      0,
+    );
+    const revenue = products.reduce((sum, product) => {
+      const quantity = product._sum.quantity || 0;
+      const price = product.batch?.product.price || 0;
+      return sum + quantity * price;
+    }, 0);
 
-  const formatRupiah = (amount: number) => {
+    return { totalUnits: units, totalRevenue: revenue };
+  }, [products]);
+
+  const formatRupiah = useCallback((amount: number) => {
     return new Intl.NumberFormat('id-ID', {
       style: 'currency',
       currency: 'IDR',
       minimumFractionDigits: 0,
     }).format(amount);
-  };
+  }, []);
 
   return (
     <Card className="h-full">

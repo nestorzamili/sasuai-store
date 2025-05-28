@@ -1,6 +1,6 @@
 'use client';
 import * as React from 'react';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { ColumnDef } from '@tanstack/react-table';
 import { MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -32,7 +32,7 @@ interface SupplierTableProps {
 }
 
 export function SupplierTable({ onEdit, onRefresh }: SupplierTableProps) {
-  const fetchSuppliers = async (options: TableFetchOptions) => {
+  const fetchSuppliers = useCallback(async (options: TableFetchOptions) => {
     // Convert TableFetchOptions to SupplierOptions using the helper
     const response = await getAllSuppliersWithCount({
       page: options.page !== undefined ? options.page + 1 : 1,
@@ -46,7 +46,7 @@ export function SupplierTable({ onEdit, onRefresh }: SupplierTableProps) {
       data: response.data || [],
       totalRows: response.totalRows || 0,
     };
-  };
+  }, []);
 
   const {
     data,
@@ -66,32 +66,50 @@ export function SupplierTable({ onEdit, onRefresh }: SupplierTableProps) {
     initialSortDirection: false,
   });
 
-  const handlePaginationChange = (newPagination: {
-    pageIndex: number;
-    pageSize: number;
-  }) => {
-    setPage(newPagination.pageIndex);
-    setLimit(newPagination.pageSize);
-  };
+  const handlePaginationChange = useCallback(
+    (newPagination: { pageIndex: number; pageSize: number }) => {
+      setPage(newPagination.pageIndex);
+      setLimit(newPagination.pageSize);
+    },
+    [setPage, setLimit],
+  );
 
-  const handleSortingChange = (newSorting: SortByOptions) => {
-    setSortBy(newSorting);
-  };
+  const handleSortingChange = useCallback(
+    (newSorting: SortByOptions) => {
+      setSortBy(newSorting);
+    },
+    [setSortBy],
+  );
 
-  const handleSearchChange = (newSearch: string) => {
-    setSearch(newSearch);
-  };
+  const handleSearchChange = useCallback(
+    (newSearch: string) => {
+      setSearch(newSearch);
+    },
+    [setSearch],
+  );
 
   const [deleteDialog, setDeleteDialog] = useState(false);
   const [detailDialog, setDetailDialog] = useState(false);
   const [detailId, setDetailId] = useState<string | null>(null);
   const [deleteData, setDeleteData] = useState<SupplierWithCount | null>(null);
 
-  // Handle successful operations
-  const handleOperationSuccess = () => {
+  // Handle successful operations - stabilize with useCallback
+  const handleOperationSuccess = useCallback(() => {
     refresh();
     onRefresh?.();
-  };
+  }, [refresh, onRefresh]);
+
+  // Handle detail dialog - stabilize with useCallback
+  const handleViewDetails = useCallback((supplier: SupplierWithCount) => {
+    setDetailId(supplier.id);
+    setDetailDialog(true);
+  }, []);
+
+  // Handle delete dialog - stabilize with useCallback
+  const handleDeleteClick = useCallback((supplier: SupplierWithCount) => {
+    setDeleteData(supplier);
+    setDeleteDialog(true);
+  }, []);
 
   const columns: ColumnDef<SupplierWithCount>[] = [
     {
@@ -148,10 +166,7 @@ export function SupplierTable({ onEdit, onRefresh }: SupplierTableProps) {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   className="flex justify-between cursor-pointer"
-                  onClick={() => {
-                    setDetailId(supplier.id);
-                    setDetailDialog(true);
-                  }}
+                  onClick={() => handleViewDetails(supplier)}
                 >
                   View Details <IconEye className="h-4 w-4" />
                 </DropdownMenuItem>
@@ -163,10 +178,7 @@ export function SupplierTable({ onEdit, onRefresh }: SupplierTableProps) {
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="flex justify-between cursor-pointer text-destructive focus:text-destructive"
-                  onClick={() => {
-                    setDeleteData(supplier);
-                    setDeleteDialog(true);
-                  }}
+                  onClick={() => handleDeleteClick(supplier)}
                 >
                   Delete <IconTrash className="h-4 w-4" />
                 </DropdownMenuItem>

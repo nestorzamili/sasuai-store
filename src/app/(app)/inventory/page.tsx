@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, lazy, Suspense, useRef } from 'react';
+import { useState, lazy, Suspense, useRef, useCallback, useMemo } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { IconBox, IconLogout, IconLogin } from '@tabler/icons-react';
 import { BatchTable } from './_components/batch-table';
@@ -25,20 +25,31 @@ export default function InventoryPage() {
   // Create a ref to store the refresh function from BatchTable
   const batchTableRefreshFn = useRef<() => void>(() => {});
 
-  const handleOpenForm = (state: boolean) => {
+  // Memoize handlers to prevent unnecessary re-renders
+  const handleOpenForm = useCallback((state: boolean) => {
     setDialogOpen(state);
-  };
+  }, []);
 
   // Update handleSuccess to call the refresh function
-  const handleSuccess = () => {
+  const handleSuccess = useCallback(() => {
     // Call the batch table refresh function when a batch is created successfully
     batchTableRefreshFn.current();
-  };
+  }, []);
 
   // Function to capture the refresh function from BatchTable
-  const setBatchTableRefresh = (refreshFn: () => void) => {
+  const setBatchTableRefresh = useCallback((refreshFn: () => void) => {
     batchTableRefreshFn.current = refreshFn;
-  };
+  }, []);
+
+  // Memoize the loading fallback
+  const LoadingFallback = useMemo(
+    () => (
+      <div className="flex items-center justify-center h-[200px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    ),
+    [],
+  );
 
   return (
     <div className="space-y-6">
@@ -84,9 +95,7 @@ export default function InventoryPage() {
               </div>
               <BatchPrimaryButton
                 open={dialogOpen}
-                onOpenChange={(state) => {
-                  handleOpenForm(!!state);
-                }}
+                onOpenChange={handleOpenForm}
                 onSuccess={handleSuccess}
               />
             </div>
@@ -110,7 +119,7 @@ export default function InventoryPage() {
             </div>
 
             {/* Lazy loaded Stock In Table using TableLayout's loading state */}
-            <Suspense fallback={null}>
+            <Suspense fallback={LoadingFallback}>
               {activeTab === 'stock-in' && <LazyStockInTable isActive={true} />}
             </Suspense>
           </div>
@@ -127,7 +136,7 @@ export default function InventoryPage() {
             </div>
 
             {/* Lazy loaded Stock Out Table using TableLayout's loading state */}
-            <Suspense fallback={null}>
+            <Suspense fallback={LoadingFallback}>
               {activeTab === 'stock-out' && (
                 <LazyStockOutTable isActive={true} />
               )}
