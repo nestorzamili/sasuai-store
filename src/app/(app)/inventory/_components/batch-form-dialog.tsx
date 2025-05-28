@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { useForm, Control } from 'react-hook-form';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { getAllProducts } from '@/app/(app)/products/action';
@@ -28,8 +28,14 @@ import {
 import { Input } from '@/components/ui/input';
 import { toast } from '@/hooks/use-toast';
 import { IconPlus, IconRefresh, IconInfoCircle } from '@tabler/icons-react';
-import { ProductBatchFormInitialData } from '@/lib/types/product-batch';
-import { Product } from '@/lib/types/base-types'; // Updated import
+import {
+  ProductBatchFormInitialData,
+  Product,
+  Unit,
+  Supplier,
+  extractUnitsArray,
+  extractSuppliersArray,
+} from '@/lib/types/inventory';
 import { createBatch, updateBatch } from '../action';
 import {
   Popover,
@@ -46,8 +52,6 @@ import { cn } from '@/lib/utils';
 import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { format, addMonths } from 'date-fns';
-import { SupplierWithCount } from '@/lib/types/supplier';
-import { UnitWithCounts } from '@/lib/types/unit';
 import { ComboBox, ComboBoxOption } from '@/components/ui/combobox';
 
 // Form schema for batch
@@ -135,7 +139,7 @@ const ComboBoxFormField = ({
   label: string;
   tooltip: string;
   options: ComboBoxOption[];
-  control: any;
+  control: Control<FormValues>;
   disabled?: boolean;
   placeholder: string;
   emptyMessage: string;
@@ -153,7 +157,7 @@ const ComboBoxFormField = ({
         <FormControl>
           <ComboBox
             options={options}
-            value={field.value || ''}
+            value={String(field.value || '')}
             onChange={(value) =>
               field.onChange(transform ? transform(value) : value)
             }
@@ -182,8 +186,8 @@ export default function BatchFormDialog({
 
   // State for data from APIs - MOVED BEFORE generateBatchCode
   const [products, setProducts] = useState<Product[]>([]);
-  const [units, setUnits] = useState<UnitWithCounts[]>([]);
-  const [suppliers, setSuppliers] = useState<SupplierWithCount[]>([]);
+  const [units, setUnits] = useState<Unit[]>([]);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
 
   // Generate a batch code based on the selected product
   const generateBatchCode = useCallback(
@@ -212,29 +216,31 @@ export default function BatchFormDialog({
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const productsData = await getAllProducts();
+        // Get products data
+        const productsResponse = await getAllProducts();
+        if (productsResponse.success && productsResponse.data) {
+          setProducts(productsResponse.data as Product[]);
+        } else {
+          setProducts([]);
+        }
 
-        // Map API response data to ensure it matches the Product type
-        const mappedProducts = productsData.data?.map((product: any) => ({
-          ...product,
-          // Ensure sellPrice is present (required by Product type)
-          sellPrice: product.sellPrice || product.price || 0,
-        }));
+        // Get units data
+        const unitsResponse = await getAllUnits();
+        if (unitsResponse.success && unitsResponse.data) {
+          const unitsData = extractUnitsArray(unitsResponse.data);
+          setUnits(unitsData);
+        } else {
+          setUnits([]);
+        }
 
-        setProducts(mappedProducts || []);
-
-        const unitsData = await getAllUnits();
-        setUnits(unitsData.data || []);
-
-        const suppliersData = await getAllSuppliers();
-        setSuppliers(
-          suppliersData.data?.map((supplier: any) => ({
-            ...supplier,
-            _count: supplier._count || { products: 0 },
-            createdAt: supplier.createdAt || new Date(),
-            updatedAt: supplier.updatedAt || new Date(),
-          })) || [],
-        );
+        // Get suppliers data
+        const suppliersResponse = await getAllSuppliers();
+        if (suppliersResponse.success && suppliersResponse.data) {
+          const suppliersData = extractSuppliersArray(suppliersResponse.data);
+          setSuppliers(suppliersData);
+        } else {
+          setSuppliers([]);
+        }
       } catch (error) {
         console.error('Error fetching data:', error);
         toast({
@@ -242,6 +248,10 @@ export default function BatchFormDialog({
           description: 'Failed to load necessary data',
           variant: 'destructive',
         });
+        // Set empty arrays on error
+        setProducts([]);
+        setUnits([]);
+        setSuppliers([]);
       }
     };
 
@@ -410,6 +420,7 @@ export default function BatchFormDialog({
         });
       }
     } catch (error) {
+      console.error('Error in batch form submission:', error);
       toast({
         title: 'Error',
         description: 'An unexpected error occurred',
@@ -685,8 +696,8 @@ export default function BatchFormDialog({
                     ? 'Updating...'
                     : 'Creating...'
                   : isEditing
-                  ? 'Update Batch'
-                  : 'Create Batch'}
+                    ? 'Update Batch'
+                    : 'Create Batch'}
               </Button>
             </DialogFooter>
           </form>

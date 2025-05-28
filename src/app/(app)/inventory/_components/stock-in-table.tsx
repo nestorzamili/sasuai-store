@@ -2,7 +2,11 @@
 
 import { ColumnDef } from '@tanstack/react-table';
 import { Badge } from '@/components/ui/badge';
-import { StockInComplete } from '@/lib/types/stock-movement';
+import {
+  StockInComplete,
+  TableFetchOptions,
+  TableFetchResult,
+} from '@/lib/types/inventory';
 import { format } from 'date-fns';
 import { TableLayout } from '@/components/layout/table-layout';
 import { useFetch } from '@/hooks/use-fetch';
@@ -79,29 +83,28 @@ export const StockInTable = memo(function StockInTable({
 
   // Memoize the fetch function to prevent it from changing on every render
   const fetchDataTable = useCallback(
-    async (options: any) => {
+    async (
+      options: TableFetchOptions,
+    ): Promise<TableFetchResult<StockInComplete[]>> => {
       try {
-        // Don't fetch if component is not active
         if (!isActive) {
           return { data: [], totalRows: 0 };
         }
 
         const response = await getAllStockIns({
-          page: options.page + 1,
-          limit: options.limit,
+          page: (options.page || 0) + 1,
+          limit: options.limit || 10,
           sortBy: options.sortBy?.id || 'date',
           sortDirection: options.sortBy?.desc ? 'desc' : 'asc',
           search: options.search,
           columnFilter: ['batch.product.name', 'batch.batchCode'],
         });
 
-        // Better error logging
         if (!response.success) {
           console.error('Failed to fetch stock-in data:', response.error);
           return { data: [], totalRows: 0 };
         }
 
-        // Validate the response data
         if (!response.data || !Array.isArray(response.data)) {
           console.error('Invalid data structure received:', response);
           return { data: [], totalRows: 0 };
@@ -152,7 +155,7 @@ export const StockInTable = memo(function StockInTable({
     setLimit(newPagination.pageSize);
   };
 
-  const handleSortingChange = (newSorting: any) => {
+  const handleSortingChange = (newSorting: { id: string; desc: boolean }[]) => {
     setSortBy(newSorting);
   };
 
