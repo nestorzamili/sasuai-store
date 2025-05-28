@@ -1,8 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { DateRange } from 'react-day-picker';
-import { DateRangePickerWithPresets } from '@/components/ui/date-range-picker-with-presets';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -12,12 +10,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import {
   IconCash,
   IconCreditCard,
@@ -35,18 +27,8 @@ import {
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { formatRupiah } from '@/lib/currency';
-
-interface TransactionFilterToolbarProps {
-  dateRange: DateRange | undefined;
-  setDateRange: (range: DateRange | undefined) => void;
-  minAmount: string;
-  setMinAmount: (value: string) => void;
-  maxAmount: string;
-  setMaxAmount: (value: string) => void;
-  paymentMethod: string;
-  setPaymentMethod: (value: string) => void;
-  onDatePresetClick: (preset: string) => void;
-}
+import { DateRangePickerWithPresets } from '@/components/ui/date-range-picker-with-presets';
+import { TransactionFilterToolbarProps } from '@/lib/types/transaction';
 
 export default function TransactionFilterToolbar({
   dateRange,
@@ -130,7 +112,7 @@ export default function TransactionFilterToolbar({
   return (
     <div className="flex flex-col gap-2">
       <div className="flex flex-wrap items-center gap-3">
-        {/* Date Range Picker with compact display */}
+        {/* Date Range Picker with compact display - same as batch filter */}
         <div className="w-[200px]">
           <DateRangePickerWithPresets
             value={dateRange}
@@ -228,48 +210,36 @@ export default function TransactionFilterToolbar({
         </Popover>
 
         {/* Payment Method */}
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="w-[160px] shrink-0">
-                <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Payment Method">
-                      {paymentMethod && (
-                        <div className="flex items-center gap-2">
-                          {
-                            paymentMethods.find(
-                              (m) => m.value === paymentMethod,
-                            )?.icon
-                          }
-                          <span className="overflow-hidden text-ellipsis">
-                            {paymentMethods.find(
-                              (m) => m.value === paymentMethod,
-                            )?.label || 'Payment Method'}
-                          </span>
-                        </div>
-                      )}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {paymentMethods.map((method) => (
-                      <SelectItem key={method.value} value={method.value}>
-                        <div className="flex items-center gap-2 w-full">
-                          <div className="flex-shrink-0">{method.icon}</div>
-                          <span>{method.label}</span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </TooltipTrigger>
-            <TooltipContent>
-              {paymentMethods.find((m) => m.value === paymentMethod)?.label ||
-                'Payment Method'}
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <div className="w-[160px] shrink-0">
+          <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Payment Method">
+                {paymentMethod && (
+                  <div className="flex items-center gap-2">
+                    {
+                      paymentMethods.find((m) => m.value === paymentMethod)
+                        ?.icon
+                    }
+                    <span className="overflow-hidden text-ellipsis">
+                      {paymentMethods.find((m) => m.value === paymentMethod)
+                        ?.label || 'Payment Method'}
+                    </span>
+                  </div>
+                )}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {paymentMethods.map((method) => (
+                <SelectItem key={method.value} value={method.value}>
+                  <div className="flex items-center gap-2 w-full">
+                    <div className="flex-shrink-0">{method.icon}</div>
+                    <span>{method.label}</span>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
         {/* Clear All Filters Button */}
         <Button

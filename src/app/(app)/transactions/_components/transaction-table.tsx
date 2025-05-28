@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { ColumnDef } from '@tanstack/react-table';
 import { MoreHorizontal, Eye } from 'lucide-react';
 import {
@@ -25,45 +25,69 @@ import { getPaginatedTransactions } from '../action';
 import { formatRupiah } from '@/lib/currency';
 import { TableFetchOptions } from '@/hooks/use-fetch';
 import { TransactionDetailDialog } from './transaction-detail-dialog';
-import { DateRange } from 'react-day-picker';
-import {
-  startOfDay,
-  endOfDay,
-  subDays,
-  startOfWeek,
-  endOfWeek,
-  startOfMonth,
-  endOfMonth,
-  startOfYear,
-  endOfYear,
-} from 'date-fns';
+import { startOfDay, endOfDay } from 'date-fns';
 import TransactionFilterToolbar from './transaction-filter-toolbar';
+import {
+  ProcessedTransaction,
+  TransactionForTable,
+  TransactionTableProps,
+  SortingState,
+  DateRange,
+} from '@/lib/types/transaction';
 
-interface Transaction {
-  id: string;
-  tranId: string;
-  createdAt: string;
-  totalAmount: number;
-  finalAmount: number;
-  paymentMethod: string;
-  cashier: {
-    name: string;
+// === CUSTOM HOOKS ===
+const useTransactionFilters = () => {
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+  const [minAmount, setMinAmount] = useState<string>('');
+  const [maxAmount, setMaxAmount] = useState<string>('');
+  const [paymentMethod, setPaymentMethod] = useState<string>('ALL_METHODS');
+
+  const clearFilters = useCallback(() => {
+    setDateRange(undefined);
+    setMinAmount('');
+    setMaxAmount('');
+    setPaymentMethod('ALL_METHODS');
+  }, []);
+
+  return {
+    dateRange,
+    setDateRange,
+    minAmount,
+    setMinAmount,
+    maxAmount,
+    setMaxAmount,
+    paymentMethod,
+    setPaymentMethod,
+    clearFilters,
   };
-  member?: {
-    name: string;
-  } | null;
-  itemCount?: number;
-  discountAmount?: number;
-  paymentAmount?: number;
-  pointsEarned?: number;
-}
+};
 
-interface TransactionTableProps {
-  onRefresh?: () => void;
-  onSelectionChange?: (selectedRows: Transaction[]) => void;
-}
+const useTransactionTable = () => {
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const [selectedTransactionId, setSelectedTransactionId] = useState<
+    string | null
+  >(null);
 
-const paymentMethodIcons: Record<string, React.ReactNode> = {
+  const viewTransactionDetails = useCallback((id: string) => {
+    setSelectedTransactionId(id);
+    setDetailDialogOpen(true);
+  }, []);
+
+  const closeDialog = useCallback(() => {
+    setDetailDialogOpen(false);
+    setSelectedTransactionId(null);
+  }, []);
+
+  return {
+    detailDialogOpen,
+    selectedTransactionId,
+    viewTransactionDetails,
+    closeDialog,
+  };
+};
+
+// === CONSTANTS ===
+const PAYMENT_METHOD_ICONS: Record<string, React.ReactNode> = {
   CASH: <IconCash size={16} className="text-muted-foreground" />,
   DEBIT: <IconCreditCard size={16} className="text-muted-foreground" />,
   E_WALLET: <IconWallet size={16} className="text-muted-foreground" />,
@@ -72,24 +96,12 @@ const paymentMethodIcons: Record<string, React.ReactNode> = {
   OTHER: <IconDots size={16} className="text-muted-foreground" />,
 };
 
+// === MAIN COMPONENT ===
 export function TransactionTable({}: TransactionTableProps) {
-  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
-  const [selectedTransactionId, setSelectedTransactionId] = useState<
-    string | null
-  >(null);
+  const filters = useTransactionFilters();
+  const tableState = useTransactionTable();
 
-  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
-
-  const [minAmount, setMinAmount] = useState<string>('');
-  const [maxAmount, setMaxAmount] = useState<string>('');
-  const [paymentMethod, setPaymentMethod] = useState<string>('ALL_METHODS');
-
-  const fetchTransactions = async (
-    options: TableFetchOptions,
-  ): Promise<{
-    data: Transaction[];
-    totalRows: number;
-  }> => {
+  const fetchTransactions = useCallback(async (options: TableFetchOptions) => {
     let startDate: Date | undefined;
     let endDate: Date | undefined;
 
@@ -136,16 +148,16 @@ export function TransactionTable({}: TransactionTableProps) {
       maxAmount: maxAmountValue,
     });
 
-    const transactions: Transaction[] = (response.data || []).map(
-      (item: any) => ({
+    const transactions: TransactionForTable[] = (response.data || []).map(
+      (item: ProcessedTransaction) => ({
         id: item.id,
-        tranId: item.tranId || item.id,
-        createdAt: item.createdAt,
+        tranId: item.tranId,
+        createdAt: item.createdAt.toString(),
         totalAmount: item.pricing?.originalAmount || 0,
         finalAmount: item.pricing?.finalAmount || 0,
         paymentMethod: item.payment?.method || '',
         cashier: {
-          name: item.cashier?.name || 'Unknown',
+          name: item.cashier?.name || null,
         },
         member: item.member
           ? {
@@ -163,7 +175,7 @@ export function TransactionTable({}: TransactionTableProps) {
       data: transactions,
       totalRows: response.pagination?.totalCount || 0,
     };
-  };
+  }, []);
 
   const {
     data,
@@ -175,7 +187,7 @@ export function TransactionTable({}: TransactionTableProps) {
     setSearch,
     setFilters,
     totalRows,
-  } = useFetch<Transaction[]>({
+  } = useFetch<TransactionForTable[]>({
     fetchData: fetchTransactions,
     initialPageIndex: 0,
     initialPageSize: 10,
@@ -191,7 +203,7 @@ export function TransactionTable({}: TransactionTableProps) {
     setLimit(newPagination.pageSize);
   };
 
-  const handleSortingChange = (newSorting: any) => {
+  const handleSortingChange = (newSorting: SortingState[]) => {
     setSortBy(newSorting);
   };
 
@@ -199,124 +211,73 @@ export function TransactionTable({}: TransactionTableProps) {
     setSearch(newSearch);
   };
 
-  const handleFilterChange = (key: string, value: any) => {
+  const handleFilterChange = (
+    key: string,
+    value: string | DateRange | undefined,
+  ) => {
     if (key === 'paymentMethod') {
       if (value === 'ALL_METHODS') {
-        setFilters((prev: any) => {
-          const newFilters = { ...prev };
-          delete newFilters[key];
-          return newFilters;
-        });
+        setFilters(
+          (
+            prev: Record<string, string | number | boolean | null | undefined>,
+          ) => {
+            const newFilters = { ...prev };
+            delete newFilters[key];
+            return newFilters;
+          },
+        );
         return;
       }
     }
 
     if (key === 'dateRange') {
-      setDateRange(value);
+      filters.setDateRange(value as DateRange | undefined);
     }
 
     if (key === 'minAmount') {
-      setMinAmount(value);
+      filters.setMinAmount(value as string);
     }
     if (key === 'maxAmount') {
-      setMaxAmount(value);
+      filters.setMaxAmount(value as string);
     }
 
-    setFilters((prev: any) => ({
-      ...prev,
-      [key]: value,
-    }));
-  };
-
-  const applyDatePreset = (preset: string) => {
-    const today = new Date();
-    let range: DateRange;
-
-    switch (preset) {
-      case 'today':
-        range = {
-          from: startOfDay(today),
-          to: endOfDay(today),
-        };
-        break;
-      case 'yesterday':
-        const yesterday = subDays(today, 1);
-        range = {
-          from: startOfDay(yesterday),
-          to: endOfDay(yesterday),
-        };
-        break;
-      case 'last7days':
-        range = {
-          from: startOfDay(subDays(today, 6)),
-          to: endOfDay(today),
-        };
-        break;
-      case 'last30days':
-        range = {
-          from: startOfDay(subDays(today, 29)),
-          to: endOfDay(today),
-        };
-        break;
-      case 'thisWeek':
-        range = {
-          from: startOfWeek(today, { weekStartsOn: 1 }),
-          to: endOfWeek(today, { weekStartsOn: 1 }),
-        };
-        break;
-      case 'thisMonth':
-        range = {
-          from: startOfMonth(today),
-          to: endOfMonth(today),
-        };
-        break;
-      case 'thisYear':
-        range = {
-          from: startOfYear(today),
-          to: endOfYear(today),
-        };
-        break;
-      default:
-        range = {
-          from: subDays(today, 7),
-          to: today,
-        };
-    }
-
-    setDateRange(range);
-    handleFilterChange('dateRange', range);
+    setFilters(
+      (prev: Record<string, string | number | boolean | null | undefined>) => ({
+        ...prev,
+        [key]: value as string | number | boolean | null | undefined,
+      }),
+    );
   };
 
   const handleMinAmountChange = (value: string) => {
-    setMinAmount(value);
+    filters.setMinAmount(value);
     handleFilterChange('minAmount', value);
   };
 
   const handleMaxAmountChange = (value: string) => {
-    setMaxAmount(value);
+    filters.setMaxAmount(value);
     handleFilterChange('maxAmount', value);
   };
 
   const handlePaymentMethodChange = (value: string) => {
-    setPaymentMethod(value);
+    filters.setPaymentMethod(value);
 
     if (value === 'ALL_METHODS') {
-      setFilters((prev: any) => {
-        const newFilters = { ...prev };
-        delete newFilters['paymentMethod'];
-        return newFilters;
-      });
+      setFilters(
+        (
+          prev: Record<string, string | number | boolean | null | undefined>,
+        ) => {
+          const newFilters = { ...prev };
+          delete newFilters['paymentMethod'];
+          return newFilters;
+        },
+      );
     } else {
       handleFilterChange('paymentMethod', value);
     }
   };
 
-  const viewTransactionDetails = (id: string) => {
-    setSelectedTransactionId(id);
-    setDetailDialogOpen(true);
-  };
-
-  const columns: ColumnDef<Transaction>[] = [
+  const columns: ColumnDef<TransactionForTable>[] = [
     {
       header: 'Transaction ID',
       accessorKey: 'tranId',
@@ -391,7 +352,7 @@ export function TransactionTable({}: TransactionTableProps) {
         const method = row.getValue('paymentMethod') as string;
         return (
           <div className="flex items-center gap-x-2">
-            {paymentMethodIcons[method] || (
+            {PAYMENT_METHOD_ICONS[method] || (
               <IconCash size={16} className="text-muted-foreground" />
             )}
             <span className="text-sm capitalize">
@@ -439,7 +400,9 @@ export function TransactionTable({}: TransactionTableProps) {
               <DropdownMenuContent align="end">
                 <DropdownMenuItem
                   className="flex justify-between cursor-pointer"
-                  onClick={() => viewTransactionDetails(transaction.id)}
+                  onClick={() =>
+                    tableState.viewTransactionDetails(transaction.id)
+                  }
                 >
                   View Details <Eye className="h-4 w-4" />
                 </DropdownMenuItem>
@@ -453,15 +416,14 @@ export function TransactionTable({}: TransactionTableProps) {
 
   const filterToolbarElement = (
     <TransactionFilterToolbar
-      dateRange={dateRange}
+      dateRange={filters.dateRange}
       setDateRange={(range) => handleFilterChange('dateRange', range)}
-      minAmount={minAmount}
+      minAmount={filters.minAmount}
       setMinAmount={handleMinAmountChange}
-      maxAmount={maxAmount}
+      maxAmount={filters.maxAmount}
       setMaxAmount={handleMaxAmountChange}
-      paymentMethod={paymentMethod}
+      paymentMethod={filters.paymentMethod}
       setPaymentMethod={handlePaymentMethodChange}
-      onDatePresetClick={applyDatePreset}
     />
   );
 
@@ -481,11 +443,11 @@ export function TransactionTable({}: TransactionTableProps) {
       />
 
       {/* Transaction Detail Dialog */}
-      {selectedTransactionId && (
+      {tableState.selectedTransactionId && (
         <TransactionDetailDialog
-          open={detailDialogOpen}
-          onOpenChange={setDetailDialogOpen}
-          transactionId={selectedTransactionId}
+          open={tableState.detailDialogOpen}
+          onOpenChange={tableState.closeDialog}
+          transactionId={tableState.selectedTransactionId}
         />
       )}
     </>

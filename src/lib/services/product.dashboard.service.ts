@@ -1,10 +1,29 @@
 import prisma from '@/lib/prisma';
 import { dateToCompare } from '../date';
 import { format } from 'date-fns';
+import {
+  ProductDashboardResponse,
+  TopSellingByQuantityResponse,
+  TopSellingByFrequencyResponse,
+  ExtendedDateFilter,
+  ProductFrequencyMap,
+} from '@/lib/types/dashboard';
+
 export class ProductDashboardService {
-  static async getProductDashboard(filter: any) {
+  static async getProductDashboard(
+    filter: ExtendedDateFilter,
+  ): Promise<ProductDashboardResponse> {
     try {
       const { startDate, endDate } = filter;
+
+      // Add null checks and provide fallback values
+      if (!startDate || !endDate) {
+        return {
+          success: false,
+          error: 'Start date and end date are required',
+        };
+      }
+
       const data = await prisma.product.findMany({
         where: {
           createdAt: {
@@ -26,7 +45,10 @@ export class ProductDashboardService {
     }
   }
 
-  static async getTopSellingProductsByQuantity(dateFilter?: any, limit = 10) {
+  static async getTopSellingProductsByQuantity(
+    dateFilter?: ExtendedDateFilter,
+    limit = 10,
+  ): Promise<TopSellingByQuantityResponse> {
     try {
       // Default dates if no filter provided
       const defaultStart = '2024-09-01';
@@ -39,7 +61,7 @@ export class ProductDashboardService {
           : dateToCompare(defaultStart, defaultEnd);
 
       // Format all dates at once
-      const [startDate, endDate, prevStartDate, prevEndDate] = [
+      const [startDate, endDate] = [
         dates.current.startDate,
         dates.current.endDate,
         dates.previous.startDate,
@@ -67,7 +89,7 @@ export class ProductDashboardService {
 
       // Fetch batch details with product information separately
       const batchIds = topProducts.map(
-        (item: { batchId: string }) => item.batchId
+        (item: { batchId: string }) => item.batchId,
       );
       const batchDetails = await prisma.productBatch.findMany({
         where: {
@@ -83,7 +105,7 @@ export class ProductDashboardService {
       // Merge the data
       const result = topProducts.map((product) => {
         const batchInfo = batchDetails.find(
-          (batch) => batch.id === product.batchId
+          (batch) => batch.id === product.batchId,
         );
         return {
           ...product,
@@ -105,10 +127,18 @@ export class ProductDashboardService {
 
   static async getTopSellingProductsByFrequency(
     filter: { startDate: string; endDate: string },
-    limit = 10
-  ) {
+    limit = 10,
+  ): Promise<TopSellingByFrequencyResponse> {
     try {
       const { startDate, endDate } = filter;
+
+      // Add null checks
+      if (!startDate || !endDate) {
+        return {
+          success: false,
+          error: 'Start date and end date are required',
+        };
+      }
 
       const topProducts = await prisma.transactionItem.groupBy({
         by: ['batchId'],
@@ -145,18 +175,18 @@ export class ProductDashboardService {
       });
 
       // Map the batches to their products and sum frequencies
-      const productFrequencies = new Map();
+      const productFrequencies = new Map<string, ProductFrequencyMap>();
       for (const batch of batches) {
         const topProduct = topProducts.find((p) => p.batchId === batch.id);
         if (topProduct && topProduct._count.transactionId) {
           const productId = batch.productId;
           const frequency = topProduct._count.transactionId;
 
-          if (productFrequencies.has(productId)) {
+          const existingEntry = productFrequencies.get(productId);
+          if (existingEntry) {
             productFrequencies.set(productId, {
               productId,
-              totalFrequency:
-                productFrequencies.get(productId).totalFrequency + frequency,
+              totalFrequency: existingEntry.totalFrequency + frequency,
               product: batch.product,
             });
           } else {

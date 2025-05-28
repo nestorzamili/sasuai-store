@@ -25,10 +25,6 @@ export function SupplierDeleteDialog({
   const [canDelete, setCanDelete] = useState<boolean | null>(null);
   const [isCheckingDelete, setIsCheckingDelete] = useState(false);
 
-  const hasStockIns = !!(
-    supplier._count?.stockIns && supplier._count.stockIns > 0
-  );
-
   // Check if the supplier can be deleted when the dialog opens
   useEffect(() => {
     if (open) {
@@ -42,6 +38,7 @@ export function SupplierDeleteDialog({
             setCanDelete(false);
           }
         } catch (error) {
+          console.error('Error checking if supplier can be deleted:', error);
           setCanDelete(false);
         } finally {
           setIsCheckingDelete(false);
@@ -85,6 +82,7 @@ export function SupplierDeleteDialog({
         });
       }
     } catch (error) {
+      console.error('Error deleting supplier:', error);
       toast({
         title: 'Error',
         description: 'An unexpected error occurred',

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -40,15 +40,21 @@ import {
 import { cn } from '@/lib/utils';
 import { RewardImageUpload } from './reward-image-upload';
 
-// Define the form schema
+// Enhanced form schema with better validation
 const formSchema = z.object({
-  name: z.string().min(1, 'Reward name is required'),
-  pointsCost: z.coerce.number().min(1, 'Points cost must be at least 1'),
-  stock: z.coerce.number().min(0, 'Stock cannot be negative'),
+  name: z.string().min(1, 'Reward name is required').max(100, 'Name too long'),
+  pointsCost: z.coerce
+    .number()
+    .min(1, 'Points cost must be at least 1')
+    .max(1000000, 'Points cost too high'),
+  stock: z.coerce
+    .number()
+    .min(0, 'Stock cannot be negative')
+    .max(10000, 'Stock too high'),
   isActive: z.boolean().default(true),
   description: z.string().optional(),
-  imageUrl: z.string().optional(),
-  expiryDate: z.date().optional().nullable(),
+  imageUrl: z.string().url('Invalid URL').optional().or(z.literal('')),
+  expiryDate: z.date().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -69,12 +75,12 @@ export default function RewardFormDialog({
   showTrigger = false,
 }: RewardFormDialogProps) {
   const [loading, setLoading] = useState(false);
-  const isEditing = Boolean(initialData?.id);
 
-  // Initialize the form
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
+  const isEditing = useMemo(() => Boolean(initialData?.id), [initialData?.id]);
+
+  // Memoized default values to prevent unnecessary re-renders
+  const defaultValues = useMemo(
+    (): FormValues => ({
       name: initialData?.name || '',
       pointsCost: initialData?.pointsCost || 100,
       stock: initialData?.stock || 10,
@@ -83,116 +89,103 @@ export default function RewardFormDialog({
       imageUrl: initialData?.imageUrl || '',
       expiryDate: initialData?.expiryDate
         ? new Date(initialData.expiryDate)
-        : null,
-    },
+        : undefined,
+    }),
+    [initialData],
+  );
+
+  // Initialize the form with memoized resolver
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues,
   });
 
-  // Update form when initialData changes
+  // Optimized form reset effect
   useEffect(() => {
-    if (initialData) {
-      form.reset({
-        name: initialData.name || '',
-        pointsCost: initialData.pointsCost || 100,
-        stock: initialData.stock || 0,
-        isActive: initialData.isActive ?? true,
-        description: initialData.description || '',
-        imageUrl: initialData.imageUrl || '',
-        expiryDate: initialData.expiryDate
-          ? new Date(initialData.expiryDate)
-          : null,
-      });
-    } else {
-      form.reset({
-        name: '',
-        pointsCost: 100,
-        stock: 10,
-        isActive: true,
-        description: '',
-        imageUrl: '',
-        expiryDate: null,
-      });
-    }
-  }, [form, initialData]);
+    form.reset(defaultValues);
+  }, [form, defaultValues]);
 
-  // Handle form submission
-  const onSubmit = async (values: FormValues) => {
-    try {
-      setLoading(true);
+  // Memoized date validation
+  const validateExpiryDate = useCallback((date: Date): boolean => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-      // Check if expiry date is in the past
-      if (values.expiryDate) {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0); // Reset waktu ke awal hari
+    const expiryDate = new Date(date);
+    expiryDate.setHours(0, 0, 0, 0);
 
-        const expiryDate = new Date(values.expiryDate);
-        expiryDate.setHours(0, 0, 0, 0); // Reset waktu ke awal hari
+    return expiryDate >= today;
+  }, []);
 
-        // Validasi: hanya tolak tanggal yang SEBELUM hari ini
-        if (expiryDate < today) {
+  // Optimized form submission with better error handling
+  const onSubmit = useCallback(
+    async (values: FormValues) => {
+      try {
+        setLoading(true);
+
+        // Validate expiry date
+        if (values.expiryDate && !validateExpiryDate(values.expiryDate)) {
           toast({
             title: 'Invalid date',
             description: 'Expiry date cannot be in the past',
             variant: 'destructive',
           });
-          setLoading(false);
           return;
         }
-      }
 
-      const result =
-        isEditing && initialData
-          ? await updateReward(initialData.id, {
-              name: values.name,
-              pointsCost: values.pointsCost,
-              stock: values.stock,
-              isActive: values.isActive,
-              description: values.description,
-              imageUrl: values.imageUrl,
-              expiryDate: values.expiryDate,
-            })
-          : await createReward({
-              name: values.name,
-              pointsCost: values.pointsCost,
-              stock: values.stock,
-              isActive: values.isActive,
-              description: values.description,
-              imageUrl: values.imageUrl,
-              expiryDate: values.expiryDate,
-            });
+        const submitData = {
+          name: values.name,
+          pointsCost: values.pointsCost,
+          stock: values.stock,
+          isActive: values.isActive,
+          description: values.description || undefined,
+          imageUrl: values.imageUrl || undefined,
+          expiryDate: values.expiryDate,
+        };
 
-      if (result.success) {
-        toast({
-          title: isEditing ? 'Reward updated' : 'Reward created',
-          description: isEditing
-            ? 'Reward has been updated successfully'
-            : 'New reward has been created',
-        });
+        const result =
+          isEditing && initialData
+            ? await updateReward(initialData.id, submitData)
+            : await createReward(submitData);
 
-        form.reset();
-        onSuccess?.();
-      } else {
+        if (result.success) {
+          toast({
+            title: isEditing ? 'Reward updated' : 'Reward created',
+            description: isEditing
+              ? 'Reward has been updated successfully'
+              : 'New reward has been created',
+          });
+
+          form.reset();
+          onSuccess?.();
+        } else {
+          toast({
+            title: 'Error',
+            description: result.error || 'Something went wrong',
+            variant: 'destructive',
+          });
+        }
+      } catch (error) {
+        console.error('Reward form submission error:', error);
         toast({
           title: 'Error',
-          description: result.error || 'Something went wrong',
+          description: 'An unexpected error occurred',
           variant: 'destructive',
         });
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'An unexpected error occurred',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    [isEditing, initialData, validateExpiryDate, form, onSuccess],
+  );
 
-  // Handle image upload
-  const handleImageChange = (imageUrl: string) => {
-    form.setValue('imageUrl', imageUrl);
-    form.trigger('imageUrl');
-  };
+  // Optimized image change handler
+  const handleImageChange = useCallback(
+    (imageUrl: string) => {
+      form.setValue('imageUrl', imageUrl);
+      form.trigger('imageUrl');
+    },
+    [form],
+  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

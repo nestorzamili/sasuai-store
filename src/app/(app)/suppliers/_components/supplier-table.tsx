@@ -18,6 +18,11 @@ import { TableLayout } from '@/components/layout/table-layout';
 import { SupplierDeleteDialog } from './supplier-delete-dialog';
 import { SupplierDetailDialog } from './supplier-detail-dialog';
 import { SupplierWithCount } from '@/lib/types/supplier';
+import {
+  TableFetchOptions,
+  SortByOptions,
+  normalizeSortOption,
+} from '@/lib/types/table';
 import { useFetch } from '@/hooks/use-fetch';
 import { getAllSuppliersWithCount } from '../action';
 
@@ -27,14 +32,16 @@ interface SupplierTableProps {
 }
 
 export function SupplierTable({ onEdit, onRefresh }: SupplierTableProps) {
-  const fetchSuppliers = async (options: any) => {
+  const fetchSuppliers = async (options: TableFetchOptions) => {
+    // Convert TableFetchOptions to SupplierOptions using the helper
     const response = await getAllSuppliersWithCount({
-      page: options.page + 1,
+      page: options.page !== undefined ? options.page + 1 : 1,
       limit: options.limit,
-      sortBy: options.sortBy,
+      sortBy: normalizeSortOption(options.sortBy),
       search: options.search,
       columnFilter: ['name', 'contact'],
     });
+
     return {
       data: response.data || [],
       totalRows: response.totalRows || 0,
@@ -67,7 +74,7 @@ export function SupplierTable({ onEdit, onRefresh }: SupplierTableProps) {
     setLimit(newPagination.pageSize);
   };
 
-  const handleSortingChange = (newSorting: any) => {
+  const handleSortingChange = (newSorting: SortByOptions) => {
     setSortBy(newSorting);
   };
 

@@ -18,7 +18,6 @@ import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/password-input';
 import { authClient } from '@/lib/auth-client';
 import { useToast } from '@/hooks/use-toast';
-import Link from 'next/link';
 import { extractErrorMessage } from '@/lib/error-handler';
 import { AuthLink } from '@/components/auth/auth-footers';
 
@@ -70,14 +69,18 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
     mode: 'onBlur', // Validate on field blur for better UX
   });
 
-  // Memoized form validation check
+  // Watch form values to trigger re-computation
+  const watchedValues = form.watch();
+
+  // Optimized form validation check with proper dependencies
   const isSubmitDisabled = useMemo(() => {
-    return (
-      isLoading ||
-      !form.formState.isValid ||
-      !Object.values(form.getValues()).every(Boolean)
+    const { isValid, isDirty } = form.formState;
+    const hasAllFields = Object.values(watchedValues).every(
+      (value) => typeof value === 'string' && value.trim().length > 0,
     );
-  }, [isLoading, form.formState.isValid, form.watch()]);
+
+    return isLoading || !isValid || !isDirty || !hasAllFields;
+  }, [isLoading, form.formState, watchedValues]);
 
   // Sign-up submission handler
   async function onSubmit(values: z.infer<typeof formSchema>) {

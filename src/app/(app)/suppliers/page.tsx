@@ -2,7 +2,10 @@
 
 import { useState } from 'react';
 import { SupplierTable } from './_components/supplier-table';
-import { SupplierFormInitialData } from '@/lib/types/supplier';
+import {
+  SupplierFormInitialData,
+  SupplierWithCount,
+} from '@/lib/types/supplier';
 import SupplierFormDialog from './_components/supplier-form-dialog';
 
 export default function SuppliersPage() {
@@ -12,7 +15,7 @@ export default function SuppliersPage() {
   >(undefined);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  const handleEdit = (supplier: any) => {
+  const handleEdit = (supplier: SupplierWithCount) => {
     setFormInitialData({
       id: supplier.id,
       name: supplier.name,

@@ -18,7 +18,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { ProductBatchWithProduct } from '@/lib/types/product-batch';
+import {
+  ProductBatchWithProduct,
+  TableFetchOptions,
+  TableFetchResult,
+  ProductBatchFormInitialData,
+} from '@/lib/types/inventory';
 import { BatchDeleteDialog } from './batch-delete-dialog';
 import { BatchDetailDialog } from './batch-detail-dialog';
 import { formatDate } from '@/lib/date';
@@ -33,6 +38,7 @@ import BatchFilterToolbar from './batch-filter-toolbar';
 import { DateRange } from 'react-day-picker';
 import { startOfDay, endOfDay } from 'date-fns';
 import { getAllUnits } from '@/app/(app)/products/units/action';
+import { getAllCategories } from '@/app/(app)/products/categories/action';
 
 interface BatchTableProps {
   onSetRefresh?: (refreshFn: () => void) => void;
@@ -61,6 +67,13 @@ export function BatchTable({
   const [includeOutOfStock, setIncludeOutOfStock] = useState<boolean>(true);
   const [categoryId, setCategoryId] = useState<string>('');
 
+  const [selectedBatch, setSelectedBatch] =
+    useState<ProductBatchWithProduct | null>(null);
+  const [units, setUnits] = useState<UnitWithCounts[]>([]);
+  const [categories, setCategories] = useState<
+    Array<{ id: string; name: string }>
+  >([]);
+
   // Handle delete click
   const handleDeleteClick = (batch: ProductBatchWithProduct) => {
     setSelectedBatchForDelete(batch);
@@ -76,6 +89,116 @@ export function BatchTable({
   // Determine if a batch is expired
   const isExpired = (expiryDate: Date): boolean => {
     return new Date(expiryDate) < new Date();
+  };
+
+  // Optimize fetchBatchData with useCallback to prevent unnecessary re-renders
+  const fetchBatchData = useCallback(
+    async (
+      options: TableFetchOptions,
+    ): Promise<TableFetchResult<ProductBatchWithProduct[]>> => {
+      try {
+        if (!isActive && !isInitialLoad) {
+          return {
+            data: [],
+            totalRows: 0,
+          };
+        }
+
+        setIsLoading(true);
+
+        let expiryDateStart: Date | undefined;
+        let expiryDateEnd: Date | undefined;
+
+        // Handle date range conversion from string filters
+        if (options.filters?.expiryDateStart) {
+          expiryDateStart = startOfDay(
+            new Date(options.filters.expiryDateStart as string),
+          );
+        }
+        if (options.filters?.expiryDateEnd) {
+          expiryDateEnd = endOfDay(
+            new Date(options.filters.expiryDateEnd as string),
+          );
+        }
+
+        const response = await getAllBatches({
+          page: (options.page || 0) + 1,
+          pageSize: options.limit || 10,
+          sortField: options.sortBy?.id || 'createdAt',
+          sortDirection: options.sortBy?.desc ? 'desc' : 'asc',
+          search: options.search,
+          expiryDateStart,
+          expiryDateEnd,
+          minRemainingQuantity: options.filters?.minQuantity as number,
+          maxRemainingQuantity: options.filters?.maxQuantity as number,
+          includeExpired: options.filters?.includeExpired as boolean,
+          includeOutOfStock: options.filters?.includeOutOfStock as boolean,
+          categoryId: options.filters?.categoryId as string,
+        });
+
+        return {
+          data: response.data?.data || [],
+          totalRows: response.data?.meta.totalRows || 0,
+        };
+      } catch (error) {
+        console.error('Error fetching batch data:', error);
+        return {
+          data: [],
+          totalRows: 0,
+        };
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [isActive, isInitialLoad],
+  );
+
+  // Use fetch hook first to get the setFilters function
+  const {
+    data,
+    options,
+    setPage,
+    setLimit,
+    setSortBy,
+    setSearch,
+    setFilters,
+    totalRows,
+    refresh,
+  } = useFetch({
+    fetchData: fetchBatchData,
+    initialPageIndex: 0,
+    initialPageSize: 10,
+    initialSortField: 'createdAt',
+    initialSortDirection: true,
+  });
+
+  // Now define the filter change handler that uses setFilters
+  const handleFilterChange = useCallback(
+    (key: string, value: unknown) => {
+      setFilters(
+        (
+          prev: Record<string, string | number | boolean | null | undefined>,
+        ) => ({
+          ...prev,
+          [key]: value as string | number | boolean | null | undefined,
+        }),
+      );
+    },
+    [setFilters],
+  );
+
+  // Handle adjust quantity
+  const [adjustQtyDialog, setAdjustQtyDialog] = useState(false);
+  const handleAdjust = (batch: ProductBatchWithProduct) => {
+    setSelectedBatch(batch);
+    setAdjustQtyDialog(true);
+  };
+
+  // Handle edit batch
+  const [formDialog, setFormDialog] = useState(false);
+  const handleEdit = (batch: ProductBatchWithProduct) => {
+    setSelectedBatch(batch);
+    setFormDialog(true);
   };
 
   // Define columns
@@ -176,7 +299,7 @@ export function BatchTable({
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="flex justify-between cursor-pointer"
-                  onClick={() => handleEdit?.(batch)}
+                  onClick={() => handleEdit(batch)}
                 >
                   Edit <IconEdit className="h-4 w-4" />
                 </DropdownMenuItem>
@@ -205,7 +328,7 @@ export function BatchTable({
   };
 
   // handle sorting change
-  const handleSortingChange = (newSorting: any) => {
+  const handleSortingChange = (newSorting: { id: string; desc: boolean }[]) => {
     setSortBy(newSorting);
   };
 
@@ -214,174 +337,105 @@ export function BatchTable({
     setSearch(search);
   };
 
-  // Handle adjust quantity
-  const [adjustQtyDialog, setAdjustQtyDialog] = useState(false);
-  const handleAdjust = (batch: ProductBatchWithProduct) => {
-    setSelectedBatch(batch);
-    setAdjustQtyDialog(true);
-  };
+  // Handle expiry date range change - convert DateRange to string filters
+  const handleExpiryDateRangeChange = useCallback(
+    (range: DateRange | undefined) => {
+      setExpiryDateRange(range);
 
-  // Optimize fetchBatchData with useCallback to prevent unnecessary re-renders
-  const fetchBatchData = useCallback(
-    async (options: any) => {
-      try {
-        // Skip fetching when tab is not active, except during initial load
-        if (!isActive && !isInitialLoad) {
-          return {
-            data: [],
-            totalRows: 0,
-          };
-        }
+      if (range?.from) {
+        handleFilterChange('expiryDateStart', range.from.toISOString());
+      } else {
+        handleFilterChange('expiryDateStart', undefined);
+      }
 
-        // Add loading state indication
-        setIsLoading(true);
-
-        // Process filters
-        let expiryDateStart: Date | undefined;
-        let expiryDateEnd: Date | undefined;
-
-        if (options.filters?.expiryDateRange) {
-          const range = options.filters.expiryDateRange as DateRange;
-          if (range.from) {
-            expiryDateStart = startOfDay(range.from);
-          }
-          if (range.to) {
-            expiryDateEnd = endOfDay(range.to);
-          }
-        }
-
-        // Optimize by requesting only necessary fields
-        const response = await getAllBatches({
-          page: options.page + 1,
-          pageSize: options.limit,
-          sortField: options.sortBy?.id || 'createdAt',
-          sortDirection: options.sortBy?.desc ? 'desc' : 'asc',
-          search: options.search,
-          expiryDateStart,
-          expiryDateEnd,
-          minRemainingQuantity: options.filters?.minQuantity,
-          maxRemainingQuantity: options.filters?.maxQuantity,
-          includeExpired: options.filters?.includeExpired,
-          includeOutOfStock: options.filters?.includeOutOfStock,
-          categoryId: options.filters?.categoryId,
-        });
-
-        return {
-          data: response.data,
-          totalRows: response.meta?.totalRows || 0,
-        };
-      } catch (error) {
-        console.error('Error fetching batch data:', error);
-        return {
-          data: [],
-          totalRows: 0,
-        };
-      } finally {
-        setIsLoading(false);
+      if (range?.to) {
+        handleFilterChange('expiryDateEnd', range.to.toISOString());
+      } else {
+        handleFilterChange('expiryDateEnd', undefined);
       }
     },
-    [isActive, isInitialLoad], // Only depend on these two variables
+    [handleFilterChange],
   );
 
-  // Handle filter changes
-  const handleFilterChange = (key: string, value: any) => {
-    setFilters((prev: any) => ({
-      ...prev,
-      [key]: value,
-    }));
-  };
+  // Handle min quantity change
+  const handleMinQuantityChange = useCallback(
+    (value: string) => {
+      setMinQuantity(value);
+      handleFilterChange('minQuantity', value ? Number(value) : undefined);
+    },
+    [handleFilterChange],
+  );
 
-  // Handle edit batch
-  const [formDialog, setFormDialog] = useState(false);
-  const handleEdit = (batch: ProductBatchWithProduct) => {
-    setSelectedBatch(batch);
-    setFormDialog(true);
-  };
+  // Handle max quantity change
+  const handleMaxQuantityChange = useCallback(
+    (value: string) => {
+      setMaxQuantity(value);
+      handleFilterChange('maxQuantity', value ? Number(value) : undefined);
+    },
+    [handleFilterChange],
+  );
 
-  const {
-    data,
-    options,
-    setPage,
-    setLimit,
-    setSortBy,
-    setSearch,
-    setFilters,
-    totalRows,
-    refresh,
-  } = useFetch({
-    fetchData: fetchBatchData,
-    initialPageIndex: 0,
-    initialPageSize: 10,
-    initialSortField: 'createdAt',
-    initialSortDirection: true,
-  });
+  // Handle include expired change
+  const handleIncludeExpiredChange = useCallback(
+    (value: boolean) => {
+      setIncludeExpired(value);
+      handleFilterChange('includeExpired', value);
+    },
+    [handleFilterChange],
+  );
 
-  const [selectedBatch, setSelectedBatch] =
-    useState<ProductBatchWithProduct | null>(null);
-  const [units, setUnits] = useState<UnitWithCounts[]>([]);
-  const [categories, setCategories] = useState<
-    Array<{ id: string; name: string }>
-  >([]);
+  // Handle include out of stock change
+  const handleIncludeOutOfStockChange = useCallback(
+    (value: boolean) => {
+      setIncludeOutOfStock(value);
+      handleFilterChange('includeOutOfStock', value);
+    },
+    [handleFilterChange],
+  );
 
-  // Fetch units when component mounts
+  // Handle category change
+  const handleCategoryChange = useCallback(
+    (value: string) => {
+      setCategoryId(value);
+      handleFilterChange('categoryId', value);
+    },
+    [handleFilterChange],
+  );
+
+  // Fetch units and categories when component mounts
   useEffect(() => {
-    const fetchUnits = async () => {
+    const fetchData = async () => {
       try {
-        const response = await getAllUnits();
-        if (response.success && response.data) {
-          setUnits(response.data);
+        const [unitsResponse, categoriesResponse] = await Promise.all([
+          getAllUnits(),
+          getAllCategories(),
+        ]);
+
+        if (unitsResponse.success && unitsResponse.data) {
+          setUnits(unitsResponse.data.units);
+        }
+
+        if (categoriesResponse.success && categoriesResponse.data) {
+          setCategories(
+            categoriesResponse.data.categories.map((cat) => ({
+              id: cat.id,
+              name: cat.name,
+            })),
+          );
         }
       } catch (error) {
-        console.error('Failed to fetch units:', error);
+        console.error('Failed to fetch data:', error);
       }
     };
 
-    // Only fetch if component is active
     if (isActive) {
-      fetchUnits();
+      fetchData();
     }
   }, [isActive]);
-
-  // Handle expiry date range change
-  const handleExpiryDateRangeChange = (range: DateRange | undefined) => {
-    setExpiryDateRange(range);
-    handleFilterChange('expiryDateRange', range);
-  };
-
-  // Handle min quantity change
-  const handleMinQuantityChange = (value: string) => {
-    setMinQuantity(value);
-    handleFilterChange('minQuantity', value);
-  };
-
-  // Handle max quantity change
-  const handleMaxQuantityChange = (value: string) => {
-    setMaxQuantity(value);
-    handleFilterChange('maxQuantity', value);
-  };
-
-  // Handle include expired change
-  const handleIncludeExpiredChange = (value: boolean) => {
-    setIncludeExpired(value);
-    handleFilterChange('includeExpired', value);
-  };
-
-  // Handle include out of stock change
-  const handleIncludeOutOfStockChange = (value: boolean) => {
-    setIncludeOutOfStock(value);
-    handleFilterChange('includeOutOfStock', value);
-  };
-
-  // Handle category change
-  const handleCategoryChange = (value: string) => {
-    setCategoryId(value);
-    handleFilterChange('categoryId', value);
-  };
 
   // Optimize rendering by only refreshing data when tab becomes active
   useEffect(() => {
     if (isActive || isInitialLoad) {
-      // Mark that we're past initial load
       setIsInitialLoad(false);
       refresh();
     }
@@ -472,7 +526,7 @@ export function BatchTable({
           }}
           initialData={
             selectedBatch
-              ? {
+              ? ({
                   id: selectedBatch.id,
                   productId: selectedBatch.productId,
                   batchCode: selectedBatch.batchCode,
@@ -480,7 +534,7 @@ export function BatchTable({
                   initialQuantity: selectedBatch.initialQuantity,
                   buyPrice: selectedBatch.buyPrice,
                   unitId: selectedBatch.product.unitId,
-                }
+                } as ProductBatchFormInitialData)
               : undefined
           }
           onSuccess={() => {

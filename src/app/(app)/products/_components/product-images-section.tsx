@@ -30,6 +30,9 @@ import {
 } from '../action';
 import { ProductImageWithUrl, TempProductImage } from '@/lib/types/product';
 
+// Union type for both temp and real images
+type DisplayImage = ProductImageWithUrl | TempProductImage;
+
 export function ProductImagesSection() {
   const {
     isEditing,
@@ -45,7 +48,7 @@ export function ProductImagesSection() {
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [isPrimarySetting, setIsPrimarySetting] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [imageToDelete, setImageToDelete] = useState<any | null>(null);
+  const [imageToDelete, setImageToDelete] = useState<DisplayImage | null>(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [currentImage, setCurrentImage] = useState<string | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState<number>(0);
@@ -61,7 +64,8 @@ export function ProductImagesSection() {
       try {
         new URL(url);
         return true;
-      } catch (e) {
+      } catch (error) {
+        console.error('Invalid URL:', url, error);
         return false;
       }
     },
@@ -93,6 +97,7 @@ export function ProductImagesSection() {
           });
         }
       } catch (error) {
+        console.error('Error setting primary image:', error);
         toast({
           title: 'Error',
           description: 'An unexpected error occurred',
@@ -107,7 +112,7 @@ export function ProductImagesSection() {
   };
 
   // Open delete confirmation dialog
-  const openDeleteDialog = (image: any) => {
+  const openDeleteDialog = (image: DisplayImage) => {
     setImageToDelete(image);
     setDeleteDialogOpen(true);
   };
@@ -131,6 +136,7 @@ export function ProductImagesSection() {
           });
         }
       } catch (error) {
+        console.error('Error deleting image:', error);
         toast({
           title: 'Error',
           description: 'An unexpected error occurred',
@@ -179,6 +185,7 @@ export function ProductImagesSection() {
         toast({ title: 'Image uploaded' });
       }
     } catch (error) {
+      console.error('Error uploading image:', error);
       toast({
         title: 'Error',
         description: 'An unexpected error occurred',

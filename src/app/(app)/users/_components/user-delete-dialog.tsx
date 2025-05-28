@@ -5,7 +5,7 @@ import { IconAlertTriangle } from '@tabler/icons-react';
 import { toast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ConfirmDialog } from '@/components/confirm-dialog';
-import { User } from './main-content';
+import { User } from '@/lib/types/user';
 import { removeUser } from '../action';
 
 interface Props {
@@ -43,6 +43,7 @@ export function UserDeleteDialog({
         });
       }
     } catch (error) {
+      console.error('Error deleting user:', error);
       toast({
         title: 'Error',
         description: 'An unexpected error occurred',

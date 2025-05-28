@@ -1,36 +1,23 @@
 import prisma from '@/lib/prisma';
 import { format } from 'date-fns';
 import { dateToCompare } from '../date';
-
-type DateFilter = {
-  from: string;
-  to: string;
-};
-
-// Named interface for payment method count
-interface PaymentMethodCount {
-  paymentMethod: string;
-  _count: { paymentMethod: number };
-}
-
-// Named interface for batch group count
-interface BatchGroupCount {
-  batchId: string;
-  _count: { batchId: number };
-}
-
-// Define a type for the transaction item in the sales reducing operation
-interface SalesDataItem {
-  year: number;
-  month: number;
-  day: number;
-  avg_sales: number | null;
-  total_transactions: number;
-  total_sales: number | null;
-}
+import {
+  DateFilter,
+  ExtendedDateFilter,
+  PerformanceMetricsResponse,
+  SalesStatisticsResponse,
+  PaymentMethodResponse,
+  CategoryResponse,
+  PaymentMethodCount,
+  BatchGroupCount,
+  SalesDataItem,
+  GroupedSalesData,
+} from '@/lib/types/dashboard';
 
 export class DashboardService {
-  static async getPerformanceMetrics(dateFilter?: DateFilter) {
+  static async getPerformanceMetrics(
+    dateFilter?: DateFilter,
+  ): Promise<PerformanceMetricsResponse> {
     // Default dates if no filter provided
     const defaultStart = '2024-09-01';
     const defaultEnd = '2024-09-02';
@@ -40,7 +27,7 @@ export class DashboardService {
       dateFilter?.from || dateFilter?.to
         ? dateToCompare(
             dateFilter.from || defaultStart,
-            dateFilter.to || defaultEnd
+            dateFilter.to || defaultEnd,
           )
         : dateToCompare(defaultStart, defaultEnd);
     // Format all dates at once
@@ -151,11 +138,11 @@ export class DashboardService {
       // Calculate total costs
       const currentTotalCost = currentItems.reduce(
         (acc: number, item: { cost: number }) => acc + item.cost,
-        0
+        0,
       );
       const prevTotalCost = prevItems.reduce(
         (acc: number, item: { cost: number }) => acc + item.cost,
-        0
+        0,
       );
 
       // Extract current values with fallback to 0
@@ -188,31 +175,31 @@ export class DashboardService {
 
       const salesGrowth = calculateGrowth(
         currentTotalSalesValue,
-        prevTotalSalesValue
+        prevTotalSalesValue,
       );
       const transactionsGrowth = calculateGrowth(
         currentTransactions,
-        prevTransactions
+        prevTransactions,
       );
       const avgSalesGrowth = calculateGrowth(
         currentAvgSalesValue,
-        prevAvgSalesValue
+        prevAvgSalesValue,
       );
       const costGrowth = calculateGrowth(currentTotalCost, prevTotalCost);
       const profitGrowth = calculateGrowth(currentProfit, prevProfit);
       const profitMarginGrowth = calculateGrowth(
         currentProfitMargin,
-        prevProfitMargin
+        prevProfitMargin,
       );
 
       // Format date range for display
       const currentDateRange = `${format(
         new Date(startDate),
-        'MMM d, yyyy'
+        'MMM d, yyyy',
       )} - ${format(new Date(endDate), 'MMM d, yyyy')}`;
       const prevDateRange = `${format(
         new Date(startDate),
-        'MMM d, yyyy'
+        'MMM d, yyyy',
       )} - ${format(new Date(endDate), 'MMM d, yyyy')}`;
 
       return {
@@ -251,11 +238,11 @@ export class DashboardService {
       // Format date range for display
       const currentDateRange = `${format(
         new Date(startDate),
-        'MMM d, yyyy'
+        'MMM d, yyyy',
       )} - ${format(new Date(endDate), 'MMM d, yyyy')}`;
       const prevDateRange = `${format(
         new Date(startDate),
-        'MMM d, yyyy'
+        'MMM d, yyyy',
       )} - ${format(new Date(endDate), 'MMM d, yyyy')}`;
 
       return {
@@ -274,7 +261,9 @@ export class DashboardService {
       };
     }
   }
-  static async getSalesStatistics(year: string) {
+  static async getSalesStatistics(
+    year: string,
+  ): Promise<SalesStatisticsResponse> {
     // Current period
     const startDate = `${year}-01-01`;
     const endDate = `${year}-12-31`;
@@ -333,7 +322,7 @@ export class DashboardService {
             total_transactions: transaction._count._all,
             total_sales: transaction._sum.finalAmount,
           };
-        }
+        },
       );
 
       // Group transaction items by year and month for cost calculation
@@ -347,25 +336,13 @@ export class DashboardService {
             costsByMonth[key] = 0;
           }
           costsByMonth[key] += item.cost * item.quantity;
-        }
+        },
       );
 
-      interface GroupedSales {
-        [key: string]: {
-          year: number;
-          month: number;
-          total_transactions: number;
-          total_sales: number;
-          avg_sales_per_month: number;
-          total_cost: number;
-          profit_margin: number; // Added profit margin property
-        };
-      }
-
-      // Remove the generic type parameter from reduce and use type assertion for the initial value
+      // Remove the generic type parameter from reduce and use proper typing
       const groupedData = sales.reduce(
-        (acc: GroupedSales, curr: SalesDataItem) => {
-          const key = `${curr.year}-${curr.month}`; // Create a unique key for each year and month
+        (acc: { [key: string]: GroupedSalesData }, curr: SalesDataItem) => {
+          const key = `${curr.year}-${curr.month}`;
           if (!acc[key]) {
             acc[key] = {
               year: curr.year,
@@ -374,21 +351,16 @@ export class DashboardService {
               total_sales: 0,
               avg_sales_per_month: 0,
               total_cost: 0,
-              profit_margin: 0, // Initialize profit margin
+              profit_margin: 0,
             };
           }
           acc[key].total_transactions += curr.total_transactions;
           acc[key].total_sales += curr.total_sales || 0;
-
-          // Add cost from our costsByMonth mapping
           acc[key].total_cost = costsByMonth[key] || 0;
-
-          // Calculate the profit margin (sales - cost)
           acc[key].profit_margin = acc[key].total_sales - acc[key].total_cost;
-
           return acc;
         },
-        {} as GroupedSales
+        {},
       );
 
       // Calculate average sales per month after all data is aggregated
@@ -412,21 +384,23 @@ export class DashboardService {
       };
     }
   }
-  static async getTopPaymentMethods(dateFilter: any) {
+  static async getTopPaymentMethods(
+    dateFilter: ExtendedDateFilter,
+  ): Promise<PaymentMethodResponse> {
     // Default dates if no filter provided
     const defaultStart = '2024-09-01';
     const defaultEnd = '2024-09-02';
     // Process dates - either use provided dates or defaults
     const dates =
-      dateFilter?.filter.from || dateFilter?.filter.to
+      dateFilter?.filter?.from || dateFilter?.filter?.to
         ? dateToCompare(
             dateFilter.filter.from || defaultStart,
-            dateFilter.filter.to || defaultEnd
+            dateFilter.filter.to || defaultEnd,
           )
         : dateToCompare(defaultStart, defaultEnd);
 
     // Format all dates at once
-    const [startDate, endDate, prevStartDate, prevEndDate] = [
+    const [startDate, endDate] = [
       dates.current.startDate,
       dates.current.endDate,
       dates.previous.startDate,
@@ -450,7 +424,7 @@ export class DashboardService {
           results.map((item) => ({
             type: item.paymentMethod,
             total: item._count.paymentMethod,
-          }))
+          })),
         );
 
       return {
@@ -465,21 +439,23 @@ export class DashboardService {
       };
     }
   }
-  static async getTopCategories(dateFilter: any) {
+  static async getTopCategories(
+    dateFilter: ExtendedDateFilter,
+  ): Promise<CategoryResponse> {
     // Default dates if no filter provided
     const defaultStart = '2024-09-01';
     const defaultEnd = '2024-09-02';
     // Process dates - either use provided dates or defaults
     const dates =
-      dateFilter?.filter.from || dateFilter?.filter.to
+      dateFilter?.filter?.from || dateFilter?.filter?.to
         ? dateToCompare(
             dateFilter.filter.from || defaultStart,
-            dateFilter.filter.to || defaultEnd
+            dateFilter.filter.to || defaultEnd,
           )
         : dateToCompare(defaultStart, defaultEnd);
 
     // Format all dates at once
-    const [startDate, endDate, prevStartDate, prevEndDate] = [
+    const [startDate, endDate] = [
       dates.current.startDate,
       dates.current.endDate,
       dates.previous.startDate,
@@ -523,7 +499,7 @@ export class DashboardService {
             categoryName: batch?.product.category.name || 'Unknown',
             transactionCount: group._count.batchId,
           };
-        })
+        }),
       );
       return {
         success: true,

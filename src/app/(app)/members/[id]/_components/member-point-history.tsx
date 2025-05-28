@@ -19,14 +19,14 @@ import { formatRupiah } from '@/lib/currency';
 interface MemberPointHistoryProps {
   memberId: string;
   points: MemberPointHistoryItem[];
-  memberTier?: MemberTier; // Updated type annotation
+  memberTier?: MemberTier;
 }
 
 export default function MemberPointHistory({
   points,
   memberTier,
 }: MemberPointHistoryProps) {
-  const [tier, setTier] = useState(memberTier);
+  const [tier, setTier] = useState<MemberTier | undefined>(memberTier);
 
   useEffect(() => {
     if (!tier) {

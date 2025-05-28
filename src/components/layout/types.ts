@@ -1,11 +1,3 @@
-import { StaticImageData } from 'next/image';
-
-interface User {
-  name: string;
-  email: string;
-  avatar: string;
-}
-
 interface Store {
   name: string;
   logo: string;

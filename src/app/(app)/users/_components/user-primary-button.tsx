@@ -1,7 +1,7 @@
 'use client';
 
+import { User } from '@/lib/types/user';
 import UserFormDialog from './user-form-dialog';
-import { User } from './main-content';
 
 // Define props type
 interface UserPrimaryButtonProps {
@@ -17,6 +17,13 @@ export default function UserPrimaryButton({
   initialData,
   onSuccess,
 }: UserPrimaryButtonProps) {
+  const isEditing = Boolean(initialData?.id);
+
+  // If we're editing, don't render the button since edit is triggered from the table
+  if (isEditing) {
+    return null;
+  }
+
   return (
     <div className="flex gap-2">
       <UserFormDialog

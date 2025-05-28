@@ -7,6 +7,13 @@ import {
   DiscountCreateResult,
   DiscountUpdateResult,
   DiscountValidationResult,
+  DiscountWithRelations,
+  DiscountWithCounts,
+  DiscountWhereClause,
+  DiscountOrderBy,
+  DiscountPaginationResult,
+  MemberTierForSelection,
+  MemberForSelection,
 } from '../types/discount';
 
 export class DiscountService {
@@ -14,7 +21,7 @@ export class DiscountService {
    * Create a new discount
    */
   static async createDiscount(
-    data: DiscountData
+    data: DiscountData,
   ): Promise<DiscountCreateResult> {
     try {
       const validation = await this.validateDiscount(data);
@@ -33,7 +40,7 @@ export class DiscountService {
         discountData.applyTo = DiscountApplyTo.ALL;
       }
 
-      const discount = await prisma.discount.create({
+      const discount = (await prisma.discount.create({
         data: {
           ...discountData,
           // Only connect relationships for non-global discounts
@@ -67,11 +74,32 @@ export class DiscountService {
             : {}),
         },
         include: {
-          products: true,
-          members: true,
-          memberTiers: true,
+          products: {
+            select: {
+              id: true,
+              name: true,
+              barcode: true,
+              category: { select: { name: true } },
+              brand: { select: { name: true } },
+            },
+          },
+          members: {
+            select: {
+              id: true,
+              name: true,
+              tier: { select: { name: true } },
+            },
+          },
+          memberTiers: {
+            select: {
+              id: true,
+              name: true,
+              minPoints: true,
+              multiplier: true,
+            },
+          },
         },
-      });
+      })) as DiscountWithRelations;
 
       return {
         success: true,
@@ -111,7 +139,7 @@ export class DiscountService {
    */
   static async updateDiscount(
     id: string,
-    data: Partial<DiscountData>
+    data: Partial<DiscountData>,
   ): Promise<DiscountUpdateResult> {
     try {
       const existingDiscount = await prisma.discount.findUnique({
@@ -155,39 +183,24 @@ export class DiscountService {
         data;
 
       // Update related products if specified
-      let productsUpdate = {};
-      if (productIds !== undefined && data.applyTo === 'SPECIFIC_PRODUCTS') {
-        productsUpdate = {
-          products: {
-            set: productIds?.map((id) => ({ id })) || [],
-          },
-        };
-      }
+      const productsUpdate =
+        productIds !== undefined && data.applyTo === 'SPECIFIC_PRODUCTS'
+          ? { products: { set: productIds.map((id) => ({ id })) } }
+          : {};
 
       // Update related members if specified
-      let membersUpdate = {};
-      if (memberIds !== undefined && data.applyTo === 'SPECIFIC_MEMBERS') {
-        membersUpdate = {
-          members: {
-            set: memberIds?.map((id) => ({ id })) || [],
-          },
-        };
-      }
+      const membersUpdate =
+        memberIds !== undefined && data.applyTo === 'SPECIFIC_MEMBERS'
+          ? { members: { set: memberIds.map((id) => ({ id })) } }
+          : {};
 
       // Update related member tiers if specified
-      let memberTiersUpdate = {};
-      if (
-        memberTierIds !== undefined &&
-        data.applyTo === 'SPECIFIC_MEMBER_TIERS'
-      ) {
-        memberTiersUpdate = {
-          memberTiers: {
-            set: memberTierIds?.map((id) => ({ id })) || [],
-          },
-        };
-      }
+      const memberTiersUpdate =
+        memberTierIds !== undefined && data.applyTo === 'SPECIFIC_MEMBER_TIERS'
+          ? { memberTiers: { set: memberTierIds.map((id) => ({ id })) } }
+          : {};
 
-      const updatedDiscount = await prisma.discount.update({
+      const updatedDiscount = (await prisma.discount.update({
         where: { id },
         data: {
           ...discountUpdateData,
@@ -196,11 +209,32 @@ export class DiscountService {
           ...memberTiersUpdate,
         },
         include: {
-          products: true,
-          members: true,
-          memberTiers: true,
+          products: {
+            select: {
+              id: true,
+              name: true,
+              barcode: true,
+              category: { select: { name: true } },
+              brand: { select: { name: true } },
+            },
+          },
+          members: {
+            select: {
+              id: true,
+              name: true,
+              tier: { select: { name: true } },
+            },
+          },
+          memberTiers: {
+            select: {
+              id: true,
+              name: true,
+              minPoints: true,
+              multiplier: true,
+            },
+          },
         },
-      });
+      })) as DiscountWithRelations;
 
       return {
         success: true,
@@ -268,7 +302,7 @@ export class DiscountService {
         discount: {
           ...discount,
           isValid,
-        },
+        } as DiscountWithRelations & { isValid: boolean },
       };
     } catch (error) {
       console.error('Get discount error:', error);
@@ -296,10 +330,36 @@ export class DiscountService {
         };
       }
 
-      const updatedDiscount = await prisma.discount.update({
+      const updatedDiscount = (await prisma.discount.update({
         where: { id },
         data: { isActive: !discount.isActive },
-      });
+        include: {
+          products: {
+            select: {
+              id: true,
+              name: true,
+              barcode: true,
+              category: { select: { name: true } },
+              brand: { select: { name: true } },
+            },
+          },
+          members: {
+            select: {
+              id: true,
+              name: true,
+              tier: { select: { name: true } },
+            },
+          },
+          memberTiers: {
+            select: {
+              id: true,
+              name: true,
+              minPoints: true,
+              multiplier: true,
+            },
+          },
+        },
+      })) as DiscountWithRelations;
 
       return {
         success: true,
@@ -331,10 +391,10 @@ export class DiscountService {
     applyTo,
     isGlobal,
     validAsOf,
-  }: DiscountPaginationParams) {
+  }: DiscountPaginationParams): Promise<DiscountPaginationResult> {
     try {
       // Build where clause based on filters
-      const where: any = {};
+      const where: DiscountWhereClause = {};
 
       // Add search filter
       if (search) {
@@ -362,7 +422,7 @@ export class DiscountService {
       const skip = (page - 1) * pageSize;
 
       // Get order by field
-      const orderBy: any = {};
+      const orderBy: DiscountOrderBy = {};
       orderBy[sortField] = sortDirection;
 
       // Execute query with count
@@ -389,26 +449,45 @@ export class DiscountService {
 
       // Process discounts to add validity info
       const now = new Date();
-      const processedDiscounts = discounts.map((discount: any) => {
-        const isValid =
-          discount.isActive &&
-          now >= discount.startDate &&
-          now <= discount.endDate &&
-          (!discount.maxUses || discount.usedCount < discount.maxUses);
+      const processedDiscounts: DiscountWithCounts[] = discounts.map(
+        (discount) => {
+          const isValid =
+            discount.isActive &&
+            now >= discount.startDate &&
+            now <= discount.endDate &&
+            (!discount.maxUses || discount.usedCount < discount.maxUses);
 
-        return {
-          ...discount,
-          isValid,
-          usage: {
-            usedCount: discount.usedCount,
+          return {
+            id: discount.id,
+            name: discount.name,
+            code: discount.code,
+            description: discount.description,
+            type: discount.type,
+            value: discount.value,
+            minPurchase: discount.minPurchase,
+            startDate: discount.startDate,
+            endDate: discount.endDate,
+            isActive: discount.isActive,
+            isGlobal: discount.isGlobal,
             maxUses: discount.maxUses,
-            usagePercentage: discount.maxUses
-              ? Math.round((discount.usedCount / discount.maxUses) * 100)
-              : null,
-          },
-          relationCounts: discount._count,
-        };
-      });
+            usedCount: discount.usedCount,
+            applyTo: discount.applyTo,
+            createdAt: discount.createdAt,
+            updatedAt: discount.updatedAt,
+            _count: discount._count,
+            isValid,
+            usage: {
+              usedCount: discount.usedCount,
+              maxUses: discount.maxUses,
+              usagePercentage:
+                discount.maxUses && discount.maxUses > 0
+                  ? Math.round((discount.usedCount / discount.maxUses) * 100)
+                  : null,
+            },
+            relationCounts: discount._count,
+          };
+        },
+      );
 
       return {
         success: true,
@@ -489,7 +568,7 @@ export class DiscountService {
   // Get member tiers for discount selection
   static async getMemberTiersForSelection(search?: string) {
     try {
-      const tiers = await prisma.memberTier.findMany({
+      const tiers: MemberTierForSelection[] = await prisma.memberTier.findMany({
         select: {
           id: true,
           name: true,
@@ -526,7 +605,7 @@ export class DiscountService {
    */
   static async getMembersForSelection(search?: string) {
     try {
-      const members = await prisma.member.findMany({
+      const members: MemberForSelection[] = await prisma.member.findMany({
         select: {
           id: true,
           name: true,
@@ -564,7 +643,7 @@ export class DiscountService {
    * Validate discount data
    */
   private static async validateDiscount(
-    data: DiscountData
+    data: DiscountData,
   ): Promise<DiscountValidationResult> {
     try {
       if (data.id && data.code) {

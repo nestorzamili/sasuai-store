@@ -74,6 +74,7 @@ export function CreateCategoryDialog() {
         });
       }
     } catch (error) {
+      console.error('Error creating category:', error);
       toast({
         title: 'Error',
         description: 'An unexpected error occurred',

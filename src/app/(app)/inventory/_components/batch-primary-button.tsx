@@ -1,10 +1,7 @@
 'use client';
 
-import { ProductBatchFormInitialData } from '@/lib/types/product-batch';
-import { Product } from '@/lib/types/base-types'; // Updated import
+import { ProductBatchFormInitialData } from '@/lib/types/inventory';
 import BatchFormDialog from './batch-form-dialog';
-import { SupplierWithCount } from '@/lib/types/supplier';
-import { UnitWithCounts } from '@/lib/types/unit';
 
 // Define props type
 interface BatchPrimaryButtonProps {

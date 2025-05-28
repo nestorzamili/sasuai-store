@@ -19,23 +19,35 @@ export interface TableFetchOptions {
   sortBy?: SortByOptions;
   sortOrder?: string;
   columnFilter?: string[];
-  filters?: Record<string, any>; // Add filters to TableFetchOptions
-  [key: string]: any; // Allow for additional custom options
+  filters?: Record<string, string | number | boolean | null | undefined>;
+  [key: string]:
+    | string
+    | number
+    | boolean
+    | null
+    | undefined
+    | string[]
+    | SortByOptions
+    | Record<string, unknown>;
+}
+
+export interface FetchResult<T> {
+  data: T;
+  totalRows: number;
+  [key: string]: unknown;
 }
 
 export interface FetchOptions<T> {
-  fetchData: (
-    options: TableFetchOptions,
-  ) => Promise<{ data: T; totalRows: number; [key: string]: any }>;
+  fetchData: (options: TableFetchOptions) => Promise<FetchResult<T>>;
   options?: TableFetchOptions;
   initialPageIndex?: number;
   initialPageSize?: number;
   initialSortField?: string;
   initialSortDirection?: boolean;
-  initialFilters?: Record<string, any>; // Add initialFilters
+  initialFilters?: Record<string, string | number | boolean | null | undefined>;
   debounceTime?: number;
-  onError?: (error: any) => void;
-  onSuccess?: (data: any) => void;
+  onError?: (error: Error) => void;
+  onSuccess?: (data: FetchResult<T>) => void;
 }
 
 export interface HookOptions {
@@ -44,14 +56,31 @@ export interface HookOptions {
   search: string;
   sortOrder?: string;
   columnFilter?: string[];
-  filters: Record<string, any>; // Add filters to HookOptions
-  [key: string]: any; // Allow for additional custom options
+  filters: Record<string, string | number | boolean | null | undefined>;
+  [key: string]:
+    | string
+    | number
+    | boolean
+    | null
+    | undefined
+    | string[]
+    | PaginationOptions
+    | SortByOptions
+    | Record<string, unknown>;
 }
 
 export function useFetch<T>(fetchOptions: FetchOptions<T>) {
+  // Destructure stable parts of fetchOptions
+  const {
+    fetchData: fetchDataFn,
+    onSuccess,
+    onError,
+    debounceTime = 500,
+  } = fetchOptions;
+
   const [data, setData] = useState<T | undefined>();
   const [isLoading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<any>(null);
+  const [error, setError] = useState<Error | null>(null);
   const [options, setOptions] = useState<HookOptions>({
     pagination: {
       pageIndex:
@@ -122,8 +151,8 @@ export function useFetch<T>(fetchOptions: FetchOptions<T>) {
       debounce((newSearch: string) => {
         setOptions((prev) => ({ ...prev, search: newSearch }));
         resetPagination();
-      }, fetchOptions.debounceTime || 500),
-    [resetPagination, fetchOptions.debounceTime],
+      }, debounceTime),
+    [resetPagination, debounceTime],
   );
 
   const setSortBy = useCallback((newSortBy: SortByOptions[]) => {
@@ -155,7 +184,13 @@ export function useFetch<T>(fetchOptions: FetchOptions<T>) {
 
   // Add a dedicated setFilters function
   const setFilters = useCallback(
-    (newFilters: Record<string, any>) => {
+    (
+      newFilters:
+        | Record<string, string | number | boolean | null | undefined>
+        | ((
+            prev: Record<string, string | number | boolean | null | undefined>,
+          ) => Record<string, string | number | boolean | null | undefined>),
+    ) => {
       setOptions((prev) => ({
         ...prev,
         filters:
@@ -169,39 +204,47 @@ export function useFetch<T>(fetchOptions: FetchOptions<T>) {
   );
 
   // Add custom option setter
-  const setCustomOption = useCallback((key: string, value: any) => {
-    setOptions((prev) => ({
-      ...prev,
-      [key]: value,
-    }));
-  }, []);
+  const setCustomOption = useCallback(
+    (key: string, value: string | number | boolean | null | undefined) => {
+      setOptions((prev) => ({
+        ...prev,
+        [key]: value,
+      }));
+    },
+    [],
+  );
 
-  const fetchData = useCallback(async (options: TableFetchOptions) => {
-    try {
-      setLoading(true);
-      setError(null);
-      const result = await fetchOptions.fetchData(options);
-      setData(result.data);
-      setTotalRows(result.totalRows);
+  const fetchData = useCallback(
+    async (options: TableFetchOptions) => {
+      try {
+        setLoading(true);
+        setError(null);
+        const result = await fetchDataFn(options);
+        setData(result.data);
+        setTotalRows(result.totalRows);
 
-      if (fetchOptions.onSuccess) {
-        fetchOptions.onSuccess(result);
+        if (onSuccess) {
+          onSuccess(result);
+        }
+
+        return result;
+      } catch (error) {
+        const errorObj =
+          error instanceof Error ? error : new Error(String(error));
+        setError(errorObj);
+        console.error('Error fetching data:', errorObj);
+
+        if (onError) {
+          onError(errorObj);
+        }
+
+        return { data: undefined as T, totalRows: 0 };
+      } finally {
+        setLoading(false);
       }
-
-      return result;
-    } catch (error) {
-      setError(error);
-      console.error('Error fetching data:', error);
-
-      if (fetchOptions.onError) {
-        fetchOptions.onError(error);
-      }
-
-      return { data: undefined, totalRows: 0 };
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    },
+    [fetchDataFn, onSuccess, onError],
+  ); // Include the destructured dependencies
 
   const formattedOptions = useMemo(
     () => ({

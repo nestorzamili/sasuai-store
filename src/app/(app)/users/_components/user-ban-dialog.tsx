@@ -5,7 +5,7 @@ import { IconShieldX, IconShieldCheck } from '@tabler/icons-react';
 import { toast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ConfirmDialog } from '@/components/confirm-dialog';
-import { User } from './main-content';
+import { User } from '@/lib/types/user';
 import { banUser, unbanUser } from '../action';
 import {
   Dialog,
@@ -94,6 +94,7 @@ export function UserBanDialog({ open, onOpenChange, user, onSuccess }: Props) {
         });
       }
     } catch (error) {
+      console.error('Error banning user:', error);
       toast({
         title: 'Error',
         description: 'An unexpected error occurred',
@@ -125,6 +126,7 @@ export function UserBanDialog({ open, onOpenChange, user, onSuccess }: Props) {
         });
       }
     } catch (error) {
+      console.error('Error unbanning user:', error);
       toast({
         title: 'Error',
         description: 'An unexpected error occurred',

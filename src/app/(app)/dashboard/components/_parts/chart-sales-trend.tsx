@@ -91,10 +91,6 @@ interface SalesDataItem {
   margin?: number;
 }
 
-interface GroupedSales {
-  [key: string]: SalesDataItem;
-}
-
 const Loading = () => {
   return (
     <div className="flex h-[300px] w-full flex-col gap-3">
@@ -125,7 +121,6 @@ const ChartContainer: React.FC<{
 };
 
 export function SalesTrend() {
-  const [salesStatistic, setSalesStatistic] = useState<GroupedSales>({});
   const [isLoading, setIsLoading] = useState(false);
   const [year, setYear] = useState('2025');
   const [chartDataUpdated, setChartDataUpdated] = useState(chartData);
@@ -136,12 +131,11 @@ export function SalesTrend() {
       setIsLoading(true);
       const response = await salesStatistics(year);
       if (response.success) {
-        setSalesStatistic(response.data || {});
         // Process the data for the chart after receiving it
         const updatedChartData = [...chartData];
 
         // Convert the object data into array format for the chart
-        Object.entries(response.data || {}).forEach(([key, value]) => {
+        Object.entries(response.data || {}).forEach(([, value]) => {
           const typedValue = value as SalesDataItem; // Add type assertion here
           const monthIndex = typedValue.month - 1; // Convert to 0-based index
           if (monthIndex >= 0 && monthIndex < updatedChartData.length) {

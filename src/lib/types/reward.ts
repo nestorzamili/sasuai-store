@@ -27,7 +27,16 @@ export interface Member {
   name: string;
   email?: string | null;
   phone?: string | null;
-  // Add minimum fields needed for this context
+  totalPoints: number;
+  isBanned: boolean | null;
+  tier?: MemberTier | null;
+}
+
+export interface MemberTier {
+  id: string;
+  name: string;
+  minPoints: number;
+  color?: string | null;
 }
 
 // Type for reward creation
@@ -55,6 +64,7 @@ export type UpdateRewardData = {
 // Reward search parameters
 export type RewardSearchParams = {
   query?: string;
+  search?: string; // Add search property
   page?: number;
   limit?: number;
   sortBy?: string;
@@ -62,9 +72,34 @@ export type RewardSearchParams = {
   includeInactive?: boolean;
 };
 
+// Member search parameters
+export type MemberSearchParams = {
+  query?: string;
+  page?: number;
+  limit?: number;
+};
+
+// Reward claim search parameters
+export type RewardClaimSearchParams = {
+  page?: number;
+  limit?: number;
+  sortBy?: string;
+  sortDirection?: 'asc' | 'desc';
+  search?: string;
+  status?: string;
+};
+
 // Paginated response for reward search
 export type PaginatedRewardResponse = {
-  rewards: Reward[];
+  rewards: RewardWithClaimCount[];
+  totalCount: number;
+  totalPages: number;
+  currentPage: number;
+};
+
+// Paginated response for member search
+export type PaginatedMemberResponse = {
+  members: Member[];
   totalCount: number;
   totalPages: number;
   currentPage: number;
@@ -102,3 +137,89 @@ export type RewardWithClaims = Reward & {
 export type RewardClaimWithMember = RewardClaim & {
   member: Member;
 };
+
+// API Response types
+export interface ApiResponse<T = unknown> {
+  success: boolean;
+  data?: T;
+  error?: string;
+  validationErrors?: Array<{
+    code: string;
+    expected?: unknown;
+    received?: unknown;
+    path: (string | number)[];
+    message: string;
+  }>;
+}
+
+// Specific API response types
+export type GetRewardsResponse = ApiResponse<PaginatedRewardResponse>;
+export type GetRewardResponse = ApiResponse<Reward>;
+export type CreateRewardResponse = ApiResponse<Reward>;
+export type UpdateRewardResponse = ApiResponse<Reward>;
+export type DeleteRewardResponse = ApiResponse<void>;
+export type SearchMembersResponse = ApiResponse<PaginatedMemberResponse>;
+export type ClaimRewardResponse = ApiResponse<RewardClaim>;
+export type GetClaimsResponse = ApiResponse<PaginatedClaimResponse>;
+export type UpdateClaimStatusResponse = ApiResponse<RewardClaimWithRelations>;
+
+// Loading states for UI components
+export interface LoadingState {
+  rewards: boolean;
+  search: boolean;
+  claim: boolean;
+}
+
+// Form state for claim dialog
+export interface ClaimDialogState {
+  selectedRewardId: string;
+  availableRewards: RewardWithClaimCount[];
+  searchQuery: string;
+  selectedMember: Member | null;
+  searchResults: Member[];
+  showResults: boolean;
+}
+
+// Prisma-like where input types for type safety
+export interface RewardWhereInput {
+  isActive?: boolean;
+  OR?: Array<{
+    name?: { contains: string; mode?: 'insensitive' };
+    description?: { contains: string; mode?: 'insensitive' };
+  }>;
+  AND?: Array<
+    | {
+        OR?: Array<{ expiryDate: null } | { expiryDate: { gte: Date } }>;
+      }
+    | Record<string, unknown>
+  >;
+}
+
+export interface RewardClaimWhereInput {
+  OR?: Array<{
+    member?: { name?: { contains: string; mode?: 'insensitive' } };
+    reward?: { name?: { contains: string; mode?: 'insensitive' } };
+  }>;
+  status?: string;
+}
+
+// Additional interfaces for reward table functionality
+export interface FetchOptions {
+  page?: number; // Make page optional to match TableFetchOptions
+  limit?: number; // Make limit optional to match TableFetchOptions
+  sortBy?: {
+    id: string;
+    desc: boolean;
+  } | null;
+  search?: string;
+}
+
+export interface SortingState {
+  id: string;
+  desc: boolean;
+}
+
+export interface RewardTableProps {
+  onEdit?: (reward: RewardWithClaimCount) => void;
+  onDelete: (reward: RewardWithClaimCount) => void;
+}

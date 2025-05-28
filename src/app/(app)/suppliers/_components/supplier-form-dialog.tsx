@@ -123,6 +123,7 @@ export default function SupplierFormDialog({
         });
       }
     } catch (error) {
+      console.error('Error creating/updating supplier:', error);
       toast({
         title: 'Error',
         description: 'An unexpected error occurred',

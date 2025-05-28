@@ -1,7 +1,21 @@
 'use server';
 import { DashboardService } from '@/lib/services/dashboard.service';
 import { ProductDashboardService } from '@/lib/services/product.dashboard.service';
-export async function metricPeformance(filter?: any) {
+import {
+  DateFilter,
+  ExtendedDateFilter,
+  PerformanceMetricsResponse,
+  SalesStatisticsResponse,
+  TopSellingByQuantityResponse,
+  PaymentMethodResponse,
+  CategoryResponse,
+} from '@/lib/types/dashboard';
+
+export async function metricPeformance(filter?: DateFilter): Promise<{
+  data?: PerformanceMetricsResponse['data'];
+  success: boolean;
+  error?: string;
+}> {
   try {
     const response = await DashboardService.getPerformanceMetrics(filter);
     return {
@@ -16,7 +30,12 @@ export async function metricPeformance(filter?: any) {
     };
   }
 }
-export async function salesStatistics(year: string) {
+
+export async function salesStatistics(year: string): Promise<{
+  data?: SalesStatisticsResponse['data'];
+  success: boolean;
+  error?: string;
+}> {
   try {
     const response = await DashboardService.getSalesStatistics(year);
 
@@ -32,7 +51,14 @@ export async function salesStatistics(year: string) {
     };
   }
 }
-export async function getTopSellingProductsByQuantity(filter: any) {
+
+export async function getTopSellingProductsByQuantity(
+  filter: ExtendedDateFilter,
+): Promise<{
+  data?: TopSellingByQuantityResponse['data'];
+  success: boolean;
+  error?: string;
+}> {
   try {
     const response =
       await ProductDashboardService.getTopSellingProductsByQuantity(filter);
@@ -48,7 +74,12 @@ export async function getTopSellingProductsByQuantity(filter: any) {
     };
   }
 }
-export async function getTopPaymentMethod(filter: any) {
+
+export async function getTopPaymentMethod(filter: ExtendedDateFilter): Promise<{
+  data?: PaymentMethodResponse['data'];
+  success: boolean;
+  error?: string;
+}> {
   try {
     const response = await DashboardService.getTopPaymentMethods(filter);
     return {
@@ -63,7 +94,12 @@ export async function getTopPaymentMethod(filter: any) {
     };
   }
 }
-export async function getTopCategories(filter: any) {
+
+export async function getTopCategories(filter: ExtendedDateFilter): Promise<{
+  data?: CategoryResponse['data'];
+  success: boolean;
+  error?: string;
+}> {
   try {
     const response = await DashboardService.getTopCategories(filter);
     return {

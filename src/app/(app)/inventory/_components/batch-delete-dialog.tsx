@@ -6,7 +6,7 @@ import { toast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { canDeleteBatch, deleteBatch } from '../action';
-import { ProductBatchWithProduct } from '@/lib/types/product-batch';
+import { ProductBatchWithProduct } from '@/lib/types/inventory';
 import { format } from 'date-fns';
 
 interface Props {
@@ -43,6 +43,7 @@ export function BatchDeleteDialog({
             setCanDelete(false);
           }
         } catch (error) {
+          console.error('Error checking batch delete status:', error);
           setCanDelete(false);
         } finally {
           setIsCheckingDelete(false);
@@ -86,6 +87,7 @@ export function BatchDeleteDialog({
         });
       }
     } catch (error) {
+      console.error('Error deleting batch:', error);
       toast({
         title: 'Error',
         description: 'An unexpected error occurred',

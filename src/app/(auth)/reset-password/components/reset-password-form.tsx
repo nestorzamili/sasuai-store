@@ -18,8 +18,6 @@ import { PasswordInput } from '@/components/password-input';
 import { useRouter } from 'next/navigation';
 import { authClient } from '@/lib/auth-client';
 import { useToast } from '@/hooks/use-toast';
-import { extractErrorMessage } from '@/lib/error-handler';
-
 type ResetFormProps = HTMLAttributes<HTMLDivElement> & {
   token: string;
 };
@@ -91,6 +89,7 @@ export function ResetForm({ className, token, ...props }: ResetFormProps) {
         router.push('/sign-in?success=password_reset');
       }, 1500);
     } catch (error) {
+      console.error('Error during password reset:', error);
       toast({
         title: 'Error',
         description:

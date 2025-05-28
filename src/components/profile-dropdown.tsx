@@ -26,6 +26,7 @@ export function ProfileDropdown() {
       await signOut();
       router.refresh();
     } catch (error) {
+      console.error('Logout error:', error);
       toast({
         title: 'Error',
         description: 'Failed to log out',

@@ -27,7 +27,7 @@ export default function BasicInfo({ form }: BasicInfoProps) {
   const discountType = form.watch('type');
 
   // Super robust number formatter with guaranteed output
-  const formatNumber = (value: any): string => {
+  const formatNumber = (value: string | number | null | undefined): string => {
     try {
       // Handle all possible edge cases
       if (value === null || value === undefined) return '0';
@@ -157,34 +157,62 @@ export default function BasicInfo({ form }: BasicInfoProps) {
                     )}
 
                     {discountType === DiscountType.PERCENTAGE ? (
-                      // For percentage - use number input with constraints
+                      // For percentage - use number input with better UX
                       <Input
                         type="number"
-                        placeholder="0"
+                        placeholder="Enter percentage"
                         min={0}
                         max={100}
                         step={0.01}
                         {...restField}
-                        value={value ?? 0}
+                        value={value ?? ''}
                         onChange={(e) => {
-                          const newValue =
-                            e.target.value === '' ? 0 : Number(e.target.value);
-                          onChange(newValue);
+                          const inputValue = e.target.value;
+                          if (inputValue === '') {
+                            onChange(0);
+                          } else {
+                            const newValue = Number(inputValue);
+                            if (!isNaN(newValue)) {
+                              onChange(newValue);
+                            }
+                          }
+                        }}
+                        onBlur={(e) => {
+                          // Ensure we have a valid number on blur
+                          const inputValue = e.target.value;
+                          if (inputValue === '' || isNaN(Number(inputValue))) {
+                            onChange(0);
+                          }
                         }}
                       />
                     ) : (
-                      // For fixed amount - use text input with formatting
+                      // For fixed amount - use text input with better formatting
                       <Input
                         type="text"
-                        placeholder="0"
+                        placeholder="Enter amount"
                         className="pl-8"
                         {...restField}
-                        value={formatNumber(value)}
+                        value={value === 0 ? '' : formatNumber(value)}
                         onChange={(e) => {
-                          const numericValue = parseFormattedNumber(
-                            e.target.value,
-                          );
-                          onChange(numericValue);
+                          const inputValue = e.target.value;
+                          if (inputValue === '') {
+                            onChange(0);
+                          } else {
+                            const numericValue =
+                              parseFormattedNumber(inputValue);
+                            onChange(numericValue);
+                          }
+                        }}
+                        onBlur={(e) => {
+                          // Format the number properly on blur
+                          const inputValue = e.target.value;
+                          if (inputValue === '') {
+                            onChange(0);
+                          } else {
+                            const numericValue =
+                              parseFormattedNumber(inputValue);
+                            onChange(numericValue);
+                          }
                         }}
                       />
                     )}

@@ -74,6 +74,7 @@ export function ForgotForm({ className, ...props }: ForgotFormProps) {
       // Clear the form on success
       form.reset();
     } catch (error) {
+      console.error('Error during password reset:', error);
       setFormState({
         status: 'error',
         message: 'Unable to process your request. Please try again later.',

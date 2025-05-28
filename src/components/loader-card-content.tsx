@@ -1,6 +1,5 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Loader2 } from 'lucide-react';
 
 type LoaderCardVariant = 'default' | 'card' | 'compact' | 'inline';
@@ -54,7 +53,7 @@ export const LoaderCardContent = ({
         className={cn(
           containerStyles[variant],
           'flex items-center justify-center',
-          containerClassName
+          containerClassName,
         )}
       >
         <Loader2
@@ -75,7 +74,7 @@ export const LoaderCardContent = ({
           variant === 'card' && 'min-h-[160px]',
           variant === 'compact' && 'min-h-[100px]',
           variant === 'inline' && 'min-h-[60px]',
-          className
+          className,
         )}
       />
     </div>
