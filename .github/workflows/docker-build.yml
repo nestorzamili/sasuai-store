@@ -42,10 +42,11 @@ jobs:
             BETTER_AUTH_URL=${{ secrets.BETTER_AUTH_URL }}
             EMAIL_VERIFICATION_CALLBACK_URL=${{ secrets.EMAIL_VERIFICATION_CALLBACK_URL }}
             MAINTENANCE_MODE=${{ secrets.MAINTENANCE_MODE }}
-            NODE_ENV=${{ secrets.NODE_ENV }}
-            EMAIL_SERVER_USER=${{ secrets.EMAIL_SERVER_USER }}
-            EMAIL_SERVER_PASSWORD=${{ secrets.EMAIL_SERVER_PASSWORD }}
+            NODE_ENV=production
             EMAIL_FROM_ADDRESS=${{ secrets.EMAIL_FROM_ADDRESS }}
             NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=${{ secrets.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME }}
             NEXT_PUBLIC_CLOUDINARY_API_KEY=${{ secrets.NEXT_PUBLIC_CLOUDINARY_API_KEY }}
             CLOUDINARY_API_SECRET=${{ secrets.CLOUDINARY_API_SECRET }}
+            RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}
+            EMAIL_USER=${{ secrets.EMAIL_USER }}
+            ENABLE_SIGNUP=${{ secrets.ENABLE_SIGNUP }}
