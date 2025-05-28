@@ -297,3 +297,23 @@ export type MemberForDiscount = NonNullable<
 export type MemberTierForDiscount = NonNullable<
   DiscountWithRelations['memberTiers']
 >[0];
+
+// Form data interfaces
+export interface DiscountFormData {
+  name: string;
+  code?: string | null;
+  description?: string | null;
+  type: DiscountType;
+  value: number;
+  minPurchase?: number | null;
+  startDate: Date;
+  endDate: Date;
+  isActive: boolean;
+  isGlobal: boolean;
+  maxUses?: number | null;
+  applyTo: DiscountApplyTo;
+  productIds: string[];
+  memberIds: string[];
+  memberTierIds: string[];
+  [key: string]: unknown;
+}

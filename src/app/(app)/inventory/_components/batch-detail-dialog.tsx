@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -32,13 +32,9 @@ export function BatchDetailDialog({
   const [stockMovements, setStockMovements] = useState<StockMovement[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    if (open && batchId) {
-      fetchBatchDetails();
-    }
-  }, [open, batchId]);
+  const fetchBatchDetails = useCallback(async () => {
+    if (!batchId) return;
 
-  const fetchBatchDetails = async () => {
     setIsLoading(true);
     try {
       const [batchResult, movementsResult] = await Promise.all([
@@ -58,7 +54,13 @@ export function BatchDetailDialog({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [batchId]);
+
+  useEffect(() => {
+    if (open && batchId) {
+      fetchBatchDetails();
+    }
+  }, [open, batchId, fetchBatchDetails]);
 
   const isExpired = (expiryDate: Date): boolean => {
     return new Date(expiryDate) < new Date();

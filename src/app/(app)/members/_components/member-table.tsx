@@ -43,7 +43,9 @@ import type {
   FilterOption,
   TableFilter,
   MemberTier,
+  MemberResponse,
 } from '@/lib/types/member';
+import { mapToMemberWithTier } from '@/lib/types/member';
 import type { SortByOptions, TableFetchOptions } from '@/hooks/use-fetch';
 
 // Actions
@@ -283,8 +285,11 @@ export function MemberTable({ onEdit, onAwardPoints }: MemberTableProps) {
       });
 
       if (response.success) {
+        const mappedMembers = (response.members || []).map((member) =>
+          mapToMemberWithTier(member as MemberResponse),
+        );
         return {
-          data: response.members || [],
+          data: mappedMembers,
           totalRows: response.totalCount || 0,
         };
       }

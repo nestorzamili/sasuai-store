@@ -19,8 +19,13 @@ import {
   getProductImages,
   addProductImage,
 } from '../action';
-import { ProductWithRelations, ProductImageWithUrl } from '@/lib/types/product';
-import { Category, Brand, Unit } from '@/lib/types/base-types';
+import {
+  ProductWithRelations,
+  ProductImageWithUrl,
+  Category,
+  Brand,
+  Unit,
+} from '@/lib/types/product';
 
 // Form schema for product
 const formSchema = z.object({

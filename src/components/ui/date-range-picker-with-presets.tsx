@@ -150,7 +150,6 @@ export function DateRangePickerWithPresets({
         <PopoverContent className="w-auto p-0 flex" align={align}>
           <div>
             <Calendar
-              autoFocus={false}
               mode="range"
               defaultMonth={date?.from}
               selected={date}

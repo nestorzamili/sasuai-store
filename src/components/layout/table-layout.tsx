@@ -9,6 +9,7 @@ import {
   getCoreRowModel,
   getSortedRowModel,
   useReactTable,
+  Column,
 } from '@tanstack/react-table';
 import { Loader2 } from 'lucide-react';
 import { ArrowUp, ArrowDown } from 'lucide-react';
@@ -45,9 +46,9 @@ export interface FilterConfig {
   handleFilterChange: (value: string) => void;
 }
 
-interface TableLayoutProps {
-  data: any[];
-  columns: ColumnDef<any>[];
+interface TableLayoutProps<TData = unknown> {
+  data: TData[];
+  columns: ColumnDef<TData>[];
   isLoading?: boolean;
   columnFilters?: ColumnFiltersState;
   pagination?: PaginationState;
@@ -64,7 +65,7 @@ interface TableLayoutProps {
   filterToolbar?: React.ReactNode;
 }
 
-export function TableLayout({
+export function TableLayout<TData = unknown>({
   data,
   columns,
   isLoading = false,
@@ -81,9 +82,8 @@ export function TableLayout({
   onSelectionChange,
   initialSelectedRows = {},
   filterToolbar,
-}: TableLayoutProps) {
+}: TableLayoutProps<TData>) {
   const [searchValue, setSearchValue] = useState<string>('');
-  const [isSearching, setIsSearching] = useState<boolean>(false);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [rowSelection, setRowSelection] =
     React.useState<Record<string, boolean>>(initialSelectedRows);
@@ -103,11 +103,8 @@ export function TableLayout({
       clearTimeout(searchTimeout.current);
     }
 
-    setIsSearching(true);
-
     searchTimeout.current = setTimeout(() => {
       handleSearchChange(searchValue);
-      setIsSearching(false);
     }, 500);
 
     return () => {
@@ -115,7 +112,7 @@ export function TableLayout({
         clearTimeout(searchTimeout.current);
       }
     };
-  }, [searchValue]);
+  }, [searchValue, handleSearchChange]);
 
   useEffect(() => {
     if (onSelectionChange) {
@@ -194,7 +191,7 @@ export function TableLayout({
     column,
     label,
   }: {
-    column: any;
+    column: Column<TData, unknown>;
     label: string;
   }) => {
     const handleClick = () => {

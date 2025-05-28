@@ -17,7 +17,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { RewardWithClaimCount } from '@/lib/types/reward';
+import {
+  RewardWithClaimCount,
+  FetchOptions,
+  SortingState,
+  RewardTableProps,
+} from '@/lib/types/reward';
 import { format } from 'date-fns';
 import Image from 'next/image';
 import { useFetch } from '@/hooks/use-fetch';
@@ -25,23 +30,18 @@ import { getAllRewardsWithClaimCount } from '../actions';
 import { TableLayout } from '@/components/layout/table-layout';
 import { ImagePreviewDialog } from '@/components/image-preview-dialog';
 
-interface RewardTableProps {
-  onEdit?: (reward: RewardWithClaimCount) => void;
-  onDelete: (reward: RewardWithClaimCount) => void;
-}
-
 export function RewardTable({ onEdit, onDelete }: RewardTableProps) {
   // State for image preview dialog
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   // Use the useFetch hook to handle data fetching, pagination, and sorting
-  const fetchRewards = async (options: any) => {
+  const fetchRewards = async (options: FetchOptions) => {
     const response = await getAllRewardsWithClaimCount({
-      page: options.page + 1,
-      limit: options.limit,
+      page: (options.page ?? 0) + 1,
+      limit: options.limit ?? 10,
       sortBy: options.sortBy?.id || 'name',
       sortDirection: options.sortBy?.desc ? 'desc' : 'asc',
-      search: options.search,
+      query: options.search,
       includeInactive: true,
     });
 
@@ -82,8 +82,8 @@ export function RewardTable({ onEdit, onDelete }: RewardTableProps) {
   };
 
   // Handle sorting change
-  const handleSortingChange = (newSorting: any) => {
-    setSortBy(newSorting);
+  const handleSortingChange = (newSorting: SortingState[]) => {
+    setSortBy(newSorting.length > 0 ? [newSorting[0]] : []);
   };
 
   // Handle search change

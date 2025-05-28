@@ -219,6 +219,7 @@ export const TransactionPDF = ({
     <Page size="A4" style={styles.page}>
       <View style={styles.header}>
         <View style={styles.headerTop}>
+          {/* eslint-disable-next-line jsx-a11y/alt-text */}
           <Image
             source={STORE_LOGO}
             style={styles.logo}

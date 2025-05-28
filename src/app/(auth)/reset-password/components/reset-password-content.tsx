@@ -42,7 +42,8 @@ export default function ResetPasswordContent() {
             variant: 'destructive',
           });
         }
-      } catch (err) {
+      } catch (error) {
+        console.error('Error validating token:', error);
         toast({
           title: 'Error',
           description: 'An error occurred while validating your reset link.',

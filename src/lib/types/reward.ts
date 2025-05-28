@@ -64,6 +64,7 @@ export type UpdateRewardData = {
 // Reward search parameters
 export type RewardSearchParams = {
   query?: string;
+  search?: string; // Add search property
   page?: number;
   limit?: number;
   sortBy?: string;
@@ -200,4 +201,25 @@ export interface RewardClaimWhereInput {
     reward?: { name?: { contains: string; mode?: 'insensitive' } };
   }>;
   status?: string;
+}
+
+// Additional interfaces for reward table functionality
+export interface FetchOptions {
+  page?: number; // Make page optional to match TableFetchOptions
+  limit?: number; // Make limit optional to match TableFetchOptions
+  sortBy?: {
+    id: string;
+    desc: boolean;
+  } | null;
+  search?: string;
+}
+
+export interface SortingState {
+  id: string;
+  desc: boolean;
+}
+
+export interface RewardTableProps {
+  onEdit?: (reward: RewardWithClaimCount) => void;
+  onDelete: (reward: RewardWithClaimCount) => void;
 }

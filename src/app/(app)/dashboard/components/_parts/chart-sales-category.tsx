@@ -4,7 +4,6 @@ import { LabelList, Pie, PieChart } from 'recharts';
 import { getTopCategories } from '../../actions';
 import { UnavailableData } from '@/components/unavailable-data';
 import { LoaderCardContent } from '@/components/loader-card-content';
-
 import {
   Card,
   CardContent,
@@ -18,7 +17,8 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
+import { DateFilter as FilterDateFilter } from '@/lib/types/filter';
 
 // Basic chart config with just the visitors key
 const baseChartConfig = {
@@ -46,7 +46,18 @@ interface CategoryData {
   label: string;
 }
 
-export function SalesCategory(filter?: any) {
+// Define props interface
+interface SalesCategoryProps {
+  filter?: FilterDateFilter;
+}
+
+// Define API response interface
+interface CategoryApiItem {
+  categoryName: string;
+  transactionCount: number;
+}
+
+export function SalesCategory({ filter }: SalesCategoryProps) {
   const [chartData, setChartData] = useState<CategoryData[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -64,16 +75,37 @@ export function SalesCategory(filter?: any) {
     return config;
   }, [chartData]);
 
-  const fetchTopCategories = async () => {
+  const fetchTopCategories = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await getTopCategories(filter);
+
+      // Convert FilterDateFilter to ExtendedDateFilter format expected by the API
+      // Provide default values if filter is not provided
+      const defaultStart = new Date();
+      defaultStart.setDate(defaultStart.getDate() - 7); // Last 7 days
+      const defaultEnd = new Date();
+
+      const apiFilter = {
+        filter: {
+          from:
+            filter?.from instanceof Date
+              ? filter.from.toISOString().split('T')[0]
+              : filter?.from
+                ? String(filter.from)
+                : defaultStart.toISOString().split('T')[0],
+          to:
+            filter?.to instanceof Date
+              ? filter.to.toISOString().split('T')[0]
+              : filter?.to
+                ? String(filter.to)
+                : defaultEnd.toISOString().split('T')[0],
+        },
+      };
+
+      const response = await getTopCategories(apiFilter);
       if (response.success && response.data) {
         const formattedData = response.data.map(
-          (
-            item: { categoryName: string; transactionCount: number },
-            index: number,
-          ) => ({
+          (item: CategoryApiItem, index: number) => ({
             browser: item.categoryName, // Using browser key for consistency with chart component
             visitors: item.transactionCount, // Using visitors key for consistency with chart component
             fill: categoryColors[index % categoryColors.length],
@@ -91,11 +123,11 @@ export function SalesCategory(filter?: any) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filter]); // Include filter as dependency
 
   useEffect(() => {
     fetchTopCategories();
-  }, [filter]);
+  }, [fetchTopCategories]); // Now fetchTopCategories is stable
 
   return (
     <Card className="flex flex-col">
