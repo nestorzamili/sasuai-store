@@ -162,6 +162,7 @@ export function SalesTrend() {
       console.error('Error fetching sales statistics:', error);
     }
   };
+
   useEffect(() => {
     fetchSalesStatistic(year);
   }, [year]);

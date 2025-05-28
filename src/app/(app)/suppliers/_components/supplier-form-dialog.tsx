@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -88,59 +88,65 @@ export default function SupplierFormDialog({
     }
   }, [form, initialData, isOpen]);
 
-  // Handle form submission
-  const onSubmit = async (values: FormValues) => {
-    try {
-      setLoading(true);
+  // Handle form submission - stabilize with useCallback
+  const onSubmit = useCallback(
+    async (values: FormValues) => {
+      try {
+        setLoading(true);
 
-      const result =
-        isEditing && initialData
-          ? await updateSupplier(initialData.id, {
-              name: values.name,
-              contact: values.contact,
-            })
-          : await createSupplier({
-              name: values.name,
-              contact: values.contact,
-            });
+        const result =
+          isEditing && initialData
+            ? await updateSupplier(initialData.id, {
+                name: values.name,
+                contact: values.contact,
+              })
+            : await createSupplier({
+                name: values.name,
+                contact: values.contact,
+              });
 
-      if (result.success) {
-        toast({
-          title: isEditing ? 'Supplier updated' : 'Supplier created',
-          description: isEditing
-            ? 'Supplier has been updated successfully'
-            : 'New supplier has been created',
-        });
+        if (result.success) {
+          toast({
+            title: isEditing ? 'Supplier updated' : 'Supplier created',
+            description: isEditing
+              ? 'Supplier has been updated successfully'
+              : 'New supplier has been created',
+          });
 
-        form.reset();
-        onSuccess?.();
-        setIsOpen(false);
-      } else {
+          form.reset();
+          onSuccess?.();
+          setIsOpen(false);
+        } else {
+          toast({
+            title: 'Error',
+            description: result.error || 'Something went wrong',
+            variant: 'destructive',
+          });
+        }
+      } catch (error) {
+        console.error('Error creating/updating supplier:', error);
         toast({
           title: 'Error',
-          description: result.error || 'Something went wrong',
+          description: 'An unexpected error occurred',
           variant: 'destructive',
         });
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Error creating/updating supplier:', error);
-      toast({
-        title: 'Error',
-        description: 'An unexpected error occurred',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    [isEditing, initialData, form, onSuccess, setIsOpen],
+  );
 
-  const handleOpenChange = (value: boolean) => {
-    setIsOpen(value);
-    // If dialog is closing, reset form
-    if (!value) {
-      form.reset();
-    }
-  };
+  const handleOpenChange = useCallback(
+    (value: boolean) => {
+      setIsOpen(value);
+      // If dialog is closing, reset form
+      if (!value) {
+        form.reset();
+      }
+    },
+    [setIsOpen, form],
+  );
 
   const dialogContent = (
     <DialogContent className="sm:max-w-[500px]">

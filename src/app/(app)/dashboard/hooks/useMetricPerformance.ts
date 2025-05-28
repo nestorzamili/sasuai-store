@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { metricPeformance } from '../actions';
 import { DateFilter as FilterDateFilter } from '@/lib/types/filter';
 import { DateFilter as DashboardDateFilter } from '@/lib/types/dashboard';
@@ -27,6 +27,21 @@ export function useMetricPerformance(filter: FilterDateFilter) {
 
   const abortControllerRef = useRef<AbortController | null>(null);
 
+  // Memoize the filter conversion to prevent unnecessary re-renders
+  const dashboardFilter: DashboardDateFilter = useMemo(
+    () => ({
+      from:
+        filter.from instanceof Date
+          ? filter.from.toISOString().split('T')[0]
+          : String(filter.from),
+      to:
+        filter.to instanceof Date
+          ? filter.to.toISOString().split('T')[0]
+          : String(filter.to),
+    }),
+    [filter.from, filter.to],
+  );
+
   const fetchMetricPerformance = useCallback(async () => {
     try {
       // Cancel previous request
@@ -36,18 +51,6 @@ export function useMetricPerformance(filter: FilterDateFilter) {
 
       abortControllerRef.current = new AbortController();
       setIsLoading(true);
-
-      // Convert filter
-      const dashboardFilter: DashboardDateFilter = {
-        from:
-          filter.from instanceof Date
-            ? filter.from.toISOString().split('T')[0]
-            : String(filter.from),
-        to:
-          filter.to instanceof Date
-            ? filter.to.toISOString().split('T')[0]
-            : String(filter.to),
-      };
 
       const response = await metricPeformance(dashboardFilter);
 
@@ -76,9 +79,9 @@ export function useMetricPerformance(filter: FilterDateFilter) {
     } finally {
       setIsLoading(false);
     }
-  }, [filter]);
+  }, [dashboardFilter]); // Use memoized dashboardFilter as dependency
 
-  // Auto-fetch when filter changes
+  // Auto-fetch when dashboardFilter changes
   useEffect(() => {
     fetchMetricPerformance();
 

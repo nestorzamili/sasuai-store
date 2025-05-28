@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useState } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { ColumnDef } from '@tanstack/react-table';
 import { MoreHorizontal } from 'lucide-react';
 import { IconTrash, IconEdit } from '@tabler/icons-react';
@@ -48,35 +48,38 @@ export function ProductTable({
     product: null,
   });
 
-  // Define the fetch function for products
-  const fetchProducts = async (
-    options: TableFetchOptions,
-  ): Promise<{
-    data: ProductWithRelations[];
-    totalRows: number;
-  }> => {
-    const response = await getPaginatedProducts({
-      page: (options.page ?? 0) + 1, // Convert from 0-indexed to 1-indexed
-      pageSize: options.limit ?? 10,
-      sortField: options.sortBy?.id || 'name',
-      sortDirection: options.sortBy?.desc ? 'desc' : 'asc',
-      search: options.search,
-      ...filterParams, // Apply additional filter params
-      ...options.filters, // Apply filters from the table
-    });
+  // Define the fetch function for products - stabilize with useCallback
+  const fetchProducts = useCallback(
+    async (
+      options: TableFetchOptions,
+    ): Promise<{
+      data: ProductWithRelations[];
+      totalRows: number;
+    }> => {
+      const response = await getPaginatedProducts({
+        page: (options.page ?? 0) + 1, // Convert from 0-indexed to 1-indexed
+        pageSize: options.limit ?? 10,
+        sortField: options.sortBy?.id || 'name',
+        sortDirection: options.sortBy?.desc ? 'desc' : 'asc',
+        search: options.search,
+        ...filterParams, // Apply additional filter params
+        ...options.filters, // Apply filters from the table
+      });
 
-    if (response.success && response.data) {
+      if (response.success && response.data) {
+        return {
+          data: response.data.products as ProductWithRelations[],
+          totalRows: response.data.totalCount,
+        };
+      }
+
       return {
-        data: response.data.products as ProductWithRelations[],
-        totalRows: response.data.totalCount,
+        data: [],
+        totalRows: 0,
       };
-    }
-
-    return {
-      data: [],
-      totalRows: 0,
-    };
-  };
+    },
+    [filterParams], // Only depend on filterParams which should be stable
+  );
 
   const {
     data,
@@ -96,150 +99,159 @@ export function ProductTable({
     initialSortDirection: false,
   });
 
-  // Handle pagination change
-  const handlePaginationChange = (newPagination: {
-    pageIndex: number;
-    pageSize: number;
-  }) => {
-    setPage(newPagination.pageIndex);
-    setLimit(newPagination.pageSize);
-  };
+  // Handle pagination change - stabilize with useCallback
+  const handlePaginationChange = useCallback(
+    (newPagination: { pageIndex: number; pageSize: number }) => {
+      setPage(newPagination.pageIndex);
+      setLimit(newPagination.pageSize);
+    },
+    [setPage, setLimit],
+  );
 
-  // Handle sorting change
-  const handleSortingChange = (newSorting: { id: string; desc: boolean }[]) => {
-    setSortBy(newSorting);
-  };
+  // Handle sorting change - stabilize with useCallback
+  const handleSortingChange = useCallback(
+    (newSorting: { id: string; desc: boolean }[]) => {
+      setSortBy(newSorting);
+    },
+    [setSortBy],
+  );
 
-  // Handle search change
-  const handleSearchChange = (newSearch: string) => {
-    setSearch(newSearch);
-  };
+  // Handle search change - stabilize with useCallback
+  const handleSearchChange = useCallback(
+    (newSearch: string) => {
+      setSearch(newSearch);
+    },
+    [setSearch],
+  );
 
-  // Handle delete confirmation
-  const handleDeleteClick = (product: ProductWithRelations) => {
+  // Handle delete confirmation - stabilize with useCallback
+  const handleDeleteClick = useCallback((product: ProductWithRelations) => {
     setDeleteState({ isOpen: true, product });
-  };
+  }, []);
 
-  // Handle dialog open state change
-  const handleDeleteDialogChange = (isOpen: boolean) => {
+  // Handle dialog open state change - stabilize with useCallback
+  const handleDeleteDialogChange = useCallback((isOpen: boolean) => {
     setDeleteState((prev) => ({ ...prev, isOpen }));
-  };
+  }, []);
 
-  // Handle delete success
-  const handleDeleteSuccess = () => {
+  // Handle delete success - stabilize with useCallback
+  const handleDeleteSuccess = useCallback(() => {
     refresh(); // Refresh the data after successful deletion
-  };
+  }, [refresh]);
 
-  // Define table columns
-  const columns: ColumnDef<ProductWithRelations>[] = [
-    {
-      header: 'Product Name',
-      accessorKey: 'name',
-      cell: ({ row }) => (
-        <div className="font-medium">{row.getValue('name')}</div>
-      ),
-    },
-    {
-      header: 'Description',
-      accessorKey: 'description',
-      cell: ({ row }) => {
-        const description = row.original.description || 'No description';
-        return (
-          <div className="text-sm text-muted-foreground truncate max-w-[200px]">
-            {description}
-          </div>
-        );
+  // Define table columns - memoize to prevent re-creation
+  const columns: ColumnDef<ProductWithRelations>[] = useMemo(
+    () => [
+      {
+        header: 'Product Name',
+        accessorKey: 'name',
+        cell: ({ row }) => (
+          <div className="font-medium">{row.getValue('name')}</div>
+        ),
       },
-    },
-    {
-      header: 'Category',
-      accessorKey: 'category.name',
-      cell: ({ row }) => <div>{row.original.category.name}</div>,
-    },
-    {
-      header: 'Brand',
-      accessorKey: 'brand.name',
-      cell: ({ row }) => <div>{row.original.brand?.name || 'N/A'}</div>,
-    },
-    {
-      header: 'Barcode',
-      accessorKey: 'barcode',
-      cell: ({ row }) => <div>{row.original.barcode || 'N/A'}</div>,
-    },
-    {
-      header: 'Price',
-      accessorKey: 'price',
-      cell: ({ row }) => (
-        <div className="text-right">{formatRupiah(row.original.price)}</div>
-      ),
-    },
-    {
-      header: 'Stock',
-      accessorKey: 'currentStock',
-      cell: ({ row }) => {
-        const stock = row.original.currentStock;
-        return (
-          <div className="flex items-center justify-center">
-            <Badge
-              variant={
-                stock <= 5
-                  ? 'destructive'
-                  : stock <= 10
-                    ? 'secondary'
-                    : 'outline'
-              }
-            >
-              {stock} {row.original.unit.symbol}
-            </Badge>
-          </div>
-        );
+      {
+        header: 'Description',
+        accessorKey: 'description',
+        cell: ({ row }) => {
+          const description = row.original.description || 'No description';
+          return (
+            <div className="text-sm text-muted-foreground truncate max-w-[200px]">
+              {description}
+            </div>
+          );
+        },
       },
-    },
-    {
-      header: 'Status',
-      accessorKey: 'isActive',
-      cell: ({ row }) => {
-        return row.original.isActive ? (
-          <Badge>Active</Badge>
-        ) : (
-          <Badge variant="secondary">Inactive</Badge>
-        );
+      {
+        header: 'Category',
+        accessorKey: 'category.name',
+        cell: ({ row }) => <div>{row.original.category.name}</div>,
       },
-    },
-    {
-      id: 'actions',
-      header: '',
-      cell: ({ row }) => {
-        const product = row.original;
-        return (
-          <div className="text-right">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-8 w-8 p-0">
-                  <span className="sr-only">Open menu</span>
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  className="flex justify-between cursor-pointer"
-                  onClick={() => onEdit?.(product)}
-                >
-                  Edit <IconEdit className="h-4 w-4" />
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="flex justify-between cursor-pointer text-destructive focus:text-destructive"
-                  onClick={() => handleDeleteClick(product)}
-                >
-                  Delete <IconTrash className="h-4 w-4" />
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        );
+      {
+        header: 'Brand',
+        accessorKey: 'brand.name',
+        cell: ({ row }) => <div>{row.original.brand?.name || 'N/A'}</div>,
       },
-    },
-  ];
+      {
+        header: 'Barcode',
+        accessorKey: 'barcode',
+        cell: ({ row }) => <div>{row.original.barcode || 'N/A'}</div>,
+      },
+      {
+        header: 'Price',
+        accessorKey: 'price',
+        cell: ({ row }) => (
+          <div className="text-right">{formatRupiah(row.original.price)}</div>
+        ),
+      },
+      {
+        header: 'Stock',
+        accessorKey: 'currentStock',
+        cell: ({ row }) => {
+          const stock = row.original.currentStock;
+          return (
+            <div className="flex items-center justify-center">
+              <Badge
+                variant={
+                  stock <= 5
+                    ? 'destructive'
+                    : stock <= 10
+                      ? 'secondary'
+                      : 'outline'
+                }
+              >
+                {stock} {row.original.unit.symbol}
+              </Badge>
+            </div>
+          );
+        },
+      },
+      {
+        header: 'Status',
+        accessorKey: 'isActive',
+        cell: ({ row }) => {
+          return row.original.isActive ? (
+            <Badge>Active</Badge>
+          ) : (
+            <Badge variant="secondary">Inactive</Badge>
+          );
+        },
+      },
+      {
+        id: 'actions',
+        header: '',
+        cell: ({ row }) => {
+          const product = row.original;
+          return (
+            <div className="text-right">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="h-8 w-8 p-0">
+                    <span className="sr-only">Open menu</span>
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem
+                    className="flex justify-between cursor-pointer"
+                    onClick={() => onEdit?.(product)}
+                  >
+                    Edit <IconEdit className="h-4 w-4" />
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="flex justify-between cursor-pointer text-destructive focus:text-destructive"
+                    onClick={() => handleDeleteClick(product)}
+                  >
+                    Delete <IconTrash className="h-4 w-4" />
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          );
+        },
+      },
+    ],
+    [onEdit, handleDeleteClick],
+  );
 
   return (
     <>

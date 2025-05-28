@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { getAllMemberTiers, awardPointsToMember } from '../action';
 import { MemberWithTier, MemberTier } from '@/lib/types/member';
 import MemberPrimaryButton from './member-primary-button';
@@ -71,11 +71,11 @@ export default function MainContent() {
     }
   };
 
-  // Handle edit member
-  const handleEdit = (member: MemberWithTier) => {
+  // Handle edit member - stabilize with useCallback
+  const handleEdit = useCallback((member: MemberWithTier) => {
     setSelectedMember(member);
     setIsDialogOpen(true);
-  };
+  }, []);
 
   // Handle member operation success
   const handleSuccess = () => {
@@ -86,16 +86,14 @@ export default function MainContent() {
   // Handle tab change
   const handleTabChange = (value: string) => {
     setActiveTab(value);
-    if (value === 'tiers') {
-      fetchTiers();
-    }
+    // Remove the fetchTiers() call here as it's causing unnecessary re-renders
   };
 
-  // Handle award points dialog
-  const handleOpenAwardPoints = (member: MemberWithTier) => {
+  // Handle award points dialog - stabilize with useCallback
+  const handleOpenAwardPoints = useCallback((member: MemberWithTier) => {
     setMemberForPoints(member);
     setIsAwardPointsOpen(true);
-  };
+  }, []);
 
   const handleAwardPointsOpenChange = (open: boolean) => {
     setIsAwardPointsOpen(open);

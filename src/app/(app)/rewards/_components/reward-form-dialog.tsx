@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -106,7 +106,7 @@ export default function RewardFormDialog({
   }, [form, defaultValues]);
 
   // Memoized date validation
-  const validateExpiryDate = useCallback((date: Date): boolean => {
+  const validateExpiryDate = (date: Date): boolean => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -114,78 +114,72 @@ export default function RewardFormDialog({
     expiryDate.setHours(0, 0, 0, 0);
 
     return expiryDate >= today;
-  }, []);
+  };
 
   // Optimized form submission with better error handling
-  const onSubmit = useCallback(
-    async (values: FormValues) => {
-      try {
-        setLoading(true);
+  const onSubmit = async (values: FormValues) => {
+    try {
+      setLoading(true);
 
-        // Validate expiry date
-        if (values.expiryDate && !validateExpiryDate(values.expiryDate)) {
-          toast({
-            title: 'Invalid date',
-            description: 'Expiry date cannot be in the past',
-            variant: 'destructive',
-          });
-          return;
-        }
-
-        const submitData = {
-          name: values.name,
-          pointsCost: values.pointsCost,
-          stock: values.stock,
-          isActive: values.isActive,
-          description: values.description || undefined,
-          imageUrl: values.imageUrl || undefined,
-          expiryDate: values.expiryDate,
-        };
-
-        const result =
-          isEditing && initialData
-            ? await updateReward(initialData.id, submitData)
-            : await createReward(submitData);
-
-        if (result.success) {
-          toast({
-            title: isEditing ? 'Reward updated' : 'Reward created',
-            description: isEditing
-              ? 'Reward has been updated successfully'
-              : 'New reward has been created',
-          });
-
-          form.reset();
-          onSuccess?.();
-        } else {
-          toast({
-            title: 'Error',
-            description: result.error || 'Something went wrong',
-            variant: 'destructive',
-          });
-        }
-      } catch (error) {
-        console.error('Reward form submission error:', error);
+      // Validate expiry date
+      if (values.expiryDate && !validateExpiryDate(values.expiryDate)) {
         toast({
-          title: 'Error',
-          description: 'An unexpected error occurred',
+          title: 'Invalid date',
+          description: 'Expiry date cannot be in the past',
           variant: 'destructive',
         });
-      } finally {
-        setLoading(false);
+        return;
       }
-    },
-    [isEditing, initialData, validateExpiryDate, form, onSuccess],
-  );
+
+      const submitData = {
+        name: values.name,
+        pointsCost: values.pointsCost,
+        stock: values.stock,
+        isActive: values.isActive,
+        description: values.description || undefined,
+        imageUrl: values.imageUrl || undefined,
+        expiryDate: values.expiryDate,
+      };
+
+      const result =
+        isEditing && initialData
+          ? await updateReward(initialData.id, submitData)
+          : await createReward(submitData);
+
+      if (result.success) {
+        toast({
+          title: isEditing ? 'Reward updated' : 'Reward created',
+          description: isEditing
+            ? 'Reward has been updated successfully'
+            : 'New reward has been created',
+        });
+
+        form.reset();
+        onSuccess?.();
+      } else {
+        toast({
+          title: 'Error',
+          description: result.error || 'Something went wrong',
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      console.error('Reward form submission error:', error);
+      toast({
+        title: 'Error',
+        description: 'An unexpected error occurred',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Optimized image change handler
-  const handleImageChange = useCallback(
-    (imageUrl: string) => {
-      form.setValue('imageUrl', imageUrl);
-      form.trigger('imageUrl');
-    },
-    [form],
-  );
+  const handleImageChange = (imageUrl: string) => {
+    form.setValue('imageUrl', imageUrl);
+    form.trigger('imageUrl');
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

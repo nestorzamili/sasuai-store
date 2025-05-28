@@ -17,7 +17,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { DateFilter as FilterDateFilter } from '@/lib/types/filter';
 
 const chartConfig = {
@@ -50,40 +50,50 @@ interface PaymentMethodApiItem {
 }
 
 export function PaymentMethod({ filter }: PaymentMethodProps) {
-  const [chart, setChart] = useState<PaymentMethodData[]>([
-    { type: 'cash', total: 275, fill: 'var(--color-cash)' },
-    { type: 'debit', total: 200, fill: 'var(--color-debit)' },
-  ]);
+  const [chart, setChart] = useState<PaymentMethodData[]>([]);
   const [loading, setLoading] = useState(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Memoize the API filter to prevent unnecessary recreations
+  const apiFilter = useMemo(() => {
+    const defaultStart = new Date();
+    defaultStart.setDate(defaultStart.getDate() - 7);
+    const defaultEnd = new Date();
+
+    return {
+      filter: {
+        from:
+          filter?.from instanceof Date
+            ? filter.from.toISOString().split('T')[0]
+            : filter?.from
+              ? String(filter.from)
+              : defaultStart.toISOString().split('T')[0],
+        to:
+          filter?.to instanceof Date
+            ? filter.to.toISOString().split('T')[0]
+            : filter?.to
+              ? String(filter.to)
+              : defaultEnd.toISOString().split('T')[0],
+      },
+    };
+  }, [filter?.from, filter?.to]);
 
   const fetchPaymentMethod = useCallback(async () => {
     try {
+      // Cancel previous request
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+
+      abortControllerRef.current = new AbortController();
       setLoading(true);
 
-      // Convert FilterDateFilter to ExtendedDateFilter format expected by the API
-      // Provide default values if filter is not provided
-      const defaultStart = new Date();
-      defaultStart.setDate(defaultStart.getDate() - 7); // Last 7 days
-      const defaultEnd = new Date();
-
-      const apiFilter = {
-        filter: {
-          from:
-            filter?.from instanceof Date
-              ? filter.from.toISOString().split('T')[0]
-              : filter?.from
-                ? String(filter.from)
-                : defaultStart.toISOString().split('T')[0],
-          to:
-            filter?.to instanceof Date
-              ? filter.to.toISOString().split('T')[0]
-              : filter?.to
-                ? String(filter.to)
-                : defaultEnd.toISOString().split('T')[0],
-        },
-      };
-
       const response = await getTopPaymentMethod(apiFilter);
+
+      if (abortControllerRef.current?.signal.aborted) {
+        return;
+      }
+
       if (response.success && response.data) {
         const formattedData = response.data.map(
           (item: PaymentMethodApiItem) => ({
@@ -94,17 +104,28 @@ export function PaymentMethod({ filter }: PaymentMethodProps) {
           }),
         );
         setChart(formattedData);
+      } else {
+        setChart([]);
       }
     } catch (error) {
-      console.error('Error fetching top payment methods:', error);
+      if (error instanceof Error && error.name !== 'AbortError') {
+        console.error('Error fetching top payment methods:', error);
+      }
+      setChart([]);
     } finally {
       setLoading(false);
     }
-  }, [filter]); // Include filter as dependency
+  }, [apiFilter]);
 
   useEffect(() => {
     fetchPaymentMethod();
-  }, [fetchPaymentMethod]); // Now fetchPaymentMethod is stable
+
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, [fetchPaymentMethod]);
 
   return (
     <Card className="flex flex-col">

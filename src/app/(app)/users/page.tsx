@@ -1,40 +1,34 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import UserPrimaryButton from './_components/user-primary-button';
 import { UserTable } from './_components/user-table';
 import { User } from '@/lib/types/user';
 import UserFormDialog from './_components/user-form-dialog';
 
 export default function UsersPage() {
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
-  // Handle dialog reset on close
-  const handleDialogOpenChange = (open: boolean) => {
+  // Handle dialog reset on close - stabilize with useCallback
+  const handleDialogOpenChange = useCallback((open: boolean) => {
     setIsDialogOpen(open);
     if (!open) {
       setSelectedUser(null);
     }
-  };
+  }, []);
 
-  // Handle edit user
-  const handleEdit = (user: User) => {
+  // Handle edit user - stabilize with useCallback
+  const handleEdit = useCallback((user: User) => {
     setSelectedUser(user);
     setIsDialogOpen(true);
-  };
+  }, []);
 
-  // Handle operation success
-  const handleSuccess = () => {
+  // Handle operation success - stabilize with useCallback
+  const handleSuccess = useCallback(() => {
     setIsDialogOpen(false);
     setSelectedUser(null);
-    handleRefresh();
-  };
-
-  const handleRefresh = () => {
-    setRefreshTrigger((prev) => prev + 1);
-  };
+  }, []);
 
   return (
     <div className="space-y-4">
@@ -53,11 +47,7 @@ export default function UsersPage() {
         />
       </div>
 
-      <UserTable
-        key={`user-table-${refreshTrigger}`}
-        onEdit={handleEdit}
-        onRefresh={handleRefresh}
-      />
+      <UserTable onEdit={handleEdit} onRefresh={handleSuccess} />
 
       {/* Additional UserFormDialog for editing */}
       {selectedUser && (

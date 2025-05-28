@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { authClient } from '@/lib/auth-client';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import {
   Card,
   CardContent,
@@ -88,70 +88,76 @@ export default function ChangePasswordForm() {
   }, [form]);
 
   // Centralized error handling for password change
-  const handlePasswordChangeError = (errorMessage: string) => {
-    if (
-      ['invalid password', 'incorrect password', 'wrong password'].some((err) =>
-        errorMessage.toLowerCase().includes(err),
-      )
-    ) {
-      setPasswordError('The current password you entered is incorrect.');
-      form.setFocus('currentPassword');
-    } else {
-      toast({
-        title: 'Password change failed',
-        description:
-          errorMessage || 'There was a problem changing your password.',
-        variant: 'destructive',
-      });
-    }
-  };
+  const handlePasswordChangeError = useCallback(
+    (errorMessage: string) => {
+      if (
+        ['invalid password', 'incorrect password', 'wrong password'].some(
+          (err) => errorMessage.toLowerCase().includes(err),
+        )
+      ) {
+        setPasswordError('The current password you entered is incorrect.');
+        form.setFocus('currentPassword');
+      } else {
+        toast({
+          title: 'Password change failed',
+          description:
+            errorMessage || 'There was a problem changing your password.',
+          variant: 'destructive',
+        });
+      }
+    },
+    [form],
+  );
 
   // Handle password change
-  const onSubmit = async (data: PasswordFormValues) => {
-    setIsChangingPassword(true);
-    setPasswordError(null);
+  const onSubmit = useCallback(
+    async (data: PasswordFormValues) => {
+      setIsChangingPassword(true);
+      setPasswordError(null);
 
-    try {
-      await authClient.changePassword(
-        {
-          newPassword: data.newPassword,
-          currentPassword: data.currentPassword,
-          revokeOtherSessions: true,
-        },
-        {
-          onSuccess: () => {
-            toast({
-              title: 'Password changed successfully',
-              description:
-                'Your password has been updated and other sessions have been logged out.',
-            });
-            form.reset();
-            router.refresh();
+      try {
+        await authClient.changePassword(
+          {
+            newPassword: data.newPassword,
+            currentPassword: data.currentPassword,
+            revokeOtherSessions: true,
           },
-          onError: (ctx) => {
-            handlePasswordChangeError(ctx.error?.message || '');
+          {
+            onSuccess: () => {
+              toast({
+                title: 'Password changed successfully',
+                description:
+                  'Your password has been updated and other sessions have been logged out.',
+              });
+              form.reset();
+              router.refresh();
+            },
+            onError: (ctx) => {
+              handlePasswordChangeError(ctx.error?.message || '');
+            },
           },
-        },
-      );
-    } catch (error: unknown) {
-      // Extract error message safely with type narrowing
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : typeof error === 'object' && error !== null && 'message' in error
-          ? String((error as { message: unknown }).message)
-          : 'An unknown error occurred';
+        );
+      } catch (error: unknown) {
+        // Extract error message safely with type narrowing
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : typeof error === 'object' && error !== null && 'message' in error
+              ? String((error as { message: unknown }).message)
+              : 'An unknown error occurred';
 
-      toast({
-        title: 'Password change failed',
-        description:
-          errorMessage || 'There was a problem changing your password.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsChangingPassword(false);
-    }
-  };
+        toast({
+          title: 'Password change failed',
+          description:
+            errorMessage || 'There was a problem changing your password.',
+          variant: 'destructive',
+        });
+      } finally {
+        setIsChangingPassword(false);
+      }
+    },
+    [form, router, handlePasswordChangeError],
+  );
 
   return (
     <Card>

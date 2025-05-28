@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { IconAlertTriangle } from '@tabler/icons-react';
 import { toast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -25,7 +25,7 @@ export function BrandDeleteDialog({
 
   const hasProducts = !!(brand._count?.products && brand._count.products > 0);
 
-  const handleDelete = async () => {
+  const handleDelete = useCallback(async () => {
     try {
       setIsDeleting(true);
 
@@ -65,7 +65,7 @@ export function BrandDeleteDialog({
       setIsDeleting(false);
       onOpenChange(false);
     }
-  };
+  }, [brand, hasProducts, onOpenChange, onSuccess]);
 
   return (
     <ConfirmDialog

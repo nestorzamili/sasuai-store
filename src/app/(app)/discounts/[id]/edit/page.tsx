@@ -9,7 +9,7 @@ import { toast } from '@/hooks/use-toast';
 import { discountSchema, DiscountFormValues } from '../../schema';
 import { DiscountType, DiscountApplyTo } from '@/lib/types/discount';
 import { getDiscount, updateDiscount } from '../../action';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { Separator } from '@/components/ui/separator';
@@ -52,7 +52,7 @@ export default function EditDiscountPage() {
   });
 
   // Memoize the data fetching to avoid unnecessary rerenders
-  const fetchDiscountData = useCallback(async () => {
+  const fetchDiscountData = async () => {
     if (!discountId) return;
 
     try {
@@ -121,12 +121,12 @@ export default function EditDiscountPage() {
     } finally {
       setInitialLoading(false);
     }
-  }, [discountId, router, form]);
+  };
 
   // Fetch discount data once on component mount
   useEffect(() => {
     fetchDiscountData();
-  }, [fetchDiscountData]);
+  }, [discountId]);
 
   // Handle form submission
   const onSubmit = async (values: DiscountFormValues) => {

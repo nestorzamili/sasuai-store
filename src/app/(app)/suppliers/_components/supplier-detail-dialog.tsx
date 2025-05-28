@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -40,35 +40,35 @@ export function SupplierDetailDialog({
   const [supplier, setSupplier] = useState<SupplierWithStockIns | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch supplier details when the dialog opens
-  useEffect(() => {
-    const fetchSupplier = async () => {
-      if (!supplierId || !open) {
-        setIsLoading(false);
-        return;
-      }
+  // Fetch supplier details when the dialog opens - stabilize with useCallback
+  const fetchSupplier = useCallback(async () => {
+    if (!supplierId || !open) {
+      setIsLoading(false);
+      return;
+    }
 
-      setIsLoading(true);
-      try {
-        const response = await getSupplierWithStockIns(supplierId);
-        if (response.success) {
-          setSupplier(response.data as unknown as SupplierWithStockIns);
-        }
-      } catch (error) {
-        console.error('Error fetching supplier details:', error);
-        toast({
-          title: 'Error fetching supplier details',
-          description:
-            'An unexpected error occurred while fetching supplier details',
-          variant: 'destructive',
-        });
-      } finally {
-        setIsLoading(false);
+    setIsLoading(true);
+    try {
+      const response = await getSupplierWithStockIns(supplierId);
+      if (response.success) {
+        setSupplier(response.data as unknown as SupplierWithStockIns);
       }
-    };
-
-    fetchSupplier();
+    } catch (error) {
+      console.error('Error fetching supplier details:', error);
+      toast({
+        title: 'Error fetching supplier details',
+        description:
+          'An unexpected error occurred while fetching supplier details',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   }, [supplierId, open]);
+
+  useEffect(() => {
+    fetchSupplier();
+  }, [fetchSupplier]);
 
   // Reset state when dialog closes
   useEffect(() => {
@@ -89,8 +89,8 @@ export function SupplierDetailDialog({
             {isLoading
               ? 'Loading supplier details...'
               : supplier
-              ? supplier.name
-              : 'Supplier Details'}
+                ? supplier.name
+                : 'Supplier Details'}
           </DialogTitle>
         </DialogHeader>
 

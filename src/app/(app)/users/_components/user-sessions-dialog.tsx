@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { toast } from '@/hooks/use-toast';
 import { User, UserSession } from '@/lib/types/user';
 import {
@@ -46,7 +46,7 @@ export function UserSessionsDialog({
   const [revokingSession, setRevokingSession] = useState<string | null>(null);
   const [revokingAll, setRevokingAll] = useState(false);
 
-  const fetchSessions = async () => {
+  const fetchSessions = useCallback(async () => {
     try {
       setLoading(true);
       const result = await getUserSessions({ userId: user.id });
@@ -70,46 +70,48 @@ export function UserSessionsDialog({
     } finally {
       setLoading(false);
     }
-  };
+  }, [user.id]);
 
   useEffect(() => {
     if (open) {
       fetchSessions();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
+  }, [open, fetchSessions]);
 
-  const handleRevokeSession = async (sessionToken: string) => {
-    try {
-      setRevokingSession(sessionToken);
-      const result = await revokeUserSession({ sessionToken });
+  const handleRevokeSession = useCallback(
+    async (sessionToken: string) => {
+      try {
+        setRevokingSession(sessionToken);
+        const result = await revokeUserSession({ sessionToken });
 
-      if (result.success) {
-        toast({
-          title: 'Session revoked',
-          description: 'The user session has been terminated successfully',
-        });
-        fetchSessions();
-      } else {
+        if (result.success) {
+          toast({
+            title: 'Session revoked',
+            description: 'The user session has been terminated successfully',
+          });
+          fetchSessions();
+        } else {
+          toast({
+            title: 'Error',
+            description: result.error || 'Failed to revoke session',
+            variant: 'destructive',
+          });
+        }
+      } catch (error) {
+        console.error('Error revoking session:', error);
         toast({
           title: 'Error',
-          description: result.error || 'Failed to revoke session',
+          description: 'An unexpected error occurred',
           variant: 'destructive',
         });
+      } finally {
+        setRevokingSession(null);
       }
-    } catch (error) {
-      console.error('Error revoking session:', error);
-      toast({
-        title: 'Error',
-        description: 'An unexpected error occurred',
-        variant: 'destructive',
-      });
-    } finally {
-      setRevokingSession(null);
-    }
-  };
+    },
+    [fetchSessions],
+  );
 
-  const handleRevokeAllSessions = async () => {
+  const handleRevokeAllSessions = useCallback(async () => {
     try {
       setRevokingAll(true);
       const result = await revokeAllUserSessions({ userId: user.id });
@@ -138,9 +140,9 @@ export function UserSessionsDialog({
     } finally {
       setRevokingAll(false);
     }
-  };
+  }, [user.id, fetchSessions, onSuccess]);
 
-  const getBrowserIcon = (userAgent?: string | null) => {
+  const getBrowserIcon = useCallback((userAgent?: string | null) => {
     if (!userAgent) return '🌐';
 
     if (userAgent.includes('Chrome')) return '🌐';
@@ -149,9 +151,9 @@ export function UserSessionsDialog({
     if (userAgent.includes('Edge')) return '🌐';
     if (userAgent.includes('Opera')) return '🔴';
     return '🌐';
-  };
+  }, []);
 
-  const getDeviceIcon = (userAgent?: string | null) => {
+  const getDeviceIcon = useCallback((userAgent?: string | null) => {
     if (!userAgent) return '💻';
 
     if (userAgent.includes('iPhone') || userAgent.includes('iPad')) return '📱';
@@ -160,7 +162,7 @@ export function UserSessionsDialog({
     if (userAgent.includes('Mac')) return '💻';
     if (userAgent.includes('Linux')) return '💻';
     return '💻';
-  };
+  }, []);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

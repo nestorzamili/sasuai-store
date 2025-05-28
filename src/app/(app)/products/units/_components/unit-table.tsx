@@ -1,6 +1,6 @@
 'use client';
 import * as React from 'react';
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { ColumnDef } from '@tanstack/react-table';
 import { MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -75,7 +75,7 @@ export function UnitTable({ onEdit, onRefresh }: UnitTableProps) {
     initialSortDirection: false,
   });
 
-  // Memoized handlers
+  // Memoized handlers - stabilize with useCallback
   const handlePaginationChange = useCallback(
     (newPagination: { pageIndex: number; pageSize: number }): void => {
       setPage(newPagination.pageIndex);
@@ -98,19 +98,19 @@ export function UnitTable({ onEdit, onRefresh }: UnitTableProps) {
     [setSearch],
   );
 
-  // Handle successful operations
+  // Handle successful operations - stabilize with useCallback
   const handleOperationSuccess = useCallback((): void => {
     refresh();
     onRefresh?.();
   }, [refresh, onRefresh]);
 
-  // Handle delete action
+  // Handle delete action - stabilize with useCallback
   const handleDeleteClick = useCallback((unit: UnitWithCounts): void => {
     setDeleteData(unit);
     setDeleteDialog(true);
   }, []);
 
-  // Handle edit action
+  // Handle edit action - stabilize with useCallback
   const handleEditClick = useCallback(
     (unit: UnitWithCounts): void => {
       onEdit?.(unit);
@@ -118,7 +118,7 @@ export function UnitTable({ onEdit, onRefresh }: UnitTableProps) {
     [onEdit],
   );
 
-  // Calculate if a unit is in use
+  // Calculate if a unit is in use - stabilize with useCallback
   const isUnitInUse = useCallback((unit: UnitWithCounts): boolean => {
     return !!(
       (unit._count?.products && unit._count.products > 0) ||
