@@ -114,7 +114,7 @@ export default function UserFormDialog({
             name: values.name,
             email: values.email,
             password: values.password || '',
-            role: values.role,
+            role: values.role as 'admin' | 'user' | undefined,
           });
 
           if (result.success) {
