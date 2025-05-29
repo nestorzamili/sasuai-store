@@ -1,6 +1,7 @@
 'use server';
 
 import { auth } from '@/lib/auth';
+import { headers } from 'next/headers';
 
 interface AuthError {
   statusCode?: number;
@@ -10,15 +11,20 @@ interface AuthError {
 
 export async function signInWithEmail(email: string, password: string) {
   try {
-    await auth.api.signInEmail({
+    const result = await auth.api.signInEmail({
       body: {
         email,
         password,
       },
+      headers: await headers(),
     });
+
+    // Add a small delay to ensure session is properly set
+    await new Promise((resolve) => setTimeout(resolve, 100));
 
     return {
       success: true,
+      session: result,
     };
   } catch (error: unknown) {
     const authError = error as AuthError;
@@ -46,15 +52,20 @@ export async function signInWithEmail(email: string, password: string) {
 
 export async function signInWithUsername(username: string, password: string) {
   try {
-    await auth.api.signInUsername({
+    const result = await auth.api.signInUsername({
       body: {
         username,
         password,
       },
+      headers: await headers(),
     });
+
+    // Add a small delay to ensure session is properly set
+    await new Promise((resolve) => setTimeout(resolve, 100));
 
     return {
       success: true,
+      session: result,
     };
   } catch (error: unknown) {
     const authError = error as AuthError;
