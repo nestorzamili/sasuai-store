@@ -77,27 +77,24 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
           description: 'Logged in successfully',
         });
 
-        // Use a small delay to ensure toast is shown and session is properly set
-        setTimeout(() => {
-          try {
-            // First refresh to ensure session is updated
-            router.refresh();
+        // Force a more comprehensive redirect strategy
+        try {
+          // First, try to refresh the page to update session
+          await new Promise((resolve) => setTimeout(resolve, 500));
 
-            // Then navigate to home page
+          // Use window.location for more reliable navigation
+          window.location.href = '/';
+
+          // Fallback: use Next.js router after a delay
+          setTimeout(() => {
             router.push('/');
-
-            // Add a fallback navigation in case Next.js router fails
-            setTimeout(() => {
-              if (window.location.pathname !== '/') {
-                window.location.href = '/';
-              }
-            }, 1000);
-          } catch (navigationError) {
-            console.error('Navigation error:', navigationError);
-            // Force navigation as last resort
-            window.location.href = '/';
-          }
-        }, 300);
+            router.refresh();
+          }, 1000);
+        } catch (navigationError) {
+          console.error('Navigation error:', navigationError);
+          // Ultimate fallback
+          window.location.replace('/');
+        }
 
         return;
       }
