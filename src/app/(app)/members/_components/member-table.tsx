@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
 import { ColumnDef } from '@tanstack/react-table';
@@ -40,7 +40,6 @@ import { toast } from '@/hooks/use-toast';
 import type {
   MemberWithTier,
   MemberTableProps,
-  FilterOption,
   TableFilter,
   MemberTier,
   MemberResponse,
@@ -81,198 +80,8 @@ export function MemberTable({ onEdit, onAwardPoints }: MemberTableProps) {
     fetchTiers();
   }, []);
 
-  // Event handlers
-  const handleDeleteClick = (member: MemberWithTier) => {
-    setSelectedMemberForDelete(member);
-    setIsDeleteDialogOpen(true);
-  };
-
-  const viewMemberDetails = (member: MemberWithTier) => {
-    router.push(`/members/${member.id}`);
-  };
-
-  const handleUnban = async (member: MemberWithTier) => {
-    try {
-      const result = await unbanMember(member.id);
-      if (result.success) {
-        toast({
-          title: 'Member unbanned',
-          description: `${member.name} has been unbanned successfully`,
-        });
-        refresh();
-      } else {
-        toast({
-          title: 'Error',
-          description: result.error || 'Failed to unban member',
-          variant: 'destructive',
-        });
-      }
-    } catch (error) {
-      console.error('Failed to unban member:', error);
-      toast({
-        title: 'Error',
-        description: 'An unexpected error occurred',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  // Table columns definition
-  const columns: ColumnDef<MemberWithTier>[] = [
-    {
-      accessorKey: 'cardId',
-      header: 'Card ID',
-      cell: ({ row }) => (
-        <div className="font-medium">{row.getValue('cardId')}</div>
-      ),
-    },
-    {
-      accessorKey: 'name',
-      header: 'Name',
-      cell: ({ row }) => (
-        <div className="font-medium uppercase">{row.getValue('name')}</div>
-      ),
-    },
-    {
-      accessorKey: 'phone',
-      header: 'Phone',
-      cell: ({ row }) => (
-        <div className="font-medium text-xs text-muted-foreground">
-          {row.getValue('phone')}
-        </div>
-      ),
-    },
-    {
-      accessorKey: 'address',
-      header: 'Address',
-      cell: ({ row }) => (
-        <span className="text-muted-foreground text-xs uppercase">
-          {row.original.address}
-        </span>
-      ),
-    },
-    {
-      id: 'tier',
-      header: 'Membership Tier',
-      cell: ({ row }) => {
-        const tier = row.original.tier;
-        if (!tier) {
-          return (
-            <span className="text-xs italic text-muted-foreground">
-              No tier
-            </span>
-          );
-        }
-        return <MemberTierBadge tier={tier} />;
-      },
-    },
-    {
-      accessorKey: 'totalPoints',
-      header: 'Total Point',
-      cell: ({ row }) => (
-        <div className="font-medium ml-4">
-          {Number(row.original.totalPoints).toLocaleString()}
-        </div>
-      ),
-    },
-    {
-      accessorKey: 'joinDate',
-      header: 'Join Date',
-      cell: ({ row }) => {
-        const joinDate = row.original.joinDate;
-        return (
-          <div className="font-medium ml-4">
-            {joinDate ? format(new Date(joinDate), 'MMMM dd, yyyy') : 'N/A'}
-          </div>
-        );
-      },
-    },
-    {
-      id: 'status',
-      header: 'Status',
-      cell: ({ row }) => {
-        const isBanned = row.original.isBanned;
-        return isBanned ? (
-          <Badge variant="destructive" className="whitespace-nowrap">
-            <IconBan className="h-3 w-3 mr-1" /> Banned
-          </Badge>
-        ) : (
-          <Badge
-            variant="outline"
-            className="whitespace-nowrap bg-green-50 text-green-700 border-green-200"
-          >
-            Active
-          </Badge>
-        );
-      },
-    },
-    {
-      id: 'actions',
-      header: '',
-      cell: ({ row }) => {
-        const member = row.original;
-        return (
-          <div className="text-right">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-8 w-8 p-0">
-                  <span className="sr-only">Open menu</span>
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  className="flex justify-between cursor-pointer"
-                  onClick={() => viewMemberDetails(member)}
-                >
-                  View Details <IconEye className="h-4 w-4" />
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="flex justify-between cursor-pointer"
-                  onClick={() => onEdit?.(member)}
-                >
-                  Edit <IconEdit className="h-4 w-4" />
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="flex justify-between cursor-pointer"
-                  onClick={() => onAwardPoints(member)}
-                >
-                  Award Points <IconGift className="h-4 w-4" />
-                </DropdownMenuItem>
-                {member.isBanned ? (
-                  <DropdownMenuItem
-                    className="flex justify-between cursor-pointer text-green-600 focus:text-green-600"
-                    onClick={() => handleUnban(member)}
-                  >
-                    Unban Member <IconShieldCheck className="h-4 w-4" />
-                  </DropdownMenuItem>
-                ) : (
-                  <DropdownMenuItem
-                    className="flex justify-between cursor-pointer text-amber-600 focus:text-amber-600"
-                    onClick={() => {
-                      setSelectedMemberForBan(member);
-                      setIsBanDialogOpen(true);
-                    }}
-                  >
-                    Ban Member <IconBan className="h-4 w-4" />
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuItem
-                  className="flex justify-between cursor-pointer text-destructive focus:text-destructive"
-                  onClick={() => handleDeleteClick(member)}
-                >
-                  Delete <IconTrash className="h-4 w-4" />
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        );
-      },
-    },
-  ];
-
-  // Data fetching function
-  const fetchData = async (options: TableFetchOptions) => {
+  // Data fetching function - stabilize with useCallback
+  const fetchData = useCallback(async (options: TableFetchOptions) => {
     try {
       const response = await searchMembers({
         query: options.search || '',
@@ -305,9 +114,9 @@ export function MemberTable({ onEdit, onAwardPoints }: MemberTableProps) {
         totalRows: 0,
       };
     }
-  };
+  }, []); // Empty dependency array since searchMembers is stable
 
-  // Use fetch hook
+  // Use fetch hook - moved before callbacks that use refresh
   const {
     data: members,
     isLoading,
@@ -327,90 +136,306 @@ export function MemberTable({ onEdit, onAwardPoints }: MemberTableProps) {
     initialSortDirection: false,
   });
 
-  // Event handlers for table interactions
-  const handlePaginationChange = (newPagination: {
-    pageIndex: number;
-    pageSize: number;
-  }) => {
-    setPage(newPagination.pageIndex);
-    setLimit(newPagination.pageSize);
-  };
+  // Event handlers - now refresh is available
+  const handleDeleteClick = useCallback((member: MemberWithTier) => {
+    setSelectedMemberForDelete(member);
+    setIsDeleteDialogOpen(true);
+  }, []);
 
-  const handleSortingChange = (newSorting: SortByOptions[]) => {
-    setSortBy(newSorting);
-  };
+  const viewMemberDetails = useCallback(
+    (member: MemberWithTier) => {
+      router.push(`/members/${member.id}`);
+    },
+    [router],
+  );
 
-  const handleSearchChange = (search: string) => {
-    setSearch(search);
-  };
-
-  // Filter handling with proper types
-  const handleFilterChange = (key: string, value: string) => {
-    if (key === 'tier') {
-      if (value === 'ALL_TIERS') {
-        setFilters((prev) => {
-          const newFilters = { ...prev };
-          delete newFilters[key];
-          return newFilters;
+  const handleUnban = useCallback(
+    async (member: MemberWithTier) => {
+      try {
+        const result = await unbanMember(member.id);
+        if (result.success) {
+          toast({
+            title: 'Member unbanned',
+            description: `${member.name} has been unbanned successfully`,
+          });
+          refresh();
+        } else {
+          toast({
+            title: 'Error',
+            description: result.error || 'Failed to unban member',
+            variant: 'destructive',
+          });
+        }
+      } catch (error) {
+        console.error('Failed to unban member:', error);
+        toast({
+          title: 'Error',
+          description: 'An unexpected error occurred',
+          variant: 'destructive',
         });
+      }
+    },
+    [refresh],
+  );
+
+  const handleBanMember = useCallback((member: MemberWithTier) => {
+    setSelectedMemberForBan(member);
+    setIsBanDialogOpen(true);
+  }, []);
+
+  // Table columns definition - memoize to prevent re-creation
+  const columns: ColumnDef<MemberWithTier>[] = useMemo(
+    () => [
+      {
+        accessorKey: 'cardId',
+        header: 'Card ID',
+        cell: ({ row }) => (
+          <div className="font-medium">{row.getValue('cardId')}</div>
+        ),
+      },
+      {
+        accessorKey: 'name',
+        header: 'Name',
+        cell: ({ row }) => (
+          <div className="font-medium uppercase">{row.getValue('name')}</div>
+        ),
+      },
+      {
+        accessorKey: 'phone',
+        header: 'Phone',
+        cell: ({ row }) => (
+          <div className="font-medium text-xs text-muted-foreground">
+            {row.getValue('phone')}
+          </div>
+        ),
+      },
+      {
+        accessorKey: 'address',
+        header: 'Address',
+        cell: ({ row }) => (
+          <span className="text-muted-foreground text-xs uppercase">
+            {row.original.address}
+          </span>
+        ),
+      },
+      {
+        id: 'tier',
+        header: 'Membership Tier',
+        cell: ({ row }) => {
+          const tier = row.original.tier;
+          if (!tier) {
+            return (
+              <span className="text-xs italic text-muted-foreground">
+                No tier
+              </span>
+            );
+          }
+          return <MemberTierBadge tier={tier} />;
+        },
+      },
+      {
+        accessorKey: 'totalPoints',
+        header: 'Total Point',
+        cell: ({ row }) => (
+          <div className="font-medium ml-4">
+            {Number(row.original.totalPoints).toLocaleString()}
+          </div>
+        ),
+      },
+      {
+        accessorKey: 'joinDate',
+        header: 'Join Date',
+        cell: ({ row }) => {
+          const joinDate = row.original.joinDate;
+          return (
+            <div className="font-medium ml-4">
+              {joinDate ? format(new Date(joinDate), 'MMMM dd, yyyy') : 'N/A'}
+            </div>
+          );
+        },
+      },
+      {
+        id: 'status',
+        header: 'Status',
+        cell: ({ row }) => {
+          const isBanned = row.original.isBanned;
+          return isBanned ? (
+            <Badge variant="destructive" className="whitespace-nowrap">
+              <IconBan className="h-3 w-3 mr-1" /> Banned
+            </Badge>
+          ) : (
+            <Badge
+              variant="outline"
+              className="whitespace-nowrap bg-green-50 text-green-700 border-green-200"
+            >
+              Active
+            </Badge>
+          );
+        },
+      },
+      {
+        id: 'actions',
+        header: '',
+        cell: ({ row }) => {
+          const member = row.original;
+          return (
+            <div className="text-right">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="h-8 w-8 p-0">
+                    <span className="sr-only">Open menu</span>
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem
+                    className="flex justify-between cursor-pointer"
+                    onClick={() => viewMemberDetails(member)}
+                  >
+                    View Details <IconEye className="h-4 w-4" />
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="flex justify-between cursor-pointer"
+                    onClick={() => onEdit?.(member)}
+                  >
+                    Edit <IconEdit className="h-4 w-4" />
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="flex justify-between cursor-pointer"
+                    onClick={() => onAwardPoints(member)}
+                  >
+                    Award Points <IconGift className="h-4 w-4" />
+                  </DropdownMenuItem>
+                  {member.isBanned ? (
+                    <DropdownMenuItem
+                      className="flex justify-between cursor-pointer text-green-600 focus:text-green-600"
+                      onClick={() => handleUnban(member)}
+                    >
+                      Unban Member <IconShieldCheck className="h-4 w-4" />
+                    </DropdownMenuItem>
+                  ) : (
+                    <DropdownMenuItem
+                      className="flex justify-between cursor-pointer text-amber-600 focus:text-amber-600"
+                      onClick={() => handleBanMember(member)}
+                    >
+                      Ban Member <IconBan className="h-4 w-4" />
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem
+                    className="flex justify-between cursor-pointer text-destructive focus:text-destructive"
+                    onClick={() => handleDeleteClick(member)}
+                  >
+                    Delete <IconTrash className="h-4 w-4" />
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          );
+        },
+      },
+    ],
+    [
+      viewMemberDetails,
+      onEdit,
+      onAwardPoints,
+      handleUnban,
+      handleBanMember,
+      handleDeleteClick,
+    ],
+  );
+
+  // Event handlers for table interactions - stabilize with useCallback
+  const handlePaginationChange = useCallback(
+    (newPagination: { pageIndex: number; pageSize: number }) => {
+      setPage(newPagination.pageIndex);
+      setLimit(newPagination.pageSize);
+    },
+    [setPage, setLimit],
+  );
+
+  const handleSortingChange = useCallback(
+    (newSorting: SortByOptions[]) => {
+      setSortBy(newSorting);
+    },
+    [setSortBy],
+  );
+
+  const handleSearchChange = useCallback(
+    (search: string) => {
+      setSearch(search);
+    },
+    [setSearch],
+  );
+
+  // Filter handling with proper types - stabilize with useCallback
+  const handleFilterChange = useCallback(
+    (key: string, value: string) => {
+      if (key === 'tier') {
+        if (value === 'ALL_TIERS') {
+          setFilters((prev) => {
+            const newFilters = { ...prev };
+            delete newFilters[key];
+            return newFilters;
+          });
+          return;
+        }
+      }
+
+      if (key === 'isBanned') {
+        const actualValue: boolean | undefined =
+          value === 'ALL_STATUS'
+            ? undefined
+            : value === 'true'
+              ? true
+              : value === 'false'
+                ? false
+                : undefined;
+
+        setFilters((prev) => ({
+          ...prev,
+          [key]: actualValue,
+        }));
         return;
       }
-    }
-
-    if (key === 'isBanned') {
-      const actualValue: boolean | undefined =
-        value === 'ALL_STATUS'
-          ? undefined
-          : value === 'true'
-            ? true
-            : value === 'false'
-              ? false
-              : undefined;
 
       setFilters((prev) => ({
         ...prev,
-        [key]: actualValue,
+        [key]: value,
       }));
-      return;
-    }
-
-    setFilters((prev) => ({
-      ...prev,
-      [key]: value,
-    }));
-  };
-
-  // Filter options
-  const tierFilterOptions: FilterOption[] = [
-    { value: 'ALL_TIERS', label: 'All Tiers' },
-    ...memberTiers.map((tier) => ({
-      value: tier.name,
-      label: tier.name,
-    })),
-  ];
-
-  const statusOptions: FilterOption[] = [
-    { value: 'ALL_STATUS', label: 'All Status' },
-    { value: 'false', label: 'Active' },
-    { value: 'true', label: 'Banned' },
-  ];
-
-  const filters: TableFilter[] = [
-    {
-      id: 'tier',
-      label: 'Tier',
-      type: 'select',
-      options: tierFilterOptions,
-      handleFilterChange: (value) => handleFilterChange('tier', value),
     },
-    {
-      id: 'isBanned',
-      label: 'Status',
-      type: 'select',
-      options: statusOptions,
-      handleFilterChange: (value) => handleFilterChange('isBanned', value),
-    },
-  ];
+    [setFilters],
+  );
+
+  // Filter options - memoize to prevent re-creation
+  const filters: TableFilter[] = useMemo(
+    () => [
+      {
+        id: 'tier',
+        label: 'Tier',
+        type: 'select',
+        options: [
+          { value: 'ALL_TIERS', label: 'All Tiers' },
+          ...memberTiers.map((tier) => ({
+            value: tier.name,
+            label: tier.name,
+          })),
+        ],
+        handleFilterChange: (value) => handleFilterChange('tier', value),
+      },
+      {
+        id: 'isBanned',
+        label: 'Status',
+        type: 'select',
+        options: [
+          { value: 'ALL_STATUS', label: 'All Status' },
+          { value: 'false', label: 'Active' },
+          { value: 'true', label: 'Banned' },
+        ],
+        handleFilterChange: (value) => handleFilterChange('isBanned', value),
+      },
+    ],
+    [memberTiers, handleFilterChange],
+  );
 
   return (
     <>

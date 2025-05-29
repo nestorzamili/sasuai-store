@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { getAllUnits } from './action';
 import UnitPrimaryButton from './_components/unit-primary-button';
 import { UnitTable } from './_components/unit-table';
@@ -19,7 +19,6 @@ export default function UnitsPage() {
   const [selectedConversion, setSelectedConversion] =
     useState<UnitConversionWithUnits | null>(null);
   const [activeTab, setActiveTab] = useState('units');
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const fetchUnits = async () => {
     try {
@@ -42,44 +41,46 @@ export default function UnitsPage() {
     fetchUnits();
   }, []);
 
-  // Handle dialog reset on close
-  const handleDialogOpenChange = (open: boolean) => {
+  // Handle dialog reset on close - stabilize with useCallback
+  const handleDialogOpenChange = useCallback((open: boolean) => {
     setIsDialogOpen(open);
     if (!open) {
       setSelectedUnit(null);
     }
-  };
+  }, []);
 
-  // Handle tab change
-  const handleTabChange = (value: string) => {
+  // Handle tab change - stabilize with useCallback
+  const handleTabChange = useCallback((value: string) => {
     setActiveTab(value);
-  };
+  }, []);
 
-  // Handle edit unit
-  const handleEdit = (unit: UnitWithCounts) => {
+  // Handle edit unit - stabilize with useCallback
+  const handleEdit = useCallback((unit: UnitWithCounts) => {
     setSelectedUnit(unit);
     setIsDialogOpen(true);
-  };
+  }, []);
 
-  // Handle edit conversion
-  const handleEditConversion = (conversion: UnitConversionWithUnits) => {
-    setSelectedConversion(conversion);
-    setIsConversionDialogOpen(true);
-  };
+  // Handle edit conversion - stabilize with useCallback
+  const handleEditConversion = useCallback(
+    (conversion: UnitConversionWithUnits) => {
+      setSelectedConversion(conversion);
+      setIsConversionDialogOpen(true);
+    },
+    [],
+  );
 
-  // Handle unit operation success
-  const handleSuccess = () => {
+  // Handle unit operation success - stabilize with useCallback
+  const handleSuccess = useCallback(() => {
     setIsDialogOpen(false);
     setSelectedUnit(null);
-    setRefreshTrigger((prev) => prev + 1);
     fetchUnits();
-  };
+  }, []);
 
-  // Handle conversion operation success
-  const handleConversionSuccess = () => {
+  // Handle conversion operation success - stabilize with useCallback
+  const handleConversionSuccess = useCallback(() => {
     setIsConversionDialogOpen(false);
     setSelectedConversion(null);
-  };
+  }, []);
 
   return (
     <div className="space-y-1">
@@ -120,11 +121,7 @@ export default function UnitsPage() {
           <TabsTrigger value="calculator">Conversion Calculator</TabsTrigger>
         </TabsList>
         <TabsContent value="units" className="mt-2">
-          <UnitTable
-            onEdit={handleEdit}
-            onRefresh={handleSuccess}
-            key={`unit-table-${refreshTrigger}`}
-          />
+          <UnitTable onEdit={handleEdit} onRefresh={handleSuccess} />
         </TabsContent>
         <TabsContent value="conversions" className="mt-2">
           <UnitConversionTable

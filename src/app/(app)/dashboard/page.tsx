@@ -8,12 +8,13 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { IconRefresh } from '@tabler/icons-react';
-import { useState, useMemo, lazy, useCallback } from 'react';
+import { useState, useMemo, lazy, useCallback, Suspense } from 'react';
 import { Download } from 'lucide-react';
 import { useMetricPerformance } from './hooks/useMetricPerformance';
 import { formatDate } from '@/lib/date';
 import { DateFilter as FilterDateFilter } from '@/lib/types/filter';
 import { DateRangePickerWithPresets } from '@/components/ui/date-range-picker-with-presets';
+
 // Lazy load components for better initial load time
 const SalesTrend = lazy(() =>
   import('./components/_parts/chart-sales-trend').then((mod) => ({
@@ -71,7 +72,7 @@ export interface MetricPerformanceStat {
 }
 
 export default function Dashboard() {
-  // Memoize the current date/time
+  // Memoize the current date/time to prevent re-calculations
   const currentDateTime = useMemo(() => {
     const now = new Date();
     return {
@@ -88,15 +89,17 @@ export default function Dashboard() {
         }) + ' WIB',
     };
   }, []);
-  const [filter, setFilter] = useState<FilterDateFilter>({
+
+  const [filter, setFilter] = useState<FilterDateFilter>(() => ({
     from: new Date(currentDateTime.date),
     to: new Date(currentDateTime.date),
-  });
+  }));
 
   // Use custom hook
   const { metricPerformance, isLoading, refetch } =
     useMetricPerformance(filter);
 
+  // Memoize handlers to prevent unnecessary re-renders
   const handleRefresh = useCallback(() => {
     refetch();
   }, [refetch]);
@@ -110,6 +113,19 @@ export default function Dashboard() {
         });
       }
     },
+    [],
+  );
+
+  // Memoize the filter object passed to components
+  const memoizedFilter = useMemo(() => filter, [filter]);
+
+  // Memoize the loading component
+  const LoadingFallback = useMemo(
+    () => (
+      <div className="flex items-center justify-center h-[200px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    ),
     [],
   );
 
@@ -157,27 +173,31 @@ export default function Dashboard() {
       </div>
       <div className="space-y-8 transition-opacity duration-300 ease-in-out">
         {/* High-level Key Performance Indicators */}
-        <OverviewSales
-          isLoading={isLoading}
-          metricPerformance={metricPerformance}
-        />
+        <Suspense fallback={LoadingFallback}>
+          <OverviewSales
+            isLoading={isLoading}
+            metricPerformance={metricPerformance}
+          />
+        </Suspense>
         {/* Main content area with more detailed analytics */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main column - 2/3 width on large screens */}
           <div className="lg:col-span-3 space-y-8">
             {/* Sales trend - prioritized as most important chart */}
             <section aria-label="Sales Trend Analysis">
-              <SalesTrend />
+              <Suspense fallback={LoadingFallback}>
+                <SalesTrend />
+              </Suspense>
             </section>
-            {/* Transaction Analysis - Important financial data
-            <section aria-label="Transaction Analysis">
-              <TransactionTrend />
-            </section> */}
             {/* Product and Category Analysis */}
             <section aria-label="Products and Categories">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <PaymentMethod filter={filter} />
-                <SalesCategory filter={filter} />
+                <Suspense fallback={LoadingFallback}>
+                  <PaymentMethod filter={memoizedFilter} />
+                </Suspense>
+                <Suspense fallback={LoadingFallback}>
+                  <SalesCategory filter={memoizedFilter} />
+                </Suspense>
                 <section aria-label="Time Analysis" className="space-y-4">
                   <Card>
                     <CardHeader className="pb-2">
@@ -191,23 +211,21 @@ export default function Dashboard() {
                       </p>
                     </CardContent>
                   </Card>
-                  {/* <MemberActivities /> */}
                 </section>
-                <TopSellingProduct filter={filter} />
-                <TopMember />
-                <TopDiscount />
-                <LowProductStock />
+                <Suspense fallback={LoadingFallback}>
+                  <TopSellingProduct filter={memoizedFilter} />
+                </Suspense>
+                <Suspense fallback={LoadingFallback}>
+                  <TopMember />
+                </Suspense>
+                <Suspense fallback={LoadingFallback}>
+                  <TopDiscount />
+                </Suspense>
+                <Suspense fallback={LoadingFallback}>
+                  <LowProductStock />
+                </Suspense>
               </div>
             </section>
-          </div>
-          {/* Side column - 1/3 width on large screens */}
-          <div className="lg:col-span-1 space-y-8">
-            {/* Top Performers Section */}
-            <section aria-label="Top Performers">
-              <div className="space-y-4"></div>
-            </section>
-
-            {/* Time Analysis & Recent Activity */}
           </div>
         </div>
       </div>

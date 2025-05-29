@@ -1,6 +1,6 @@
 'use client';
 import * as React from 'react';
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { ColumnDef } from '@tanstack/react-table';
 import { MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -75,7 +75,7 @@ export function CategoryTable({ onEdit, onRefresh }: CategoryTableProps) {
     initialSortDirection: false,
   });
 
-  // Memoized handlers
+  // Memoized handlers - stabilize with useCallback
   const handlePaginationChange = useCallback(
     (newPagination: { pageIndex: number; pageSize: number }): void => {
       setPage(newPagination.pageIndex);
@@ -98,19 +98,19 @@ export function CategoryTable({ onEdit, onRefresh }: CategoryTableProps) {
     [setSearch],
   );
 
-  // Handle successful operations
+  // Handle successful operations - stabilize with useCallback
   const handleOperationSuccess = useCallback((): void => {
     refresh();
     onRefresh?.();
   }, [refresh, onRefresh]);
 
-  // Handle delete action
+  // Handle delete action - stabilize with useCallback
   const handleDeleteClick = useCallback((category: CategoryWithCount): void => {
     setDeleteData(category);
     setDeleteDialog(true);
   }, []);
 
-  // Handle edit action
+  // Handle edit action - stabilize with useCallback
   const handleEditClick = useCallback(
     (category: CategoryWithCount): void => {
       onEdit?.(category);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { ProductWithRelations } from '@/lib/types/product';
 import ProductPrimaryButton from './product-primary-button';
 import { ProductTable } from './product-table';
@@ -10,7 +10,6 @@ export default function MainContent() {
   const [selectedProduct, setSelectedProduct] =
     useState<ProductWithRelations | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(Date.now());
 
   // Filter states
   const [status, setStatus] = useState('all');
@@ -19,27 +18,26 @@ export default function MainContent() {
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
 
-  // Handle dialog open state change
+  // Handle dialog open state change - stabilize with useCallback
   const handleDialogOpenChange = useCallback((open: boolean) => {
     setIsDialogOpen(open);
     if (!open) setSelectedProduct(null);
   }, []);
 
-  // Handle edit product
+  // Handle edit product - stabilize with useCallback
   const handleEdit = useCallback((product: ProductWithRelations) => {
     setSelectedProduct(product);
     setIsDialogOpen(true);
   }, []);
 
-  // Handle product operation success
+  // Handle product operation success - stabilize with useCallback
   const handleSuccess = useCallback(() => {
     setIsDialogOpen(false);
     setSelectedProduct(null);
-    setRefreshKey(Date.now());
   }, []);
 
-  // Parse status filter to boolean for the API
-  const getStatusBooleanFilter = (): boolean | undefined => {
+  // Parse status filter to boolean for the API - memoize
+  const getStatusBooleanFilter = useCallback((): boolean | undefined => {
     switch (status) {
       case 'active':
         return true;
@@ -48,31 +46,37 @@ export default function MainContent() {
       default:
         return undefined;
     }
-  };
+  }, [status]);
 
-  // Create filter params object
-  const filterParams = {
-    isActive: getStatusBooleanFilter(),
-    categoryId: categoryId !== 'all' ? categoryId : undefined,
-    brandId: brandId !== 'all' ? brandId : undefined,
-    minPrice: minPrice ? parseFloat(minPrice) : undefined,
-    maxPrice: maxPrice ? parseFloat(maxPrice) : undefined,
-  };
+  // Create filter params object - memoize
+  const filterParams = useMemo(
+    () => ({
+      isActive: getStatusBooleanFilter(),
+      categoryId: categoryId !== 'all' ? categoryId : undefined,
+      brandId: brandId !== 'all' ? brandId : undefined,
+      minPrice: minPrice ? parseFloat(minPrice) : undefined,
+      maxPrice: maxPrice ? parseFloat(maxPrice) : undefined,
+    }),
+    [getStatusBooleanFilter, categoryId, brandId, minPrice, maxPrice],
+  );
 
-  // Create filter toolbar element
-  const filterToolbarElement = (
-    <ProductFilterToolbar
-      status={status}
-      setStatus={setStatus}
-      categoryId={categoryId}
-      setCategoryId={setCategoryId}
-      brandId={brandId}
-      setBrandId={setBrandId}
-      minPrice={minPrice}
-      setMinPrice={setMinPrice}
-      maxPrice={maxPrice}
-      setMaxPrice={setMaxPrice}
-    />
+  // Create filter toolbar element - memoize
+  const filterToolbarElement = useMemo(
+    () => (
+      <ProductFilterToolbar
+        status={status}
+        setStatus={setStatus}
+        categoryId={categoryId}
+        setCategoryId={setCategoryId}
+        brandId={brandId}
+        setBrandId={setBrandId}
+        minPrice={minPrice}
+        setMinPrice={setMinPrice}
+        maxPrice={maxPrice}
+        setMaxPrice={setMaxPrice}
+      />
+    ),
+    [status, categoryId, brandId, minPrice, maxPrice],
   );
 
   return (
@@ -95,7 +99,6 @@ export default function MainContent() {
 
       {/* Product table with filters */}
       <ProductTable
-        key={`products-${refreshKey}-${status}-${categoryId}-${brandId}-${minPrice}-${maxPrice}`}
         onEdit={handleEdit}
         filterParams={filterParams}
         filterToolbar={filterToolbarElement}

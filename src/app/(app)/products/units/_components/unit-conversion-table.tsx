@@ -1,6 +1,6 @@
 'use client';
 import * as React from 'react';
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { ColumnDef } from '@tanstack/react-table';
 import { MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -82,7 +82,7 @@ export function UnitConversionTable({
     initialSortDirection: false,
   });
 
-  // Memoized handlers
+  // Memoized handlers - stabilize with useCallback
   const handlePaginationChange = useCallback(
     (newPagination: { pageIndex: number; pageSize: number }): void => {
       setPage(newPagination.pageIndex);
@@ -105,13 +105,13 @@ export function UnitConversionTable({
     [setSearch],
   );
 
-  // Handle successful operations
+  // Handle successful operations - stabilize with useCallback
   const handleOperationSuccess = useCallback((): void => {
     refresh();
     onRefresh?.();
   }, [refresh, onRefresh]);
 
-  // Handle delete action
+  // Handle delete action - stabilize with useCallback
   const handleDeleteClick = useCallback(
     (conversion: UnitConversionWithUnits): void => {
       setDeleteData(conversion);
@@ -120,7 +120,7 @@ export function UnitConversionTable({
     [],
   );
 
-  // Handle edit action
+  // Handle edit action - stabilize with useCallback
   const handleEditClick = useCallback(
     (conversion: UnitConversionWithUnits): void => {
       onEdit?.(conversion);

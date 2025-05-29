@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { X, Search, Loader2, ChevronsUpDown } from 'lucide-react';
@@ -46,30 +46,27 @@ export default function EntitySelector<T extends Entity>({
     [columns],
   );
 
-  // Helper function to fetch missing items by ID - memoized with useCallback
-  const fetchMissingItems = useCallback(
-    async (missingIds: string[]): Promise<T[]> => {
-      if (missingIds.length === 0) return [];
+  // Helper function to fetch missing items by ID
+  const fetchMissingItems = async (missingIds: string[]): Promise<T[]> => {
+    if (missingIds.length === 0) return [];
 
-      const fetchPromises = missingIds.map(async (id) => {
-        // Use fetchItemById if available, otherwise fall back to fetchItems
-        const fetchFn = fetchItemById || fetchItems;
-        const singleItemResponse = await fetchFn(id);
-        if (
-          singleItemResponse.success &&
-          singleItemResponse.data &&
-          singleItemResponse.data.length > 0
-        ) {
-          return singleItemResponse.data;
-        }
-        return [];
-      });
+    const fetchPromises = missingIds.map(async (id) => {
+      // Use fetchItemById if available, otherwise fall back to fetchItems
+      const fetchFn = fetchItemById || fetchItems;
+      const singleItemResponse = await fetchFn(id);
+      if (
+        singleItemResponse.success &&
+        singleItemResponse.data &&
+        singleItemResponse.data.length > 0
+      ) {
+        return singleItemResponse.data;
+      }
+      return [];
+    });
 
-      const results = await Promise.all(fetchPromises);
-      return results.flat();
-    },
-    [fetchItems, fetchItemById], // Include dependencies
-  );
+    const results = await Promise.all(fetchPromises);
+    return results.flat();
+  };
 
   // Compare selected IDs to see if they've changed
   const selectedIdsChanged = useMemo(() => {
@@ -132,30 +129,27 @@ export default function EntitySelector<T extends Entity>({
     };
 
     fetchInitialItems();
-  }, [fetchItems, selectedIds, selectedIdsChanged, fetchMissingItems]); // Include fetchMissingItems
+  }, [fetchItems, selectedIds, selectedIdsChanged]);
 
-  // Handle search input change - memoize to avoid unnecessary re-renders
-  const handleSearchChange = useMemo(
-    () => async (value: string) => {
-      setSearch(value);
-      setLoading(true);
+  // Handle search input change
+  const handleSearchChange = async (value: string) => {
+    setSearch(value);
+    setLoading(true);
 
-      try {
-        const response = await fetchItems(value);
-        if (response.success && response.data) {
-          setItems(response.data);
-        } else {
-          setItems([]);
-        }
-      } catch (error) {
-        console.error('Error searching items:', error);
+    try {
+      const response = await fetchItems(value);
+      if (response.success && response.data) {
+        setItems(response.data);
+      } else {
         setItems([]);
-      } finally {
-        setLoading(false);
       }
-    },
-    [fetchItems],
-  );
+    } catch (error) {
+      console.error('Error searching items:', error);
+      setItems([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Toggle item selection
   const toggleItem = (item: T) => {
@@ -197,15 +191,12 @@ export default function EntitySelector<T extends Entity>({
   // If search value changes, do the search
   useEffect(() => {
     if (search !== '') {
-      const currentSearch = search;
       const timer = setTimeout(() => {
-        if (currentSearch === search) {
-          handleSearchChange(search);
-        }
+        handleSearchChange(search);
       }, 300);
       return () => clearTimeout(timer);
     }
-  }, [search, handleSearchChange]);
+  }, [search]);
 
   return (
     <div className="space-y-4">

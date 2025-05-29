@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useState } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { ColumnDef } from '@tanstack/react-table';
 import { MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -49,33 +49,43 @@ type FetchResult = TableFetchResult<DiscountWithCounts[]>;
 export function DiscountTable({ onRefresh }: DiscountTableProps) {
   const router = useRouter();
 
-  const fetchDiscounts = async (
-    options: FetchOptions,
-  ): Promise<FetchResult> => {
-    const response = await getAllDiscounts({
-      page: (options.page ?? 0) + 1,
-      pageSize: options.limit ?? 10,
-      sortField: options.sortBy?.id || 'createdAt',
-      sortDirection: options.sortBy?.desc ? 'desc' : 'asc',
-      search: options.search,
-      isActive: options.filters?.isActive,
-      type: options.filters?.type as DiscountType,
-      applyTo: options.filters?.applyTo as DiscountApplyTo,
-      isGlobal: options.filters?.isGlobal,
-    });
+  // Memoize the fetchDiscounts function to prevent unnecessary re-renders
+  const fetchDiscounts = useCallback(
+    async (options: FetchOptions): Promise<FetchResult> => {
+      try {
+        const response = await getAllDiscounts({
+          page: (options.page ?? 0) + 1,
+          pageSize: options.limit ?? 10,
+          sortField: options.sortBy?.id || 'createdAt',
+          sortDirection: options.sortBy?.desc ? 'desc' : 'asc',
+          search: options.search,
+          isActive: options.filters?.isActive,
+          type: options.filters?.type as DiscountType,
+          applyTo: options.filters?.applyTo as DiscountApplyTo,
+          isGlobal: options.filters?.isGlobal,
+        });
 
-    if (response.success && response.discounts && response.pagination) {
-      return {
-        data: response.discounts,
-        totalRows: response.pagination.totalCount,
-      };
-    }
+        if (response.success && response.discounts && response.pagination) {
+          return {
+            data: response.discounts,
+            totalRows: response.pagination.totalCount,
+          };
+        }
 
-    return {
-      data: [],
-      totalRows: 0,
-    };
-  };
+        return {
+          data: [],
+          totalRows: 0,
+        };
+      } catch (error) {
+        console.error('Error fetching discounts:', error);
+        return {
+          data: [],
+          totalRows: 0,
+        };
+      }
+    },
+    [], // Empty dependency array since getAllDiscounts is stable
+  );
 
   const {
     data: discounts,
@@ -96,110 +106,146 @@ export function DiscountTable({ onRefresh }: DiscountTableProps) {
     initialSortDirection: true, // desc
   });
 
-  const handlePaginationChange = (newPagination: {
-    pageIndex: number;
-    pageSize: number;
-  }) => {
-    setPage(newPagination.pageIndex);
-    setLimit(newPagination.pageSize);
-  };
+  // Memoize handlers to prevent unnecessary re-renders
+  const handlePaginationChange = useCallback(
+    (newPagination: { pageIndex: number; pageSize: number }) => {
+      setPage(newPagination.pageIndex);
+      setLimit(newPagination.pageSize);
+    },
+    [setPage, setLimit],
+  );
 
-  const handleSortingChange = (newSorting: { id: string; desc: boolean }[]) => {
-    setSortBy(newSorting);
-  };
+  const handleSortingChange = useCallback(
+    (newSorting: { id: string; desc: boolean }[]) => {
+      setSortBy(newSorting);
+    },
+    [setSortBy],
+  );
 
-  const handleSearchChange = (newSearch: string) => {
-    setSearch(newSearch);
-  };
+  const handleSearchChange = useCallback(
+    (newSearch: string) => {
+      setSearch(newSearch);
+    },
+    [setSearch],
+  );
 
-  const handleFilterChange = (
-    key: string,
-    value: string | boolean | undefined,
-  ) => {
-    // For the status filter
-    if (key === 'isActive') {
-      const actualValue =
-        value === 'ALL_STATUSES'
-          ? undefined
-          : value === 'true'
-            ? true
-            : value === 'false'
-              ? false
-              : undefined;
+  const handleFilterChange = useCallback(
+    (key: string, value: string | boolean | undefined) => {
+      // For the status filter
+      if (key === 'isActive') {
+        const actualValue =
+          value === 'ALL_STATUSES'
+            ? undefined
+            : value === 'true'
+              ? true
+              : value === 'false'
+                ? false
+                : undefined;
 
+        setFilters((prev: FetchOptions['filters']) => ({
+          ...prev,
+          [key]: actualValue,
+        }));
+        return;
+      }
+
+      // For type and applyTo filters
+      if (value === 'ALL_TYPES' || value === 'ALL_APPLICATIONS') {
+        setFilters((prev: FetchOptions['filters']) => {
+          if (!prev) return {};
+          const newFilters = { ...prev };
+          if (key === 'type') {
+            delete newFilters.type;
+          } else if (key === 'applyTo') {
+            delete newFilters.applyTo;
+          } else if (key === 'isGlobal') {
+            delete newFilters.isGlobal;
+          }
+          return newFilters;
+        });
+        return;
+      }
+
+      // Normal case
       setFilters((prev: FetchOptions['filters']) => ({
         ...prev,
-        [key]: actualValue,
+        [key]: value,
       }));
-      return;
-    }
-
-    // For type and applyTo filters
-    if (value === 'ALL_TYPES' || value === 'ALL_APPLICATIONS') {
-      setFilters((prev: FetchOptions['filters']) => {
-        if (!prev) return {};
-        const newFilters = { ...prev };
-        if (key === 'type') {
-          delete newFilters.type;
-        } else if (key === 'applyTo') {
-          delete newFilters.applyTo;
-        } else if (key === 'isGlobal') {
-          delete newFilters.isGlobal;
-        }
-        return newFilters;
-      });
-      return;
-    }
-
-    // Normal case
-    setFilters((prev: FetchOptions['filters']) => ({
-      ...prev,
-      [key]: value,
-    }));
-  };
+    },
+    [setFilters],
+  );
 
   const [deleteDialog, setDeleteDialog] = useState(false);
   const [detailDialog, setDetailDialog] = useState(false);
   const [detailId, setDetailId] = useState<string | null>(null);
   const [deleteData, setDeleteData] = useState<DiscountWithCounts | null>(null);
 
-  // Handle toggle discount status
-  const handleToggleStatus = async (discount: DiscountWithCounts) => {
-    try {
-      const result = await toggleDiscountStatus(discount.id);
-      if (result.success) {
-        toast({
-          title: 'Status Updated',
-          description: result.message,
-        });
-        refresh();
-        onRefresh?.();
-      } else {
+  // Handle toggle discount status with useCallback
+  const handleToggleStatus = useCallback(
+    async (discount: DiscountWithCounts) => {
+      try {
+        const result = await toggleDiscountStatus(discount.id);
+        if (result.success) {
+          toast({
+            title: 'Status Updated',
+            description: result.message,
+          });
+          refresh();
+          onRefresh?.();
+        } else {
+          toast({
+            title: 'Error',
+            description: result.message || 'Failed to update status',
+            variant: 'destructive',
+          });
+        }
+      } catch (error) {
+        console.error('Error toggling discount status:', error);
         toast({
           title: 'Error',
-          description: result.message || 'Failed to update status',
+          description: 'An unexpected error occurred',
           variant: 'destructive',
         });
       }
-    } catch (error) {
-      console.error('Error toggling discount status:', error);
-      toast({
-        title: 'Error',
-        description: 'An unexpected error occurred',
-        variant: 'destructive',
-      });
-    }
-  };
+    },
+    [refresh, onRefresh],
+  );
 
-  // Handle successful operations
-  const handleOperationSuccess = () => {
+  // Handle successful operations with useCallback
+  const handleOperationSuccess = useCallback(() => {
     refresh();
     onRefresh?.();
-  };
+  }, [refresh, onRefresh]);
 
-  const handleEdit = (discount: DiscountWithCounts) => {
-    router.push(`/discounts/${discount.id}/edit`);
-  };
+  const handleEdit = useCallback(
+    (discount: DiscountWithCounts) => {
+      router.push(`/discounts/${discount.id}/edit`);
+    },
+    [router],
+  );
+
+  // Memoize filter options to prevent unnecessary re-renders
+  const filterOptions = useMemo(
+    () => ({
+      discountTypeOptions: [
+        { value: 'ALL_TYPES', label: 'All Types' },
+        { value: 'PERCENTAGE', label: 'Percentage' },
+        { value: 'FIXED_AMOUNT', label: 'Fixed Amount' },
+      ],
+      applyToOptions: [
+        { value: 'ALL_APPLICATIONS', label: 'All Applications' },
+        { value: 'SPECIFIC_PRODUCTS', label: 'Specific Products' },
+        { value: 'SPECIFIC_MEMBERS', label: 'Specific Members' },
+        { value: 'SPECIFIC_MEMBER_TIERS', label: 'Member Tiers' },
+      ],
+      statusOptions: [
+        { value: 'ALL_STATUSES', label: 'All Statuses' },
+        { value: 'true', label: 'Active' },
+        { value: 'false', label: 'Inactive' },
+      ],
+    }),
+    [],
+  );
 
   const columns: ColumnDef<DiscountWithCounts>[] = [
     {
@@ -380,28 +426,6 @@ export function DiscountTable({ onRefresh }: DiscountTableProps) {
     },
   ];
 
-  // Filter options for the discount type dropdown
-  const discountTypeOptions = [
-    { value: 'ALL_TYPES', label: 'All Types' },
-    { value: 'PERCENTAGE', label: 'Percentage' },
-    { value: 'FIXED_AMOUNT', label: 'Fixed Amount' },
-  ];
-
-  // Filter options for apply to dropdown
-  const applyToOptions = [
-    { value: 'ALL_APPLICATIONS', label: 'All Applications' },
-    { value: 'SPECIFIC_PRODUCTS', label: 'Specific Products' },
-    { value: 'SPECIFIC_MEMBERS', label: 'Specific Members' },
-    { value: 'SPECIFIC_MEMBER_TIERS', label: 'Member Tiers' },
-  ];
-
-  // Filter options for active status
-  const statusOptions = [
-    { value: 'ALL_STATUSES', label: 'All Statuses' },
-    { value: 'true', label: 'Active' },
-    { value: 'false', label: 'Inactive' },
-  ];
-
   return (
     <>
       <TableLayout
@@ -419,7 +443,7 @@ export function DiscountTable({ onRefresh }: DiscountTableProps) {
             id: 'type',
             label: 'Type',
             type: 'select',
-            options: discountTypeOptions,
+            options: filterOptions.discountTypeOptions,
             handleFilterChange: (value: string) =>
               handleFilterChange('type', value),
           },
@@ -427,7 +451,7 @@ export function DiscountTable({ onRefresh }: DiscountTableProps) {
             id: 'applyTo',
             label: 'Applies To',
             type: 'select',
-            options: applyToOptions,
+            options: filterOptions.applyToOptions,
             handleFilterChange: (value: string) =>
               handleFilterChange('applyTo', value),
           },
@@ -435,7 +459,7 @@ export function DiscountTable({ onRefresh }: DiscountTableProps) {
             id: 'isActive',
             label: 'Status',
             type: 'select',
-            options: statusOptions,
+            options: filterOptions.statusOptions,
             handleFilterChange: (value: string) =>
               handleFilterChange('isActive', value),
           },

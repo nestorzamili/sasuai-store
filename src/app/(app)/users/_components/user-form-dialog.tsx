@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -95,54 +95,57 @@ export default function UserFormDialog({
     }
   }, [form, initialData]);
 
-  // Handle form submission
-  const onSubmit = async (values: FormValues) => {
-    try {
-      setLoading(true);
+  // Handle form submission - stabilize with useCallback
+  const onSubmit = useCallback(
+    async (values: FormValues) => {
+      try {
+        setLoading(true);
 
-      if (isEditing) {
-        // In a real app, we would implement update functionality
-        // For now, let's just show a toast message
-        toast({
-          title: 'Not implemented',
-          description: 'User editing is not implemented yet',
-          variant: 'destructive',
-        });
-      } else {
-        const result = await createUser({
-          name: values.name,
-          email: values.email,
-          password: values.password || '',
-          role: values.role,
-        });
-
-        if (result.success) {
+        if (isEditing) {
+          // In a real app, we would implement update functionality
+          // For now, let's just show a toast message
           toast({
-            title: 'User created',
-            description: 'New user has been created successfully',
-          });
-
-          form.reset();
-          onSuccess?.();
-        } else {
-          toast({
-            title: 'Error',
-            description: result.error || 'Something went wrong',
+            title: 'Not implemented',
+            description: 'User editing is not implemented yet',
             variant: 'destructive',
           });
+        } else {
+          const result = await createUser({
+            name: values.name,
+            email: values.email,
+            password: values.password || '',
+            role: values.role,
+          });
+
+          if (result.success) {
+            toast({
+              title: 'User created',
+              description: 'New user has been created successfully',
+            });
+
+            form.reset();
+            onSuccess?.();
+          } else {
+            toast({
+              title: 'Error',
+              description: result.error || 'Something went wrong',
+              variant: 'destructive',
+            });
+          }
         }
+      } catch (error) {
+        console.error('Error creating user:', error);
+        toast({
+          title: 'Error',
+          description: 'An unexpected error occurred',
+          variant: 'destructive',
+        });
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Error creating user:', error);
-      toast({
-        title: 'Error',
-        description: 'An unexpected error occurred',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    [isEditing, form, onSuccess],
+  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

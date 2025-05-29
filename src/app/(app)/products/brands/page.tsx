@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { BrandWithCount } from '@/lib/types/brand';
 import BrandPrimaryButton from './_components/brand-primary-button';
 import { BrandTable } from './_components/brand-table';
@@ -10,28 +10,26 @@ export default function BrandsPage() {
   const [selectedBrand, setSelectedBrand] = useState<BrandWithCount | null>(
     null,
   );
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  // Handle dialog reset on close
-  const handleDialogOpenChange = (open: boolean) => {
+  // Handle dialog reset on close - stabilize with useCallback
+  const handleDialogOpenChange = useCallback((open: boolean) => {
     setIsDialogOpen(open);
     if (!open) {
       setSelectedBrand(null);
     }
-  };
+  }, []);
 
-  // Handle edit brand
-  const handleEdit = (brand: BrandWithCount) => {
+  // Handle edit brand - stabilize with useCallback
+  const handleEdit = useCallback((brand: BrandWithCount) => {
     setSelectedBrand(brand);
     setIsDialogOpen(true);
-  };
+  }, []);
 
-  // Handle brand operation success
-  const handleSuccess = () => {
+  // Handle brand operation success - stabilize with useCallback
+  const handleSuccess = useCallback(() => {
     setIsDialogOpen(false);
     setSelectedBrand(null);
-    setRefreshTrigger((prev) => prev + 1);
-  };
+  }, []);
 
   return (
     <div className="space-y-1">
@@ -50,11 +48,7 @@ export default function BrandsPage() {
           onSuccess={handleSuccess}
         />
       </div>
-      <BrandTable
-        onEdit={handleEdit}
-        onRefresh={handleSuccess}
-        key={`brand-table-${refreshTrigger}`}
-      />
+      <BrandTable onEdit={handleEdit} onRefresh={handleSuccess} />
     </div>
   );
 }

@@ -70,6 +70,9 @@ export function BatchDetailDialog({
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Loading Batch Details</DialogTitle>
+          </DialogHeader>
           <div className="flex items-center justify-center p-8">
             <Loader2 className="h-8 w-8 animate-spin" />
             <span className="ml-2">Loading batch details...</span>
@@ -83,6 +86,9 @@ export function BatchDetailDialog({
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Batch Not Found</DialogTitle>
+          </DialogHeader>
           <div className="flex items-center justify-center p-8">
             <span>Batch not found</span>
           </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { IconShieldX, IconShieldCheck } from '@tabler/icons-react';
 import { toast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -62,51 +62,54 @@ export function UserBanDialog({ open, onOpenChange, user, onSuccess }: Props) {
     },
   });
 
-  const handleBanUser = async (values: BanFormValues) => {
-    try {
-      setLoading(true);
+  const handleBanUser = useCallback(
+    async (values: BanFormValues) => {
+      try {
+        setLoading(true);
 
-      // Calculate expiration date if not permanent
-      let banExpiresIn: number | undefined = undefined;
-      if (values.duration !== 'permanent') {
-        if (values.duration === '1d') banExpiresIn = 60 * 60 * 24;
-        if (values.duration === '7d') banExpiresIn = 60 * 60 * 24 * 7;
-        if (values.duration === '30d') banExpiresIn = 60 * 60 * 24 * 30;
-      }
+        // Calculate expiration date if not permanent
+        let banExpiresIn: number | undefined = undefined;
+        if (values.duration !== 'permanent') {
+          if (values.duration === '1d') banExpiresIn = 60 * 60 * 24;
+          if (values.duration === '7d') banExpiresIn = 60 * 60 * 24 * 7;
+          if (values.duration === '30d') banExpiresIn = 60 * 60 * 24 * 30;
+        }
 
-      const result = await banUser({
-        userId: user.id,
-        banReason: values.reason,
-        banExpiresIn,
-      });
-
-      if (result.success) {
-        toast({
-          title: 'User banned',
-          description: `${user.name} has been banned successfully`,
+        const result = await banUser({
+          userId: user.id,
+          banReason: values.reason,
+          banExpiresIn,
         });
-        onSuccess?.();
-      } else {
+
+        if (result.success) {
+          toast({
+            title: 'User banned',
+            description: `${user.name} has been banned successfully`,
+          });
+          onSuccess?.();
+        } else {
+          toast({
+            title: 'Error',
+            description: result.error || 'Failed to ban user',
+            variant: 'destructive',
+          });
+        }
+      } catch (error) {
+        console.error('Error banning user:', error);
         toast({
           title: 'Error',
-          description: result.error || 'Failed to ban user',
+          description: 'An unexpected error occurred',
           variant: 'destructive',
         });
+      } finally {
+        setLoading(false);
+        onOpenChange(false);
       }
-    } catch (error) {
-      console.error('Error banning user:', error);
-      toast({
-        title: 'Error',
-        description: 'An unexpected error occurred',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
-      onOpenChange(false);
-    }
-  };
+    },
+    [user.id, user.name, onSuccess, onOpenChange],
+  );
 
-  const handleUnbanUser = async () => {
+  const handleUnbanUser = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -136,7 +139,7 @@ export function UserBanDialog({ open, onOpenChange, user, onSuccess }: Props) {
       setLoading(false);
       onOpenChange(false);
     }
-  };
+  }, [user.id, user.name, onSuccess, onOpenChange]);
 
   if (isBanned) {
     return (

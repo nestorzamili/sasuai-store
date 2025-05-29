@@ -189,7 +189,7 @@ export default function BatchFormDialog({
   const [units, setUnits] = useState<Unit[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
 
-  // Generate a batch code based on the selected product
+  // Memoize the batch code generation function
   const generateBatchCode = useCallback(
     (productId: string) => {
       if (!productId) return '';
@@ -212,53 +212,56 @@ export default function BatchFormDialog({
     [products],
   );
 
-  // Fetch data on component mount
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Get products data
-        const productsResponse = await getAllProducts();
-        if (productsResponse.success && productsResponse.data) {
-          setProducts(productsResponse.data as Product[]);
-        } else {
-          setProducts([]);
-        }
-
-        // Get units data
-        const unitsResponse = await getAllUnits();
-        if (unitsResponse.success && unitsResponse.data) {
-          const unitsData = extractUnitsArray(unitsResponse.data);
-          setUnits(unitsData);
-        } else {
-          setUnits([]);
-        }
-
-        // Get suppliers data
-        const suppliersResponse = await getAllSuppliers();
-        if (suppliersResponse.success && suppliersResponse.data) {
-          const suppliersData = extractSuppliersArray(suppliersResponse.data);
-          setSuppliers(suppliersData);
-        } else {
-          setSuppliers([]);
-        }
-      } catch (error) {
-        console.error('Error fetching data:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to load necessary data',
-          variant: 'destructive',
-        });
-        // Set empty arrays on error
+  // Memoize data fetching to prevent unnecessary API calls
+  const fetchData = useCallback(async () => {
+    try {
+      // Get products data
+      const productsResponse = await getAllProducts();
+      if (productsResponse.success && productsResponse.data) {
+        setProducts(productsResponse.data as Product[]);
+      } else {
         setProducts([]);
+      }
+
+      // Get units data
+      const unitsResponse = await getAllUnits();
+      if (unitsResponse.success && unitsResponse.data) {
+        const unitsData = extractUnitsArray(unitsResponse.data);
+        setUnits(unitsData);
+      } else {
         setUnits([]);
+      }
+
+      // Get suppliers data
+      const suppliersResponse = await getAllSuppliers();
+      if (suppliersResponse.success && suppliersResponse.data) {
+        const suppliersData = extractSuppliersArray(suppliersResponse.data);
+        setSuppliers(suppliersData);
+      } else {
         setSuppliers([]);
       }
-    };
-
-    fetchData();
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load necessary data',
+        variant: 'destructive',
+      });
+      // Set empty arrays on error
+      setProducts([]);
+      setUnits([]);
+      setSuppliers([]);
+    }
   }, []);
 
-  // Convert data arrays to ComboBox options
+  // Fetch data on component mount - only when dialog opens
+  useEffect(() => {
+    if (open) {
+      fetchData();
+    }
+  }, [open, fetchData]);
+
+  // Convert data arrays to ComboBox options - memoized
   const productOptions = useMemo(
     () =>
       products.map((product) => ({
@@ -288,7 +291,7 @@ export default function BatchFormDialog({
     [suppliers],
   );
 
-  // Default form values
+  // Default form values - memoized
   const defaultValues = useMemo(
     () => ({
       productId: '',
@@ -300,39 +303,12 @@ export default function BatchFormDialog({
       supplierId: null,
     }),
     [],
-  ); // Empty dependency array since these values don't depend on any props or state
+  );
 
-  // Initialize the form
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: initialData
-      ? {
-          productId: initialData.productId || '',
-          batchCode: initialData.batchCode || '',
-          expiryDate: initialData.expiryDate
-            ? new Date(initialData.expiryDate)
-            : addMonths(new Date(), 6),
-          initialQuantity: initialData.initialQuantity || 0,
-          buyPrice: initialData.buyPrice || 0,
-          unitId: initialData.unitId || '',
-          supplierId: initialData.supplierId || null,
-        }
-      : defaultValues,
-  });
-
-  // Regenerate batch code
-  const regenerateBatchCode = () => {
-    const productId = form.getValues('productId');
-    if (productId) {
-      const newBatchCode = generateBatchCode(productId);
-      form.setValue('batchCode', newBatchCode);
-    }
-  };
-
-  // Update form when initialData changes or product changes
-  useEffect(() => {
+  // Initialize the form - memoized initial values
+  const formInitialValues = useMemo(() => {
     if (initialData) {
-      form.reset({
+      return {
         productId: initialData.productId || '',
         batchCode: initialData.batchCode || '',
         expiryDate: initialData.expiryDate
@@ -342,17 +318,35 @@ export default function BatchFormDialog({
         buyPrice: initialData.buyPrice || 0,
         unitId: initialData.unitId || '',
         supplierId: initialData.supplierId || null,
-      });
-    } else {
-      form.reset(defaultValues);
+      };
     }
-  }, [form, initialData, defaultValues]);
+    return defaultValues;
+  }, [initialData, defaultValues]);
+
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: formInitialValues,
+  });
+
+  // Regenerate batch code - memoized
+  const regenerateBatchCode = useCallback(() => {
+    const productId = form.getValues('productId');
+    if (productId) {
+      const newBatchCode = generateBatchCode(productId);
+      form.setValue('batchCode', newBatchCode);
+    }
+  }, [form, generateBatchCode]);
+
+  // Update form when initialData changes or product changes
+  useEffect(() => {
+    form.reset(formInitialValues);
+  }, [form, formInitialValues]);
 
   // Extract watched productId to a variable for dependency array
   const watchedProductId = form.watch('productId');
 
-  // Handle product selection
-  useEffect(() => {
+  // Handle product selection - memoized
+  const handleProductSelection = useCallback(() => {
     const productId = watchedProductId;
     if (!productId) return;
 
@@ -372,68 +366,77 @@ export default function BatchFormDialog({
     }
   }, [watchedProductId, products, form, isEditing, generateBatchCode]);
 
-  // Handle form submission
-  const onSubmit = async (values: FormValues) => {
-    try {
-      setLoading(true);
-      const result =
-        isEditing && initialData?.id
-          ? await updateBatch(initialData.id, {
-              batchCode: values.batchCode,
-              expiryDate: values.expiryDate,
-              buyPrice: values.buyPrice,
-            })
-          : await createBatch({
-              productId: values.productId,
-              batchCode: values.batchCode,
-              expiryDate: values.expiryDate,
-              initialQuantity: values.initialQuantity,
-              buyPrice: values.buyPrice,
-              unitId: values.unitId,
-              supplierId: values.supplierId,
-            });
+  useEffect(() => {
+    handleProductSelection();
+  }, [handleProductSelection]);
 
-      if (result.success) {
-        toast({
-          title: isEditing ? 'Batch updated' : 'Batch created',
-          description: isEditing
-            ? 'Batch has been updated successfully'
-            : 'New batch has been created',
-        });
+  // Handle form submission - memoized
+  const onSubmit = useCallback(
+    async (values: FormValues) => {
+      try {
+        setLoading(true);
+        const result =
+          isEditing && initialData?.id
+            ? await updateBatch(initialData.id, {
+                batchCode: values.batchCode,
+                expiryDate: values.expiryDate,
+                buyPrice: values.buyPrice,
+              })
+            : await createBatch({
+                productId: values.productId,
+                batchCode: values.batchCode,
+                expiryDate: values.expiryDate,
+                initialQuantity: values.initialQuantity,
+                buyPrice: values.buyPrice,
+                unitId: values.unitId,
+                supplierId: values.supplierId,
+              });
 
-        form.reset();
+        if (result.success) {
+          toast({
+            title: isEditing ? 'Batch updated' : 'Batch created',
+            description: isEditing
+              ? 'Batch has been updated successfully'
+              : 'New batch has been created',
+          });
 
-        // Close the dialog when successful
-        if (onOpenChange) {
-          onOpenChange(false);
+          form.reset();
+
+          // Close the dialog when successful
+          if (onOpenChange) {
+            onOpenChange(false);
+          }
+
+          // Call onSuccess after a short delay to allow the dialog to close
+          setTimeout(() => {
+            onSuccess?.();
+          }, 100);
+        } else {
+          toast({
+            title: 'Error',
+            description: result.error || 'Something went wrong',
+            variant: 'destructive',
+          });
         }
-
-        // Call onSuccess after a short delay to allow the dialog to close
-        setTimeout(() => {
-          onSuccess?.();
-        }, 100);
-      } else {
+      } catch (error) {
+        console.error('Error in batch form submission:', error);
         toast({
           title: 'Error',
-          description: result.error || 'Something went wrong',
+          description: 'An unexpected error occurred',
           variant: 'destructive',
         });
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Error in batch form submission:', error);
-      toast({
-        title: 'Error',
-        description: 'An unexpected error occurred',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    [isEditing, initialData?.id, form, onOpenChange, onSuccess],
+  );
 
-  // Get the selected product
-  const selectedProductId = form.watch('productId');
-  const selectedProduct = products.find((p) => p.id === selectedProductId);
+  // Get the selected product - memoized
+  const selectedProduct = useMemo(() => {
+    const selectedProductId = form.watch('productId');
+    return products.find((p) => p.id === selectedProductId);
+  }, [form.watch('productId'), products]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

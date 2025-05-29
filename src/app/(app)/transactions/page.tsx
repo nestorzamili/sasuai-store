@@ -1,15 +1,8 @@
 'use client';
 
-import { useState } from 'react';
 import { TransactionTable } from './_components/transaction-table';
 
 export default function TransactionsPage() {
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
-
-  const handleRefresh = () => {
-    setRefreshTrigger((prev) => prev + 1);
-  };
-
   return (
     <div className="space-y-4">
       <div>
@@ -18,10 +11,7 @@ export default function TransactionsPage() {
           View all transaction records in your store.
         </p>
       </div>
-      <TransactionTable
-        key={`transaction-table-${refreshTrigger}`}
-        onRefresh={handleRefresh}
-      />
+      <TransactionTable />
     </div>
   );
 }

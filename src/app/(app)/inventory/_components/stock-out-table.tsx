@@ -10,7 +10,7 @@ import { format } from 'date-fns';
 import { TableLayout } from '@/components/layout/table-layout';
 import { useFetch } from '@/hooks/use-fetch';
 import { getAllStockOuts } from '../stock-actions';
-import { memo, useCallback, useEffect, useMemo } from 'react';
+import { memo, useEffect, useMemo, useCallback, useRef } from 'react';
 
 interface StockOutTableProps {
   isActive?: boolean;
@@ -19,7 +19,9 @@ interface StockOutTableProps {
 export const StockOutTable = memo(function StockOutTable({
   isActive = false,
 }: StockOutTableProps) {
-  // Memoized columns
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Memoized columns to prevent unnecessary re-renders
   const columns = useMemo(
     (): ColumnDef<StockOutComplete>[] => [
       {
@@ -78,7 +80,7 @@ export const StockOutTable = memo(function StockOutTable({
     [],
   );
 
-  // Memoize the fetch function to prevent it from changing on every render
+  // Stabilize fetchStockOutData with abort controller
   const fetchStockOutData = useCallback(
     async (
       options: TableFetchOptions,
@@ -88,6 +90,13 @@ export const StockOutTable = memo(function StockOutTable({
           return { data: [], totalRows: 0 };
         }
 
+        // Cancel previous request
+        if (abortControllerRef.current) {
+          abortControllerRef.current.abort();
+        }
+
+        abortControllerRef.current = new AbortController();
+
         const response = await getAllStockOuts({
           page: (options.page || 0) + 1,
           limit: options.limit || 10,
@@ -96,6 +105,10 @@ export const StockOutTable = memo(function StockOutTable({
           search: options.search,
           columnFilter: ['batch.product.name', 'batch.batchCode'],
         });
+
+        if (abortControllerRef.current?.signal.aborted) {
+          return { data: [], totalRows: 0 };
+        }
 
         if (!response.success) {
           console.error('Failed to fetch stock-out data:', response.error);
@@ -107,7 +120,9 @@ export const StockOutTable = memo(function StockOutTable({
           totalRows: response.meta?.rowsCount || 0,
         };
       } catch (error) {
-        console.error('Error fetching stock-out data:', error);
+        if (error instanceof Error && error.name !== 'AbortError') {
+          console.error('Error fetching stock-out data:', error);
+        }
         return { data: [], totalRows: 0 };
       }
     },
@@ -137,23 +152,36 @@ export const StockOutTable = memo(function StockOutTable({
     if (isActive) {
       refresh();
     }
+
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
   }, [isActive, refresh]);
 
-  const handlePaginationChange = (newPagination: {
-    pageIndex: number;
-    pageSize: number;
-  }) => {
-    setPage(newPagination.pageIndex);
-    setLimit(newPagination.pageSize);
-  };
+  // Memoize handlers to prevent unnecessary re-renders
+  const handlePaginationChange = useCallback(
+    (newPagination: { pageIndex: number; pageSize: number }) => {
+      setPage(newPagination.pageIndex);
+      setLimit(newPagination.pageSize);
+    },
+    [setPage, setLimit],
+  );
 
-  const handleSortingChange = (newSorting: { id: string; desc: boolean }[]) => {
-    setSortBy(newSorting);
-  };
+  const handleSortingChange = useCallback(
+    (newSorting: { id: string; desc: boolean }[]) => {
+      setSortBy(newSorting);
+    },
+    [setSortBy],
+  );
 
-  const handleSearchChange = (search: string) => {
-    setSearch(search);
-  };
+  const handleSearchChange = useCallback(
+    (search: string) => {
+      setSearch(search);
+    },
+    [setSearch],
+  );
 
   return (
     <div className="space-y-4">

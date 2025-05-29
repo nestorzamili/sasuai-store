@@ -44,93 +44,7 @@ export function TransactionDetailDialog({
     };
   }, []);
 
-  useEffect(() => {
-    const fetchTransactionDetails = async () => {
-      if (!open || !transactionId) return;
-
-      try {
-        setLoading(true);
-        const result = await getTransactionById(transactionId);
-
-        if (result.success && result.data && isMounted.current) {
-          // Convert the API response to match the component's expected type
-          const transactionData: TransactionDetail = {
-            id: result.data.id,
-            tranId: result.data.tranId,
-            createdAt: result.data.createdAt.toString(), // Convert Date to string
-            cashier: {
-              name: result.data.cashier.name,
-            },
-            member: result.data.member
-              ? {
-                  id: result.data.member.id,
-                  name: result.data.member.name,
-                  tier: result.data.member.tier,
-                }
-              : null,
-            pricing: {
-              originalAmount: result.data.pricing.originalAmount,
-              finalAmount: result.data.pricing.finalAmount,
-              discounts: {
-                member: result.data.pricing.discounts.member,
-                products: result.data.pricing.discounts.products,
-                total: result.data.pricing.discounts.total,
-              },
-            },
-            payment: {
-              method: result.data.payment.method,
-              amount: result.data.payment.amount,
-              change: result.data.payment.change,
-            },
-            items: result.data.items.map((item) => ({
-              id: item.id,
-              product: {
-                name: item.product.name,
-                price: item.product.price,
-                unit: item.product.unit,
-                category: item.product.category,
-              },
-              quantity: item.quantity,
-              originalAmount: item.originalAmount,
-              discountApplied: item.discountApplied
-                ? {
-                    id: item.discountApplied.id,
-                    name: item.discountApplied.name,
-                    amount: item.discountApplied.amount,
-                  }
-                : null,
-            })),
-            pointsEarned: result.data.pointsEarned,
-          };
-
-          setTransaction(transactionData);
-        } else if (isMounted.current) {
-          toast({
-            title: 'Error',
-            description: result.error || 'Failed to load transaction details',
-            variant: 'destructive',
-          });
-        }
-      } catch (error) {
-        console.error('Error fetching transaction details:', error);
-        if (isMounted.current) {
-          toast({
-            title: 'Error',
-            description: 'An unexpected error occurred',
-            variant: 'destructive',
-          });
-        }
-      } finally {
-        if (isMounted.current) {
-          setLoading(false);
-        }
-      }
-    };
-
-    fetchTransactionDetails();
-  }, [open, transactionId]);
-
-  // Memoize handlers
+  // Memoize handlers - stabilize with useCallback
   const handlePdfGeneration = useCallback(async () => {
     if (!transaction) return;
 
@@ -169,7 +83,94 @@ export function TransactionDetailDialog({
         setPdfLoading(false);
       }
     }
-  }, [transaction, isMounted]);
+  }, [transaction]);
+
+  // Stabilize fetch function with useCallback
+  const fetchTransactionDetails = useCallback(async () => {
+    if (!open || !transactionId) return;
+
+    try {
+      setLoading(true);
+      const result = await getTransactionById(transactionId);
+
+      if (result.success && result.data && isMounted.current) {
+        // Convert the API response to match the component's expected type
+        const transactionData: TransactionDetail = {
+          id: result.data.id,
+          tranId: result.data.tranId,
+          createdAt: result.data.createdAt.toString(), // Convert Date to string
+          cashier: {
+            name: result.data.cashier.name,
+          },
+          member: result.data.member
+            ? {
+                id: result.data.member.id,
+                name: result.data.member.name,
+                tier: result.data.member.tier,
+              }
+            : null,
+          pricing: {
+            originalAmount: result.data.pricing.originalAmount,
+            finalAmount: result.data.pricing.finalAmount,
+            discounts: {
+              member: result.data.pricing.discounts.member,
+              products: result.data.pricing.discounts.products,
+              total: result.data.pricing.discounts.total,
+            },
+          },
+          payment: {
+            method: result.data.payment.method,
+            amount: result.data.payment.amount,
+            change: result.data.payment.change,
+          },
+          items: result.data.items.map((item) => ({
+            id: item.id,
+            product: {
+              name: item.product.name,
+              price: item.product.price,
+              unit: item.product.unit,
+              category: item.product.category,
+            },
+            quantity: item.quantity,
+            originalAmount: item.originalAmount,
+            discountApplied: item.discountApplied
+              ? {
+                  id: item.discountApplied.id,
+                  name: item.discountApplied.name,
+                  amount: item.discountApplied.amount,
+                }
+              : null,
+          })),
+          pointsEarned: result.data.pointsEarned,
+        };
+
+        setTransaction(transactionData);
+      } else if (isMounted.current) {
+        toast({
+          title: 'Error',
+          description: result.error || 'Failed to load transaction details',
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching transaction details:', error);
+      if (isMounted.current) {
+        toast({
+          title: 'Error',
+          description: 'An unexpected error occurred',
+          variant: 'destructive',
+        });
+      }
+    } finally {
+      if (isMounted.current) {
+        setLoading(false);
+      }
+    }
+  }, [open, transactionId]);
+
+  useEffect(() => {
+    fetchTransactionDetails();
+  }, [fetchTransactionDetails]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
