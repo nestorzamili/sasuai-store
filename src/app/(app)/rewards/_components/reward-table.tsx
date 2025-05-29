@@ -1,6 +1,6 @@
 'use client';
 import * as React from 'react';
-import { useState } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { ColumnDef } from '@tanstack/react-table';
 import { MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -35,7 +35,7 @@ export function RewardTable({ onEdit, onDelete }: RewardTableProps) {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   // Use the useFetch hook to handle data fetching, pagination, and sorting
-  const fetchRewards = async (options: FetchOptions) => {
+  const fetchRewards = useCallback(async (options: FetchOptions) => {
     const response = await getAllRewardsWithClaimCount({
       page: (options.page ?? 0) + 1,
       limit: options.limit ?? 10,
@@ -53,7 +53,7 @@ export function RewardTable({ onEdit, onDelete }: RewardTableProps) {
     }
 
     return { data: [], totalRows: 0 };
-  };
+  }, []);
 
   const {
     data,
@@ -72,205 +72,217 @@ export function RewardTable({ onEdit, onDelete }: RewardTableProps) {
     initialSortDirection: false,
   });
 
-  // Handle pagination change
-  const handlePaginationChange = (newPagination: {
-    pageIndex: number;
-    pageSize: number;
-  }) => {
-    setPage(newPagination.pageIndex);
-    setLimit(newPagination.pageSize);
-  };
+  // Handle pagination change - stabilize with useCallback
+  const handlePaginationChange = useCallback(
+    (newPagination: { pageIndex: number; pageSize: number }) => {
+      setPage(newPagination.pageIndex);
+      setLimit(newPagination.pageSize);
+    },
+    [setPage, setLimit],
+  );
 
-  // Handle sorting change
-  const handleSortingChange = (newSorting: SortingState[]) => {
-    setSortBy(newSorting.length > 0 ? [newSorting[0]] : []);
-  };
+  // Handle sorting change - stabilize with useCallback
+  const handleSortingChange = useCallback(
+    (newSorting: SortingState[]) => {
+      setSortBy(newSorting.length > 0 ? [newSorting[0]] : []);
+    },
+    [setSortBy],
+  );
 
-  // Handle search change
-  const handleSearchChange = (newSearch: string) => {
-    setSearch(newSearch);
-  };
+  // Handle search change - stabilize with useCallback
+  const handleSearchChange = useCallback(
+    (newSearch: string) => {
+      setSearch(newSearch);
+    },
+    [setSearch],
+  );
 
-  // Define columns
-  const columns: ColumnDef<RewardWithClaimCount>[] = [
-    // Image column
-    {
-      id: 'image',
-      header: 'Image',
-      cell: ({ row }) => {
-        const reward = row.original;
-        if (reward.imageUrl) {
+  // Define columns - memoize to prevent re-creation
+  const columns: ColumnDef<RewardWithClaimCount>[] = useMemo(
+    () => [
+      // Image column
+      {
+        id: 'image',
+        header: 'Image',
+        cell: ({ row }) => {
+          const reward = row.original;
+          if (reward.imageUrl) {
+            return (
+              <div
+                className="relative h-12 w-16 rounded overflow-hidden cursor-pointer"
+                onClick={() => setSelectedImage(reward.imageUrl || null)}
+              >
+                <Image
+                  src={reward.imageUrl}
+                  alt={reward.name}
+                  fill
+                  className="object-cover hover:opacity-80 transition-opacity"
+                  sizes="64px"
+                />
+              </div>
+            );
+          }
           return (
-            <div
-              className="relative h-12 w-16 rounded overflow-hidden cursor-pointer"
-              onClick={() => setSelectedImage(reward.imageUrl || null)}
-            >
-              <Image
-                src={reward.imageUrl}
-                alt={reward.name}
-                fill
-                className="object-cover hover:opacity-80 transition-opacity"
-                sizes="64px"
-              />
+            <div className="h-12 w-16 rounded bg-muted flex items-center justify-center">
+              <IconPhoto className="h-5 w-5 text-muted-foreground/60" />
             </div>
           );
-        }
-        return (
-          <div className="h-12 w-16 rounded bg-muted flex items-center justify-center">
-            <IconPhoto className="h-5 w-5 text-muted-foreground/60" />
+        },
+      },
+
+      // Name column
+      {
+        accessorKey: 'name',
+        header: 'Reward Name',
+        cell: ({ row }) => (
+          <div className="flex items-center">
+            <IconTrophy className="mr-2 h-4 w-4 text-yellow-500" />
+            <div className="font-medium">{row.getValue('name')}</div>
           </div>
-        );
+        ),
+        enableSorting: true,
       },
-    },
 
-    // Name column
-    {
-      accessorKey: 'name',
-      header: 'Reward Name',
-      cell: ({ row }) => (
-        <div className="flex items-center">
-          <IconTrophy className="mr-2 h-4 w-4 text-yellow-500" />
-          <div className="font-medium">{row.getValue('name')}</div>
-        </div>
-      ),
-      enableSorting: true,
-    },
-
-    // Points cost column
-    {
-      accessorKey: 'pointsCost',
-      header: 'Points Cost',
-      cell: ({ row }) => (
-        <div className="font-medium">{row.getValue('pointsCost')} points</div>
-      ),
-      enableSorting: true,
-    },
-
-    // Stock column
-    {
-      accessorKey: 'stock',
-      header: 'Stock',
-      cell: ({ row }) => {
-        const stock = row.getValue('stock') as number;
-        return (
-          <div className="font-medium">
-            {stock === 0 ? (
-              <Badge variant="destructive">Out of Stock</Badge>
-            ) : stock < 10 ? (
-              <Badge
-                variant="secondary"
-                className="bg-amber-500 hover:bg-amber-600 text-white"
-              >
-                {stock} remaining
-              </Badge>
-            ) : (
-              <Badge variant="outline">{stock}</Badge>
-            )}
-          </div>
-        );
+      // Points cost column
+      {
+        accessorKey: 'pointsCost',
+        header: 'Points Cost',
+        cell: ({ row }) => (
+          <div className="font-medium">{row.getValue('pointsCost')} points</div>
+        ),
+        enableSorting: true,
       },
-      enableSorting: true,
-    },
 
-    // Active status column
-    {
-      accessorKey: 'isActive',
-      header: 'Status',
-      cell: ({ row }) => {
-        const isActive = row.getValue('isActive') as boolean;
-        return (
-          <Badge
-            variant={isActive ? 'default' : 'secondary'}
-            className={isActive ? 'bg-green-500 hover:bg-green-600' : ''}
-          >
-            {isActive ? 'Active' : 'Inactive'}
-          </Badge>
-        );
-      },
-      enableSorting: true,
-    },
-
-    // Expiry date column
-    {
-      accessorKey: 'expiryDate',
-      header: 'Expiry',
-      cell: ({ row }) => {
-        const expiryDate = row.original.expiryDate;
-        if (!expiryDate)
+      // Stock column
+      {
+        accessorKey: 'stock',
+        header: 'Stock',
+        cell: ({ row }) => {
+          const stock = row.getValue('stock') as number;
           return (
-            <span className="text-muted-foreground text-sm">No expiry</span>
+            <div className="font-medium">
+              {stock === 0 ? (
+                <Badge variant="destructive">Out of Stock</Badge>
+              ) : stock < 10 ? (
+                <Badge
+                  variant="secondary"
+                  className="bg-amber-500 hover:bg-amber-600 text-white"
+                >
+                  {stock} remaining
+                </Badge>
+              ) : (
+                <Badge variant="outline">{stock}</Badge>
+              )}
+            </div>
           );
+        },
+        enableSorting: true,
+      },
 
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-
-        const expiryDateOnly = new Date(expiryDate);
-        expiryDateOnly.setHours(0, 0, 0, 0);
-
-        const isExpired = expiryDateOnly < today;
-
-        if (isExpired) {
+      // Active status column
+      {
+        accessorKey: 'isActive',
+        header: 'Status',
+        cell: ({ row }) => {
+          const isActive = row.getValue('isActive') as boolean;
           return (
-            <Badge variant="destructive" className="whitespace-nowrap text-xs">
-              Expired
+            <Badge
+              variant={isActive ? 'default' : 'secondary'}
+              className={isActive ? 'bg-green-500 hover:bg-green-600' : ''}
+            >
+              {isActive ? 'Active' : 'Inactive'}
             </Badge>
           );
-        }
-
-        return (
-          <span className="text-sm">
-            {format(new Date(expiryDate), 'MMM d, yyyy')}
-          </span>
-        );
+        },
+        enableSorting: true,
       },
-    },
 
-    // Claims count column
-    {
-      id: 'claimsCount',
-      header: 'Claims',
-      cell: ({ row }) => (
-        <Badge variant="outline" className="text-xs">
-          {row.original._count?.rewardClaims || 0} claims
-        </Badge>
-      ),
-    },
+      // Expiry date column
+      {
+        accessorKey: 'expiryDate',
+        header: 'Expiry',
+        cell: ({ row }) => {
+          const expiryDate = row.original.expiryDate;
+          if (!expiryDate)
+            return (
+              <span className="text-muted-foreground text-sm">No expiry</span>
+            );
 
-    // Actions column
-    {
-      id: 'actions',
-      header: '',
-      cell: ({ row }) => {
-        const reward = row.original;
-        return (
-          <div className="text-right">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-8 w-8 p-0">
-                  <span className="sr-only">Open menu</span>
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  className="flex justify-between cursor-pointer"
-                  onClick={() => onEdit?.(reward)}
-                >
-                  Edit <IconEdit className="h-4 w-4" />
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="flex justify-between cursor-pointer text-destructive focus:text-destructive"
-                  onClick={() => onDelete(reward)}
-                >
-                  Delete <IconTrash className="h-4 w-4" />
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        );
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+
+          const expiryDateOnly = new Date(expiryDate);
+          expiryDateOnly.setHours(0, 0, 0, 0);
+
+          const isExpired = expiryDateOnly < today;
+
+          if (isExpired) {
+            return (
+              <Badge
+                variant="destructive"
+                className="whitespace-nowrap text-xs"
+              >
+                Expired
+              </Badge>
+            );
+          }
+
+          return (
+            <span className="text-sm">
+              {format(new Date(expiryDate), 'MMM d, yyyy')}
+            </span>
+          );
+        },
       },
-    },
-  ];
+
+      // Claims count column
+      {
+        id: 'claimsCount',
+        header: 'Claims',
+        cell: ({ row }) => (
+          <Badge variant="outline" className="text-xs">
+            {row.original._count?.rewardClaims || 0} claims
+          </Badge>
+        ),
+      },
+
+      // Actions column
+      {
+        id: 'actions',
+        header: '',
+        cell: ({ row }) => {
+          const reward = row.original;
+          return (
+            <div className="text-right">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="h-8 w-8 p-0">
+                    <span className="sr-only">Open menu</span>
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem
+                    className="flex justify-between cursor-pointer"
+                    onClick={() => onEdit?.(reward)}
+                  >
+                    Edit <IconEdit className="h-4 w-4" />
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="flex justify-between cursor-pointer text-destructive focus:text-destructive"
+                    onClick={() => onDelete(reward)}
+                  >
+                    Delete <IconTrash className="h-4 w-4" />
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          );
+        },
+      },
+    ],
+    [onEdit, onDelete],
+  );
 
   return (
     <>

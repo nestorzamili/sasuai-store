@@ -211,8 +211,10 @@ export default function BatchFilterToolbar({
         {categories.length > 0 && setCategoryId && (
           <div className="w-[180px]">
             <Select
-              value={categoryId || ''}
-              onValueChange={(value) => setCategoryId(value)}
+              value={categoryId || 'all'}
+              onValueChange={(value) =>
+                setCategoryId(value === 'all' ? '' : value)
+              }
             >
               <SelectTrigger
                 className={cn(categoryId && 'border-primary text-primary')}
@@ -221,7 +223,7 @@ export default function BatchFilterToolbar({
                 <SelectValue placeholder="All Categories" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Categories</SelectItem>
+                <SelectItem value="all">All Categories</SelectItem>
                 {categories.map((category) => (
                   <SelectItem key={category.id} value={category.id}>
                     {category.name}

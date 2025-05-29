@@ -17,7 +17,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { DateFilter as FilterDateFilter } from '@/lib/types/filter';
 
 // Basic chart config with just the visitors key
@@ -60,6 +60,7 @@ interface CategoryApiItem {
 export function SalesCategory({ filter }: SalesCategoryProps) {
   const [chartData, setChartData] = useState<CategoryData[]>([]);
   const [loading, setLoading] = useState(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Dynamically generate chart config based on current data
   const chartConfig = useMemo(() => {
@@ -75,59 +76,78 @@ export function SalesCategory({ filter }: SalesCategoryProps) {
     return config;
   }, [chartData]);
 
+  // Memoize the API filter to prevent unnecessary recreations
+  const apiFilter = useMemo(() => {
+    const defaultStart = new Date();
+    defaultStart.setDate(defaultStart.getDate() - 7);
+    const defaultEnd = new Date();
+
+    return {
+      filter: {
+        from:
+          filter?.from instanceof Date
+            ? filter.from.toISOString().split('T')[0]
+            : filter?.from
+              ? String(filter.from)
+              : defaultStart.toISOString().split('T')[0],
+        to:
+          filter?.to instanceof Date
+            ? filter.to.toISOString().split('T')[0]
+            : filter?.to
+              ? String(filter.to)
+              : defaultEnd.toISOString().split('T')[0],
+      },
+    };
+  }, [filter?.from, filter?.to]);
+
   const fetchTopCategories = useCallback(async () => {
     try {
+      // Cancel previous request
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+
+      abortControllerRef.current = new AbortController();
       setLoading(true);
 
-      // Convert FilterDateFilter to ExtendedDateFilter format expected by the API
-      // Provide default values if filter is not provided
-      const defaultStart = new Date();
-      defaultStart.setDate(defaultStart.getDate() - 7); // Last 7 days
-      const defaultEnd = new Date();
-
-      const apiFilter = {
-        filter: {
-          from:
-            filter?.from instanceof Date
-              ? filter.from.toISOString().split('T')[0]
-              : filter?.from
-                ? String(filter.from)
-                : defaultStart.toISOString().split('T')[0],
-          to:
-            filter?.to instanceof Date
-              ? filter.to.toISOString().split('T')[0]
-              : filter?.to
-                ? String(filter.to)
-                : defaultEnd.toISOString().split('T')[0],
-        },
-      };
-
       const response = await getTopCategories(apiFilter);
+
+      if (abortControllerRef.current?.signal.aborted) {
+        return;
+      }
+
       if (response.success && response.data) {
         const formattedData = response.data.map(
           (item: CategoryApiItem, index: number) => ({
-            browser: item.categoryName, // Using browser key for consistency with chart component
-            visitors: item.transactionCount, // Using visitors key for consistency with chart component
+            browser: item.categoryName,
+            visitors: item.transactionCount,
             fill: categoryColors[index % categoryColors.length],
-            label: item.categoryName, // Add label field for tooltip
+            label: item.categoryName,
           }),
         );
         setChartData(formattedData);
       } else {
-        console.log('dari fetch data', response);
         setChartData([]);
       }
     } catch (error) {
-      console.error('Error fetching top categories:', error);
+      if (error instanceof Error && error.name !== 'AbortError') {
+        console.error('Error fetching top categories:', error);
+      }
       setChartData([]);
     } finally {
       setLoading(false);
     }
-  }, [filter]); // Include filter as dependency
+  }, [apiFilter]);
 
   useEffect(() => {
     fetchTopCategories();
-  }, [fetchTopCategories]); // Now fetchTopCategories is stable
+
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, [fetchTopCategories]);
 
   return (
     <Card className="flex flex-col">

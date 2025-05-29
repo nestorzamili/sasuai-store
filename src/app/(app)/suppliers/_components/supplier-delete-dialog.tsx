@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { IconAlertTriangle } from '@tabler/icons-react';
 import { toast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -49,7 +49,7 @@ export function SupplierDeleteDialog({
     }
   }, [open, supplier.id]);
 
-  const handleDelete = async () => {
+  const handleDelete = useCallback(async () => {
     try {
       setIsDeleting(true);
 
@@ -92,7 +92,7 @@ export function SupplierDeleteDialog({
       setIsDeleting(false);
       onOpenChange(false);
     }
-  };
+  }, [supplier.id, supplier.name, onOpenChange, onSuccess]);
 
   return (
     <ConfirmDialog

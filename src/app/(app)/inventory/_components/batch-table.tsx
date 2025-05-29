@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { ColumnDef } from '@tanstack/react-table';
 import { MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -74,36 +74,29 @@ export function BatchTable({
     Array<{ id: string; name: string }>
   >([]);
 
-  // Handle delete click
-  const handleDeleteClick = (batch: ProductBatchWithProduct) => {
-    setSelectedBatchForDelete(batch);
-    setIsDeleteDialogOpen(true);
-  };
-
-  // New handler for viewing batch details
-  const handleViewDetails = (batch: ProductBatchWithProduct) => {
-    setSelectedBatchId(batch.id);
-    setIsDetailDialogOpen(true);
-  };
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Determine if a batch is expired
   const isExpired = (expiryDate: Date): boolean => {
     return new Date(expiryDate) < new Date();
   };
 
-  // Optimize fetchBatchData with useCallback to prevent unnecessary re-renders
+  // Stabilize fetchBatchData with proper dependencies
   const fetchBatchData = useCallback(
     async (
       options: TableFetchOptions,
     ): Promise<TableFetchResult<ProductBatchWithProduct[]>> => {
       try {
         if (!isActive && !isInitialLoad) {
-          return {
-            data: [],
-            totalRows: 0,
-          };
+          return { data: [], totalRows: 0 };
         }
 
+        // Cancel previous request
+        if (abortControllerRef.current) {
+          abortControllerRef.current.abort();
+        }
+
+        abortControllerRef.current = new AbortController();
         setIsLoading(true);
 
         let expiryDateStart: Date | undefined;
@@ -136,21 +129,24 @@ export function BatchTable({
           categoryId: options.filters?.categoryId as string,
         });
 
+        if (abortControllerRef.current?.signal.aborted) {
+          return { data: [], totalRows: 0 };
+        }
+
         return {
           data: response.data?.data || [],
           totalRows: response.data?.meta.totalRows || 0,
         };
       } catch (error) {
-        console.error('Error fetching batch data:', error);
-        return {
-          data: [],
-          totalRows: 0,
-        };
+        if (error instanceof Error && error.name !== 'AbortError') {
+          console.error('Error fetching batch data:', error);
+        }
+        return { data: [], totalRows: 0 };
       } finally {
         setIsLoading(false);
       }
     },
-    [isActive, isInitialLoad],
+    [isActive, isInitialLoad], // Remove memoizedFilters from here as it's handled by useFetch
   );
 
   // Use fetch hook first to get the setFilters function
@@ -172,6 +168,27 @@ export function BatchTable({
     initialSortDirection: true,
   });
 
+  // Memoize handlers to prevent unnecessary re-renders
+  const handleDeleteClick = useCallback((batch: ProductBatchWithProduct) => {
+    setSelectedBatchForDelete(batch);
+    setIsDeleteDialogOpen(true);
+  }, []);
+
+  const handleViewDetails = useCallback((batch: ProductBatchWithProduct) => {
+    setSelectedBatchId(batch.id);
+    setIsDetailDialogOpen(true);
+  }, []);
+
+  const handleAdjust = useCallback((batch: ProductBatchWithProduct) => {
+    setSelectedBatch(batch);
+    setAdjustQtyDialog(true);
+  }, []);
+
+  const handleEdit = useCallback((batch: ProductBatchWithProduct) => {
+    setSelectedBatch(batch);
+    setFormDialog(true);
+  }, []);
+
   // Now define the filter change handler that uses setFilters
   const handleFilterChange = useCallback(
     (key: string, value: unknown) => {
@@ -189,153 +206,153 @@ export function BatchTable({
 
   // Handle adjust quantity
   const [adjustQtyDialog, setAdjustQtyDialog] = useState(false);
-  const handleAdjust = (batch: ProductBatchWithProduct) => {
-    setSelectedBatch(batch);
-    setAdjustQtyDialog(true);
-  };
-
   // Handle edit batch
   const [formDialog, setFormDialog] = useState(false);
-  const handleEdit = (batch: ProductBatchWithProduct) => {
-    setSelectedBatch(batch);
-    setFormDialog(true);
-  };
 
   // Define columns
-  const columns: ColumnDef<ProductBatchWithProduct>[] = [
-    // Product column
-    {
-      accessorKey: 'product.name',
-      header: 'Name',
-      cell: ({ row }) => {
-        const product = row.original.product;
-        return <div className="font-medium">{product.name}</div>;
+  const columns = useMemo(
+    (): ColumnDef<ProductBatchWithProduct>[] => [
+      // Product column
+      {
+        accessorKey: 'product.name',
+        header: 'Name',
+        cell: ({ row }) => {
+          const product = row.original.product;
+          return <div className="font-medium">{product.name}</div>;
+        },
       },
-    },
 
-    // Batch Code column
-    {
-      accessorKey: 'batchCode',
-      header: 'batch code',
-      cell: ({ row }) => {
-        return <div>{row.getValue('batchCode')}</div>;
+      // Batch Code column
+      {
+        accessorKey: 'batchCode',
+        header: 'batch code',
+        cell: ({ row }) => {
+          return <div>{row.getValue('batchCode')}</div>;
+        },
       },
-    },
 
-    // Expiry Date column
-    {
-      accessorKey: 'expiryDate',
-      header: 'Expire Date',
-      cell: ({ row }) => {
-        const expiryDate = new Date(row.getValue('expiryDate'));
-        const expired = isExpired(expiryDate);
-        return (
-          <div className="flex">
-            <div className={expired ? 'text-destructive font-medium' : ''}>
-              {formatDate(expiryDate)}
+      // Expiry Date column
+      {
+        accessorKey: 'expiryDate',
+        header: 'Expire Date',
+        cell: ({ row }) => {
+          const expiryDate = new Date(row.getValue('expiryDate'));
+          const expired = isExpired(expiryDate);
+          return (
+            <div className="flex">
+              <div className={expired ? 'text-destructive font-medium' : ''}>
+                {formatDate(expiryDate)}
+              </div>
+              {expired && (
+                <Badge variant="destructive" className="ml-2">
+                  Expired
+                </Badge>
+              )}
             </div>
-            {expired && (
-              <Badge variant="destructive" className="ml-2">
-                Expired
-              </Badge>
-            )}
-          </div>
-        );
+          );
+        },
       },
-    },
 
-    // Quantity column
-    {
-      accessorKey: 'remainingQuantity',
-      header: 'remaining quantity',
-      cell: ({ row }) => {
-        const quantity = row.getValue('remainingQuantity') as number;
-        return <div>{quantity.toLocaleString()}</div>;
+      // Quantity column
+      {
+        accessorKey: 'remainingQuantity',
+        header: 'remaining quantity',
+        cell: ({ row }) => {
+          const quantity = row.getValue('remainingQuantity') as number;
+          return <div>{quantity.toLocaleString()}</div>;
+        },
       },
-    },
 
-    // Buy Price column
-    {
-      accessorKey: 'buyPrice',
-      header: 'buy price',
-      cell: ({ row }) => {
-        const buyPrice = row.getValue('buyPrice') as number;
-        return <div className="font-medium">{formatRupiah(buyPrice)}</div>;
+      // Buy Price column
+      {
+        accessorKey: 'buyPrice',
+        header: 'buy price',
+        cell: ({ row }) => {
+          const buyPrice = row.getValue('buyPrice') as number;
+          return <div className="font-medium">{formatRupiah(buyPrice)}</div>;
+        },
       },
-    },
 
-    // Actions column
-    {
-      id: 'actions',
-      header: '',
-      cell: ({ row }) => {
-        const batch = row.original;
-        return (
-          <div className="text-right">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-8 w-8 p-0">
-                  <span className="sr-only">Open menu</span>
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  className="flex justify-between cursor-pointer"
-                  onClick={() => handleViewDetails(batch)}
-                >
-                  View Details <IconEye className="h-4 w-4" />
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="flex justify-between cursor-pointer"
-                  onClick={() => {
-                    handleAdjust(batch);
-                  }}
-                >
-                  Adjust Quantity{' '}
-                  <IconAdjustmentsHorizontal className="h-4 w-4" />
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="flex justify-between cursor-pointer"
-                  onClick={() => handleEdit(batch)}
-                >
-                  Edit <IconEdit className="h-4 w-4" />
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="flex justify-between cursor-pointer text-destructive focus:text-destructive"
-                  onClick={() => handleDeleteClick(batch)}
-                  disabled={batch.remainingQuantity !== batch.initialQuantity}
-                >
-                  Delete <IconTrash className="h-4 w-4" />
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        );
+      // Actions column
+      {
+        id: 'actions',
+        header: '',
+        cell: ({ row }) => {
+          const batch = row.original;
+          return (
+            <div className="text-right">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="h-8 w-8 p-0">
+                    <span className="sr-only">Open menu</span>
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    className="flex justify-between cursor-pointer"
+                    onClick={() => handleViewDetails(batch)}
+                  >
+                    View Details <IconEye className="h-4 w-4" />
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="flex justify-between cursor-pointer"
+                    onClick={() => {
+                      handleAdjust(batch);
+                    }}
+                  >
+                    Adjust Quantity{' '}
+                    <IconAdjustmentsHorizontal className="h-4 w-4" />
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="flex justify-between cursor-pointer"
+                    onClick={() => handleEdit(batch)}
+                  >
+                    Edit <IconEdit className="h-4 w-4" />
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="flex justify-between cursor-pointer text-destructive focus:text-destructive"
+                    onClick={() => handleDeleteClick(batch)}
+                    disabled={batch.remainingQuantity !== batch.initialQuantity}
+                  >
+                    Delete <IconTrash className="h-4 w-4" />
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          );
+        },
       },
-    },
-  ];
+    ],
+    [handleViewDetails, handleAdjust, handleEdit, handleDeleteClick],
+  );
 
   // handle pagination change
-  const handlePaginationChange = (newPagination: {
-    pageIndex: number;
-    pageSize: number;
-  }) => {
-    setPage(newPagination.pageIndex);
-    setLimit(newPagination.pageSize);
-  };
+  const handlePaginationChange = useCallback(
+    (newPagination: { pageIndex: number; pageSize: number }) => {
+      setPage(newPagination.pageIndex);
+      setLimit(newPagination.pageSize);
+    },
+    [setPage, setLimit],
+  );
 
   // handle sorting change
-  const handleSortingChange = (newSorting: { id: string; desc: boolean }[]) => {
-    setSortBy(newSorting);
-  };
+  const handleSortingChange = useCallback(
+    (newSorting: { id: string; desc: boolean }[]) => {
+      setSortBy(newSorting);
+    },
+    [setSortBy],
+  );
 
   // handle search change
-  const handleSearchChange = (search: string) => {
-    setSearch(search);
-  };
+  const handleSearchChange = useCallback(
+    (search: string) => {
+      setSearch(search);
+    },
+    [setSearch],
+  );
 
   // Handle expiry date range change - convert DateRange to string filters
   const handleExpiryDateRangeChange = useCallback(
@@ -402,7 +419,7 @@ export function BatchTable({
     [handleFilterChange],
   );
 
-  // Fetch units and categories when component mounts
+  // Fetch units and categories when component mounts - memoized
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -439,6 +456,12 @@ export function BatchTable({
       setIsInitialLoad(false);
       refresh();
     }
+
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
   }, [isActive, refresh, isInitialLoad]);
 
   // Set refresh function if needed
@@ -448,23 +471,40 @@ export function BatchTable({
     }
   }, [onSetRefresh, refresh]);
 
-  // Create the filter toolbar element
-  const filterToolbarElement = (
-    <BatchFilterToolbar
-      expiryDateRange={expiryDateRange}
-      setExpiryDateRange={handleExpiryDateRangeChange}
-      minQuantity={minQuantity}
-      setMinQuantity={handleMinQuantityChange}
-      maxQuantity={maxQuantity}
-      setMaxQuantity={handleMaxQuantityChange}
-      includeExpired={includeExpired}
-      setIncludeExpired={handleIncludeExpiredChange}
-      includeOutOfStock={includeOutOfStock}
-      setIncludeOutOfStock={handleIncludeOutOfStockChange}
-      categoryId={categoryId}
-      setCategoryId={handleCategoryChange}
-      categories={categories}
-    />
+  // Memoize the filter toolbar element
+  const filterToolbarElement = useMemo(
+    () => (
+      <BatchFilterToolbar
+        expiryDateRange={expiryDateRange}
+        setExpiryDateRange={handleExpiryDateRangeChange}
+        minQuantity={minQuantity}
+        setMinQuantity={handleMinQuantityChange}
+        maxQuantity={maxQuantity}
+        setMaxQuantity={handleMaxQuantityChange}
+        includeExpired={includeExpired}
+        setIncludeExpired={handleIncludeExpiredChange}
+        includeOutOfStock={includeOutOfStock}
+        setIncludeOutOfStock={handleIncludeOutOfStockChange}
+        categoryId={categoryId}
+        setCategoryId={handleCategoryChange}
+        categories={categories}
+      />
+    ),
+    [
+      expiryDateRange,
+      handleExpiryDateRangeChange,
+      minQuantity,
+      handleMinQuantityChange,
+      maxQuantity,
+      handleMaxQuantityChange,
+      includeExpired,
+      handleIncludeExpiredChange,
+      includeOutOfStock,
+      handleIncludeOutOfStockChange,
+      categoryId,
+      handleCategoryChange,
+      categories,
+    ],
   );
 
   return (

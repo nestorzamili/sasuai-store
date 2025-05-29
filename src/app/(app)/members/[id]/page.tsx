@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { toast } from '@/hooks/use-toast';
 import { getMember } from '../action';
@@ -28,7 +28,7 @@ export default function MemberDetailsPage() {
   const [member, setMember] = useState<MemberWithRelations | null>(null);
 
   // Fetch member data
-  const fetchMember = useCallback(async () => {
+  const fetchMember = async () => {
     if (!memberId.current) {
       toast({
         title: 'Error',
@@ -74,12 +74,12 @@ export default function MemberDetailsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [router]);
+  };
 
   // Initial fetch on component mount
   useEffect(() => {
     fetchMember();
-  }, [fetchMember]);
+  }, []);
 
   return (
     <>

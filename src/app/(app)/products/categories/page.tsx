@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { CategoryWithCount } from '@/lib/types/category';
 import CategoryPrimaryButton from './_components/category-primary-button';
 import { CategoryTable } from './_components/category-table';
@@ -9,28 +9,26 @@ export default function CategoriesPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] =
     useState<CategoryWithCount | null>(null);
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  // Handle dialog reset on close
-  const handleDialogOpenChange = (open: boolean) => {
+  // Handle dialog reset on close - stabilize with useCallback
+  const handleDialogOpenChange = useCallback((open: boolean) => {
     setIsDialogOpen(open);
     if (!open) {
       setSelectedCategory(null);
     }
-  };
+  }, []);
 
-  // Handle edit category
-  const handleEdit = (category: CategoryWithCount) => {
+  // Handle edit category - stabilize with useCallback
+  const handleEdit = useCallback((category: CategoryWithCount) => {
     setSelectedCategory(category);
     setIsDialogOpen(true);
-  };
+  }, []);
 
-  // Handle category operation success
-  const handleSuccess = () => {
+  // Handle category operation success - stabilize with useCallback
+  const handleSuccess = useCallback(() => {
     setIsDialogOpen(false);
     setSelectedCategory(null);
-    setRefreshTrigger((prev) => prev + 1);
-  };
+  }, []);
 
   return (
     <div className="space-y-1">
@@ -49,11 +47,7 @@ export default function CategoriesPage() {
           onSuccess={handleSuccess}
         />
       </div>
-      <CategoryTable
-        onEdit={handleEdit}
-        onRefresh={handleSuccess}
-        key={`category-table-${refreshTrigger}`}
-      />
+      <CategoryTable onEdit={handleEdit} onRefresh={handleSuccess} />
     </div>
   );
 }

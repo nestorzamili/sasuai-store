@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
 import {
@@ -65,14 +65,14 @@ export function RewardImageUpload({
     };
   }, [lightboxOpen]);
 
-  const handleRemoveImage = useCallback(() => {
+  const handleRemoveImage = () => {
     setImage('');
     onImageChange('');
     toast({
       title: 'Image removed',
       description: 'The reward image has been removed.',
     });
-  }, [onImageChange]);
+  };
 
   const handleImageUploaded = (imageUrl: string) => {
     setIsUploading(true);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import RewardPrimaryButton from './_components/reward-primary-button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -14,7 +14,6 @@ import { RewardWithClaimCount } from '@/lib/types/reward';
 
 export default function RewardsPage() {
   const [activeTab, setActiveTab] = useState('rewards');
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // State for Dialogs
   const [isFormDialogOpen, setIsFormDialogOpen] = useState(false);
@@ -27,35 +26,34 @@ export default function RewardsPage() {
   const [selectedRewardForDelete, setSelectedRewardForDelete] =
     useState<RewardWithClaimCount | null>(null);
 
-  // Handlers for opening dialogs
-  const handleOpenCreateDialog = () => {
+  // Handlers for opening dialogs - stabilize with useCallback
+  const handleOpenCreateDialog = useCallback(() => {
     setSelectedRewardForEdit(null);
     setIsFormDialogOpen(true);
-  };
+  }, []);
 
-  const handleOpenEditDialog = (reward: RewardWithClaimCount) => {
+  const handleOpenEditDialog = useCallback((reward: RewardWithClaimCount) => {
     setSelectedRewardForEdit(reward);
     setIsFormDialogOpen(true);
-  };
+  }, []);
 
-  const handleOpenDeleteDialog = (reward: RewardWithClaimCount) => {
+  const handleOpenDeleteDialog = useCallback((reward: RewardWithClaimCount) => {
     setSelectedRewardForDelete(reward);
     setIsDeleteDialogOpen(true);
-  };
+  }, []);
 
-  const handleOpenClaimDialog = () => {
+  const handleOpenClaimDialog = useCallback(() => {
     setIsClaimDialogOpen(true);
-  };
+  }, []);
 
-  // Handler for successful operations that require data refresh
-  const handleSuccess = () => {
+  // Handler for successful operations that require data refresh - stabilize with useCallback
+  const handleSuccess = useCallback(() => {
     setIsFormDialogOpen(false);
     setIsDeleteDialogOpen(false);
     setIsClaimDialogOpen(false);
     setSelectedRewardForEdit(null);
     setSelectedRewardForDelete(null);
-    setRefreshTrigger((prev) => prev + 1);
-  };
+  }, []);
 
   return (
     <div className="space-y-4">
@@ -97,7 +95,6 @@ export default function RewardsPage() {
         {/* Rewards Tab */}
         <TabsContent value="rewards" className="mt-4">
           <RewardTable
-            key={`reward-table-${refreshTrigger}`}
             onEdit={handleOpenEditDialog}
             onDelete={handleOpenDeleteDialog}
           />

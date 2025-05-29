@@ -6,7 +6,6 @@ import {
   useState,
   useEffect,
   ReactNode,
-  useCallback,
 } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, FormProvider } from 'react-hook-form';
@@ -134,7 +133,7 @@ export function ProductFormProvider({
   });
 
   // Consolidated function to fetch all options (categories, brands, units)
-  const fetchOptions = useCallback(async () => {
+  const fetchOptions = async () => {
     try {
       const result = await getProductFormOptions();
       if (result.success && result.data) {
@@ -150,12 +149,12 @@ export function ProductFormProvider({
         variant: 'destructive',
       });
     }
-  }, [toast]);
+  };
 
   // Fetch options on initialization
   useEffect(() => {
     fetchOptions();
-  }, [fetchOptions]);
+  }, []);
 
   // Update form when initialData changes
   useEffect(() => {

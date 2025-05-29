@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from '@/hooks/use-toast';
@@ -83,16 +83,19 @@ export function AvatarUpload({
     });
   }, [onImageChange]);
 
-  const handleImageUploaded = (imageUrl: string) => {
-    setImage(imageUrl);
-    onImageChange(imageUrl);
-  };
+  const handleImageUploaded = useCallback(
+    (imageUrl: string) => {
+      setImage(imageUrl);
+      onImageChange(imageUrl);
+    },
+    [onImageChange],
+  );
 
-  const openLightbox = () => {
+  const openLightbox = useCallback(() => {
     if (image) {
       setLightboxOpen(true);
     }
-  };
+  }, [image]);
 
   return (
     <div className="flex flex-col items-center gap-3">
