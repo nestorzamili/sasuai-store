@@ -261,10 +261,10 @@ export async function getUserSessions({ userId }: UserIdData): Promise<{
           session.lastActiveAt instanceof Date
             ? session.lastActiveAt.toISOString()
             : session.updatedAt instanceof Date
-            ? session.updatedAt.toISOString()
-            : session.createdAt instanceof Date
-            ? session.createdAt.toISOString()
-            : new Date().toISOString(),
+              ? session.updatedAt.toISOString()
+              : session.createdAt instanceof Date
+                ? session.createdAt.toISOString()
+                : new Date().toISOString(),
         createdAt:
           session.createdAt instanceof Date
             ? session.createdAt.toISOString()
