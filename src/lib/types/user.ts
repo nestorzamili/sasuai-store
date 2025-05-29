@@ -3,7 +3,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  role: string;
+  role: UserRole;
   banned?: boolean;
   banReason?: string;
   banExpiresAt?: string | null;
@@ -55,7 +55,7 @@ export interface UserPaginationParams {
   sortField?: string;
   sortDirection?: 'asc' | 'desc';
   search?: string;
-  role?: string;
+  role?: UserRole;
   banned?: boolean;
   startDate?: Date;
   endDate?: Date;
@@ -75,7 +75,7 @@ export interface UserCreateData {
   name: string;
   email: string;
   password: string;
-  role?: string;
+  role?: UserRole;
   data?: UserData;
 }
 
@@ -86,7 +86,7 @@ export interface UserUpdateData {
 
 export interface UserRoleData {
   userId: string;
-  role: string;
+  role: UserRole | UserRole[];
 }
 
 export interface UserBanData {
@@ -123,7 +123,7 @@ export interface ImpersonateResult {
 
 // Define filter states type with specific values
 export interface UserFilters {
-  role?: string;
+  role?: UserRole;
   status?: string;
 }
 
@@ -137,5 +137,5 @@ export interface UserSortingState {
 export type UserSortingOptions = UserSortingState[];
 
 // Define more specific filter value types
-export type UserRoleFilter = 'ALL_ROLES' | 'admin' | 'user' | string;
+export type UserRoleFilter = 'ALL_ROLES' | UserRole | string;
 export type UserStatusFilter = 'ALL' | 'active' | 'banned';

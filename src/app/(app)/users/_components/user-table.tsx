@@ -34,6 +34,7 @@ import { UserRoleDialog } from './user-role-dialog';
 import { UserSessionsDialog } from './user-sessions-dialog';
 import {
   User,
+  UserRole,
   UserFilters,
   UserSortingOptions,
   UserRoleFilter,
@@ -98,9 +99,9 @@ export function UserTable({ onEdit, onRefresh }: UserTableProps) {
       totalRows: number;
     }> => {
       // Handle role filter
-      let roleFilter: string | undefined;
+      let roleFilter: UserRole | undefined;
       if (options.filters?.role && options.filters.role !== 'ALL_ROLES') {
-        roleFilter = options.filters.role as string;
+        roleFilter = options.filters.role as UserRole;
       }
 
       // Handle status filter
