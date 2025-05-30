@@ -1,0 +1,219 @@
+{
+  "product": {
+    "mainContent": {
+      "title": "Kelola Produk",
+      "description": "Lihat dan kelola inventori produk Anda"
+    },
+    "table": {
+      "columns": {
+        "productName": "Nama Produk",
+        "description": "Deskripsi",
+        "category": "Kategori",
+        "brand": "Merek",
+        "barcode": "Barcode",
+        "price": "Harga",
+        "stock": "Stok",
+        "status": "Status",
+        "actions": "Aksi"
+      },
+      "status": {
+        "active": "Aktif",
+        "inactive": "Tidak Aktif"
+      },
+      "actions": {
+        "openMenu": "Buka menu",
+        "edit": "Edit",
+        "delete": "Hapus"
+      },
+      "placeholders": {
+        "noDescription": "Tidak ada deskripsi",
+        "noBrand": "Tidak Ada",
+        "noBarcode": "Tidak Ada"
+      }
+    },
+    "filterToolbar": {
+      "status": "Status",
+      "allStatus": "Semua Status",
+      "active": "Aktif",
+      "inactive": "Tidak Aktif",
+      "category": "Kategori",
+      "allCategories": "Semua Kategori",
+      "priceRange": "Rentang Harga",
+      "minPrice": "Harga Minimum",
+      "maxPrice": "Harga Maksimum",
+      "min": "Min",
+      "max": "Maks",
+      "applyFilter": "Terapkan Filter",
+      "reset": "Reset",
+      "clearFilters": "Hapus Filter"
+    },
+    "detailsSection": {
+      "productName": "Nama Produk",
+      "productNamePlaceholder": "Masukkan nama produk",
+      "category": "Kategori",
+      "brand": "Merek",
+      "unit": "Unit",
+      "price": "Harga",
+      "pricePlaceholder": "0",
+      "skuCode": "Kode SKU",
+      "skuCodePlaceholder": "Dibuat otomatis dari nama",
+      "generateSku": "Buat SKU",
+      "skuDescriptionNew": "Dibuat otomatis dari nama produk",
+      "skuDescriptionEdit": "Kode SKU untuk identifikasi produk",
+      "barcode": "Barcode",
+      "barcodePlaceholder": "Masukkan barcode",
+      "productStatus": "Status Produk",
+      "active": "Aktif",
+      "inactive": "Tidak Aktif",
+      "description": "Deskripsi",
+      "descriptionPlaceholder": "Masukkan deskripsi produk (opsional)"
+    },
+    "deleteDialog": {
+      "title": "Hapus Produk",
+      "description": "Apakah Anda yakin ingin menghapus produk {name}?",
+      "permanentRemove": "Tindakan ini akan menghapus produk ini secara permanen dari sistem. Tindakan ini tidak dapat dibatalkan.",
+      "warning": "Peringatan!",
+      "warningMessage": "Ini juga akan menghapus semua gambar produk dan data batch yang terkait. Harap berhati-hati, operasi ini tidak dapat dikembalikan.",
+      "success": "Produk dihapus",
+      "successMessage": "Produk \"{name}\" telah berhasil dihapus",
+      "failed": "Gagal menghapus produk",
+      "deleting": "Menghapus...",
+      "deleteButton": "Hapus"
+    },
+    "formDialog": {
+      "addProduct": "Tambah Produk",
+      "createTitle": "Buat Produk",
+      "editTitle": "Edit Produk",
+      "createDescription": "Tambahkan produk baru ke toko Anda",
+      "editDescription": "Edit informasi produk di bawah ini"
+    },
+    "createUnitDialog": {
+      "title": "Buat Unit",
+      "description": "Tambahkan unit baru untuk mengukur produk",
+      "unitName": "Nama Unit",
+      "unitNamePlaceholder": "contoh: Kilogram, Liter, Buah",
+      "unitSymbol": "Simbol Unit",
+      "unitSymbolPlaceholder": "contoh: kg, L, bh",
+      "cancel": "Batal",
+      "creating": "Membuat...",
+      "createButton": "Buat Unit",
+      "success": "Unit dibuat",
+      "successMessage": "Unit baru telah berhasil dibuat",
+      "failed": "Gagal membuat unit",
+      "validation": {
+        "nameRequired": "Nama unit diperlukan",
+        "symbolRequired": "Simbol unit diperlukan",
+        "symbolMaxLength": "Simbol harus pendek"
+      }
+    },
+    "unitCombobox": {
+      "placeholder": "Pilih unit...",
+      "emptyPlaceholder": "Unit tidak ditemukan",
+      "searchPlaceholder": "Cari unit...",
+      "createEntityText": "Buat unit baru"
+    },
+    "brandCombobox": {
+      "placeholder": "Pilih merek...",
+      "emptyPlaceholder": "Merek tidak ditemukan",
+      "searchPlaceholder": "Cari merek...",
+      "createEntityText": "Buat merek baru"
+    },
+    "createBrandDialog": {
+      "title": "Buat Merek",
+      "description": "Tambahkan merek baru untuk produk Anda",
+      "brandName": "Nama Merek",
+      "brandNamePlaceholder": "contoh: Nike, Adidas, Apple",
+      "cancel": "Batal",
+      "creating": "Membuat...",
+      "createButton": "Buat Merek",
+      "success": "Merek dibuat",
+      "successMessage": "Merek baru telah berhasil dibuat",
+      "failed": "Gagal membuat merek",
+      "validation": {
+        "nameRequired": "Nama merek diperlukan"
+      }
+    },
+    "categoryCombobox": {
+      "placeholder": "Pilih kategori...",
+      "emptyPlaceholder": "Kategori tidak ditemukan",
+      "searchPlaceholder": "Cari kategori...",
+      "createEntityText": "Buat kategori baru"
+    },
+    "createCategoryDialog": {
+      "title": "Buat Kategori",
+      "description": "Tambahkan kategori baru ke katalog produk Anda",
+      "categoryName": "Nama Kategori",
+      "categoryNamePlaceholder": "Masukkan nama kategori",
+      "categoryDescription": "Deskripsi",
+      "categoryDescriptionPlaceholder": "Masukkan deskripsi kategori (opsional)",
+      "cancel": "Batal",
+      "creating": "Membuat...",
+      "createButton": "Buat Kategori",
+      "success": "Kategori dibuat",
+      "successMessage": "Kategori baru telah berhasil dibuat",
+      "failed": "Gagal membuat kategori",
+      "validation": {
+        "nameRequired": "Nama kategori diperlukan"
+      }
+    },
+    "entityCombobox": {
+      "none": "Tidak Ada",
+      "create": "Buat \"{query}\""
+    },
+    "formContent": {
+      "cancel": "Batal",
+      "creating": "Membuat...",
+      "updating": "Memperbarui...",
+      "createButton": "Buat Produk",
+      "updateButton": "Perbarui Produk"
+    },
+    "formProvider": {
+      "validation": {
+        "nameRequired": "Nama produk diperlukan",
+        "categoryRequired": "Kategori diperlukan",
+        "unitRequired": "Unit diperlukan",
+        "pricePositive": "Harga harus berupa angka positif"
+      },
+      "success": {
+        "productCreated": "Produk dibuat",
+        "productCreatedMessage": "Produk baru telah dibuat",
+        "productUpdated": "Produk diperbarui",
+        "productUpdatedMessage": "Produk telah berhasil diperbarui"
+      },
+      "error": {
+        "somethingWrong": "Terjadi kesalahan",
+        "unexpectedError": "Terjadi kesalahan yang tidak terduga",
+        "failedToFetchOptions": "Gagal mengambil opsi formulir",
+        "imagesSaveWarning": "Beberapa gambar mungkin tidak tersimpan dengan benar"
+      }
+    },
+    "imagesSection": {
+      "title": "Gambar Produk",
+      "description": "Unggah gambar untuk produk ini. Gambar pertama akan dijadikan gambar utama.",
+      "primary": "Utama",
+      "noPrimaryImage": "Tidak ada gambar utama",
+      "allImages": "Semua Gambar",
+      "view": "Lihat",
+      "uploadImage": "Unggah Gambar",
+      "uploading": "Mengunggah...",
+      "deleteImageTitle": "Hapus Gambar",
+      "deleteImageDesc": "Apakah Anda yakin ingin menghapus gambar ini? Tindakan ini tidak dapat dibatalkan.",
+      "deleting": "Menghapus...",
+      "delete": "Hapus",
+      "uploadDialogTitle": "Unggah Gambar Produk",
+      "uploadDialogDesc": "Unggah gambar untuk produk Anda",
+      "previousImage": "Gambar sebelumnya",
+      "nextImage": "Gambar selanjutnya",
+      "toast": {
+        "primaryImageUpdated": "Gambar utama diperbarui",
+        "failedToUpdatePrimary": "Gagal memperbarui gambar utama",
+        "imageDeleted": "Gambar dihapus",
+        "failedToDelete": "Gagal menghapus gambar",
+        "imageUploaded": "Gambar diunggah",
+        "uploadFailed": "Gagal mengunggah",
+        "failedToAddImage": "Gagal menambahkan gambar ke produk",
+        "unexpectedError": "Terjadi kesalahan yang tidak terduga"
+      }
+    }
+  }
+}

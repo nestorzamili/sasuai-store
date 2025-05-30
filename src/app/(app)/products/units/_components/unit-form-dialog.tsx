@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -28,14 +29,6 @@ import { IconPlus } from '@tabler/icons-react';
 import { UnitWithCounts } from '@/lib/types/unit';
 import { createUnit, updateUnit } from '../action';
 
-// Form schema for unit
-const formSchema = z.object({
-  name: z.string().min(1, 'Unit name is required'),
-  symbol: z.string().min(1, 'Unit symbol is required'),
-});
-
-type FormValues = z.infer<typeof formSchema>;
-
 interface UnitFormDialogProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -49,8 +42,18 @@ export default function UnitFormDialog({
   initialData,
   onSuccess,
 }: UnitFormDialogProps) {
+  const t = useTranslations('unit.formDialog');
+  const tCommon = useTranslations('common');
   const [loading, setLoading] = useState(false);
   const isEditing = Boolean(initialData?.id);
+
+  // Form schema with translations
+  const formSchema = z.object({
+    name: z.string().min(1, t('validation.nameRequired')),
+    symbol: z.string().min(1, t('validation.symbolRequired')),
+  });
+
+  type FormValues = z.infer<typeof formSchema>;
 
   // Initialize the form
   const form = useForm<FormValues>({
@@ -94,26 +97,28 @@ export default function UnitFormDialog({
 
       if (result.success) {
         toast({
-          title: isEditing ? 'Unit updated' : 'Unit created',
+          title: isEditing
+            ? t('success.unitUpdated')
+            : t('success.unitCreated'),
           description: isEditing
-            ? 'Unit has been updated successfully'
-            : 'New unit has been created',
+            ? t('success.unitUpdatedMessage')
+            : t('success.unitCreatedMessage'),
         });
 
         form.reset();
         onSuccess?.();
       } else {
         toast({
-          title: 'Error',
-          description: result.error || 'Something went wrong',
+          title: tCommon('error'),
+          description: result.error || t('error.somethingWrong'),
           variant: 'destructive',
         });
       }
     } catch (error) {
       console.error('Unit form submission error:', error);
       toast({
-        title: 'Error',
-        description: 'An unexpected error occurred',
+        title: tCommon('error'),
+        description: t('error.unexpectedError'),
         variant: 'destructive',
       });
     } finally {
@@ -125,16 +130,16 @@ export default function UnitFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
         <Button variant="default" className="space-x-1">
-          <span>Create</span> <IconPlus size={18} />
+          <span>{t('create')}</span> <IconPlus size={18} />
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>{isEditing ? 'Edit Unit' : 'Create Unit'}</DialogTitle>
+          <DialogTitle>
+            {isEditing ? t('editTitle') : t('createTitle')}
+          </DialogTitle>
           <DialogDescription>
-            {isEditing
-              ? 'Edit the measurement unit information below'
-              : 'Add a new measurement unit to your inventory system'}
+            {isEditing ? t('editDescription') : t('createDescription')}
           </DialogDescription>
         </DialogHeader>
 
@@ -145,12 +150,9 @@ export default function UnitFormDialog({
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Unit Name</FormLabel>
+                  <FormLabel>{t('unitName')}</FormLabel>
                   <FormControl>
-                    <Input
-                      placeholder="Enter unit name (e.g., Kilogram)"
-                      {...field}
-                    />
+                    <Input placeholder={t('unitNamePlaceholder')} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -162,12 +164,9 @@ export default function UnitFormDialog({
               name="symbol"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Symbol</FormLabel>
+                  <FormLabel>{t('symbol')}</FormLabel>
                   <FormControl>
-                    <Input
-                      placeholder="Enter unit symbol (e.g., kg)"
-                      {...field}
-                    />
+                    <Input placeholder={t('symbolPlaceholder')} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -180,13 +179,13 @@ export default function UnitFormDialog({
                 type="button"
                 onClick={() => onOpenChange && onOpenChange(false)}
               >
-                Cancel
+                {t('cancel')}
               </Button>
               <Button type="submit" disabled={loading}>
                 {loading ? (
-                  <>{isEditing ? 'Updating...' : 'Creating...'}</>
+                  <>{isEditing ? t('updating') : t('creating')}</>
                 ) : (
-                  <>{isEditing ? 'Update Unit' : 'Create Unit'}</>
+                  <>{isEditing ? t('updateButton') : t('createButton')}</>
                 )}
               </Button>
             </DialogFooter>

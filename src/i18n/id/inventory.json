@@ -1,0 +1,220 @@
+{
+  "inventory": {
+    "title": "Inventori",
+    "description": "Lacak dan kelola batch inventori, tanggal kedaluwarsa, dan tingkat stok Anda.",
+    "tabs": {
+      "batches": "Batch Produk",
+      "stockIn": "Stok Masuk",
+      "stockOut": "Stok Keluar"
+    },
+    "batches": {
+      "title": "Kelola Batch Produk",
+      "description": "Lacak dan kelola batch inventori, tanggal kedaluwarsa, dan tingkat stok Anda."
+    },
+    "stockIn": {
+      "title": "Catatan Stok Masuk",
+      "description": "Lihat semua penambahan stok ke inventori Anda"
+    },
+    "stockOut": {
+      "title": "Catatan Stok Keluar",
+      "description": "Lihat semua pengurangan stok dari inventori Anda"
+    },
+    "batchTable": {
+      "columns": {
+        "name": "Nama",
+        "batchCode": "Kode Batch",
+        "expireDate": "Tanggal Kedaluwarsa",
+        "remainingQuantity": "Stok Tersisa",
+        "buyPrice": "Harga Beli"
+      },
+      "actions": {
+        "openMenu": "Buka menu",
+        "actions": "Aksi",
+        "viewDetails": "Lihat Detail",
+        "adjustQuantity": "Sesuaikan Stok",
+        "edit": "Edit",
+        "delete": "Hapus"
+      },
+      "status": {
+        "expired": "Kedaluwarsa"
+      }
+    },
+    "stockInTable": {
+      "columns": {
+        "date": "Tanggal",
+        "productName": "Nama Produk",
+        "batchCode": "Kode Batch",
+        "quantity": "Kuantitas",
+        "supplier": "Pemasok"
+      },
+      "status": {
+        "noSupplier": "Tanpa Pemasok"
+      }
+    },
+    "stockOutTable": {
+      "columns": {
+        "product": "Produk",
+        "batchCode": "Kode Batch",
+        "quantityOut": "Kuantitas Keluar",
+        "reason": "Alasan",
+        "date": "Tanggal",
+        "type": "Tipe",
+        "customer": "Pelanggan",
+        "receiptNumber": "No. Struk"
+      },
+      "types": {
+        "adjustment": "Penyesuaian",
+        "transaction": "Penjualan",
+        "walkInCustomer": "Pelanggan Biasa"
+      }
+    },
+    "batchFilter": {
+      "quantityRange": "Rentang Kuantitas",
+      "minQuantity": "Kuantitas Minimum",
+      "maxQuantity": "Kuantitas Maksimum",
+      "units": "unit",
+      "min": "Min",
+      "max": "Maks",
+      "applyFilter": "Terapkan Filter",
+      "reset": "Reset",
+      "allCategories": "Semua Kategori",
+      "advancedFilters": "Filter Lanjutan",
+      "stockStatus": "Status Stok",
+      "includeExpired": "Sertakan Produk Kedaluwarsa",
+      "includeOutOfStock": "Sertakan Produk Stok Habis",
+      "clearFilters": "Hapus Filter"
+    },
+    "batchDeleteDialog": {
+      "title": "Hapus Batch",
+      "description": "Apakah Anda yakin ingin menghapus batch",
+      "forProduct": "untuk",
+      "permanentRemove": "Tindakan ini akan menghapus batch ini dan catatan stok masuk awalnya secara permanen.",
+      "product": "Produk",
+      "batchCode": "Kode Batch",
+      "expiryDate": "Tanggal Kedaluwarsa",
+      "initialQuantity": "Kuantitas Awal",
+      "currentQuantity": "Kuantitas Saat Ini",
+      "checkingStatus": "Memeriksa status batch...",
+      "pleaseWait": "Harap tunggu sementara kami memeriksa apakah batch ini dapat dihapus.",
+      "cannotDelete": "Tidak Dapat Dihapus",
+      "hasTransactions": "Batch ini tidak dapat dihapus karena memiliki transaksi atau pergerakan stok terkait. Hanya batch yang belum digunakan dalam transaksi atau penyesuaian stok yang dapat dihapus.",
+      "quantityChanged": "Batch ini tidak dapat dihapus karena kuantitas saat ini",
+      "differsFromInitial": "berbeda dari kuantitas awal",
+      "indicatingUsed": "menunjukkan telah digunakan.",
+      "warning": "Peringatan!",
+      "actionUndone": "Ini akan menghapus batch dan catatan stok masuk awalnya secara permanen. Tindakan ini tidak dapat dibatalkan.",
+      "deleting": "Menghapus...",
+      "deleteButton": "Hapus Batch",
+      "success": "Batch dihapus",
+      "successMessage": "telah berhasil dihapus",
+      "error": "Kesalahan",
+      "failedToDelete": "Gagal menghapus batch",
+      "unexpectedError": "Terjadi kesalahan yang tidak terduga",
+      "cannotDeleteTitle": "Tidak Dapat Menghapus Batch",
+      "cannotDeleteMessage": "Batch ini tidak dapat dihapus karena memiliki transaksi atau pergerakan stok terkait."
+    },
+    "batchDetailDialog": {
+      "title": "Detail Batch",
+      "description": "Informasi detail tentang batch produk",
+      "loading": "Memuat Detail Batch",
+      "loadingMessage": "Memuat detail batch...",
+      "notFound": "Batch Tidak Ditemukan",
+      "notFoundMessage": "Batch tidak ditemukan",
+      "basicInfo": "Informasi Dasar",
+      "productName": "Nama Produk",
+      "batchCode": "Kode Batch",
+      "category": "Kategori",
+      "unit": "Unit",
+      "quantityPricing": "Kuantitas & Harga",
+      "initialQuantity": "Stok Awal",
+      "remainingQuantity": "Stok Tersisa",
+      "buyPrice": "Harga Beli",
+      "expiryDate": "Tanggal Kedaluwarsa",
+      "stockMovementHistory": "Riwayat Pergerakan Stok",
+      "stockMovementHistoryLegacy": "Riwayat Pergerakan Stok (Legacy)",
+      "stockInRecords": "Catatan Stok Masuk",
+      "stockOutRecords": "Catatan Stok Keluar",
+      "transactionHistory": "Riwayat Transaksi",
+      "sold": "Terjual",
+      "transactionId": "ID Transaksi",
+      "perUnit": "per unit",
+      "expired": "Kedaluwarsa"
+    },
+    "batchAdjustmentDialog": {
+      "title": "Sesuaikan Kuantitas",
+      "description": "Sesuaikan kuantitas untuk batch",
+      "product": "Produk",
+      "currentQuantity": "Kuantitas Saat Ini",
+      "adjustment": "Penyesuaian",
+      "adjustmentPlaceholder": "Masukkan penyesuaian (positif untuk menambah, negatif untuk mengurangi)",
+      "newQuantity": "Kuantitas baru akan menjadi",
+      "cannotBeNegative": "(Tidak boleh negatif)",
+      "unit": "Unit",
+      "selectUnit": "Pilih unit",
+      "reason": "Alasan",
+      "reasonPlaceholder": "Masukkan alasan penyesuaian",
+      "cancel": "Batal",
+      "adjusting": "Menyesuaikan...",
+      "adjustQuantityButton": "Sesuaikan Kuantitas",
+      "invalidAdjustment": "Penyesuaian tidak valid",
+      "adjustmentCannotZero": "Kuantitas penyesuaian tidak boleh nol",
+      "reasonRequired": "Alasan diperlukan",
+      "provideReason": "Silakan berikan alasan untuk penyesuaian",
+      "quantityAdjusted": "Kuantitas disesuaikan",
+      "adjustmentSuccess": "Kuantitas batch telah berhasil disesuaikan",
+      "error": "Kesalahan",
+      "failedToAdjust": "Gagal menyesuaikan kuantitas",
+      "unexpectedError": "Terjadi kesalahan yang tidak terduga"
+    },
+    "batchFormDialog": {
+      "createTitle": "Buat Batch",
+      "editTitle": "Edit Batch",
+      "createDescription": "Tambahkan batch produk baru ke inventori Anda",
+      "editDescription": "Edit informasi batch di bawah ini",
+      "createButton": "Buat Batch",
+      "updateButton": "Perbarui Batch",
+      "creating": "Membuat...",
+      "updating": "Memperbarui...",
+      "cancel": "Batal",
+      "product": "Produk",
+      "selectProduct": "Pilih produk",
+      "noProductsFound": "Tidak ada produk ditemukan",
+      "batchCode": "Kode Batch",
+      "autoGeneratedBatchCode": "Kode batch yang dibuat otomatis",
+      "generateNewBatchCode": "Buat kode batch baru",
+      "batchCodeNote": "Kode batch dibuat otomatis tetapi dapat diedit jika diperlukan",
+      "expiryDate": "Tanggal Kedaluwarsa",
+      "pickDate": "Pilih tanggal",
+      "initialQuantity": "Kuantitas Awal",
+      "enterInitialQuantity": "Masukkan kuantitas awal",
+      "buyPrice": "Harga Beli (IDR)",
+      "enterBuyPrice": "Masukkan harga beli",
+      "buyPriceNote": "Total harga pembelian untuk seluruh batch, bukan per unit",
+      "unit": "Unit",
+      "selectUnit": "Pilih unit",
+      "noUnitsFound": "Tidak ada unit ditemukan",
+      "unitAutoSelected": "Unit dipilih secara otomatis berdasarkan produk.",
+      "supplier": "Pemasok (opsional)",
+      "selectSupplier": "Pilih pemasok (opsional)",
+      "noSuppliersFound": "Tidak ada pemasok ditemukan",
+      "none": "Tidak ada",
+      "batchCreated": "Batch dibuat",
+      "newBatchSuccess": "Batch baru telah dibuat",
+      "batchUpdated": "Batch diperbarui",
+      "batchUpdateSuccess": "Batch telah berhasil diperbarui",
+      "error": "Kesalahan",
+      "somethingWrong": "Terjadi kesalahan",
+      "unexpectedError": "Terjadi kesalahan yang tidak terduga",
+      "failedToLoadData": "Gagal memuat data yang diperlukan",
+      "tooltips": {
+        "product": "Pilih produk yang akan Anda tambahkan inventorinya",
+        "batchCode": "Kode unik untuk mengidentifikasi batch ini. Dibuat otomatis berdasarkan nama produk dan tanggal",
+        "expiryDate": "Tanggal ketika batch produk ini kedaluwarsa. Penting untuk manajemen inventori",
+        "initialQuantity": "Jumlah item dalam batch ini. Ini akan meningkatkan total stok produk",
+        "buyPrice": "Harga pembelian untuk SELURUH batch, bukan per unit. Digunakan untuk menghitung margin keuntungan",
+        "unit": "Unit pengukuran untuk produk ini (misalnya, buah, kotak)",
+        "supplier": "Pemasok yang menyediakan batch ini (opsional)"
+      }
+    }
+  }
+}

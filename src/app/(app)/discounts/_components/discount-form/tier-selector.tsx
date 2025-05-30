@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { getMemberTiersForSelection } from '../../action';
 import EntitySelector from './entity-selector';
 import {
@@ -12,6 +13,8 @@ export default function TierSelector({
   selectedIds,
   onChange,
 }: TierSelectorProps) {
+  const t = useTranslations('discount.form');
+
   const fetchMemberTiers = async (
     search: string,
   ): Promise<{ success: boolean; data?: MemberTierForSelection[] }> => {
@@ -45,21 +48,25 @@ export default function TierSelector({
 
   const renderTierDetails = (tier: MemberTierForSelection) => (
     <>
-      <span>Min Points: {tier.minPoints}</span>
-      <span>Multiplier: {tier.multiplier}x</span>
+      <span>
+        {t('minPoints')}: {tier.minPoints}
+      </span>
+      <span>
+        {t('pointsMultiplier')}: {tier.multiplier}x
+      </span>
     </>
   );
 
   // Define columns for the selected tiers table
   const tierColumns: Column<MemberTierForSelection>[] = [
-    { header: 'Tier Name', accessor: 'name' },
+    { header: t('tierName'), accessor: 'name' },
     {
-      header: 'Min. Points',
+      header: t('minPoints'),
       accessor: (tier: MemberTierForSelection) =>
         tier.minPoints.toLocaleString(),
     },
     {
-      header: 'Points Multiplier',
+      header: t('pointsMultiplier'),
       accessor: (tier: MemberTierForSelection) => `${tier.multiplier}x`,
     },
   ];
@@ -70,8 +77,8 @@ export default function TierSelector({
       onChange={onChange}
       fetchItems={fetchMemberTiers}
       renderItemDetails={renderTierDetails}
-      placeholder="Search member tiers..."
-      noSelectionText="No member tiers selected"
+      placeholder={t('searchMemberTiers')}
+      noSelectionText={t('noTiersSelected')}
       columns={tierColumns}
     />
   );

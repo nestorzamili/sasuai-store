@@ -1,0 +1,31 @@
+{
+  "language": {
+    "switch": "Bahasa",
+    "english": "Inggris",
+    "indonesian": "Indonesia"
+  },
+  "common": {
+    "loading": "Memuat...",
+    "error": "Kesalahan",
+    "success": "Berhasil",
+    "table": {
+      "search": "Cari...",
+      "selectAll": "Pilih semua",
+      "selectRow": "Pilih baris",
+      "noResults": "Tidak ada hasil ditemukan",
+      "noResultsDescription": "Tidak ada data yang sesuai dengan kriteria pencarian Anda. Coba sesuaikan pencarian atau filter Anda.",
+      "loading": "Memuat...",
+      "rowsSelected": "{count} baris dipilih"
+    },
+    "pagination": {
+      "rowsSelected": "baris terpilih",
+      "of": "dari",
+      "rowsPerPage": "Baris per halaman",
+      "page": "Hal",
+      "goToFirstPage": "Ke halaman pertama",
+      "goToPreviousPage": "Ke halaman sebelumnya",
+      "goToNextPage": "Ke halaman selanjutnya",
+      "goToLastPage": "Ke halaman terakhir"
+    }
+  }
+}

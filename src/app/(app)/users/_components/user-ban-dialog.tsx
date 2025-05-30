@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { IconShieldX, IconShieldCheck } from '@tabler/icons-react';
 import { toast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -43,19 +44,22 @@ interface Props {
   onSuccess?: () => void;
 }
 
-const banFormSchema = z.object({
-  reason: z.string().min(1, 'Ban reason is required'),
-  duration: z.string().optional(),
-});
+const createBanFormSchema = (t) =>
+  z.object({
+    reason: z.string().min(1, t('reasonRequired')),
+    duration: z.string().optional(),
+  });
 
-type BanFormValues = z.infer<typeof banFormSchema>;
+type BanFormValues = z.infer<ReturnType<typeof createBanFormSchema>>;
 
 export function UserBanDialog({ open, onOpenChange, user, onSuccess }: Props) {
+  const t = useTranslations('user.banDialog');
+  const tCommon = useTranslations('user.common');
   const [loading, setLoading] = useState(false);
   const isBanned = user.banned;
 
   const form = useForm<BanFormValues>({
-    resolver: zodResolver(banFormSchema),
+    resolver: zodResolver(createBanFormSchema(t)),
     defaultValues: {
       reason: '',
       duration: 'permanent',
@@ -83,22 +87,22 @@ export function UserBanDialog({ open, onOpenChange, user, onSuccess }: Props) {
 
         if (result.success) {
           toast({
-            title: 'User banned',
-            description: `${user.name} has been banned successfully`,
+            title: t('banSuccess'),
+            description: t('banSuccessMessage'),
           });
           onSuccess?.();
         } else {
           toast({
-            title: 'Error',
-            description: result.error || 'Failed to ban user',
+            title: tCommon('error'),
+            description: result.error || t('error.failed'),
             variant: 'destructive',
           });
         }
       } catch (error) {
         console.error('Error banning user:', error);
         toast({
-          title: 'Error',
-          description: 'An unexpected error occurred',
+          title: tCommon('error'),
+          description: t('error.unexpected'),
           variant: 'destructive',
         });
       } finally {
@@ -106,7 +110,7 @@ export function UserBanDialog({ open, onOpenChange, user, onSuccess }: Props) {
         onOpenChange(false);
       }
     },
-    [user.id, user.name, onSuccess, onOpenChange],
+    [user.id, onSuccess, onOpenChange, t, tCommon],
   );
 
   const handleUnbanUser = useCallback(async () => {
@@ -117,29 +121,29 @@ export function UserBanDialog({ open, onOpenChange, user, onSuccess }: Props) {
 
       if (result.success) {
         toast({
-          title: 'User unbanned',
-          description: `${user.name} has been unbanned successfully`,
+          title: t('unbanSuccess'),
+          description: t('unbanSuccessMessage'),
         });
         onSuccess?.();
       } else {
         toast({
-          title: 'Error',
-          description: result.error || 'Failed to unban user',
+          title: tCommon('error'),
+          description: result.error || t('error.failed'),
           variant: 'destructive',
         });
       }
     } catch (error) {
       console.error('Error unbanning user:', error);
       toast({
-        title: 'Error',
-        description: 'An unexpected error occurred',
+        title: tCommon('error'),
+        description: t('error.unexpected'),
         variant: 'destructive',
       });
     } finally {
       setLoading(false);
       onOpenChange(false);
     }
-  }, [user.id, user.name, onSuccess, onOpenChange]);
+  }, [user.id, onSuccess, onOpenChange, t, tCommon]);
 
   if (isBanned) {
     return (
@@ -151,32 +155,30 @@ export function UserBanDialog({ open, onOpenChange, user, onSuccess }: Props) {
         title={
           <span className="flex items-center text-green-600">
             <IconShieldCheck className="mr-2 stroke-green-600" size={18} />
-            Unban User
+            {t('unbanTitle')}
           </span>
         }
         desc={
           <div className="space-y-4">
             <p className="mb-2">
-              Are you sure you want to unban{' '}
+              {t('unbanDescription')}{' '}
               <span className="font-bold">{user.name}</span>?
             </p>
 
             <Alert>
-              <AlertTitle>Information</AlertTitle>
-              <AlertDescription>
-                Unbanning this user will restore their access to the system.
-              </AlertDescription>
+              <AlertTitle>{t('information')}</AlertTitle>
+              <AlertDescription>{t('unbanInfo')}</AlertDescription>
             </Alert>
 
             {user.banReason && (
               <div className="text-sm">
-                <div className="font-semibold">Original Ban Reason:</div>
+                <div className="font-semibold">{t('originalBanReason')}:</div>
                 <div className="mt-1 italic">{user.banReason}</div>
               </div>
             )}
           </div>
         }
-        confirmText={loading ? 'Unbanning...' : 'Unban User'}
+        confirmText={loading ? t('unbanning') : t('unbanButton')}
       />
     );
   }
@@ -187,10 +189,10 @@ export function UserBanDialog({ open, onOpenChange, user, onSuccess }: Props) {
         <DialogHeader>
           <DialogTitle className="flex items-center text-destructive">
             <IconShieldX className="mr-2 stroke-destructive" size={18} />
-            Ban User
+            {t('banTitle')}
           </DialogTitle>
           <DialogDescription>
-            Banning {user.name} will prevent them from accessing the system.
+            {t('banDescription', { name: user.name })}
           </DialogDescription>
         </DialogHeader>
 
@@ -204,9 +206,9 @@ export function UserBanDialog({ open, onOpenChange, user, onSuccess }: Props) {
               name="reason"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Ban Reason</FormLabel>
+                  <FormLabel>{t('reason')}</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter reason for ban" {...field} />
+                    <Input placeholder={t('reasonPlaceholder')} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -218,21 +220,23 @@ export function UserBanDialog({ open, onOpenChange, user, onSuccess }: Props) {
               name="duration"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Ban Duration</FormLabel>
+                  <FormLabel>{t('duration')}</FormLabel>
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select ban duration" />
+                        <SelectValue placeholder={t('durationPlaceholder')} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="permanent">Permanent</SelectItem>
-                      <SelectItem value="1d">1 Day</SelectItem>
-                      <SelectItem value="7d">7 Days</SelectItem>
-                      <SelectItem value="30d">30 Days</SelectItem>
+                      <SelectItem value="permanent">
+                        {t('durations.permanent')}
+                      </SelectItem>
+                      <SelectItem value="1d">{t('durations.1d')}</SelectItem>
+                      <SelectItem value="7d">{t('durations.7d')}</SelectItem>
+                      <SelectItem value="30d">{t('durations.30d')}</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -241,11 +245,8 @@ export function UserBanDialog({ open, onOpenChange, user, onSuccess }: Props) {
             />
 
             <Alert variant="destructive">
-              <AlertTitle>Warning!</AlertTitle>
-              <AlertDescription>
-                Banning this user will prevent them from accessing the system.
-                They will be automatically logged out of all active sessions.
-              </AlertDescription>
+              <AlertTitle>{t('warning')}</AlertTitle>
+              <AlertDescription>{t('banWarning')}</AlertDescription>
             </Alert>
 
             <DialogFooter>
@@ -254,10 +255,10 @@ export function UserBanDialog({ open, onOpenChange, user, onSuccess }: Props) {
                 type="button"
                 onClick={() => onOpenChange(false)}
               >
-                Cancel
+                {tCommon('cancel')}
               </Button>
               <Button type="submit" variant="destructive" disabled={loading}>
-                {loading ? 'Banning...' : 'Ban User'}
+                {loading ? t('banning') : t('banButton')}
               </Button>
             </DialogFooter>
           </form>

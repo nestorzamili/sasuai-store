@@ -1,8 +1,9 @@
 'use client';
 
 import { ColumnDef } from '@tanstack/react-table';
+import { useTranslations } from 'next-intl';
 import {
-  StockOutComplete,
+  UnifiedStockOutComplete,
   TableFetchOptions,
   TableFetchResult,
 } from '@/lib/types/inventory';
@@ -19,34 +20,35 @@ interface StockOutTableProps {
 export const StockOutTable = memo(function StockOutTable({
   isActive = false,
 }: StockOutTableProps) {
+  const t = useTranslations('inventory.stockOutTable');
   const abortControllerRef = useRef<AbortController | null>(null);
 
   // Memoized columns to prevent unnecessary re-renders
   const columns = useMemo(
-    (): ColumnDef<StockOutComplete>[] => [
+    (): ColumnDef<UnifiedStockOutComplete>[] => [
       {
         accessorKey: 'batch.product.name',
-        header: 'Product',
+        header: t('columns.product'),
         cell: ({ row }) => {
           const stockOut = row.original;
           return (
             <div className="font-medium">{stockOut.batch.product.name}</div>
           );
         },
-        enableSorting: true,
+        enableSorting: false,
       },
       {
         accessorKey: 'batch.batchCode',
-        header: 'Batch Code',
+        header: t('columns.batchCode'),
         cell: ({ row }) => {
           const stockOut = row.original;
           return <div>{stockOut.batch.batchCode}</div>;
         },
-        enableSorting: true,
+        enableSorting: false,
       },
       {
         accessorKey: 'quantity',
-        header: 'Quantity Out',
+        header: t('columns.quantityOut'),
         cell: ({ row }) => {
           const stockOut = row.original;
           return (
@@ -59,15 +61,30 @@ export const StockOutTable = memo(function StockOutTable({
       },
       {
         accessorKey: 'reason',
-        header: 'Reason',
+        header: t('columns.reason'),
         cell: ({ row }) => {
-          return <div>{row.getValue('reason')}</div>;
+          const stockOut = row.original;
+          if (stockOut.type === 'TRANSACTION') {
+            return (
+              <div className="space-y-1">
+                <div className="text-blue-600 font-medium">
+                  {t('types.transaction')}
+                </div>
+                {stockOut.transaction?.tranId && (
+                  <div className="text-xs text-gray-500">
+                    ID: {stockOut.transaction.tranId}
+                  </div>
+                )}
+              </div>
+            );
+          }
+          return <div>{stockOut.reason}</div>;
         },
         enableSorting: false,
       },
       {
         accessorKey: 'date',
-        header: 'Date',
+        header: t('columns.date'),
         cell: ({ row }) => {
           const date = new Date(row.getValue('date'));
           return (
@@ -77,14 +94,14 @@ export const StockOutTable = memo(function StockOutTable({
         enableSorting: true,
       },
     ],
-    [],
+    [t],
   );
 
   // Stabilize fetchStockOutData with abort controller
   const fetchStockOutData = useCallback(
     async (
       options: TableFetchOptions,
-    ): Promise<TableFetchResult<StockOutComplete[]>> => {
+    ): Promise<TableFetchResult<UnifiedStockOutComplete[]>> => {
       try {
         if (!isActive) {
           return { data: [], totalRows: 0 };

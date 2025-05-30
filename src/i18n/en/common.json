@@ -1,0 +1,31 @@
+{
+  "language": {
+    "switch": "Language",
+    "english": "English",
+    "indonesian": "Indonesian"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "table": {
+      "search": "Search...",
+      "selectAll": "Select all",
+      "selectRow": "Select row",
+      "noResults": "No results found",
+      "noResultsDescription": "No data matches your search criteria. Try adjusting your search or filters.",
+      "loading": "Loading...",
+      "rowsSelected": "{count} row(s) selected"
+    },
+    "pagination": {
+      "rowsSelected": "row(s) selected",
+      "of": "of",
+      "rowsPerPage": "Rows per page",
+      "page": "Page",
+      "goToFirstPage": "Go to first page",
+      "goToPreviousPage": "Go to previous page",
+      "goToNextPage": "Go to next page",
+      "goToLastPage": "Go to last page"
+    }
+  }
+}

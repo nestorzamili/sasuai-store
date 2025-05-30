@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { X, Search, Loader2, ChevronsUpDown } from 'lucide-react';
@@ -26,10 +27,11 @@ export default function EntitySelector<T extends Entity>({
   fetchItems,
   fetchItemById,
   renderItemDetails,
-  placeholder = 'Search items...',
-  noSelectionText = 'No items selected',
+  placeholder,
+  noSelectionText,
   columns,
 }: EntitySelectorProps<T>) {
+  const t = useTranslations('discount.form');
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<T[]>([]);
   const [selectedItems, setSelectedItems] = useState<T[]>([]);
@@ -40,10 +42,14 @@ export default function EntitySelector<T extends Entity>({
   const searchInputRef = useRef<HTMLInputElement>(null);
   const initialLoadRef = useRef(true);
 
+  // Default placeholder and noSelectionText with translations
+  const defaultPlaceholder = placeholder || t('searchProducts');
+  const defaultNoSelectionText = noSelectionText || t('noItemsSelected');
+
   // Default columns if none provided
   const tableColumns = useMemo(
-    () => columns || [{ header: 'Name', accessor: 'name' }],
-    [columns],
+    () => columns || [{ header: t('productName'), accessor: 'name' }],
+    [columns, t],
   );
 
   // Helper function to fetch missing items by ID
@@ -215,21 +221,21 @@ export default function EntitySelector<T extends Entity>({
               ) : (
                 <Search className="mr-2 h-4 w-4" />
               )}
-              {placeholder}
+              {defaultPlaceholder}
               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-full min-w-[400px] p-0" align="start">
             <Command>
               <CommandInput
-                placeholder={placeholder}
+                placeholder={defaultPlaceholder}
                 value={search}
                 onValueChange={handleSearchChange}
                 ref={searchInputRef}
               />
               <CommandList>
                 <CommandEmpty>
-                  {loading ? 'Loading...' : 'No items found.'}
+                  {loading ? t('loading') : t('noItemsFound')}
                 </CommandEmpty>
                 <CommandGroup>
                   {items.map((item) => (
@@ -238,7 +244,6 @@ export default function EntitySelector<T extends Entity>({
                       value={item.id}
                       onSelect={() => {
                         toggleItem(item);
-                        // Don't close the popover to allow multiple selections
                       }}
                       className="cursor-pointer"
                     >
@@ -261,7 +266,6 @@ export default function EntitySelector<T extends Entity>({
                 </CommandGroup>
               </CommandList>
             </Command>
-            {/* Add a close button at the bottom */}
             <div className="p-2 border-t">
               <Button
                 variant="outline"
@@ -269,7 +273,7 @@ export default function EntitySelector<T extends Entity>({
                 className="w-full"
                 onClick={() => setOpen(false)}
               >
-                Done ({selectedIds.length} selected)
+                {t('done')} ({selectedIds.length} {t('selected')})
               </Button>
             </div>
           </PopoverContent>
@@ -283,7 +287,7 @@ export default function EntitySelector<T extends Entity>({
               setSelectedItems([]);
               onChange([]);
             }}
-            title="Clear selection"
+            title={t('clearSelection')}
           >
             <X className="h-4 w-4" />
           </Button>
@@ -291,15 +295,14 @@ export default function EntitySelector<T extends Entity>({
       </div>
 
       <div className="text-sm text-muted-foreground mb-2">
-        {selectedItems.length} item(s) selected
+        {selectedItems.length} {t('itemsSelected')}
       </div>
 
-      {/* Display selected items in a table */}
       <SelectedItemsTable
         items={selectedItems}
         columns={tableColumns}
         onRemove={removeItem}
-        emptyMessage={noSelectionText}
+        emptyMessage={defaultNoSelectionText}
       />
     </div>
   );

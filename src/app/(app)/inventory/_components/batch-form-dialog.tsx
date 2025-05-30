@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, Control } from 'react-hook-form';
 import { z } from 'zod';
@@ -74,26 +75,12 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-// Define tooltip content for form fields
-const TOOLTIPS = {
-  product: "Select the product you're adding inventory for",
-  batchCode:
-    'Unique code to identify this batch. Auto-generated based on product name and date',
-  expiryDate:
-    'The date when this product batch expires. Important for inventory management',
-  initialQuantity:
-    "The number of items in this batch. This will increase the product's total stock",
-  buyPrice:
-    'The purchase price for the ENTIRE batch, not per unit. Used to calculate profit margins',
-  unit: 'The unit of measurement for this product (e.g., pieces, boxes)',
-  supplier: 'The supplier who provided this batch (optional)',
-};
-
 interface BatchFormDialogProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   initialData?: ProductBatchFormInitialData;
   onSuccess?: () => void;
+  triggerText?: string;
 }
 
 // Helper function to create label with tooltip (moved outside component)
@@ -180,9 +167,25 @@ export default function BatchFormDialog({
   onOpenChange,
   initialData,
   onSuccess,
+  triggerText,
 }: BatchFormDialogProps) {
+  const t = useTranslations('inventory.batchFormDialog');
   const [loading, setLoading] = useState(false);
   const isEditing = Boolean(initialData?.id);
+
+  // Define tooltip content using translations
+  const TOOLTIPS = useMemo(
+    () => ({
+      product: t('tooltips.product'),
+      batchCode: t('tooltips.batchCode'),
+      expiryDate: t('tooltips.expiryDate'),
+      initialQuantity: t('tooltips.initialQuantity'),
+      buyPrice: t('tooltips.buyPrice'),
+      unit: t('tooltips.unit'),
+      supplier: t('tooltips.supplier'),
+    }),
+    [t],
+  );
 
   // State for data from APIs - MOVED BEFORE generateBatchCode
   const [products, setProducts] = useState<Product[]>([]);
@@ -243,8 +246,8 @@ export default function BatchFormDialog({
     } catch (error) {
       console.error('Error fetching data:', error);
       toast({
-        title: 'Error',
-        description: 'Failed to load necessary data',
+        title: t('error'),
+        description: t('failedToLoadData'),
         variant: 'destructive',
       });
       // Set empty arrays on error
@@ -252,7 +255,7 @@ export default function BatchFormDialog({
       setUnits([]);
       setSuppliers([]);
     }
-  }, []);
+  }, [t]);
 
   // Fetch data on component mount - only when dialog opens
   useEffect(() => {
@@ -282,13 +285,13 @@ export default function BatchFormDialog({
 
   const supplierOptions = useMemo(
     () => [
-      { value: 'none', label: 'None' },
+      { value: 'none', label: t('none') },
       ...suppliers.map((supplier) => ({
         value: supplier.id,
         label: supplier.name,
       })),
     ],
-    [suppliers],
+    [suppliers, t],
   );
 
   // Default form values - memoized
@@ -394,10 +397,10 @@ export default function BatchFormDialog({
 
         if (result.success) {
           toast({
-            title: isEditing ? 'Batch updated' : 'Batch created',
+            title: isEditing ? t('batchUpdated') : t('batchCreated'),
             description: isEditing
-              ? 'Batch has been updated successfully'
-              : 'New batch has been created',
+              ? t('batchUpdateSuccess')
+              : t('newBatchSuccess'),
           });
 
           form.reset();
@@ -413,23 +416,23 @@ export default function BatchFormDialog({
           }, 100);
         } else {
           toast({
-            title: 'Error',
-            description: result.error || 'Something went wrong',
+            title: t('error'),
+            description: result.error || t('somethingWrong'),
             variant: 'destructive',
           });
         }
       } catch (error) {
         console.error('Error in batch form submission:', error);
         toast({
-          title: 'Error',
-          description: 'An unexpected error occurred',
+          title: t('error'),
+          description: t('unexpectedError'),
           variant: 'destructive',
         });
       } finally {
         setLoading(false);
       }
     },
-    [isEditing, initialData?.id, form, onOpenChange, onSuccess],
+    [isEditing, initialData?.id, form, onOpenChange, onSuccess, t],
   );
 
   // Get the selected product - memoized
@@ -442,16 +445,16 @@ export default function BatchFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
         <Button variant="default" className="space-x-1">
-          <span>Create Batch</span> <IconPlus size={18} />
+          <span>{triggerText || t('createButton')}</span> <IconPlus size={18} />
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>{isEditing ? 'Edit Batch' : 'Create Batch'}</DialogTitle>
+          <DialogTitle>
+            {isEditing ? t('editTitle') : t('createTitle')}
+          </DialogTitle>
           <DialogDescription>
-            {isEditing
-              ? 'Edit the batch information below'
-              : 'Add a new product batch to your inventory'}
+            {isEditing ? t('editDescription') : t('createDescription')}
           </DialogDescription>
         </DialogHeader>
 
@@ -461,13 +464,13 @@ export default function BatchFormDialog({
             {!isEditing && (
               <ComboBoxFormField
                 name="productId"
-                label="Product"
+                label={t('product')}
                 tooltip={TOOLTIPS.product}
                 options={productOptions}
                 control={form.control}
                 disabled={isEditing}
-                placeholder="Select a product"
-                emptyMessage="No products found"
+                placeholder={t('selectProduct')}
+                emptyMessage={t('noProductsFound')}
               />
             )}
 
@@ -479,14 +482,14 @@ export default function BatchFormDialog({
                 <FormItem>
                   <FormLabel>
                     <LabelWithTooltip
-                      label="Batch Code"
+                      label={t('batchCode')}
                       tooltipContent={TOOLTIPS.batchCode}
                     />
                   </FormLabel>
                   <div className="flex gap-2">
                     <FormControl>
                       <Input
-                        placeholder="Auto-generated batch code"
+                        placeholder={t('autoGeneratedBatchCode')}
                         {...field}
                         className="flex-grow"
                       />
@@ -498,7 +501,7 @@ export default function BatchFormDialog({
                         size="icon"
                         onClick={regenerateBatchCode}
                         className="flex-shrink-0"
-                        title="Generate new batch code"
+                        title={t('generateNewBatchCode')}
                       >
                         <IconRefresh size={16} />
                       </Button>
@@ -506,7 +509,7 @@ export default function BatchFormDialog({
                   </div>
                   {!isEditing && (
                     <p className="text-xs text-muted-foreground mt-1">
-                      Batch code is auto-generated but can be edited if needed
+                      {t('batchCodeNote')}
                     </p>
                   )}
                   <FormMessage />
@@ -522,7 +525,7 @@ export default function BatchFormDialog({
                 <FormItem className="flex flex-col">
                   <FormLabel>
                     <LabelWithTooltip
-                      label="Expiry Date"
+                      label={t('expiryDate')}
                       tooltipContent={TOOLTIPS.expiryDate}
                     />
                   </FormLabel>
@@ -540,7 +543,7 @@ export default function BatchFormDialog({
                           {field.value ? (
                             format(field.value, 'PPP')
                           ) : (
-                            <span>Pick a date</span>
+                            <span>{t('pickDate')}</span>
                           )}
                         </Button>
                       </FormControl>
@@ -579,14 +582,14 @@ export default function BatchFormDialog({
                   <FormItem>
                     <FormLabel>
                       <LabelWithTooltip
-                        label="Initial Quantity"
+                        label={t('initialQuantity')}
                         tooltipContent={TOOLTIPS.initialQuantity}
                       />
                     </FormLabel>
                     <FormControl>
                       <Input
                         type="number"
-                        placeholder="Enter initial quantity"
+                        placeholder={t('enterInitialQuantity')}
                         value={field.value === 0 ? '' : field.value}
                         onFocus={(e) => {
                           if (e.target.value === '0') {
@@ -618,14 +621,14 @@ export default function BatchFormDialog({
                 <FormItem>
                   <FormLabel>
                     <LabelWithTooltip
-                      label="Buy Price (IDR)"
+                      label={t('buyPrice')}
                       tooltipContent={TOOLTIPS.buyPrice}
                     />
                   </FormLabel>
                   <FormControl>
                     <Input
                       type="number"
-                      placeholder="Enter buy price"
+                      placeholder={t('enterBuyPrice')}
                       value={field.value === 0 ? '' : field.value}
                       onFocus={(e) => {
                         if (e.target.value === '0') {
@@ -644,7 +647,7 @@ export default function BatchFormDialog({
                     />
                   </FormControl>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Total purchase price for the entire batch, not per unit
+                    {t('buyPriceNote')}
                   </p>
                   <FormMessage />
                 </FormItem>
@@ -655,18 +658,14 @@ export default function BatchFormDialog({
             {!isEditing && (
               <ComboBoxFormField
                 name="unitId"
-                label="Unit"
+                label={t('unit')}
                 tooltip={TOOLTIPS.unit}
                 options={unitOptions}
                 control={form.control}
                 disabled={isEditing || !!selectedProduct}
-                placeholder="Select a unit"
-                emptyMessage="No units found"
-                helperText={
-                  selectedProduct
-                    ? 'Unit is automatically selected based on the product.'
-                    : undefined
-                }
+                placeholder={t('selectUnit')}
+                emptyMessage={t('noUnitsFound')}
+                helperText={selectedProduct ? t('unitAutoSelected') : undefined}
               />
             )}
 
@@ -674,13 +673,13 @@ export default function BatchFormDialog({
             {!isEditing && (
               <ComboBoxFormField
                 name="supplierId"
-                label="Supplier (optional)"
+                label={t('supplier')}
                 tooltip={TOOLTIPS.supplier}
                 options={supplierOptions}
                 control={form.control}
                 disabled={isEditing}
-                placeholder="Select a supplier (optional)"
-                emptyMessage="No suppliers found"
+                placeholder={t('selectSupplier')}
+                emptyMessage={t('noSuppliersFound')}
                 transform={(value) => (value === 'none' ? null : value)}
               />
             )}
@@ -691,16 +690,16 @@ export default function BatchFormDialog({
                 type="button"
                 onClick={() => onOpenChange && onOpenChange(false)}
               >
-                Cancel
+                {t('cancel')}
               </Button>
               <Button type="submit" disabled={loading}>
                 {loading
                   ? isEditing
-                    ? 'Updating...'
-                    : 'Creating...'
+                    ? t('updating')
+                    : t('creating')
                   : isEditing
-                    ? 'Update Batch'
-                    : 'Create Batch'}
+                    ? t('updateButton')
+                    : t('createButton')}
               </Button>
             </DialogFooter>
           </form>

@@ -1,5 +1,6 @@
 'use client';
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 import { ColumnDef } from '@tanstack/react-table';
 import { MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -53,6 +54,9 @@ export function RewardClaimsTable({
   onStatusChange,
   onRefresh,
 }: RewardClaimsTableProps) {
+  const t = useTranslations('reward.claimsTable');
+  const tCommon = useTranslations('reward.common');
+
   // Memoized fetch function to prevent unnecessary re-renders
   const fetchClaims = React.useCallback(
     async (
@@ -128,7 +132,7 @@ export function RewardClaimsTable({
     [setSearch],
   );
 
-  // Optimized status change handler with error boundary - stabilize with useCallback
+  // Optimized status change handler with translated messages
   const handleStatusChange = React.useCallback(
     async (id: string, status: string): Promise<void> => {
       try {
@@ -136,54 +140,54 @@ export function RewardClaimsTable({
 
         if (result.success) {
           toast({
-            title: 'Status updated',
-            description: `Claim status has been updated to ${status}`,
+            title: t('statusUpdated'),
+            description: t('statusUpdatedMessage', { status }),
           });
           refresh();
           onRefresh?.();
           onStatusChange?.(id, status);
         } else {
           toast({
-            title: 'Error',
-            description: result.error || 'Failed to update claim status',
+            title: tCommon('error'),
+            description: result.error || t('statusUpdateFailed'),
             variant: 'destructive',
           });
         }
       } catch (error) {
         console.error('Error updating claim status:', error);
         toast({
-          title: 'Error',
-          description: 'An unexpected error occurred',
+          title: tCommon('error'),
+          description: tCommon('unexpected'),
           variant: 'destructive',
         });
       }
     },
-    [refresh, onRefresh, onStatusChange],
+    [refresh, onRefresh, onStatusChange, t, tCommon],
   );
 
-  // Memoized status badge component - stabilize with useCallback
+  // Memoized status badge component with translations
   const getStatusBadge = React.useCallback(
     (status: string): React.ReactElement => {
       const statusConfig = {
         [CLAIM_STATUSES.CLAIMED]: {
           variant: 'secondary' as const,
           className: '',
-          label: 'Claimed',
+          label: t('status.claimed'),
         },
         [CLAIM_STATUSES.FULFILLED]: {
           variant: 'secondary' as const,
           className: 'bg-green-500 hover:bg-green-600 text-white',
-          label: 'Fulfilled',
+          label: t('status.completed'),
         },
         [CLAIM_STATUSES.CANCELLED]: {
           variant: 'destructive' as const,
           className: '',
-          label: 'Cancelled',
+          label: t('status.cancelled'),
         },
         [CLAIM_STATUSES.PENDING]: {
           variant: 'outline' as const,
           className: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-          label: 'Pending',
+          label: t('status.pending'),
         },
       };
 
@@ -199,15 +203,15 @@ export function RewardClaimsTable({
         </Badge>
       );
     },
-    [],
+    [t],
   );
 
-  // Memoized columns to prevent unnecessary re-renders
+  // Memoized columns with translations
   const columns = React.useMemo(
     (): ColumnDef<RewardClaimWithRelations>[] => [
       {
         accessorKey: 'claimDate',
-        header: 'Claim Date',
+        header: t('columns.claimDate'),
         cell: ({ row }) => (
           <div className="font-medium">
             {format(new Date(row.getValue('claimDate')), 'PPp')}
@@ -217,7 +221,7 @@ export function RewardClaimsTable({
       },
       {
         id: 'member',
-        header: 'Member',
+        header: t('columns.member'),
         cell: ({ row }) => {
           const member = row.original.member;
           return <div className="font-medium">{member.name}</div>;
@@ -225,14 +229,14 @@ export function RewardClaimsTable({
       },
       {
         id: 'reward',
-        header: 'Reward',
+        header: t('columns.reward'),
         cell: ({ row }) => {
           const reward = row.original.reward;
           return (
             <div className="font-medium">
               {reward.name}
               <span className="block text-xs text-muted-foreground">
-                {reward.pointsCost} points
+                {reward.pointsCost} {tCommon('points')}
               </span>
             </div>
           );
@@ -240,7 +244,7 @@ export function RewardClaimsTable({
       },
       {
         accessorKey: 'status',
-        header: 'Status',
+        header: t('columns.status'),
         cell: ({ row }) => getStatusBadge(row.getValue('status')),
         enableSorting: true,
       },
@@ -254,26 +258,49 @@ export function RewardClaimsTable({
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="h-8 w-8 p-0">
-                    <span className="sr-only">Open menu</span>
+                    <span className="sr-only">{t('openMenu')}</span>
                     <MoreHorizontal className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                  <DropdownMenuLabel>{t('actions')}</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuLabel className="text-xs">
-                    Change Status
+                    {t('changeStatus')}
                   </DropdownMenuLabel>
                   <DropdownMenuRadioGroup value={claim.status}>
-                    {Object.values(CLAIM_STATUSES).map((status) => (
-                      <DropdownMenuRadioItem
-                        key={status}
-                        value={status}
-                        onClick={() => handleStatusChange(claim.id, status)}
-                      >
-                        {status}
-                      </DropdownMenuRadioItem>
-                    ))}
+                    <DropdownMenuRadioItem
+                      value={CLAIM_STATUSES.CLAIMED}
+                      onClick={() =>
+                        handleStatusChange(claim.id, CLAIM_STATUSES.CLAIMED)
+                      }
+                    >
+                      {t('status.claimed')}
+                    </DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem
+                      value={CLAIM_STATUSES.FULFILLED}
+                      onClick={() =>
+                        handleStatusChange(claim.id, CLAIM_STATUSES.FULFILLED)
+                      }
+                    >
+                      {t('status.completed')}
+                    </DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem
+                      value={CLAIM_STATUSES.CANCELLED}
+                      onClick={() =>
+                        handleStatusChange(claim.id, CLAIM_STATUSES.CANCELLED)
+                      }
+                    >
+                      {t('status.cancelled')}
+                    </DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem
+                      value={CLAIM_STATUSES.PENDING}
+                      onClick={() =>
+                        handleStatusChange(claim.id, CLAIM_STATUSES.PENDING)
+                      }
+                    >
+                      {t('status.pending')}
+                    </DropdownMenuRadioItem>
                   </DropdownMenuRadioGroup>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -282,7 +309,7 @@ export function RewardClaimsTable({
         },
       },
     ],
-    [getStatusBadge, handleStatusChange],
+    [getStatusBadge, handleStatusChange, t, tCommon],
   );
 
   return (

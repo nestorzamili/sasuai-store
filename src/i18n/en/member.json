@@ -1,0 +1,337 @@
+{
+  "member": {
+    "title": "Membership Management",
+    "description": "Manage your member data, loyalty tiers, and rewards.",
+    "tabs": {
+      "members": "Members",
+      "tiers": "Membership Tiers",
+      "pointRules": "Point Rules"
+    },
+    "awardPoints": {
+      "title": "Award Points to Member",
+      "description": "Award loyalty points to {name}",
+      "defaultDescription": "Award loyalty points to this member",
+      "pointsToAward": "Points to Award",
+      "pointsPlaceholder": "Enter points",
+      "notes": "Notes (Optional)",
+      "notesPlaceholder": "Enter a reason for awarding these points",
+      "multiplierActive": "Point Multiplier Active",
+      "multiplierDescription": "This member has a {multiplier}x point multiplier from their {tierName} tier status.",
+      "invalidInput": "Invalid input",
+      "invalidInputDescription": "Please select a member and enter a valid point amount",
+      "success": "Points awarded",
+      "successDescription": "{points} points have been added to {name}",
+      "failed": "Failed to award points",
+      "awarding": "Awarding...",
+      "awardButton": "Award Points"
+    },
+    "common": {
+      "error": "Error",
+      "cancel": "Cancel",
+      "unexpectedError": "An unexpected error occurred"
+    },
+    "errors": {
+      "failedToFetchTiers": "Failed to fetch member tiers"
+    },
+    "table": {
+      "columns": {
+        "cardId": "Card ID",
+        "name": "Name",
+        "phone": "Phone",
+        "address": "Address",
+        "tier": "Membership Tier",
+        "totalPoints": "Total Points",
+        "joinDate": "Join Date",
+        "status": "Status"
+      },
+      "status": {
+        "active": "Active",
+        "banned": "Banned",
+        "noTier": "No tier"
+      },
+      "actions": {
+        "openMenu": "Open menu",
+        "viewDetails": "View Details",
+        "edit": "Edit",
+        "awardPoints": "Award Points",
+        "ban": "Ban Member",
+        "delete": "Delete",
+        "unban": {
+          "button": "Unban Member",
+          "success": "Member unbanned",
+          "successMessage": "{name} has been unbanned successfully",
+          "failed": "Failed to unban member"
+        }
+      },
+      "filters": {
+        "tier": "Tier",
+        "status": "Status",
+        "allTiers": "All Tiers",
+        "allStatus": "All Status"
+      }
+    },
+    "banDialog": {
+      "title": "Ban Member",
+      "description": "You are about to ban {name}. This will prevent them from earning points, claiming rewards, or receiving discounts.",
+      "reasonLabel": "Reason for Ban",
+      "reasonPlaceholder": "Please provide a reason for banning this member...",
+      "reasonNote": "This reason will be recorded and may be shown to administrators.",
+      "reasonRequired": "Please provide a reason for banning this member",
+      "success": "Member banned",
+      "successMessage": "{name} has been banned successfully",
+      "failed": "Failed to ban member",
+      "banning": "Banning...",
+      "banButton": "Ban Member"
+    },
+    "deleteDialog": {
+      "title": "Delete Member",
+      "description": "Are you sure you want to delete {name}?",
+      "permanentAction": "This action will permanently remove this member from the system. This cannot be undone.",
+      "warning": "Warning!",
+      "warningMessage": "Deleting this member will remove all their transaction history, point history, and reward claims.",
+      "success": "Member deleted",
+      "successMessage": "The member \"{name}\" has been deleted successfully",
+      "failed": "Failed to delete member",
+      "deleting": "Deleting...",
+      "deleteButton": "Delete"
+    },
+    "formDialog": {
+      "createTitle": "Create Member",
+      "editTitle": "Edit Member",
+      "createDescription": "Add a new member to your loyalty program",
+      "editDescription": "Edit the member information below",
+      "createTrigger": "Create",
+      "fields": {
+        "cardId": "Card ID",
+        "name": "Member Name",
+        "email": "Email (Optional)",
+        "phone": "Phone (Optional)",
+        "address": "Address",
+        "tier": "Membership Tier"
+      },
+      "placeholders": {
+        "cardId": "Scan card",
+        "name": "Enter member name",
+        "email": "Enter email address",
+        "phone": "Enter phone number",
+        "address": "Address",
+        "tier": "Select a membership tier"
+      },
+      "validation": {
+        "cardIdRequired": "Card ID is required",
+        "nameRequired": "Member name is required",
+        "invalidEmail": "Invalid email format"
+      },
+      "points": "points",
+      "createSuccess": "Member created",
+      "createSuccessMessage": "New member has been created",
+      "updateSuccess": "Member updated",
+      "updateSuccessMessage": "Member has been updated successfully",
+      "creating": "Creating...",
+      "updating": "Updating...",
+      "createButton": "Create Member",
+      "updateButton": "Update Member"
+    },
+    "pointRules": {
+      "title": "Point Rules Configuration",
+      "description": "Configure how points are awarded to members for their purchases",
+      "settings": {
+        "title": "Point Calculation Settings",
+        "description": "These settings determine how points are calculated for each transaction"
+      },
+      "fields": {
+        "enabled": {
+          "label": "Enable Points System",
+          "description": "When disabled, no points will be awarded for any purchases"
+        },
+        "baseAmount": {
+          "label": "Base Amount",
+          "description": "For every {amount} spent, customers earn 1 point"
+        },
+        "pointMultiplier": {
+          "label": "Global Point Multiplier",
+          "description": "Multiply all points earned by this value"
+        }
+      },
+      "tooltips": {
+        "enabled": "When enabled, customers will earn points for every purchase based on the settings below. Disabling this will stop all point accumulation.",
+        "baseAmount": "This is the transaction amount required to earn 1 point. For example, if set to 10,000, then a 50,000 purchase will earn 5 points (before multipliers).",
+        "pointMultiplier": "A global multiplier applied to all point calculations. For example, setting this to 2 will double all points earned by all customers.",
+        "tierMultiplier": "Each membership tier has its own multiplier that is applied after the global multiplier. Higher tiers receive more points for the same purchase amount.",
+        "exampleCalculation": "Enter any amount to see how many points each tier would earn for this purchase."
+      },
+      "calculator": {
+        "title": "Example Point Calculation",
+        "exampleAmount": "Example transaction amount",
+        "pointsByTier": "Points earned by tier",
+        "points": "points"
+      },
+      "validation": {
+        "baseAmountMin": "Base amount must be at least 1,000",
+        "multiplierMin": "Multiplier must be at least 0.1"
+      },
+      "success": {
+        "title": "Settings updated",
+        "message": "Point rule settings have been updated successfully"
+      },
+      "errors": {
+        "failedToLoad": "Failed to load point rule settings",
+        "failedToUpdate": "Failed to update point rule settings"
+      },
+      "actions": {
+        "resetToDefault": "Reset to Default",
+        "saving": "Saving...",
+        "saveSettings": "Save Settings"
+      }
+    },
+    "tierDeleteDialog": {
+      "title": "Delete Membership Tier",
+      "description": "Are you sure you want to delete {name} tier?",
+      "permanentRemove": "This action will permanently remove this membership tier from the system.",
+      "warning": "Warning!",
+      "warningMessage": "If any members are currently assigned to this tier, the operation will fail. You need to reassign those members to a different tier first.",
+      "success": "Tier deleted",
+      "successMessage": "The tier \"{name}\" has been deleted successfully",
+      "failed": "Failed to delete tier",
+      "deleting": "Deleting...",
+      "deleteButton": "Delete Tier"
+    },
+    "tiersContent": {
+      "title": "Membership Tiers",
+      "description": "Configure the membership tiers for your loyalty program",
+      "createNewTier": "Create New Tier",
+      "emptyState": {
+        "title": "No tiers defined yet",
+        "description": "Create your first membership tier to kickstart your loyalty program and reward your members",
+        "createButton": "Create First Tier"
+      },
+      "card": {
+        "topTier": "TOP TIER",
+        "points": "points",
+        "minPointsRequired": "Min. points required for this tier",
+        "pointsMultiplier": "Points multiplier",
+        "tierLevel": "Tier level",
+        "edit": "Edit",
+        "delete": "Delete"
+      }
+    },
+    "tierFormDialog": {
+      "createTitle": "Create Tier",
+      "editTitle": "Edit Tier",
+      "createDescription": "Add a new membership tier to your loyalty program",
+      "editDescription": "Edit the membership tier information below",
+      "fields": {
+        "name": {
+          "label": "Tier Name",
+          "placeholder": "Enter tier name",
+          "description": "E.g., Bronze, Silver, Gold, Platinum"
+        },
+        "minPoints": {
+          "label": "Minimum Points",
+          "placeholder": "Enter minimum points",
+          "description": "Minimum points required to reach this tier"
+        },
+        "multiplier": {
+          "label": "Points Multiplier",
+          "description": "Points earned will be multiplied by this value"
+        }
+      },
+      "validation": {
+        "nameRequired": "Tier name is required",
+        "minPointsNonNegative": "Minimum points must be a non-negative integer",
+        "multiplierMin": "Multiplier must be at least 0.1"
+      },
+      "createSuccess": "Tier created",
+      "createSuccessMessage": "New membership tier has been created",
+      "updateSuccess": "Tier updated",
+      "updateSuccessMessage": "Membership tier has been updated successfully",
+      "creating": "Creating...",
+      "updating": "Updating...",
+      "createButton": "Create Tier",
+      "updateButton": "Update Tier"
+    },
+    "detailPage": {
+      "tabs": {
+        "pointHistory": "Point History",
+        "rewardClaims": "Reward Claims"
+      },
+      "notFound": {
+        "title": "Member not found",
+        "description": "The requested member could not be found",
+        "returnButton": "Return to Members List"
+      },
+      "errors": {
+        "missingId": "Member ID is missing",
+        "fetchFailed": "Failed to fetch member details"
+      }
+    },
+    "pointHistory": {
+      "title": "Point History & Transactions",
+      "columns": {
+        "date": "Date",
+        "points": "Points",
+        "source": "Source",
+        "amount": "Amount",
+        "payment": "Payment",
+        "notes": "Notes"
+      },
+      "sources": {
+        "manualAward": "Manual award",
+        "transaction": "Transaction"
+      },
+      "emptyState": "No point history found for this member."
+    },
+    "rewardHistory": {
+      "title": "Reward Claims",
+      "columns": {
+        "date": "Date",
+        "reward": "Reward",
+        "pointsCost": "Points Cost",
+        "status": "Status"
+      },
+      "status": {
+        "claimed": "Claimed",
+        "fulfilled": "Fulfilled",
+        "cancelled": "Cancelled",
+        "pending": "Pending"
+      },
+      "emptyState": "This member hasn't claimed any rewards yet."
+    },
+    "profile": {
+      "title": "Member Profile",
+      "editButton": "Edit",
+      "fields": {
+        "memberName": "Member Name",
+        "contactInfo": "Contact Information",
+        "noContactInfo": "No contact information provided",
+        "memberSince": "Member Since",
+        "membershipDuration": "{days} days as member"
+      },
+      "banned": {
+        "title": "Member is Banned",
+        "removeBanButton": "Remove Ban",
+        "unbanSuccess": "Member unbanned",
+        "unbanSuccessMessage": "{name} has been unbanned successfully",
+        "unbanFailed": "Failed to unban member"
+      },
+      "tier": {
+        "title": "Membership Tier",
+        "noTier": "No Tier",
+        "pointsMultiplier": "Points multiplier: {multiplier}x"
+      },
+      "points": {
+        "summary": "Points Summary",
+        "available": "Available Points",
+        "lifetime": "Lifetime Points"
+      },
+      "activity": {
+        "title": "Activity Summary",
+        "transactions": "Transactions",
+        "pointHistory": "Point History",
+        "rewardClaims": "Reward Claims",
+        "lastActivity": "Last activity",
+        "noRecentActivity": "No recent activity"
+      }
+    }
+  }
+}

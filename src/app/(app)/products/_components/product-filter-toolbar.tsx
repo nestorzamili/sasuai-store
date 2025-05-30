@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { IconFilterOff, IconCurrencyDollar } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -44,6 +45,7 @@ export default function ProductFilterToolbar({
   maxPrice,
   setMaxPrice,
 }: ProductFilterToolbarProps) {
+  const t = useTranslations('product.filterToolbar');
   const [categories, setCategories] = useState<{ id: string; name: string }[]>(
     [],
   );
@@ -77,11 +79,11 @@ export default function ProductFilterToolbar({
     if (minPrice && maxPrice) {
       return `${formatRupiah(minPrice)} - ${formatRupiah(maxPrice)}`;
     } else if (minPrice) {
-      return `Min: ${formatRupiah(minPrice)}`;
+      return `${t('min')}: ${formatRupiah(minPrice)}`;
     } else if (maxPrice) {
-      return `Max: ${formatRupiah(maxPrice)}`;
+      return `${t('max')}: ${formatRupiah(maxPrice)}`;
     }
-    return 'Price Range';
+    return t('priceRange');
   };
 
   // Update temporary price values when main values change
@@ -123,12 +125,12 @@ export default function ProductFilterToolbar({
       {/* Status Filter */}
       <Select value={status} onValueChange={setStatus} disabled={isLoading}>
         <SelectTrigger className="w-[150px]">
-          <SelectValue placeholder="Status" />
+          <SelectValue placeholder={t('status')} />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">All Status</SelectItem>
-          <SelectItem value="active">Active</SelectItem>
-          <SelectItem value="inactive">Inactive</SelectItem>
+          <SelectItem value="all">{t('allStatus')}</SelectItem>
+          <SelectItem value="active">{t('active')}</SelectItem>
+          <SelectItem value="inactive">{t('inactive')}</SelectItem>
         </SelectContent>
       </Select>
 
@@ -139,10 +141,10 @@ export default function ProductFilterToolbar({
         disabled={isLoading}
       >
         <SelectTrigger className="w-[180px]">
-          <SelectValue placeholder="Category" />
+          <SelectValue placeholder={t('category')} />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">All Categories</SelectItem>
+          <SelectItem value="all">{t('allCategories')}</SelectItem>
           {categories.map((category) => (
             <SelectItem key={category.id} value={category.id}>
               {category.name}
@@ -181,7 +183,7 @@ export default function ProductFilterToolbar({
         <PopoverContent className="w-[300px] p-4">
           <div className="space-y-4">
             <div className="flex justify-between items-center">
-              <h4 className="font-medium">Price Range</h4>
+              <h4 className="font-medium">{t('priceRange')}</h4>
               {(tempMinPrice || tempMaxPrice) && (
                 <Button
                   variant="ghost"
@@ -189,7 +191,7 @@ export default function ProductFilterToolbar({
                   onClick={handleResetPriceFilter}
                   className="h-7 px-2 text-xs"
                 >
-                  Reset
+                  {t('reset')}
                 </Button>
               )}
             </div>
@@ -198,7 +200,7 @@ export default function ProductFilterToolbar({
             <div className="flex gap-4 items-center">
               <div className="flex-1">
                 <label className="text-xs text-muted-foreground block mb-1">
-                  Min Price
+                  {t('minPrice')}
                 </label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
@@ -214,7 +216,7 @@ export default function ProductFilterToolbar({
               </div>
               <div className="flex-1">
                 <label className="text-xs text-muted-foreground block mb-1">
-                  Max Price
+                  {t('maxPrice')}
                 </label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
@@ -231,7 +233,7 @@ export default function ProductFilterToolbar({
             </div>
 
             <Button className="w-full" onClick={handleApplyPriceFilter}>
-              Apply Filter
+              {t('applyFilter')}
             </Button>
           </div>
         </PopoverContent>
@@ -245,7 +247,7 @@ export default function ProductFilterToolbar({
         disabled={!hasActiveFilters}
       >
         <IconFilterOff size={16} className="mr-2" />
-        <span>Clear Filters</span>
+        <span>{t('clearFilters')}</span>
       </Button>
     </div>
   );

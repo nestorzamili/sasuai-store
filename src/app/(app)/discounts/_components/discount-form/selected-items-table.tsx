@@ -9,17 +9,22 @@ import {
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
 import { Entity, SelectedItemsTableProps } from '@/lib/types/discount';
+import { useTranslations } from 'next-intl';
 
 export default function SelectedItemsTable<T extends Entity>({
   items,
   columns,
   onRemove,
-  emptyMessage = 'No items selected',
+  emptyMessage,
 }: SelectedItemsTableProps<T>) {
+  const t = useTranslations('discount.form');
+
+  const defaultEmptyMessage = emptyMessage || t('noItemsSelected');
+
   if (items.length === 0) {
     return (
       <div className="text-center py-4 text-muted-foreground text-sm border rounded-md">
-        {emptyMessage}
+        {defaultEmptyMessage}
       </div>
     );
   }

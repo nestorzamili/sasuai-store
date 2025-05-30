@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Form } from '@/components/ui/form';
 import { toast } from '@/hooks/use-toast';
-import { discountSchema, DiscountFormValues } from '../schema';
+import { createTranslatedDiscountSchema, DiscountFormValues } from '../schema';
 import { DiscountType, DiscountApplyTo } from '@/lib/types/discount';
 import { createDiscount } from '../action';
 import { useState } from 'react';
@@ -16,14 +16,21 @@ import { Separator } from '@/components/ui/separator';
 import BasicInfo from '../_components/discount-form/basic-info';
 import ValidityRules from '../_components/discount-form/validity-rules';
 import ApplicationScope from '../_components/discount-form/application-scope';
+import { useTranslations } from 'next-intl';
 
 export default function CreateDiscountPage() {
+  const t = useTranslations('discount');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  // Initialize the form
+  // Create translated schema
+  const translatedSchema = createTranslatedDiscountSchema((key: string) =>
+    t(key),
+  );
+
+  // Initialize the form with translated schema
   const form = useForm<DiscountFormValues>({
-    resolver: zodResolver(discountSchema),
+    resolver: zodResolver(translatedSchema),
     defaultValues: {
       name: '',
       code: null,
@@ -71,8 +78,8 @@ export default function CreateDiscountPage() {
 
       if (result.success) {
         toast({
-          title: 'Discount created',
-          description: 'New discount has been created successfully',
+          title: t('pages.discountCreated'),
+          description: t('pages.newDiscountSuccess'),
         });
 
         // Navigate back to the discounts page
@@ -80,7 +87,7 @@ export default function CreateDiscountPage() {
       } else {
         // Show specific error message
         toast({
-          title: 'Error',
+          title: t('deleteDialog.error'),
           description: result.message || 'Something went wrong',
           variant: 'destructive',
         });
@@ -88,8 +95,8 @@ export default function CreateDiscountPage() {
     } catch (error) {
       console.error('Form submission error:', error);
       toast({
-        title: 'Error',
-        description: 'An unexpected error occurred',
+        title: t('deleteDialog.error'),
+        description: t('deleteDialog.unexpectedError'),
         variant: 'destructive',
       });
     } finally {
@@ -101,8 +108,8 @@ export default function CreateDiscountPage() {
   const onError = (errors: unknown) => {
     console.error('Form validation errors:', errors);
     toast({
-      title: 'Validation Error',
-      description: 'Please check the form for errors',
+      title: t('pages.validationError'),
+      description: t('pages.checkFormErrors'),
       variant: 'destructive',
     });
   };
@@ -113,12 +120,11 @@ export default function CreateDiscountPage() {
         <div className="space-y-0.5">
           <div className="flex items-center gap-2">
             <h2 className="text-2xl font-bold tracking-tight">
-              Create Discount
+              {t('pages.createTitle')}
             </h2>
           </div>
           <p className="text-muted-foreground">
-            Create a new discount that can be applied to products, members, or
-            tiers
+            {t('pages.createDescription')}
           </p>
         </div>
       </div>
@@ -155,11 +161,11 @@ export default function CreateDiscountPage() {
           <div className="flex justify-end gap-4">
             <Link href="/discounts">
               <Button variant="outline" type="button">
-                Cancel
+                {t('pages.cancel')}
               </Button>
             </Link>
             <Button type="submit" disabled={loading}>
-              {loading ? 'Creating...' : 'Create Discount'}
+              {loading ? t('pages.creating') : t('pages.createButton')}
             </Button>
           </div>
         </form>

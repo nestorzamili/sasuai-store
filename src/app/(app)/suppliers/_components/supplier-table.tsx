@@ -1,6 +1,7 @@
 'use client';
 import * as React from 'react';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { ColumnDef } from '@tanstack/react-table';
 import { MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -32,6 +33,8 @@ interface SupplierTableProps {
 }
 
 export function SupplierTable({ onEdit, onRefresh }: SupplierTableProps) {
+  const t = useTranslations('supplier.table');
+
   const fetchSuppliers = useCallback(async (options: TableFetchOptions) => {
     // Convert TableFetchOptions to SupplierOptions using the helper
     const response = await getAllSuppliersWithCount({
@@ -111,84 +114,90 @@ export function SupplierTable({ onEdit, onRefresh }: SupplierTableProps) {
     setDeleteDialog(true);
   }, []);
 
-  const columns: ColumnDef<SupplierWithCount>[] = [
-    {
-      header: 'Name',
-      accessorKey: 'name',
-      cell: ({ row }) => (
-        <div className="font-medium">{row.getValue('name')}</div>
-      ),
-      enableSorting: true,
-    },
-    {
-      header: 'Contact',
-      accessorKey: 'contact',
-      cell: ({ row }) => {
-        const contact = row.getValue('contact') as string;
-        return (
-          <div className="max-w-[700px] truncate" title={contact || ''}>
-            {contact ? (
-              contact
-            ) : (
-              <span className="text-muted-foreground italic">
-                No contact info
-              </span>
-            )}
-          </div>
-        );
+  // Memoized columns with translations
+  const columns: ColumnDef<SupplierWithCount>[] = useMemo(
+    () => [
+      {
+        header: t('columns.name'),
+        accessorKey: 'name',
+        cell: ({ row }) => (
+          <div className="font-medium">{row.getValue('name')}</div>
+        ),
+        enableSorting: false,
       },
-    },
-    {
-      header: 'Stock-Ins Count',
-      accessorKey: '_count.stockIns',
-      cell: ({ row }) => (
-        <Badge variant="outline" className="text-xs">
-          {row.original._count?.stockIns || 0} stock-ins
-        </Badge>
-      ),
-    },
-    {
-      id: 'actions',
-      header: '',
-      cell: ({ row }) => {
-        const supplier = row.original;
-        return (
-          <div className="text-right">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-8 w-8 p-0">
-                  <span className="sr-only">Open menu</span>
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  className="flex justify-between cursor-pointer"
-                  onClick={() => handleViewDetails(supplier)}
-                >
-                  View Details <IconEye className="h-4 w-4" />
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="flex justify-between cursor-pointer"
-                  onClick={() => onEdit?.(supplier)}
-                >
-                  Edit <IconEdit className="h-4 w-4" />
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="flex justify-between cursor-pointer text-destructive focus:text-destructive"
-                  onClick={() => handleDeleteClick(supplier)}
-                >
-                  Delete <IconTrash className="h-4 w-4" />
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        );
+      {
+        header: t('columns.contact'),
+        accessorKey: 'contact',
+        cell: ({ row }) => {
+          const contact = row.getValue('contact') as string;
+          return (
+            <div className="max-w-[700px] truncate" title={contact || ''}>
+              {contact ? (
+                contact
+              ) : (
+                <span className="text-muted-foreground italic">
+                  {t('noContact')}
+                </span>
+              )}
+            </div>
+          );
+        },
+        enableSorting: false,
       },
-    },
-  ];
+      {
+        header: t('columns.stockIns'),
+        accessorKey: '_count.stockIns',
+        cell: ({ row }) => (
+          <Badge variant="outline" className="text-xs">
+            {row.original._count?.stockIns || 0}{' '}
+            {t('columns.stockIns').toLowerCase()}
+          </Badge>
+        ),
+      },
+      {
+        id: 'actions',
+        header: '',
+        cell: ({ row }) => {
+          const supplier = row.original;
+          return (
+            <div className="text-right">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="h-8 w-8 p-0">
+                    <span className="sr-only">{t('actions.openMenu')}</span>
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>{t('actions.actions')}</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    className="flex justify-between cursor-pointer"
+                    onClick={() => handleViewDetails(supplier)}
+                  >
+                    {t('actions.viewDetails')} <IconEye className="h-4 w-4" />
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="flex justify-between cursor-pointer"
+                    onClick={() => onEdit?.(supplier)}
+                  >
+                    {t('actions.edit')} <IconEdit className="h-4 w-4" />
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="flex justify-between cursor-pointer text-destructive focus:text-destructive"
+                    onClick={() => handleDeleteClick(supplier)}
+                  >
+                    {t('actions.delete')} <IconTrash className="h-4 w-4" />
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          );
+        },
+      },
+    ],
+    [t, handleViewDetails, onEdit, handleDeleteClick],
+  );
 
   return (
     <>

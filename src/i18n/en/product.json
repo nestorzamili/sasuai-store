@@ -1,0 +1,219 @@
+{
+  "product": {
+    "mainContent": {
+      "title": "Manage Products",
+      "description": "View and manage your product inventory"
+    },
+    "table": {
+      "columns": {
+        "productName": "Product Name",
+        "description": "Description",
+        "category": "Category",
+        "brand": "Brand",
+        "barcode": "Barcode",
+        "price": "Price",
+        "stock": "Stock",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "actions": {
+        "openMenu": "Open menu",
+        "edit": "Edit",
+        "delete": "Delete"
+      },
+      "placeholders": {
+        "noDescription": "No description",
+        "noBrand": "N/A",
+        "noBarcode": "N/A"
+      }
+    },
+    "filterToolbar": {
+      "status": "Status",
+      "allStatus": "All Status",
+      "active": "Active",
+      "inactive": "Inactive",
+      "category": "Category",
+      "allCategories": "All Categories",
+      "priceRange": "Price Range",
+      "minPrice": "Min Price",
+      "maxPrice": "Max Price",
+      "min": "Min",
+      "max": "Max",
+      "applyFilter": "Apply Filter",
+      "reset": "Reset",
+      "clearFilters": "Clear Filters"
+    },
+    "detailsSection": {
+      "productName": "Product Name",
+      "productNamePlaceholder": "Enter product name",
+      "category": "Category",
+      "brand": "Brand",
+      "unit": "Unit",
+      "price": "Price",
+      "pricePlaceholder": "0",
+      "skuCode": "SKU Code",
+      "skuCodePlaceholder": "Auto-generated from name",
+      "generateSku": "Generate SKU",
+      "skuDescriptionNew": "Auto-generated from product name",
+      "skuDescriptionEdit": "SKU code for product identification",
+      "barcode": "Barcode",
+      "barcodePlaceholder": "Enter barcode",
+      "productStatus": "Product Status",
+      "active": "Active",
+      "inactive": "Inactive",
+      "description": "Description",
+      "descriptionPlaceholder": "Enter product description (optional)"
+    },
+    "deleteDialog": {
+      "title": "Delete Product",
+      "description": "Are you sure you want to delete the product {name}?",
+      "permanentRemove": "This action will permanently remove this product from the system. This cannot be undone.",
+      "warning": "Warning!",
+      "warningMessage": "This will also delete all associated product images and batch data. Please be careful, this operation cannot be rolled back.",
+      "success": "Product deleted",
+      "successMessage": "The product \"{name}\" has been deleted successfully",
+      "failed": "Failed to delete product",
+      "deleting": "Deleting...",
+      "deleteButton": "Delete"
+    },
+    "formDialog": {
+      "addProduct": "Add Product",
+      "createTitle": "Create Product",
+      "editTitle": "Edit Product",
+      "createDescription": "Add a new product to your store",
+      "editDescription": "Edit the product information below"
+    },
+    "createUnitDialog": {
+      "title": "Create Unit",
+      "description": "Add a new unit for measuring products",
+      "unitName": "Unit Name",
+      "unitNamePlaceholder": "e.g., Kilogram, Liter, Piece",
+      "unitSymbol": "Unit Symbol",
+      "unitSymbolPlaceholder": "e.g., kg, L, pc",
+      "cancel": "Cancel",
+      "creating": "Creating...",
+      "createButton": "Create Unit",
+      "success": "Unit created",
+      "successMessage": "New unit has been created successfully",
+      "failed": "Failed to create unit",
+      "validation": {
+        "nameRequired": "Unit name is required",
+        "symbolRequired": "Unit symbol is required",
+        "symbolMaxLength": "Symbol should be short"
+      }
+    },
+    "unitCombobox": {
+      "placeholder": "Select unit...",
+      "emptyPlaceholder": "No unit found",
+      "searchPlaceholder": "Search units...",
+      "createEntityText": "Create new unit"
+    },
+    "brandCombobox": {
+      "placeholder": "Select brand...",
+      "emptyPlaceholder": "No brand found",
+      "searchPlaceholder": "Search brands...",
+      "createEntityText": "Create new brand"
+    },
+    "createBrandDialog": {
+      "title": "Create Brand",
+      "description": "Add a new brand for your products",
+      "brandName": "Brand Name",
+      "brandNamePlaceholder": "e.g., Nike, Adidas, Apple",
+      "cancel": "Cancel",
+      "creating": "Creating...",
+      "createButton": "Create Brand",
+      "success": "Brand created",
+      "successMessage": "New brand has been created successfully",
+      "failed": "Failed to create brand",
+      "validation": {
+        "nameRequired": "Brand name is required"
+      }
+    },
+    "categoryCombobox": {
+      "placeholder": "Select category...",
+      "emptyPlaceholder": "No category found",
+      "searchPlaceholder": "Search categories...",
+      "createEntityText": "Create new category"
+    },
+    "createCategoryDialog": {
+      "title": "Create Category",
+      "description": "Add a new category to your product catalog",
+      "categoryName": "Category Name",
+      "categoryNamePlaceholder": "Enter category name",
+      "categoryDescription": "Description",
+      "categoryDescriptionPlaceholder": "Enter category description (optional)",
+      "cancel": "Cancel",
+      "creating": "Creating...",
+      "createButton": "Create Category",
+      "success": "Category created",
+      "successMessage": "New category has been created successfully",
+      "failed": "Failed to create category",
+      "validation": {
+        "nameRequired": "Category name is required"
+      }
+    },
+    "entityCombobox": {
+      "none": "None",
+      "create": "Create \"{query}\""
+    },
+    "formContent": {
+      "cancel": "Cancel",
+      "creating": "Creating...",
+      "updating": "Updating...",
+      "createButton": "Create Product",
+      "updateButton": "Update Product"
+    },
+    "formProvider": {
+      "validation": {
+        "nameRequired": "Product name is required",
+        "categoryRequired": "Category is required",
+        "unitRequired": "Unit is required",
+        "pricePositive": "Price must be a positive number"
+      },
+      "success": {
+        "productCreated": "Product created",
+        "productCreatedMessage": "New product has been created",
+        "productUpdated": "Product updated",
+        "productUpdatedMessage": "Product has been updated successfully"
+      },
+      "error": {
+        "somethingWrong": "Something went wrong",
+        "unexpectedError": "An unexpected error occurred",
+        "failedToFetchOptions": "Failed to fetch form options",
+        "imagesSaveWarning": "Some images may not have been saved properly"
+      }
+    },
+    "imagesSection": {
+      "title": "Product Images",
+      "description": "Upload images for this product. The first image will be set as primary.",
+      "primary": "Primary",
+      "noPrimaryImage": "No primary image",
+      "allImages": "All Images",
+      "view": "View",
+      "uploadImage": "Upload Image",
+      "uploading": "Uploading...",
+      "deleteImageTitle": "Delete Image",
+      "deleteImageDesc": "Are you sure you want to delete this image? This action cannot be undone.",
+      "deleting": "Deleting...",
+      "delete": "Delete",
+      "uploadDialogTitle": "Upload Product Image",
+      "uploadDialogDesc": "Upload an image for your product. Square images work best.",
+      "previousImage": "Previous image",
+      "nextImage": "Next image",
+      "toast": {
+        "primaryImageUpdated": "Primary image updated",
+        "failedToUpdatePrimary": "Failed to update primary image",
+        "imageDeleted": "Image deleted",
+        "failedToDelete": "Failed to delete image",
+        "imageUploaded": "Image uploaded",
+        "uploadFailed": "Upload failed",
+        "failedToAddImage": "Failed to add image to product",
+        "unexpectedError": "An unexpected error occurred"
+      }
+    }
+  }
+}

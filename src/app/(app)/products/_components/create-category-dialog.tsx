@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -27,18 +28,20 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { createCategory } from '../categories/action';
 
-const formSchema = z.object({
-  name: z.string().min(1, 'Category name is required'),
-  description: z.string().optional(),
-});
-
-type FormValues = z.infer<typeof formSchema>;
-
 export function CreateCategoryDialog() {
+  const t = useTranslations('product.createCategoryDialog');
+  const tCommon = useTranslations('common');
   const { openCategoryCreate, setOpenCategoryCreate, fetchOptions } =
     useProductForm();
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+
+  const formSchema = z.object({
+    name: z.string().min(1, t('validation.nameRequired')),
+    description: z.string().optional(),
+  });
+
+  type FormValues = z.infer<typeof formSchema>;
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -58,8 +61,8 @@ export function CreateCategoryDialog() {
 
       if (result.success) {
         toast({
-          title: 'Category created',
-          description: 'New category has been created successfully',
+          title: t('success'),
+          description: t('successMessage'),
         });
         form.reset();
         setOpenCategoryCreate(false);
@@ -68,16 +71,16 @@ export function CreateCategoryDialog() {
         await fetchOptions();
       } else {
         toast({
-          title: 'Error',
-          description: result.error || 'Failed to create category',
+          title: tCommon('error'),
+          description: result.error || t('failed'),
           variant: 'destructive',
         });
       }
     } catch (error) {
       console.error('Error creating category:', error);
       toast({
-        title: 'Error',
-        description: 'An unexpected error occurred',
+        title: tCommon('error'),
+        description: tCommon('unexpectedError'),
         variant: 'destructive',
       });
     } finally {
@@ -89,10 +92,8 @@ export function CreateCategoryDialog() {
     <Dialog open={openCategoryCreate} onOpenChange={setOpenCategoryCreate}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Create Category</DialogTitle>
-          <DialogDescription>
-            Add a new category to your product catalog
-          </DialogDescription>
+          <DialogTitle>{t('title')}</DialogTitle>
+          <DialogDescription>{t('description')}</DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
@@ -102,9 +103,12 @@ export function CreateCategoryDialog() {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Category Name</FormLabel>
+                  <FormLabel>{t('categoryName')}</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter category name" {...field} />
+                    <Input
+                      placeholder={t('categoryNamePlaceholder')}
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -116,10 +120,10 @@ export function CreateCategoryDialog() {
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description</FormLabel>
+                  <FormLabel>{t('categoryDescription')}</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Enter category description (optional)"
+                      placeholder={t('categoryDescriptionPlaceholder')}
                       className="resize-none"
                       {...field}
                     />
@@ -135,10 +139,10 @@ export function CreateCategoryDialog() {
                 type="button"
                 onClick={() => setOpenCategoryCreate(false)}
               >
-                Cancel
+                {t('cancel')}
               </Button>
               <Button type="submit" disabled={loading}>
-                {loading ? 'Creating...' : 'Create Category'}
+                {loading ? t('creating') : t('createButton')}
               </Button>
             </DialogFooter>
           </form>

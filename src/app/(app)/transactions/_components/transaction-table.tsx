@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { useState, useCallback, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { ColumnDef } from '@tanstack/react-table';
 import { MoreHorizontal, Eye } from 'lucide-react';
 import {
@@ -98,6 +99,7 @@ const PAYMENT_METHOD_ICONS: Record<string, React.ReactNode> = {
 
 // === MAIN COMPONENT ===
 export function TransactionTable({}: TransactionTableProps) {
+  const t = useTranslations('transaction.table');
   const filters = useTransactionFilters();
   const tableState = useTransactionTable();
 
@@ -305,25 +307,27 @@ export function TransactionTable({}: TransactionTableProps) {
     [filters.setPaymentMethod, setFilters, handleFilterChange],
   );
 
-  // Memoize columns to prevent re-creation
+  // Memoize columns with translations
   const columns: ColumnDef<TransactionForTable>[] = useMemo(
     () => [
       {
-        header: 'Transaction ID',
+        header: t('columns.tranId'),
         accessorKey: 'tranId',
         cell: ({ row }) => (
           <div className="font-medium">{row.getValue('tranId')}</div>
         ),
+        enableSorting: false,
       },
       {
-        header: 'Original Amount',
+        header: t('columns.totalAmount'),
         accessorKey: 'totalAmount',
         cell: ({ row }) => (
           <div>{formatRupiah(row.getValue('totalAmount'))}</div>
         ),
+        enableSorting: true,
       },
       {
-        header: 'Discount',
+        header: t('columns.discount'),
         accessorKey: 'discountAmount',
         cell: ({ row }) => {
           const discount = row.original.discountAmount || 0;
@@ -333,9 +337,10 @@ export function TransactionTable({}: TransactionTableProps) {
             <div className="text-rose-500">- {formatRupiah(discount)}</div>
           );
         },
+        enableSorting: false,
       },
       {
-        header: 'Final Amount',
+        header: t('columns.finalAmount'),
         accessorKey: 'finalAmount',
         cell: ({ row }) => (
           <div className="font-medium">
@@ -345,24 +350,28 @@ export function TransactionTable({}: TransactionTableProps) {
         enableSorting: true,
       },
       {
-        header: 'Customer',
+        header: t('columns.member'),
         accessorKey: 'member.name',
         cell: ({ row }) => {
           if (!row.original.member)
-            return <span className="text-muted-foreground">Guest</span>;
+            return (
+              <span className="text-muted-foreground">{t('noMember')}</span>
+            );
           return <div>{row.original.member.name}</div>;
         },
+        enableSorting: false,
       },
       {
-        header: 'Items',
+        header: t('columns.items'),
         accessorKey: 'itemCount',
         cell: ({ row }) => {
           const count = row.original.itemCount || 0;
-          return <div>{count} item(s)</div>;
+          return <div>{t('itemsCount', { count })}</div>;
         },
+        enableSorting: true,
       },
       {
-        header: 'Points',
+        header: t('columns.points'),
         accessorKey: 'pointsEarned',
         cell: ({ row }) => {
           const points = row.original.pointsEarned || 0;
@@ -370,39 +379,49 @@ export function TransactionTable({}: TransactionTableProps) {
             return <span className="text-muted-foreground">-</span>;
           return <span>{points} pts</span>;
         },
+        enableSorting: true,
       },
       {
-        header: 'Payment Amount',
+        header: t('columns.paymentAmount'),
         accessorKey: 'paymentAmount',
         cell: ({ row }) => {
           const amount = row.original.paymentAmount || row.original.finalAmount;
           return <div className="font-medium">{formatRupiah(amount)}</div>;
         },
+        enableSorting: true,
       },
       {
-        header: 'Payment',
+        header: t('columns.paymentMethod'),
         accessorKey: 'paymentMethod',
         cell: ({ row }) => {
           const method = row.getValue('paymentMethod') as string;
+          // Fix the translation call by using a proper fallback
+          let methodText: string;
+          try {
+            methodText = t(`paymentMethods.${method.toLowerCase()}`);
+          } catch {
+            // Fallback to formatted method name if translation key doesn't exist
+            methodText = method.replace(/[_-]/g, ' ').toLowerCase();
+          }
+
           return (
             <div className="flex items-center gap-x-2">
               {PAYMENT_METHOD_ICONS[method] || (
                 <IconCash size={16} className="text-muted-foreground" />
               )}
-              <span className="text-sm capitalize">
-                {method.replace(/[_-]/g, ' ')}
-              </span>
+              <span className="text-sm capitalize">{methodText}</span>
             </div>
           );
         },
+        enableSorting: true,
       },
       {
-        header: 'Cashier',
+        header: t('columns.cashier'),
         accessorKey: 'cashier.name',
         cell: ({ row }) => <div>{row.original.cashier?.name || 'Unknown'}</div>,
       },
       {
-        header: 'Date',
+        header: t('columns.date'),
         accessorKey: 'createdAt',
         cell: ({ row }) => {
           const date = new Date(row.getValue('createdAt') as string);
@@ -427,7 +446,7 @@ export function TransactionTable({}: TransactionTableProps) {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="h-8 w-8 p-0">
-                    <span className="sr-only">Open menu</span>
+                    <span className="sr-only">{t('actions.openMenu')}</span>
                     <MoreHorizontal className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -438,7 +457,7 @@ export function TransactionTable({}: TransactionTableProps) {
                       tableState.viewTransactionDetails(transaction.id)
                     }
                   >
-                    View Details <Eye className="h-4 w-4" />
+                    {t('actions.viewDetails')} <Eye className="h-4 w-4" />
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -447,7 +466,7 @@ export function TransactionTable({}: TransactionTableProps) {
         },
       },
     ],
-    [tableState.viewTransactionDetails],
+    [t, tableState.viewTransactionDetails],
   );
 
   // Memoize filter toolbar element

@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import {
   IconFilterOff,
   IconUserCog,
@@ -31,21 +32,39 @@ export default function UserFilterToolbar({
   status,
   setStatus,
 }: UserFilterToolbarProps) {
+  const t = useTranslations('user.table.filters');
+
   // Determine if any filters are active
   const hasActiveFilters = role !== 'ALL_ROLES' || status !== 'ALL';
 
-  // Role options
+  // Role options with translations
   const roles = [
-    { value: 'ALL_ROLES', label: 'All Roles' },
-    { value: 'admin', label: 'Admin', icon: <IconUserCog size={16} /> },
-    { value: 'user', label: 'User', icon: <IconUserCheck size={16} /> },
+    { value: 'ALL_ROLES', label: t('allRoles') },
+    {
+      value: 'admin',
+      label: t('roles.admin'),
+      icon: <IconUserCog size={16} />,
+    },
+    {
+      value: 'user',
+      label: t('roles.user'),
+      icon: <IconUserCheck size={16} />,
+    },
   ];
 
-  // Status options
+  // Status options with translations
   const statuses = [
-    { value: 'ALL', label: 'All Statuses' },
-    { value: 'Active', label: 'Active', icon: <IconUserCheck size={16} /> },
-    { value: 'banned', label: 'Banned', icon: <IconUserCancel size={16} /> },
+    { value: 'ALL', label: t('allStatuses') },
+    {
+      value: 'Active',
+      label: t('statusOptions.active'),
+      icon: <IconUserCheck size={16} />,
+    },
+    {
+      value: 'banned',
+      label: t('statusOptions.banned'),
+      icon: <IconUserCancel size={16} />,
+    },
   ];
 
   // Handle clearing all filters - stabilize with useCallback
@@ -64,12 +83,12 @@ export default function UserFilterToolbar({
               role !== 'ALL_ROLES' && 'border-primary text-primary',
             )}
           >
-            <SelectValue placeholder="Role">
+            <SelectValue placeholder={t('role')}>
               {role && (
                 <div className="flex items-center gap-2">
                   {roles.find((r) => r.value === role)?.icon}
                   <span className="overflow-hidden text-ellipsis">
-                    {roles.find((r) => r.value === role)?.label || 'Role'}
+                    {roles.find((r) => r.value === role)?.label || t('role')}
                   </span>
                 </div>
               )}
@@ -94,13 +113,13 @@ export default function UserFilterToolbar({
           <SelectTrigger
             className={cn(status !== 'ALL' && 'border-primary text-primary')}
           >
-            <SelectValue placeholder="Status">
+            <SelectValue placeholder={t('status')}>
               {status && (
                 <div className="flex items-center gap-2">
                   {statuses.find((s) => s.value === status)?.icon}
                   <span className="overflow-hidden text-ellipsis">
                     {statuses.find((s) => s.value === status)?.label ||
-                      'Status'}
+                      t('status')}
                   </span>
                 </div>
               )}
@@ -128,7 +147,7 @@ export default function UserFilterToolbar({
         className="shrink-0"
       >
         <IconFilterOff size={16} className="mr-2" />
-        <span>Clear Filters</span>
+        <span>{t('clearFilters')}</span>
       </Button>
     </div>
   );

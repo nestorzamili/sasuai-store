@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -26,17 +27,19 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { createBrand } from '../brands/action';
 
-const formSchema = z.object({
-  name: z.string().min(1, 'Brand name is required'),
-});
-
-type FormValues = z.infer<typeof formSchema>;
-
 export function CreateBrandDialog() {
+  const t = useTranslations('product.createBrandDialog');
+  const tCommon = useTranslations('common');
   const { openBrandCreate, setOpenBrandCreate, fetchOptions } =
     useProductForm();
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+
+  const formSchema = z.object({
+    name: z.string().min(1, t('validation.nameRequired')),
+  });
+
+  type FormValues = z.infer<typeof formSchema>;
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -54,26 +57,26 @@ export function CreateBrandDialog() {
 
       if (result.success) {
         toast({
-          title: 'Brand created',
-          description: 'New brand has been created successfully',
+          title: t('success'),
+          description: t('successMessage'),
         });
         form.reset();
         setOpenBrandCreate(false);
 
-        // Fetch updated options
+        // Fetch updated brands list
         await fetchOptions();
       } else {
         toast({
-          title: 'Error',
-          description: result.error || 'Failed to create brand',
+          title: tCommon('error'),
+          description: result.error || t('failed'),
           variant: 'destructive',
         });
       }
     } catch (error) {
       console.error('Error creating brand:', error);
       toast({
-        title: 'Error',
-        description: 'An unexpected error occurred',
+        title: tCommon('error'),
+        description: tCommon('unexpectedError'),
         variant: 'destructive',
       });
     } finally {
@@ -85,10 +88,8 @@ export function CreateBrandDialog() {
     <Dialog open={openBrandCreate} onOpenChange={setOpenBrandCreate}>
       <DialogContent className="sm:max-w-[400px]">
         <DialogHeader>
-          <DialogTitle>Create Brand</DialogTitle>
-          <DialogDescription>
-            Add a new brand to your product catalog
-          </DialogDescription>
+          <DialogTitle>{t('title')}</DialogTitle>
+          <DialogDescription>{t('description')}</DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
@@ -98,9 +99,9 @@ export function CreateBrandDialog() {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Brand Name</FormLabel>
+                  <FormLabel>{t('brandName')}</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter brand name" {...field} />
+                    <Input placeholder={t('brandNamePlaceholder')} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -113,10 +114,10 @@ export function CreateBrandDialog() {
                 type="button"
                 onClick={() => setOpenBrandCreate(false)}
               >
-                Cancel
+                {t('cancel')}
               </Button>
               <Button type="submit" disabled={loading}>
-                {loading ? 'Creating...' : 'Create Brand'}
+                {loading ? t('creating') : t('createButton')}
               </Button>
             </DialogFooter>
           </form>

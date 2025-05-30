@@ -2,6 +2,7 @@
 
 import { useFormContext, useWatch } from 'react-hook-form';
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { ProductFormValues, useProductForm } from './product-form-provider';
 import {
   FormControl,
@@ -22,6 +23,7 @@ import { UnitCombobox } from './unit-combobox';
 import { generateSKU, generateCategoryPrefix } from '@/utils/sku-generator';
 
 export function ProductDetailsSection() {
+  const t = useTranslations('product.detailsSection');
   const { control, setValue } = useFormContext<ProductFormValues>();
   const { categories, isEditing } = useProductForm();
   const [skuGenerated, setSkuGenerated] = useState(false);
@@ -79,9 +81,9 @@ export function ProductDetailsSection() {
             name="name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Product Name*</FormLabel>
+                <FormLabel>{t('productName')}*</FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter product name" {...field} />
+                  <Input placeholder={t('productNamePlaceholder')} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -95,7 +97,7 @@ export function ProductDetailsSection() {
           name="categoryId"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Category*</FormLabel>
+              <FormLabel>{t('category')}*</FormLabel>
               <CategoryCombobox value={field.value} onChange={field.onChange} />
               <FormMessage />
             </FormItem>
@@ -108,7 +110,7 @@ export function ProductDetailsSection() {
           name="brandId"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Brand</FormLabel>
+              <FormLabel>{t('brand')}</FormLabel>
               <BrandCombobox
                 value={field.value || ''}
                 onChange={(value) =>
@@ -126,7 +128,7 @@ export function ProductDetailsSection() {
           name="unitId"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Unit*</FormLabel>
+              <FormLabel>{t('unit')}*</FormLabel>
               <UnitCombobox value={field.value} onChange={field.onChange} />
               <FormMessage />
             </FormItem>
@@ -139,11 +141,11 @@ export function ProductDetailsSection() {
           name="price"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Price*</FormLabel>
+              <FormLabel>{t('price')}*</FormLabel>
               <FormControl>
                 <Input
                   type="number"
-                  placeholder="0"
+                  placeholder={t('pricePlaceholder')}
                   value={field.value === 0 ? '' : field.value}
                   onFocus={(e) => {
                     if (e.target.value === '0') {
@@ -172,11 +174,11 @@ export function ProductDetailsSection() {
           name="skuCode"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>SKU Code</FormLabel>
+              <FormLabel>{t('skuCode')}</FormLabel>
               <div className="flex gap-2 items-center">
                 <FormControl>
                   <Input
-                    placeholder="Auto-generated from name"
+                    placeholder={t('skuCodePlaceholder')}
                     {...field}
                     value={field.value || ''}
                     onChange={(e) => {
@@ -193,15 +195,13 @@ export function ProductDetailsSection() {
                   variant="outline"
                   size="icon"
                   onClick={handleRegenerateSKU}
-                  title="Generate SKU"
+                  title={t('generateSku')}
                 >
                   <IconRefresh size={16} />
                 </Button>
               </div>
               <FormDescription>
-                {!isEditing
-                  ? 'Auto-generated from product name'
-                  : 'SKU code for product identification'}
+                {!isEditing ? t('skuDescriptionNew') : t('skuDescriptionEdit')}
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -214,10 +214,10 @@ export function ProductDetailsSection() {
           name="barcode"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Barcode</FormLabel>
+              <FormLabel>{t('barcode')}</FormLabel>
               <FormControl>
                 <Input
-                  placeholder="Enter barcode"
+                  placeholder={t('barcodePlaceholder')}
                   {...field}
                   value={field.value || ''}
                 />
@@ -234,9 +234,11 @@ export function ProductDetailsSection() {
           render={({ field }) => (
             <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
               <div className="space-y-0.5">
-                <FormLabel className="text-base">Product Status</FormLabel>
+                <FormLabel className="text-base">
+                  {t('productStatus')}
+                </FormLabel>
                 <FormDescription>
-                  {field.value ? 'Active' : 'Inactive'}
+                  {field.value ? t('active') : t('inactive')}
                 </FormDescription>
               </div>
               <FormControl>
@@ -256,10 +258,10 @@ export function ProductDetailsSection() {
         name="description"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Description</FormLabel>
+            <FormLabel>{t('description')}</FormLabel>
             <FormControl>
               <Textarea
-                placeholder="Enter product description (optional)"
+                placeholder={t('descriptionPlaceholder')}
                 className="min-h-[120px] resize-none"
                 {...field}
                 value={field.value || ''}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -35,18 +36,6 @@ import { toast } from '@/hooks/use-toast';
 import { IconPlus } from '@tabler/icons-react';
 import { createMember, updateMember } from '../action';
 
-// Define the form schema
-const memberFormSchema = z.object({
-  cardId: z.string().min(1, 'Card ID is required'),
-  name: z.string().min(1, 'Member name is required'),
-  email: z.string().email('Invalid email format').optional().or(z.literal('')),
-  address: z.string().optional().or(z.literal('')),
-  phone: z.string().optional().or(z.literal('')),
-  tierId: z.string().optional().or(z.literal('')),
-});
-
-type FormValues = z.infer<typeof memberFormSchema>;
-
 export default function MemberFormDialog({
   open,
   onOpenChange,
@@ -54,8 +43,26 @@ export default function MemberFormDialog({
   tiers,
   onSuccess,
 }: MemberFormDialogProps) {
+  const t = useTranslations('member.formDialog');
+  const tCommon = useTranslations('member.common');
   const [loading, setLoading] = useState(false);
   const isEditing = Boolean(initialData?.id);
+
+  // Define the form schema with translated error messages
+  const memberFormSchema = z.object({
+    cardId: z.string().min(1, t('validation.cardIdRequired')),
+    name: z.string().min(1, t('validation.nameRequired')),
+    email: z
+      .string()
+      .email(t('validation.invalidEmail'))
+      .optional()
+      .or(z.literal('')),
+    address: z.string().optional().or(z.literal('')),
+    phone: z.string().optional().or(z.literal('')),
+    tierId: z.string().optional().or(z.literal('')),
+  });
+
+  type FormValues = z.infer<typeof memberFormSchema>;
 
   // Initialize the form
   const form = useForm<FormValues>({
@@ -119,26 +126,26 @@ export default function MemberFormDialog({
 
       if (result.success) {
         toast({
-          title: isEditing ? 'Member updated' : 'Member created',
+          title: isEditing ? t('updateSuccess') : t('createSuccess'),
           description: isEditing
-            ? 'Member has been updated successfully'
-            : 'New member has been created',
+            ? t('updateSuccessMessage')
+            : t('createSuccessMessage'),
         });
 
         form.reset();
         onSuccess?.();
       } else {
         toast({
-          title: 'Error',
-          description: result.error || 'Something went wrong',
+          title: tCommon('error'),
+          description: result.error || tCommon('somethingWrong'),
           variant: 'destructive',
         });
       }
     } catch (error) {
       console.error('Failed to submit member form:', error);
       toast({
-        title: 'Error',
-        description: 'An unexpected error occurred',
+        title: tCommon('error'),
+        description: tCommon('unexpectedError'),
         variant: 'destructive',
       });
     } finally {
@@ -150,11 +157,11 @@ export default function MemberFormDialog({
   const dialogContent = (
     <DialogContent className="sm:max-w-[500px]">
       <DialogHeader>
-        <DialogTitle>{isEditing ? 'Edit Member' : 'Create Member'}</DialogTitle>
+        <DialogTitle>
+          {isEditing ? t('editTitle') : t('createTitle')}
+        </DialogTitle>
         <DialogDescription>
-          {isEditing
-            ? 'Edit the member information below'
-            : 'Add a new member to your loyalty program'}
+          {isEditing ? t('editDescription') : t('createDescription')}
         </DialogDescription>
       </DialogHeader>
 
@@ -165,9 +172,9 @@ export default function MemberFormDialog({
             name="cardId"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Card ID</FormLabel>
+                <FormLabel>{t('fields.cardId')}</FormLabel>
                 <FormControl>
-                  <Input placeholder="Scan card" {...field} />
+                  <Input placeholder={t('placeholders.cardId')} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -178,9 +185,9 @@ export default function MemberFormDialog({
             name="name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Member Name</FormLabel>
+                <FormLabel>{t('fields.name')}</FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter member name" {...field} />
+                  <Input placeholder={t('placeholders.name')} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -193,10 +200,10 @@ export default function MemberFormDialog({
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email (Optional)</FormLabel>
+                  <FormLabel>{t('fields.email')}</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="Enter email address"
+                      placeholder={t('placeholders.email')}
                       {...field}
                       value={field.value || ''}
                     />
@@ -211,10 +218,10 @@ export default function MemberFormDialog({
               name="phone"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Phone (Optional)</FormLabel>
+                  <FormLabel>{t('fields.phone')}</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="Enter phone number"
+                      placeholder={t('placeholders.phone')}
                       {...field}
                       value={field.value || ''}
                     />
@@ -229,10 +236,10 @@ export default function MemberFormDialog({
             name="address"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Address</FormLabel>
+                <FormLabel>{t('fields.address')}</FormLabel>
                 <FormControl>
                   <Input
-                    placeholder="Address"
+                    placeholder={t('placeholders.address')}
                     {...field}
                     value={field.value || ''}
                   />
@@ -246,7 +253,7 @@ export default function MemberFormDialog({
             name="tierId"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Membership Tier</FormLabel>
+                <FormLabel>{t('fields.tier')}</FormLabel>
                 <Select
                   onValueChange={field.onChange}
                   defaultValue={field.value || ''}
@@ -254,13 +261,13 @@ export default function MemberFormDialog({
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select a membership tier" />
+                      <SelectValue placeholder={t('placeholders.tier')} />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
                     {tiers.map((tier) => (
                       <SelectItem key={tier.id} value={tier.id}>
-                        {tier.name} ({tier.minPoints} points)
+                        {tier.name} ({tier.minPoints} {t('points')})
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -276,13 +283,13 @@ export default function MemberFormDialog({
               type="button"
               onClick={() => onOpenChange && onOpenChange(false)}
             >
-              Cancel
+              {tCommon('cancel')}
             </Button>
             <Button type="submit" disabled={loading}>
               {loading ? (
-                <>{isEditing ? 'Updating...' : 'Creating...'}</>
+                <>{isEditing ? t('updating') : t('creating')}</>
               ) : (
-                <>{isEditing ? 'Update Member' : 'Create Member'}</>
+                <>{isEditing ? t('updateButton') : t('createButton')}</>
               )}
             </Button>
           </DialogFooter>
@@ -297,7 +304,7 @@ export default function MemberFormDialog({
       {!isEditing && (
         <DialogTrigger asChild>
           <Button variant="default" className="space-x-1">
-            <span>Create</span> <IconPlus size={18} />
+            <span>{t('createTrigger')}</span> <IconPlus size={18} />
           </Button>
         </DialogTrigger>
       )}

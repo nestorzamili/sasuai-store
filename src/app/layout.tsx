@@ -1,5 +1,7 @@
 // src/app/layout.tsx
 import type { Metadata } from 'next';
+import { NextIntlClientProvider } from 'next-intl';
+import { getLocale, getMessages } from 'next-intl/server';
 import { ThemeProvider } from '@/context/theme-context';
 import NextTopLoader from 'nextjs-toploader';
 import '@/index.css';
@@ -9,18 +11,23 @@ export const metadata: Metadata = {
   description: 'Store Management System',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const locale = await getLocale();
+  const messages = await getMessages();
+
   return (
-    <html lang="en">
+    <html lang={locale}>
       <body>
-        <ThemeProvider defaultTheme="light" storageKey="ui-theme">
-          <NextTopLoader showSpinner={false} />
-          {children}
-        </ThemeProvider>
+        <NextIntlClientProvider messages={messages}>
+          <ThemeProvider defaultTheme="light" storageKey="ui-theme">
+            <NextTopLoader showSpinner={false} />
+            {children}
+          </ThemeProvider>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

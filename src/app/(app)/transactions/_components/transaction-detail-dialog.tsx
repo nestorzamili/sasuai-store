@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { getTransactionById } from '../action';
 import { formatRupiah } from '@/lib/currency';
 import { Badge } from '@/components/ui/badge';
@@ -31,6 +32,8 @@ export function TransactionDetailDialog({
   onOpenChange,
   transactionId,
 }: TransactionDetailDialogProps) {
+  const t = useTranslations('transaction.detailDialog');
+  const tPdf = useTranslations('transaction.pdf');
   const [transaction, setTransaction] = useState<TransactionDetail | null>(
     null,
   );
@@ -51,9 +54,48 @@ export function TransactionDetailDialog({
     try {
       setPdfLoading(true);
 
-      // Generate PDF blob
+      // Prepare translations for PDF
+      const pdfTranslations = {
+        storeName: tPdf('storeName'),
+        storeAddress: tPdf('storeAddress'),
+        storePhone: tPdf('storePhone'),
+        storeEmail: tPdf('storeEmail'),
+        receiptTitle: tPdf('receiptTitle'),
+        dateTime: tPdf('dateTime'),
+        cashier: tPdf('cashier'),
+        customer: tPdf('customer'),
+        guest: tPdf('guest'),
+        paymentMethod: tPdf('paymentMethod'),
+        tableHeaders: {
+          no: tPdf('tableHeaders.no'),
+          item: tPdf('tableHeaders.item'),
+          unit: tPdf('tableHeaders.unit'),
+          price: tPdf('tableHeaders.price'),
+          qty: tPdf('tableHeaders.qty'),
+          total: tPdf('tableHeaders.total'),
+        },
+        discount: tPdf('discount'),
+        subtotal: tPdf('subtotal'),
+        memberDiscount: tPdf('memberDiscount'),
+        productDiscounts: tPdf('productDiscounts'),
+        totalAmount: tPdf('totalAmount'),
+        paymentDetails: tPdf('paymentDetails'),
+        amountPaid: tPdf('amountPaid'),
+        change: tPdf('change'),
+        pointsEarned: tPdf('pointsEarned'),
+        pointsMessage: tPdf('pointsMessage'),
+        totalPoints: tPdf('totalPoints'),
+        thankYou: tPdf('thankYou'),
+        poweredBy: tPdf('poweredBy'),
+        unknown: tPdf('unknown'),
+      };
+
+      // Generate PDF blob with translations
       const blob = await pdf(
-        <TransactionPDF transaction={transaction} />,
+        <TransactionPDF
+          transaction={transaction}
+          translations={pdfTranslations}
+        />,
       ).toBlob();
 
       // Create download link and trigger download
@@ -74,8 +116,8 @@ export function TransactionDetailDialog({
     } catch (error) {
       console.error('Error generating PDF:', error);
       toast({
-        title: 'Error',
-        description: 'Failed to generate PDF',
+        title: t('error'),
+        description: t('failedToGenerate'),
         variant: 'destructive',
       });
     } finally {
@@ -83,7 +125,7 @@ export function TransactionDetailDialog({
         setPdfLoading(false);
       }
     }
-  }, [transaction]);
+  }, [transaction, t, tPdf]);
 
   // Stabilize fetch function with useCallback
   const fetchTransactionDetails = useCallback(async () => {
@@ -147,8 +189,8 @@ export function TransactionDetailDialog({
         setTransaction(transactionData);
       } else if (isMounted.current) {
         toast({
-          title: 'Error',
-          description: result.error || 'Failed to load transaction details',
+          title: t('error'),
+          description: result.error || t('failedToLoad'),
           variant: 'destructive',
         });
       }
@@ -156,8 +198,8 @@ export function TransactionDetailDialog({
       console.error('Error fetching transaction details:', error);
       if (isMounted.current) {
         toast({
-          title: 'Error',
-          description: 'An unexpected error occurred',
+          title: t('error'),
+          description: t('unexpectedError'),
           variant: 'destructive',
         });
       }
@@ -166,7 +208,7 @@ export function TransactionDetailDialog({
         setLoading(false);
       }
     }
-  }, [open, transactionId]);
+  }, [open, transactionId, t]);
 
   useEffect(() => {
     fetchTransactionDetails();
@@ -178,8 +220,8 @@ export function TransactionDetailDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {!loading && transaction
-              ? `Transaction Receipt: ${transaction.tranId}`
-              : 'Transaction Receipt'}
+              ? `${t('title')}: ${transaction.tranId}`
+              : t('title')}
           </DialogTitle>
         </DialogHeader>
 
@@ -197,13 +239,15 @@ export function TransactionDetailDialog({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-2">
                 <div className="space-y-3">
                   <div>
-                    <p className="text-sm text-muted-foreground">Date & Time</p>
+                    <p className="text-sm text-muted-foreground">{t('date')}</p>
                     <p className="font-medium">
                       {new Date(transaction?.createdAt).toLocaleString()}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Cashier</p>
+                    <p className="text-sm text-muted-foreground">
+                      {t('cashier')}
+                    </p>
                     <p className="font-medium">
                       {transaction?.cashier?.name || 'Unknown'}
                     </p>
@@ -212,7 +256,9 @@ export function TransactionDetailDialog({
 
                 <div className="space-y-3">
                   <div>
-                    <p className="text-sm text-muted-foreground">Customer</p>
+                    <p className="text-sm text-muted-foreground">
+                      {t('member')}
+                    </p>
                     <div className="font-medium flex flex-wrap gap-2 items-center">
                       {transaction?.member ? (
                         <>
@@ -230,7 +276,7 @@ export function TransactionDetailDialog({
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">
-                      Payment Method
+                      {t('paymentMethod')}
                     </p>
                     <p className="font-medium capitalize">
                       {transaction?.payment?.method?.replace(/[_-]/g, ' ') ||
@@ -245,7 +291,7 @@ export function TransactionDetailDialog({
               {/* Items List */}
               <div>
                 <h3 className="font-semibold mb-3">
-                  Items Purchased ({transaction?.items?.length || 0})
+                  {t('items')} ({transaction?.items?.length || 0})
                 </h3>
 
                 <div className="border rounded-lg overflow-hidden">
@@ -254,16 +300,16 @@ export function TransactionDetailDialog({
                       <thead className="bg-muted">
                         <tr>
                           <th className="text-left p-3 sticky top-0 bg-muted z-10">
-                            Product
+                            {t('product')}
                           </th>
                           <th className="text-right p-3 whitespace-nowrap sticky top-0 bg-muted z-10">
-                            Price
+                            {t('unitPrice')}
                           </th>
                           <th className="text-right p-3 whitespace-nowrap sticky top-0 bg-muted z-10">
-                            Quantity
+                            {t('quantity')}
                           </th>
                           <th className="text-right p-3 whitespace-nowrap sticky top-0 bg-muted z-10">
-                            Total
+                            {t('subtotal')}
                           </th>
                         </tr>
                       </thead>
@@ -328,7 +374,7 @@ export function TransactionDetailDialog({
                               colSpan={4}
                               className="p-4 text-center text-muted-foreground"
                             >
-                              No items found
+                              {t('noItems')}
                             </td>
                           </tr>
                         )}
@@ -342,8 +388,11 @@ export function TransactionDetailDialog({
 
               {/* Pricing Summary */}
               <div className="space-y-3">
+                <h4 className="font-medium">{t('summary')}</h4>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Subtotal</span>
+                  <span className="text-muted-foreground">
+                    {t('totalAmount')}
+                  </span>
                   <span>
                     {formatRupiah(transaction?.pricing?.originalAmount || 0)}
                   </span>
@@ -352,7 +401,7 @@ export function TransactionDetailDialog({
                 {transaction?.pricing?.discounts?.member && (
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">
-                      Member Discount
+                      {t('memberDiscount')}
                     </span>
                     <span className="text-rose-600">
                       -
@@ -366,7 +415,7 @@ export function TransactionDetailDialog({
                 {transaction?.pricing?.discounts?.products > 0 && (
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">
-                      Product Discounts
+                      {t('productDiscounts')}
                     </span>
                     <span className="text-rose-600">
                       -{formatRupiah(transaction.pricing.discounts.products)}
@@ -375,7 +424,9 @@ export function TransactionDetailDialog({
                 )}
 
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Total Discount</span>
+                  <span className="text-muted-foreground">
+                    {t('discountAmount')}
+                  </span>
                   <span className="text-rose-600">
                     -{formatRupiah(transaction?.pricing?.discounts?.total || 0)}
                   </span>
@@ -384,7 +435,7 @@ export function TransactionDetailDialog({
                 <Separator />
 
                 <div className="flex justify-between text-lg font-bold">
-                  <span>Total</span>
+                  <span>{t('finalAmount')}</span>
                   <span>
                     {formatRupiah(transaction?.pricing?.finalAmount || 0)}
                   </span>
@@ -393,10 +444,10 @@ export function TransactionDetailDialog({
                 {/* Payment Information */}
                 {transaction?.payment && (
                   <div className="mt-4 p-3 bg-muted/30 rounded-lg space-y-2">
-                    <h4 className="font-medium">Payment Details</h4>
+                    <h4 className="font-medium">{t('paymentDetails')}</h4>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">
-                        Payment Method
+                        {t('paymentMethod')}
                       </span>
                       <span className="capitalize font-medium">
                         {(transaction?.payment?.method || '')
@@ -405,7 +456,9 @@ export function TransactionDetailDialog({
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Amount Paid</span>
+                      <span className="text-muted-foreground">
+                        {t('paymentAmount')}
+                      </span>
                       <span className="font-medium">
                         {formatRupiah(
                           transaction?.payment?.amount ||
@@ -420,7 +473,9 @@ export function TransactionDetailDialog({
                       (transaction?.payment?.change !== null &&
                         transaction?.payment?.change > 0)) && (
                       <div className="flex justify-between">
-                        <span className="text-muted-foreground">Change</span>
+                        <span className="text-muted-foreground">
+                          {t('changeAmount')}
+                        </span>
                         <span className="font-medium">
                           {formatRupiah(transaction?.payment?.change || 0)}
                         </span>
@@ -458,10 +513,11 @@ export function TransactionDetailDialog({
                       </svg>
                     </div>
                     <div>
-                      <p className="font-medium">Points Earned</p>
+                      <p className="font-medium">{t('pointsEarned')}</p>
                       <p className="text-sm text-muted-foreground">
-                        {transaction.pointsEarned} points have been added to the
-                        member's account
+                        {t('pointsEarnedMessage', {
+                          points: transaction.pointsEarned,
+                        })}
                       </p>
                     </div>
                   </div>
@@ -470,22 +526,20 @@ export function TransactionDetailDialog({
             </div>
           ) : (
             <div className="text-center p-6">
-              <h3 className="text-lg font-medium">Transaction not found</h3>
-              <p className="text-muted-foreground">
-                The requested transaction could not be found.
-              </p>
+              <h3 className="text-lg font-medium">{t('notFound')}</h3>
+              <p className="text-muted-foreground">{t('notFoundMessage')}</p>
             </div>
           )}
         </ScrollArea>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Close
+            {t('close')}
           </Button>
           {!loading && transaction && (
             <Button onClick={handlePdfGeneration} disabled={pdfLoading}>
               <IconDownload className="h-4 w-4 mr-2" />
-              {pdfLoading ? 'Generating PDF...' : 'Download PDF'}
+              {pdfLoading ? t('generatingPdf') : t('downloadPdf')}
             </Button>
           )}
         </DialogFooter>

@@ -1,0 +1,263 @@
+{
+  "user": {
+    "page": {
+      "title": "Kelola Pengguna",
+      "description": "Buat dan kelola akun pengguna."
+    },
+    "common": {
+      "error": "Kesalahan",
+      "success": "Berhasil",
+      "loading": "Memuat...",
+      "cancel": "Batal",
+      "save": "Simpan",
+      "delete": "Hapus",
+      "edit": "Edit",
+      "create": "Buat",
+      "search": "Cari pengguna...",
+      "noResults": "Tidak ada pengguna ditemukan",
+      "noResultsDescription": "Tidak ada pengguna yang sesuai dengan kriteria pencarian Anda.",
+      "points": "poin",
+      "user": "Pengguna",
+      "users": "Pengguna",
+      "total": "Total",
+      "active": "Aktif",
+      "inactive": "Tidak Aktif",
+      "banned": "Diblokir",
+      "admin": "Admin",
+      "cashier": "Kasir",
+      "customer": "Pelanggan"
+    },
+    "buttons": {
+      "createUser": "Buat Pengguna",
+      "editUser": "Edit Pengguna",
+      "deleteUser": "Hapus Pengguna",
+      "banUser": "Blokir Pengguna",
+      "unbanUser": "Buka Blokir Pengguna",
+      "resetPassword": "Reset Kata Sandi",
+      "viewProfile": "Lihat Profil"
+    },
+    "table": {
+      "columns": {
+        "name": "Nama",
+        "email": "Email",
+        "role": "Peran",
+        "status": "Status",
+        "verified": "Terverifikasi",
+        "createdAt": "Bergabung",
+        "lastLogin": "Login Terakhir",
+        "actions": "Aksi"
+      },
+      "status": {
+        "active": "Aktif",
+        "inactive": "Tidak Aktif",
+        "banned": "Diblokir",
+        "verified": "Ya",
+        "unverified": "Tidak"
+      },
+      "roles": {
+        "admin": "Admin",
+        "cashier": "Kasir",
+        "user": "Pengguna"
+      },
+      "actions": {
+        "openMenu": "Buka menu",
+        "actions": "Aksi",
+        "viewDetails": "Lihat Detail",
+        "edit": "Edit",
+        "delete": "Hapus",
+        "ban": "Blokir Pengguna",
+        "unban": "Buka Blokir Pengguna",
+        "changeRole": "Ubah Peran",
+        "sessions": "Sesi",
+        "resetPassword": "Reset Kata Sandi"
+      },
+      "filters": {
+        "allRoles": "Semua Peran",
+        "allStatuses": "Semua Status",
+        "role": "Peran",
+        "status": "Status",
+        "clearFilters": "Hapus Filter",
+        "roles": {
+          "admin": "Admin",
+          "user": "Pengguna"
+        },
+        "statusOptions": {
+          "active": "Aktif",
+          "banned": "Diblokir"
+        }
+      }
+    },
+    "form": {
+      "createTitle": "Buat Pengguna",
+      "editTitle": "Edit Pengguna",
+      "createDescription": "Tambahkan pengguna baru ke sistem Anda",
+      "editDescription": "Edit informasi pengguna di bawah ini",
+      "createButton": "Buat Pengguna",
+      "updateButton": "Perbarui Pengguna",
+      "creating": "Membuat...",
+      "updating": "Memperbarui...",
+      "cancel": "Batal",
+      "roles": {
+        "user": "Pengguna",
+        "admin": "Admin"
+      },
+      "fields": {
+        "name": "Nama Lengkap",
+        "namePlaceholder": "Masukkan nama lengkap",
+        "nameRequired": "Nama lengkap diperlukan",
+        "email": "Email",
+        "emailPlaceholder": "Alamat email",
+        "emailRequired": "Alamat email diperlukan",
+        "emailInvalid": "Masukkan alamat email yang valid",
+        "password": "Kata Sandi",
+        "passwordPlaceholder": "Masukkan kata sandi",
+        "passwordRequired": "Kata sandi diperlukan",
+        "passwordMinLength": "Kata sandi minimal 8 karakter",
+        "newPassword": "Kata Sandi Baru",
+        "newPasswordPlaceholder": "Biarkan kosong untuk mempertahankan kata sandi saat ini",
+        "role": "Peran",
+        "rolePlaceholder": "Pilih peran",
+        "roleRequired": "Peran diperlukan",
+        "username": "Nama Pengguna",
+        "usernamePlaceholder": "Masukkan nama pengguna (opsional)",
+        "displayUsername": "Nama Tampilan",
+        "displayUsernamePlaceholder": "Masukkan nama tampilan (opsional)",
+        "emailVerified": "Email Terverifikasi",
+        "emailVerifiedDescription": "Tandai email ini sebagai terverifikasi",
+        "active": "Akun Aktif",
+        "activeDescription": "Izinkan pengguna ini mengakses sistem"
+      },
+      "success": {
+        "created": "Pengguna berhasil dibuat"
+      },
+      "error": {
+        "failed": "Gagal menyimpan pengguna",
+        "unexpected": "Terjadi kesalahan yang tidak terduga"
+      }
+    },
+    "deleteDialog": {
+      "title": "Hapus Pengguna",
+      "description": "Apakah Anda yakin ingin menghapus pengguna ini?",
+      "content": "Tindakan ini tidak dapat dibatalkan. Ini akan menghapus akun pengguna secara permanen dan menghapus semua data terkait.",
+      "userName": "Pengguna",
+      "userEmail": "Email",
+      "userRole": "Peran",
+      "createdAt": "Dibuat",
+      "warning": "Peringatan!",
+      "actionUndone": "Tindakan ini tidak dapat dibatalkan dan akan menghapus semua data pengguna secara permanen.",
+      "deleting": "Menghapus...",
+      "deleteButton": "Hapus Pengguna",
+      "success": "Pengguna berhasil dihapus",
+      "successMessage": "Pengguna \"{name}\" telah berhasil dihapus",
+      "error": {
+        "failed": "Gagal menghapus pengguna",
+        "unexpected": "Terjadi kesalahan yang tidak terduga",
+        "hasTransactions": "Pengguna ini tidak dapat dihapus karena memiliki transaksi terkait.",
+        "isLastAdmin": "Tidak dapat menghapus akun administrator terakhir."
+      }
+    },
+    "banDialog": {
+      "banTitle": "Blokir Pengguna",
+      "unbanTitle": "Buka Blokir Pengguna",
+      "banDescription": "Memblokir {name} akan mencegah mereka mengakses sistem.",
+      "unbanDescription": "Apakah Anda yakin ingin membuka blokir",
+      "reason": "Alasan Pemblokiran",
+      "reasonPlaceholder": "Masukkan alasan pemblokiran",
+      "reasonRequired": "Alasan pemblokiran diperlukan",
+      "duration": "Durasi Pemblokiran",
+      "durationPlaceholder": "Pilih durasi pemblokiran",
+      "durations": {
+        "permanent": "Permanen",
+        "1d": "1 Hari",
+        "7d": "7 Hari",
+        "30d": "30 Hari"
+      },
+      "information": "Informasi",
+      "unbanInfo": "Membuka blokir pengguna ini akan mengembalikan akses mereka ke sistem.",
+      "originalBanReason": "Alasan Pemblokiran Asli",
+      "warning": "Peringatan!",
+      "banWarning": "Memblokir pengguna ini akan mencegah mereka mengakses sistem. Mereka akan secara otomatis keluar dari semua sesi aktif.",
+      "banning": "Memblokir...",
+      "unbanning": "Membuka Blokir...",
+      "banButton": "Blokir Pengguna",
+      "unbanButton": "Buka Blokir Pengguna",
+      "banSuccess": "Pengguna diblokir",
+      "unbanSuccess": "Pengguna dibuka blokirnya",
+      "banSuccessMessage": "Pengguna telah diblokir",
+      "unbanSuccessMessage": "Pengguna telah dibuka blokirnya",
+      "error": {
+        "failed": "Gagal memperbarui status blokir",
+        "unexpected": "Terjadi kesalahan yang tidak terduga"
+      }
+    },
+    "sessionsDialog": {
+      "title": "Kelola Sesi Pengguna",
+      "description": "Lihat dan kelola sesi aktif untuk {name}",
+      "sessionCount": "{count} sesi aktif",
+      "refresh": "Refresh",
+      "revokeAll": "Cabut Semua",
+      "noSessions": "Tidak ada sesi aktif ditemukan untuk pengguna ini.",
+      "currentSession": "Sesi Saat Ini",
+      "current": "Saat Ini",
+      "revoke": "Cabut",
+      "deviceTypes": {
+        "desktop": "Desktop",
+        "mobile": "Mobile",
+        "tablet": "Tablet",
+        "unknown": "Tidak Dikenal"
+      },
+      "sessionInfo": {
+        "app": "Aplikasi",
+        "device": "Perangkat",
+        "ipAddress": "Alamat IP",
+        "lastActive": "Terakhir Aktif",
+        "unknown": "Tidak Dikenal"
+      },
+      "sessionRevoked": "Sesi dicabut",
+      "sessionRevokedMessage": "Sesi pengguna telah berhasil dihentikan",
+      "allSessionsRevoked": "Semua sesi dicabut",
+      "allSessionsRevokedMessage": "Semua sesi pengguna telah berhasil dihentikan",
+      "signingOut": "Keluar",
+      "signingOutMessage": "Anda telah keluar karena pencabutan sesi",
+      "fetchFailed": "Gagal mengambil sesi",
+      "revokeFailed": "Gagal mencabut sesi",
+      "revokeAllFailed": "Gagal mencabut semua sesi",
+      "info": {
+        "currentSessionNote": "Sesi saat ini tidak dapat dicabut",
+        "revokeNote": "Mencabut sesi akan memaksa pengguna untuk masuk lagi di perangkat tersebut"
+      }
+    },
+    "validation": {
+      "required": "Field ini diperlukan",
+      "email": "Masukkan alamat email yang valid",
+      "minLength": "Minimal {min} karakter",
+      "maxLength": "Maksimal {max} karakter",
+      "invalidFormat": "Format tidak valid"
+    },
+    "roleDialog": {
+      "title": "Ubah Peran Pengguna",
+      "description": "Perbarui peran untuk {name}",
+      "selectRole": "Pilih Peran",
+      "roles": {
+        "user": "Pengguna",
+        "admin": "Administrator",
+        "cashier": "Kasir"
+      },
+      "roleDescriptions": {
+        "user": "Pengguna reguler dengan izin standar",
+        "admin": "Akses penuh ke semua fitur dan pengaturan sistem",
+        "cashier": "Akses ke fungsi kasir dan manajemen inventori dasar"
+      },
+      "updating": "Memperbarui...",
+      "updateRole": "Perbarui Peran",
+      "success": "Peran diperbarui",
+      "successMessage": "Peran {name} telah diperbarui menjadi {role}",
+      "error": {
+        "failed": "Gagal memperbarui peran",
+        "unexpected": "Terjadi kesalahan yang tidak terduga",
+        "invalidRole": "Peran yang dipilih tidak valid",
+        "unauthorized": "Anda tidak memiliki izin untuk mengubah peran pengguna"
+      }
+    }
+  }
+}

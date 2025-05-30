@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -35,18 +36,6 @@ import { IconPlus } from '@tabler/icons-react';
 import { UnitConversionWithUnits, UnitWithCounts } from '@/lib/types/unit';
 import { createConversion, updateConversion } from '../conversion-actions';
 
-// Form schema for unit conversion
-const formSchema = z.object({
-  fromUnitId: z.string().min(1, 'Source unit is required'),
-  toUnitId: z.string().min(1, 'Target unit is required'),
-  conversionFactor: z.coerce
-    .number()
-    .min(0.000001, 'Conversion factor must be positive')
-    .max(1000000, 'Conversion factor is too large'),
-});
-
-type FormValues = z.infer<typeof formSchema>;
-
 interface UnitConversionFormDialogProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -62,8 +51,22 @@ export default function UnitConversionFormDialog({
   initialData,
   onSuccess,
 }: UnitConversionFormDialogProps) {
+  const t = useTranslations('unit.conversionFormDialog');
+  const tCommon = useTranslations('common');
   const [loading, setLoading] = useState(false);
   const isEditing = Boolean(initialData?.id);
+
+  // Form schema with translations
+  const formSchema = z.object({
+    fromUnitId: z.string().min(1, t('validation.sourceUnitRequired')),
+    toUnitId: z.string().min(1, t('validation.targetUnitRequired')),
+    conversionFactor: z.coerce
+      .number()
+      .min(0.000001, t('validation.factorPositive'))
+      .max(1000000, t('validation.factorTooLarge')),
+  });
+
+  type FormValues = z.infer<typeof formSchema>;
 
   // Initialize the form
   const form = useForm<FormValues>({
@@ -106,7 +109,7 @@ export default function UnitConversionFormDialog({
       if (values.fromUnitId === values.toUnitId) {
         form.setError('toUnitId', {
           type: 'manual',
-          message: 'Source and target units cannot be the same',
+          message: t('error.sameUnits'),
         });
         setLoading(false);
         return;
@@ -125,26 +128,28 @@ export default function UnitConversionFormDialog({
 
       if (result.success) {
         toast({
-          title: isEditing ? 'Conversion updated' : 'Conversion created',
+          title: isEditing
+            ? t('success.conversionUpdated')
+            : t('success.conversionCreated'),
           description: isEditing
-            ? 'Unit conversion has been updated successfully'
-            : 'New unit conversion has been created',
+            ? t('success.conversionUpdatedMessage')
+            : t('success.conversionCreatedMessage'),
         });
 
         form.reset();
         onSuccess?.();
       } else {
         toast({
-          title: 'Error',
-          description: result.error || 'Something went wrong',
+          title: tCommon('error'),
+          description: result.error || t('error.somethingWrong'),
           variant: 'destructive',
         });
       }
     } catch (error) {
       console.error('Unit conversion form submission error:', error);
       toast({
-        title: 'Error',
-        description: 'An unexpected error occurred',
+        title: tCommon('error'),
+        description: t('error.unexpectedError'),
         variant: 'destructive',
       });
     } finally {
@@ -165,18 +170,16 @@ export default function UnitConversionFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
         <Button variant="default" className="space-x-1">
-          <span>Create Conversion</span> <IconPlus size={18} />
+          <span>{t('createConversion')}</span> <IconPlus size={18} />
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>
-            {isEditing ? 'Edit Unit Conversion' : 'Create Unit Conversion'}
+            {isEditing ? t('editTitle') : t('createTitle')}
           </DialogTitle>
           <DialogDescription>
-            {isEditing
-              ? 'Edit the unit conversion factor below'
-              : 'Define how units convert to each other in your inventory system'}
+            {isEditing ? t('editDescription') : t('createDescription')}
           </DialogDescription>
         </DialogHeader>
 
@@ -187,7 +190,7 @@ export default function UnitConversionFormDialog({
               name="fromUnitId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Source Unit</FormLabel>
+                  <FormLabel>{t('sourceUnit')}</FormLabel>
                   <Select
                     disabled={isEditing}
                     onValueChange={field.onChange}
@@ -195,7 +198,7 @@ export default function UnitConversionFormDialog({
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select source unit" />
+                        <SelectValue placeholder={t('selectSourceUnit')} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -216,7 +219,7 @@ export default function UnitConversionFormDialog({
               name="toUnitId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Target Unit</FormLabel>
+                  <FormLabel>{t('targetUnit')}</FormLabel>
                   <Select
                     disabled={isEditing}
                     onValueChange={field.onChange}
@@ -224,7 +227,7 @@ export default function UnitConversionFormDialog({
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select target unit" />
+                        <SelectValue placeholder={t('selectTargetUnit')} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -245,12 +248,12 @@ export default function UnitConversionFormDialog({
               name="conversionFactor"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Conversion Factor</FormLabel>
+                  <FormLabel>{t('conversionFactor')}</FormLabel>
                   <FormControl>
                     <Input
                       type="number"
                       step="any"
-                      placeholder="Enter conversion factor"
+                      placeholder={t('conversionFactorPlaceholder')}
                       {...field}
                     />
                   </FormControl>
@@ -268,13 +271,13 @@ export default function UnitConversionFormDialog({
                 type="button"
                 onClick={() => onOpenChange && onOpenChange(false)}
               >
-                Cancel
+                {t('cancel')}
               </Button>
               <Button type="submit" disabled={loading}>
                 {loading ? (
-                  <>{isEditing ? 'Updating...' : 'Creating...'}</>
+                  <>{isEditing ? t('updating') : t('creating')}</>
                 ) : (
-                  <>{isEditing ? 'Update Conversion' : 'Create Conversion'}</>
+                  <>{isEditing ? t('updateButton') : t('createButton')}</>
                 )}
               </Button>
             </DialogFooter>

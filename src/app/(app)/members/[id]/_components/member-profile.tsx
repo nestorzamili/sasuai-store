@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { MemberWithRelations, MemberTier } from '@/lib/types/member';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -29,6 +30,8 @@ export default function MemberProfile({
   member,
   onUpdate,
 }: MemberProfileProps) {
+  const t = useTranslations('member.profile');
+  const tCommon = useTranslations('member.common');
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [tiers, setTiers] = useState<MemberTier[]>([]);
 
@@ -61,7 +64,7 @@ export default function MemberProfile({
       <CardHeader className="pb-3">
         <div className="flex justify-between items-center">
           <CardTitle className="text-xl font-bold flex items-center">
-            Member Profile
+            {t('title')}
           </CardTitle>
           <div className="flex gap-2">
             <Button
@@ -71,7 +74,7 @@ export default function MemberProfile({
               onClick={() => setIsEditDialogOpen(true)}
             >
               <IconEdit size={16} />
-              Edit
+              {t('editButton')}
             </Button>
           </div>
         </div>
@@ -83,7 +86,7 @@ export default function MemberProfile({
           <div className="space-y-4">
             <div>
               <Label htmlFor="name" className="text-muted-foreground text-xs">
-                Member Name
+                {t('fields.memberName')}
               </Label>
               <div id="name" className="font-medium text-lg">
                 {member.name}
@@ -92,7 +95,7 @@ export default function MemberProfile({
 
             <div>
               <Label className="text-muted-foreground text-xs">
-                Contact Information
+                {t('fields.contactInfo')}
               </Label>
               <div className="space-y-1 mt-1">
                 {member.email && (
@@ -135,7 +138,7 @@ export default function MemberProfile({
                 )}
                 {!member.email && !member.phone && (
                   <div className="text-sm italic text-muted-foreground">
-                    No contact information provided
+                    {t('fields.noContactInfo')}
                   </div>
                 )}
               </div>
@@ -144,11 +147,11 @@ export default function MemberProfile({
             <div>
               <Label className="text-muted-foreground text-xs mb-1 flex items-center">
                 <IconClock size={14} className="mr-1" />
-                Member Since
+                {t('fields.memberSince')}
               </Label>
               <div className="text-sm">{formattedJoinDate}</div>
               <div className="text-xs text-muted-foreground mt-0.5">
-                {membershipDuration} days as member
+                {t('fields.membershipDuration', { days: membershipDuration })}
               </div>
             </div>
 
@@ -158,7 +161,7 @@ export default function MemberProfile({
                   <IconBan className="h-5 w-5 text-red-500 mt-0.5" />
                   <div>
                     <h4 className="text-sm font-medium text-red-800">
-                      Member is Banned
+                      {t('banned.title')}
                     </h4>
                     {member.banReason && (
                       <p className="text-sm text-red-700 mt-1">
@@ -174,30 +177,32 @@ export default function MemberProfile({
                           const result = await unbanMember(member.id);
                           if (result.success) {
                             toast({
-                              title: 'Member unbanned',
-                              description: `${member.name} has been unbanned successfully`,
+                              title: t('banned.unbanSuccess'),
+                              description: t('banned.unbanSuccessMessage', {
+                                name: member.name,
+                              }),
                             });
                             onUpdate?.();
                           } else {
                             toast({
-                              title: 'Error',
+                              title: tCommon('error'),
                               description:
-                                result.error || 'Failed to unban member',
+                                result.error || t('banned.unbanFailed'),
                               variant: 'destructive',
                             });
                           }
                         } catch (error) {
                           console.error('Failed to unban member:', error);
                           toast({
-                            title: 'Error',
-                            description: 'An unexpected error occurred',
+                            title: tCommon('error'),
+                            description: tCommon('unexpectedError'),
                             variant: 'destructive',
                           });
                         }
                       }}
                     >
                       <IconShieldCheck className="h-4 w-4 mr-2" />
-                      Remove Ban
+                      {t('banned.removeBanButton')}
                     </Button>
                   </div>
                 </div>
@@ -209,31 +214,33 @@ export default function MemberProfile({
           <div>
             <div className="bg-card border rounded-lg p-4">
               <div className="text-muted-foreground text-xs mb-1">
-                Membership Tier
+                {t('tier.title')}
               </div>
               <div className="flex items-center mb-1 mt-1">
                 {member.tier ? (
                   <MemberTierBadge tier={member.tier} className="text-sm" />
                 ) : (
-                  <Badge variant="outline">No Tier</Badge>
+                  <Badge variant="outline">{t('tier.noTier')}</Badge>
                 )}
               </div>
               {member.tier && (
                 <div className="text-xs text-muted-foreground flex items-center mt-2">
                   <IconCrown size={14} className="mr-1 text-amber-500" />
-                  Points multiplier: {member.tier.multiplier}x
+                  {t('tier.pointsMultiplier', {
+                    multiplier: member.tier.multiplier,
+                  })}
                 </div>
               )}
 
               <div className="mt-4 border-t pt-4">
                 <div className="flex items-center mb-2">
                   <div className="text-muted-foreground text-xs">
-                    Points Summary
+                    {t('points.summary')}
                   </div>
                 </div>
 
                 <div className="flex justify-between items-center mb-2">
-                  <div className="text-sm">Available Points</div>
+                  <div className="text-sm">{t('points.available')}</div>
                   <div className="font-bold text-lg">
                     {member.totalPoints?.toLocaleString() || 0}
                   </div>
@@ -241,7 +248,7 @@ export default function MemberProfile({
 
                 <div className="flex justify-between items-center">
                   <div className="text-sm text-muted-foreground">
-                    Lifetime Points
+                    {t('points.lifetime')}
                   </div>
                   <div className="text-muted-foreground">
                     {member.totalPointsEarned?.toLocaleString() || 0}
@@ -254,26 +261,26 @@ export default function MemberProfile({
           {/* Activity summary */}
           <div className="border rounded-lg p-4">
             <div className="text-muted-foreground text-xs mb-3">
-              Activity Summary
+              {t('activity.title')}
             </div>
 
             <div className="space-y-3">
               <div className="flex justify-between items-center">
-                <div className="text-sm">Transactions</div>
+                <div className="text-sm">{t('activity.transactions')}</div>
                 <Badge variant="secondary" className="font-normal">
                   {member.transactions.length}
                 </Badge>
               </div>
 
               <div className="flex justify-between items-center">
-                <div className="text-sm">Point History</div>
+                <div className="text-sm">{t('activity.pointHistory')}</div>
                 <Badge variant="secondary" className="font-normal">
                   {member.memberPoints.length}
                 </Badge>
               </div>
 
               <div className="flex justify-between items-center">
-                <div className="text-sm">Reward Claims</div>
+                <div className="text-sm">{t('activity.rewardClaims')}</div>
                 <Badge variant="secondary" className="font-normal">
                   {member.rewardClaims.length}
                 </Badge>
@@ -281,12 +288,12 @@ export default function MemberProfile({
 
               <div className="mt-4 pt-2 border-t">
                 <div className="text-xs text-muted-foreground mb-2">
-                  Last activity
+                  {t('activity.lastActivity')}
                 </div>
                 <div className="text-sm">
                   {member.memberPoints.length > 0
                     ? format(new Date(member.memberPoints[0].dateEarned), 'PPp')
-                    : 'No recent activity'}
+                    : t('activity.noRecentActivity')}
                 </div>
               </div>
             </div>

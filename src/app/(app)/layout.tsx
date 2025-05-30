@@ -14,6 +14,7 @@ import { Search } from '@/components/search';
 import { ThemeSwitch } from '@/components/theme-switch';
 import { Toaster } from '@/components/ui/toaster';
 import { BreadCrumb } from '@/components/breadcrumb';
+import { LanguageSwitcher } from '@/components/language-switcher';
 
 // Create a type-safe context for breadcrumb labels
 export type BreadcrumbLabels = Record<string, string>;
@@ -67,7 +68,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               >
                 <Header fixed>
                   <Search placeholder="Search..." />
-                  <div className="ml-auto flex items-center space-x-4">
+                  <div className="ml-auto flex items-center gap-2">
+                    <LanguageSwitcher />
                     <ThemeSwitch />
                     <ProfileDropdown />
                   </div>

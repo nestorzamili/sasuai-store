@@ -1,0 +1,73 @@
+{
+  "category": {
+    "title": "Category",
+    "description": "Manage your categories here. You can add, edit, or delete categories as needed.",
+    "table": {
+      "columns": {
+        "name": "Name",
+        "description": "Description",
+        "productsCount": "Products Count",
+        "created": "Created"
+      },
+      "actions": {
+        "openMenu": "Open menu",
+        "actions": "Actions",
+        "edit": "Edit",
+        "delete": "Delete"
+      },
+      "placeholders": {
+        "noDescription": "No description"
+      },
+      "badges": {
+        "products": "products"
+      }
+    },
+    "deleteDialog": {
+      "title": "Delete Category",
+      "description": "Are you sure you want to delete {name}?",
+      "permanentRemove": "This action will permanently remove this category from the system. This cannot be undone.",
+      "cannotDelete": "Cannot Delete",
+      "hasProducts": "This category has {count} products associated with it. You need to reassign or delete those products before deleting this category.",
+      "warning": "Warning!",
+      "warningMessage": "Please be careful, this operation cannot be rolled back.",
+      "deleting": "Deleting...",
+      "deleteButton": "Delete",
+      "cannotDeleteTitle": "Cannot Delete Category",
+      "cannotDeleteMessage": "This category has {count} products associated with it. Reassign or delete these products first.",
+      "success": "Category deleted",
+      "successMessage": "The category \"{name}\" has been deleted successfully",
+      "error": "Error",
+      "failedToDelete": "Failed to delete category",
+      "unexpectedError": "An unexpected error occurred"
+    },
+    "formDialog": {
+      "create": "Create",
+      "createTitle": "Create Category",
+      "editTitle": "Edit Category",
+      "createDescription": "Add a new category to your product catalog",
+      "editDescription": "Edit the category information below",
+      "categoryName": "Category Name",
+      "categoryNamePlaceholder": "Enter category name",
+      "description": "Description",
+      "descriptionPlaceholder": "Enter category description (optional)",
+      "cancel": "Cancel",
+      "creating": "Creating...",
+      "updating": "Updating...",
+      "createButton": "Create Category",
+      "updateButton": "Update Category",
+      "success": {
+        "categoryCreated": "Category created",
+        "categoryCreatedMessage": "New category has been created",
+        "categoryUpdated": "Category updated",
+        "categoryUpdatedMessage": "Category has been updated successfully"
+      },
+      "error": {
+        "somethingWrong": "Something went wrong",
+        "unexpectedError": "An unexpected error occurred"
+      },
+      "validation": {
+        "nameRequired": "Category name is required"
+      }
+    }
+  }
+}

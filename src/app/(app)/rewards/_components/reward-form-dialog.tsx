@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -40,25 +41,6 @@ import {
 import { cn } from '@/lib/utils';
 import { RewardImageUpload } from './reward-image-upload';
 
-// Enhanced form schema with better validation
-const formSchema = z.object({
-  name: z.string().min(1, 'Reward name is required').max(100, 'Name too long'),
-  pointsCost: z.coerce
-    .number()
-    .min(1, 'Points cost must be at least 1')
-    .max(1000000, 'Points cost too high'),
-  stock: z.coerce
-    .number()
-    .min(0, 'Stock cannot be negative')
-    .max(10000, 'Stock too high'),
-  isActive: z.boolean().default(true),
-  description: z.string().optional(),
-  imageUrl: z.string().url('Invalid URL').optional().or(z.literal('')),
-  expiryDate: z.date().optional(),
-});
-
-type FormValues = z.infer<typeof formSchema>;
-
 interface RewardFormDialogProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -74,9 +56,38 @@ export default function RewardFormDialog({
   onSuccess,
   showTrigger = false,
 }: RewardFormDialogProps) {
+  const t = useTranslations('reward.form');
+  const tValidation = useTranslations('reward.validation');
   const [loading, setLoading] = useState(false);
 
   const isEditing = useMemo(() => Boolean(initialData?.id), [initialData?.id]);
+
+  // Enhanced form schema with translated validation messages
+  const formSchema = useMemo(
+    () =>
+      z.object({
+        name: z
+          .string()
+          .min(1, tValidation('required'))
+          .max(100, tValidation('maxValue', { max: 100 })),
+        pointsCost: z.coerce
+          .number()
+          .min(1, t('fields.pointsCostMin'))
+          .max(1000000, tValidation('maxValue', { max: 1000000 })),
+        stock: z.coerce
+          .number()
+          .min(0, t('fields.stockMin'))
+          .max(10000, tValidation('maxValue', { max: 10000 })),
+        isActive: z.boolean().default(true),
+        description: z.string().optional(),
+        imageUrl: z.string().url('Invalid URL').optional().or(z.literal('')),
+        expiryDate: z.date().optional(),
+      }),
+    [t, tValidation],
+  );
+
+  // Add the FormValues type after formSchema is defined
+  type FormValues = z.infer<typeof formSchema>;
 
   // Memoized default values to prevent unnecessary re-renders
   const defaultValues = useMemo(
@@ -116,16 +127,16 @@ export default function RewardFormDialog({
     return expiryDate >= today;
   };
 
-  // Optimized form submission with better error handling
+  // Optimized form submission with translated messages
   const onSubmit = async (values: FormValues) => {
     try {
       setLoading(true);
 
-      // Validate expiry date
+      // Validate expiry date with translated message
       if (values.expiryDate && !validateExpiryDate(values.expiryDate)) {
         toast({
-          title: 'Invalid date',
-          description: 'Expiry date cannot be in the past',
+          title: t('error.failed'),
+          description: tValidation('invalidDate'),
           variant: 'destructive',
         });
         return;
@@ -148,26 +159,24 @@ export default function RewardFormDialog({
 
       if (result.success) {
         toast({
-          title: isEditing ? 'Reward updated' : 'Reward created',
-          description: isEditing
-            ? 'Reward has been updated successfully'
-            : 'New reward has been created',
+          title: isEditing ? t('success.updated') : t('success.created'),
+          description: isEditing ? t('success.updated') : t('success.created'),
         });
 
         form.reset();
         onSuccess?.();
       } else {
         toast({
-          title: 'Error',
-          description: result.error || 'Something went wrong',
+          title: t('error.failed'),
+          description: result.error || t('error.unexpected'),
           variant: 'destructive',
         });
       }
     } catch (error) {
       console.error('Reward form submission error:', error);
       toast({
-        title: 'Error',
-        description: 'An unexpected error occurred',
+        title: t('error.failed'),
+        description: t('error.unexpected'),
         variant: 'destructive',
       });
     } finally {
@@ -186,19 +195,17 @@ export default function RewardFormDialog({
       {showTrigger && (
         <DialogTrigger asChild>
           <Button variant="default" className="space-x-1">
-            <span>Create</span> <IconPlus size={18} />
+            <span>{t('createTitle')}</span> <IconPlus size={18} />
           </Button>
         </DialogTrigger>
       )}
       <DialogContent className="sm:max-w-[850px] p-0 gap-0 max-h-[90vh] flex flex-col">
         <DialogHeader className="p-6 pb-2">
           <DialogTitle>
-            {isEditing ? 'Edit Reward' : 'Create Reward'}
+            {isEditing ? t('editTitle') : t('createTitle')}
           </DialogTitle>
           <DialogDescription>
-            {isEditing
-              ? 'Edit the reward information below'
-              : 'Add a new reward for your members to claim'}
+            {isEditing ? t('editDescription') : t('createDescription')}
           </DialogDescription>
         </DialogHeader>
 
@@ -216,7 +223,7 @@ export default function RewardFormDialog({
                   name="imageUrl"
                   render={({ field }) => (
                     <FormItem className="md:w-[280px] flex-shrink-0">
-                      <FormLabel>Reward Image</FormLabel>
+                      <FormLabel>{t('fields.image')}</FormLabel>
                       <FormControl>
                         <RewardImageUpload
                           currentImage={field.value || ''}
@@ -225,8 +232,7 @@ export default function RewardFormDialog({
                         />
                       </FormControl>
                       <FormDescription className="mt-2 text-xs">
-                        Upload an image to make your reward more appealing
-                        (recommended ratio: 16:9)
+                        {t('fields.imageDescription')}
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -238,7 +244,7 @@ export default function RewardFormDialog({
                   {/* Basic Information Section */}
                   <div>
                     <h3 className="text-sm font-medium text-muted-foreground mb-3">
-                      Basic Information
+                      {t('sections.basicInfo')}
                     </h3>
 
                     <FormField
@@ -246,9 +252,12 @@ export default function RewardFormDialog({
                       name="name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Reward Name</FormLabel>
+                          <FormLabel>{t('fields.name')}</FormLabel>
                           <FormControl>
-                            <Input placeholder="Enter reward name" {...field} />
+                            <Input
+                              placeholder={t('fields.namePlaceholder')}
+                              {...field}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -261,17 +270,17 @@ export default function RewardFormDialog({
                         name="description"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Description</FormLabel>
+                            <FormLabel>{t('fields.description')}</FormLabel>
                             <FormControl>
                               <Textarea
-                                placeholder="Enter reward description"
+                                placeholder={t('fields.descriptionPlaceholder')}
                                 className="resize-none h-[80px]"
                                 {...field}
                                 value={field.value || ''}
                               />
                             </FormControl>
                             <FormDescription>
-                              Provide details about what the reward includes
+                              {t('fields.descriptionHelper')}
                             </FormDescription>
                             <FormMessage />
                           </FormItem>
@@ -283,7 +292,7 @@ export default function RewardFormDialog({
                   {/* Reward Value Section */}
                   <div>
                     <h3 className="text-sm font-medium text-muted-foreground mb-3">
-                      Reward Value
+                      {t('sections.rewardValue')}
                     </h3>
 
                     <div className="grid grid-cols-2 gap-4">
@@ -292,11 +301,11 @@ export default function RewardFormDialog({
                         name="pointsCost"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Points Cost</FormLabel>
+                            <FormLabel>{t('fields.pointsCost')}</FormLabel>
                             <FormControl>
                               <Input
                                 type="number"
-                                placeholder="100"
+                                placeholder={t('fields.pointsCostPlaceholder')}
                                 {...field}
                               />
                             </FormControl>
@@ -310,11 +319,11 @@ export default function RewardFormDialog({
                         name="stock"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Stock</FormLabel>
+                            <FormLabel>{t('fields.stock')}</FormLabel>
                             <FormControl>
                               <Input
                                 type="number"
-                                placeholder="10"
+                                placeholder={t('fields.stockPlaceholder')}
                                 {...field}
                               />
                             </FormControl>
@@ -328,7 +337,7 @@ export default function RewardFormDialog({
                   {/* Availability Section */}
                   <div>
                     <h3 className="text-sm font-medium text-muted-foreground mb-3">
-                      Availability
+                      {t('sections.availability')}
                     </h3>
 
                     <FormField
@@ -336,7 +345,7 @@ export default function RewardFormDialog({
                       name="expiryDate"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Expiry Date</FormLabel>
+                          <FormLabel>{t('fields.expiryDate')}</FormLabel>
                           <Popover>
                             <PopoverTrigger asChild>
                               <FormControl>
@@ -350,7 +359,9 @@ export default function RewardFormDialog({
                                   {field.value ? (
                                     format(field.value, 'PPP')
                                   ) : (
-                                    <span>Pick a date</span>
+                                    <span>
+                                      {t('fields.expiryDatePlaceholder')}
+                                    </span>
                                   )}
                                   <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                 </Button>
@@ -385,10 +396,10 @@ export default function RewardFormDialog({
                           <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
                             <div className="space-y-0.5">
                               <FormLabel className="text-base">
-                                Active Status
+                                {t('fields.isActive')}
                               </FormLabel>
                               <FormDescription>
-                                Make this reward available for members to claim
+                                {t('fields.isActiveDescription')}
                               </FormDescription>
                             </div>
                             <FormControl>
@@ -413,13 +424,13 @@ export default function RewardFormDialog({
                 type="button"
                 onClick={() => onOpenChange && onOpenChange(false)}
               >
-                Cancel
+                {t('cancel')}
               </Button>
               <Button type="submit" disabled={loading}>
                 {loading ? (
-                  <>{isEditing ? 'Updating...' : 'Creating...'}</>
+                  <>{isEditing ? t('updating') : t('creating')}</>
                 ) : (
-                  <>{isEditing ? 'Update Reward' : 'Create Reward'}</>
+                  <>{isEditing ? t('updateButton') : t('createButton')}</>
                 )}
               </Button>
             </div>

@@ -1,3 +1,4 @@
+import { useTranslations } from 'next-intl';
 import {
   FormControl,
   FormDescription,
@@ -24,6 +25,7 @@ interface BasicInfoProps {
 }
 
 export default function BasicInfo({ form }: BasicInfoProps) {
+  const t = useTranslations('discount.form');
   const discountType = form.watch('type');
 
   // Super robust number formatter with guaranteed output
@@ -66,20 +68,18 @@ export default function BasicInfo({ form }: BasicInfoProps) {
 
   return (
     <div className="space-y-6">
-      <h3 className="text-lg font-medium">Basic Information</h3>
+      <h3 className="text-lg font-medium">{t('basicInfo')}</h3>
       <div className="space-y-4">
         <FormField
           control={form.control}
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Discount Name</FormLabel>
+              <FormLabel>{t('discountName')}</FormLabel>
               <FormControl>
-                <Input placeholder="Enter discount name" {...field} />
+                <Input placeholder={t('enterDiscountName')} {...field} />
               </FormControl>
-              <FormDescription>
-                A descriptive name for this discount
-              </FormDescription>
+              <FormDescription>{t('descriptiveName')}</FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -90,10 +90,10 @@ export default function BasicInfo({ form }: BasicInfoProps) {
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Description (Optional)</FormLabel>
+              <FormLabel>{t('description')}</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="Enter discount description"
+                  placeholder={t('enterDescription')}
                   {...field}
                   value={field.value || ''}
                   onChange={(e) => field.onChange(e.target.value || null)}
@@ -110,10 +110,9 @@ export default function BasicInfo({ form }: BasicInfoProps) {
             name="type"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Discount Type</FormLabel>
+                <FormLabel>{t('discountType')}</FormLabel>
                 <Select
                   onValueChange={(value) => {
-                    // Reset value when changing types to avoid formatting issues
                     form.setValue('value', 0, { shouldValidate: true });
                     field.onChange(value);
                   }}
@@ -122,21 +121,19 @@ export default function BasicInfo({ form }: BasicInfoProps) {
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select discount type" />
+                      <SelectValue placeholder={t('selectDiscountType')} />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
                     <SelectItem value={DiscountType.PERCENTAGE}>
-                      Percentage
+                      {t('percentage')}
                     </SelectItem>
                     <SelectItem value={DiscountType.FIXED_AMOUNT}>
-                      Fixed Amount
+                      {t('fixedAmount')}
                     </SelectItem>
                   </SelectContent>
                 </Select>
-                <FormDescription>
-                  How the discount value should be applied
-                </FormDescription>
+                <FormDescription>{t('howApplied')}</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -147,7 +144,7 @@ export default function BasicInfo({ form }: BasicInfoProps) {
             name="value"
             render={({ field: { onChange, value, ...restField } }) => (
               <FormItem>
-                <FormLabel>Value</FormLabel>
+                <FormLabel>{t('value')}</FormLabel>
                 <FormControl>
                   <div className="relative">
                     {discountType === DiscountType.FIXED_AMOUNT && (
@@ -160,7 +157,7 @@ export default function BasicInfo({ form }: BasicInfoProps) {
                       // For percentage - use number input with better UX
                       <Input
                         type="number"
-                        placeholder="Enter percentage"
+                        placeholder={t('enterPercentage')}
                         min={0}
                         max={100}
                         step={0.01}
@@ -189,7 +186,7 @@ export default function BasicInfo({ form }: BasicInfoProps) {
                       // For fixed amount - use text input with better formatting
                       <Input
                         type="text"
-                        placeholder="Enter amount"
+                        placeholder={t('enterAmount')}
                         className="pl-8"
                         {...restField}
                         value={value === 0 ? '' : formatNumber(value)}
@@ -226,8 +223,8 @@ export default function BasicInfo({ form }: BasicInfoProps) {
                 </FormControl>
                 <FormDescription>
                   {discountType === DiscountType.PERCENTAGE
-                    ? 'Percentage amount (0-100)'
-                    : 'Fixed amount in currency'}
+                    ? t('percentageAmount')
+                    : t('fixedAmountCurrency')}
                 </FormDescription>
                 <FormMessage />
               </FormItem>

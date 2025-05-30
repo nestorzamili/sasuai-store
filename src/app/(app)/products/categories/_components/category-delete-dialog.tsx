@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { IconAlertTriangle } from '@tabler/icons-react';
 import { toast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -21,6 +22,7 @@ export function CategoryDeleteDialog({
   category,
   onSuccess,
 }: Props) {
+  const t = useTranslations('category.deleteDialog');
   const [isDeleting, setIsDeleting] = useState(false);
 
   const hasProducts = !!(
@@ -33,8 +35,10 @@ export function CategoryDeleteDialog({
 
       if (hasProducts) {
         toast({
-          title: 'Cannot Delete Category',
-          description: `This category has ${category._count?.products} products associated with it. Reassign or delete these products first.`,
+          title: t('cannotDeleteTitle'),
+          description: t('cannotDeleteMessage', {
+            count: category._count?.products || 0,
+          }),
           variant: 'destructive',
         });
         onOpenChange(false);
@@ -45,29 +49,29 @@ export function CategoryDeleteDialog({
 
       if (result.success) {
         toast({
-          title: 'Category deleted',
-          description: `The category "${category.name}" has been deleted successfully`,
+          title: t('success'),
+          description: t('successMessage', { name: category.name }),
         });
         onSuccess?.();
       } else {
         toast({
-          title: 'Error',
-          description: result.error || 'Failed to delete category',
+          title: t('error'),
+          description: result.error || t('failedToDelete'),
           variant: 'destructive',
         });
       }
     } catch (error) {
       console.error('Category delete error:', error);
       toast({
-        title: 'Error',
-        description: 'An unexpected error occurred',
+        title: t('error'),
+        description: t('unexpectedError'),
         variant: 'destructive',
       });
     } finally {
       setIsDeleting(false);
       onOpenChange(false);
     }
-  }, [category, hasProducts, onOpenChange, onSuccess]);
+  }, [category, hasProducts, onOpenChange, onSuccess, t]);
 
   return (
     <ConfirmDialog
@@ -81,39 +85,33 @@ export function CategoryDeleteDialog({
             className="mr-1 inline-block stroke-destructive"
             size={18}
           />{' '}
-          Delete Category
+          {t('title')}
         </span>
       }
       desc={
         <div className="space-y-4">
           <p className="mb-2">
-            Are you sure you want to delete{' '}
-            <span className="font-bold">{category.name}</span>?
+            {t('description', { name: category.name })}
             <br />
-            This action will permanently remove this category from the system.
-            This cannot be undone.
+            {t('permanentRemove')}
           </p>
 
           {hasProducts ? (
             <Alert variant="destructive">
-              <AlertTitle>Cannot Delete</AlertTitle>
+              <AlertTitle>{t('cannotDelete')}</AlertTitle>
               <AlertDescription>
-                This category has {category._count?.products} products
-                associated with it. You need to reassign or delete those
-                products before deleting this category.
+                {t('hasProducts', { count: category._count?.products || 0 })}
               </AlertDescription>
             </Alert>
           ) : (
             <Alert variant="destructive">
-              <AlertTitle>Warning!</AlertTitle>
-              <AlertDescription>
-                Please be careful, this operation cannot be rolled back.
-              </AlertDescription>
+              <AlertTitle>{t('warning')}</AlertTitle>
+              <AlertDescription>{t('warningMessage')}</AlertDescription>
             </Alert>
           )}
         </div>
       }
-      confirmText={isDeleting ? 'Deleting...' : 'Delete'}
+      confirmText={isDeleting ? t('deleting') : t('deleteButton')}
       destructive
     />
   );
