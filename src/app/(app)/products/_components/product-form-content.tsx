@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useProductForm } from './product-form-provider';
@@ -10,6 +11,7 @@ import { CreateBrandDialog } from './create-brand-dialog';
 import { CreateUnitDialog } from './create-unit-dialog';
 
 export function ProductFormContent() {
+  const t = useTranslations('product.formContent');
   const { loading, isEditing, submitForm, cancelForm } = useProductForm();
 
   return (
@@ -29,13 +31,13 @@ export function ProductFormContent() {
           onClick={() => cancelForm()}
           disabled={loading}
         >
-          Cancel
+          {t('cancel')}
         </Button>
         <Button type="button" onClick={() => submitForm()} disabled={loading}>
           {loading ? (
-            <>{isEditing ? 'Updating...' : 'Creating...'}</>
+            <>{isEditing ? t('updating') : t('creating')}</>
           ) : (
-            <>{isEditing ? 'Update Product' : 'Create Product'}</>
+            <>{isEditing ? t('updateButton') : t('createButton')}</>
           )}
         </Button>
       </DialogFooter>

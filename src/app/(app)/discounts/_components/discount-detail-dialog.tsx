@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -57,6 +58,7 @@ export function DiscountDetailDialog({
   onOpenChange,
   discountId,
 }: DiscountDetailDialogProps) {
+  const t = useTranslations('discount');
   const [discount, setDiscount] = useState<DiscountDetailWithValidation | null>(
     null,
   );
@@ -132,10 +134,13 @@ export function DiscountDetailDialog({
 
   // Get status label and badge variant
   const getStatusInfo = (): StatusInfo => {
-    if (!discount) return { label: 'Unavailable', variant: 'outline' };
-    if (!discount.isActive) return { label: 'Inactive', variant: 'outline' };
-    if (isExpired) return { label: 'Expired', variant: 'destructive' };
-    return { label: 'Active', variant: 'default' };
+    if (!discount)
+      return { label: t('detail.unavailable'), variant: 'outline' };
+    if (!discount.isActive)
+      return { label: t('table.inactive'), variant: 'outline' };
+    if (isExpired)
+      return { label: t('detail.expired'), variant: 'destructive' };
+    return { label: t('table.active'), variant: 'default' };
   };
 
   const statusInfo = getStatusInfo();
@@ -165,7 +170,7 @@ export function DiscountDetailDialog({
                     </Badge>
                   </>
                 ) : (
-                  'Discount Details'
+                  t('detail.title')
                 )}
               </DialogTitle>
 
@@ -189,7 +194,7 @@ export function DiscountDetailDialog({
             {!isLoading && discount && discount.code && (
               <div className="mb-2">
                 <p className="text-sm font-medium text-muted-foreground mb-1">
-                  Discount Code:
+                  {t('detail.code')}:
                 </p>
                 <Badge
                   variant="outline"
@@ -203,7 +208,7 @@ export function DiscountDetailDialog({
             {!isLoading && discount && !discount.code && (
               <DialogDescription className="mt-1">
                 <span className="text-muted-foreground italic">
-                  No code required
+                  {t('detail.noCodeRequired')}
                 </span>
               </DialogDescription>
             )}
@@ -224,27 +229,28 @@ export function DiscountDetailDialog({
               <div className="px-6">
                 <TabsList className="w-full">
                   <TabsTrigger value="overview" className="flex-1">
-                    Overview
+                    {t('detail.overview')}
                   </TabsTrigger>
                   {discount.applyTo === 'SPECIFIC_PRODUCTS' &&
                     discount.products?.length &&
                     discount.products.length > 0 && (
                       <TabsTrigger value="products" className="flex-1">
-                        Products ({discount.products.length})
+                        {t('detail.products')} ({discount.products.length})
                       </TabsTrigger>
                     )}
                   {discount.applyTo === 'SPECIFIC_MEMBERS' &&
                     discount.members?.length &&
                     discount.members.length > 0 && (
                       <TabsTrigger value="members" className="flex-1">
-                        Members ({discount.members.length})
+                        {t('detail.members')} ({discount.members.length})
                       </TabsTrigger>
                     )}
                   {discount.applyTo === 'SPECIFIC_MEMBER_TIERS' &&
                     discount.memberTiers?.length &&
                     discount.memberTiers.length > 0 && (
                       <TabsTrigger value="tiers" className="flex-1">
-                        Member Tiers ({discount.memberTiers.length})
+                        {t('detail.memberTiers')} ({discount.memberTiers.length}
+                        )
                       </TabsTrigger>
                     )}
                 </TabsList>
@@ -260,7 +266,7 @@ export function DiscountDetailDialog({
                             <div className="flex items-center gap-2 text-muted-foreground mb-1">
                               <IconCalendar className="h-4 w-4" />
                               <span className="text-sm font-medium">
-                                Validity Period
+                                {t('detail.validityPeriod')}
                               </span>
                             </div>
                             <p className="font-medium">{formatDateRange()}</p>
@@ -270,13 +276,13 @@ export function DiscountDetailDialog({
                             <div className="flex items-center gap-2 text-muted-foreground mb-1">
                               <IconShoppingCart className="h-4 w-4" />
                               <span className="text-sm font-medium">
-                                Min. Purchase
+                                {t('detail.minPurchase')}
                               </span>
                             </div>
                             <p className="font-medium">
                               {discount.minPurchase
                                 ? `Rp ${discount.minPurchase.toLocaleString()}`
-                                : 'No minimum'}
+                                : t('detail.noMinimum')}
                             </p>
                           </div>
 
@@ -292,12 +298,12 @@ export function DiscountDetailDialog({
                                 <IconBadge className="h-4 w-4" />
                               )}
                               <span className="text-sm font-medium">
-                                Application
+                                {t('detail.application')}
                               </span>
                             </div>
                             <p className="font-medium">
                               {discount.isGlobal
-                                ? 'Global Discount'
+                                ? t('detail.globalDiscount')
                                 : formatApplyTo(
                                     discount.applyTo as DiscountApplyTo,
                                   )}
@@ -313,13 +319,18 @@ export function DiscountDetailDialog({
                           <div className="flex items-center gap-2 text-muted-foreground mb-2">
                             <IconCreditCard className="h-4 w-4" />
                             <span className="text-sm font-medium">
-                              Usage Limit
+                              {t('detail.usageLimit')}
                             </span>
                           </div>
                           <div className="space-y-2">
                             <div className="flex justify-between text-sm">
-                              <span>Used: {discount.usedCount} times</span>
-                              <span>Limit: {discount.maxUses}</span>
+                              <span>
+                                {t('detail.used')}: {discount.usedCount}{' '}
+                                {t('detail.times')}
+                              </span>
+                              <span>
+                                {t('detail.limit')}: {discount.maxUses}
+                              </span>
                             </div>
                             <Progress value={usagePercentage} className="h-2" />
                           </div>
@@ -333,7 +344,7 @@ export function DiscountDetailDialog({
                           <div className="flex items-center gap-2 text-muted-foreground mb-2">
                             <IconTicket className="h-4 w-4" />
                             <span className="text-sm font-medium">
-                              Description
+                              {t('detail.description')}
                             </span>
                           </div>
                           <p className="text-sm whitespace-pre-line">
@@ -352,10 +363,12 @@ export function DiscountDetailDialog({
                         <Table>
                           <TableHeader className="sticky top-0 bg-background z-10">
                             <TableRow>
-                              <TableHead className="w-1/3">Product</TableHead>
-                              <TableHead>Barcode</TableHead>
-                              <TableHead>Category</TableHead>
-                              <TableHead>Brand</TableHead>
+                              <TableHead className="w-1/3">
+                                {t('detail.product')}
+                              </TableHead>
+                              <TableHead>{t('detail.barcode')}</TableHead>
+                              <TableHead>{t('detail.category')}</TableHead>
+                              <TableHead>{t('detail.brand')}</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -385,7 +398,7 @@ export function DiscountDetailDialog({
                     <div className="text-center py-8">
                       <IconBoxSeam className="h-12 w-12 mx-auto text-muted-foreground" />
                       <p className="mt-2 text-muted-foreground">
-                        No products associated with this discount
+                        {t('detail.noProductsAssociated')}
                       </p>
                     </div>
                   )}
@@ -398,8 +411,10 @@ export function DiscountDetailDialog({
                         <Table>
                           <TableHeader className="sticky top-0 bg-background z-10">
                             <TableRow>
-                              <TableHead className="w-1/3">Member</TableHead>
-                              <TableHead>Tier</TableHead>
+                              <TableHead className="w-1/3">
+                                {t('detail.member')}
+                              </TableHead>
+                              <TableHead>{t('detail.tier')}</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -423,7 +438,7 @@ export function DiscountDetailDialog({
                     <div className="text-center py-8">
                       <IconUsers className="h-12 w-12 mx-auto text-muted-foreground" />
                       <p className="mt-2 text-muted-foreground">
-                        No members associated with this discount
+                        {t('detail.noMembersAssociated')}
                       </p>
                     </div>
                   )}
@@ -436,9 +451,11 @@ export function DiscountDetailDialog({
                         <Table>
                           <TableHeader className="sticky top-0 bg-background z-10">
                             <TableRow>
-                              <TableHead className="w-1/3">Tier Name</TableHead>
-                              <TableHead>Min. Points</TableHead>
-                              <TableHead>Multiplier</TableHead>
+                              <TableHead className="w-1/3">
+                                {t('detail.tierName')}
+                              </TableHead>
+                              <TableHead>{t('detail.minPoints')}</TableHead>
+                              <TableHead>{t('detail.multiplier')}</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -461,7 +478,7 @@ export function DiscountDetailDialog({
                     <div className="text-center py-8">
                       <IconBadge className="h-12 w-12 mx-auto text-muted-foreground" />
                       <p className="mt-2 text-muted-foreground">
-                        No member tiers associated with this discount
+                        {t('detail.noTiersAssociated')}
                       </p>
                     </div>
                   )}
@@ -473,13 +490,15 @@ export function DiscountDetailDialog({
           <div className="py-12 text-center">
             <IconTicket className="h-12 w-12 mx-auto text-muted-foreground" />
             <p className="mt-2 text-muted-foreground">
-              No discount information available
+              {t('detail.noInformationAvailable')}
             </p>
           </div>
         )}
 
         <DialogFooter className="px-6 py-4 border-t">
-          <Button onClick={() => onOpenChange(false)}>Close</Button>
+          <Button onClick={() => onOpenChange(false)}>
+            {t('detail.close')}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

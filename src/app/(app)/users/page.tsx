@@ -1,12 +1,14 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import UserPrimaryButton from './_components/user-primary-button';
 import { UserTable } from './_components/user-table';
 import { User } from '@/lib/types/user';
 import UserFormDialog from './_components/user-form-dialog';
 
 export default function UsersPage() {
+  const t = useTranslations('user.page');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
@@ -34,10 +36,8 @@ export default function UsersPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-x-4">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Manage Users</h2>
-          <p className="text-muted-foreground">
-            Create and manage user accounts.
-          </p>
+          <h2 className="text-2xl font-bold tracking-tight">{t('title')}</h2>
+          <p className="text-muted-foreground">{t('description')}</p>
         </div>
         <UserPrimaryButton
           open={isDialogOpen}

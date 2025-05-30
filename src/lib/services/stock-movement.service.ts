@@ -3,6 +3,7 @@ import {
   StockMovementSearchParams,
   StockInComplete,
   StockOutComplete,
+  UnifiedStockOutComplete,
   CreateStockInData,
   CreateStockOutData,
   StockMovement,
@@ -82,7 +83,7 @@ export class StockMovementService {
 
   static async getAllStockOuts(
     params: StockMovementSearchParams = {},
-  ): Promise<PaginatedResponse<StockOutComplete>> {
+  ): Promise<PaginatedResponse<UnifiedStockOutComplete>> {
     const {
       page = 1,
       limit = 10,
@@ -106,15 +107,8 @@ export class StockMovementService {
       ];
     }
 
-    const orderBy: Record<string, unknown> = {};
-    if (sortBy.includes('.')) {
-      const [relation, field] = sortBy.split('.');
-      orderBy[relation] = { [field]: sortDirection };
-    } else {
-      orderBy[sortBy] = sortDirection;
-    }
-
-    const [data, totalCount] = await Promise.all([
+    // Get manual stock outs
+    const [manualStockOuts, manualCount] = await Promise.all([
       prisma.stockOut.findMany({
         where,
         include: {
@@ -130,15 +124,115 @@ export class StockMovementService {
           },
           unit: true,
         },
-        orderBy,
+        orderBy: { [sortBy]: sortDirection },
         skip,
         take: limit,
       }),
       prisma.stockOut.count({ where }),
     ]);
 
+    // Get transaction items as stock outs
+    const transactionWhere: Record<string, unknown> = {};
+    if (search) {
+      transactionWhere.OR = [
+        {
+          batch: {
+            product: { name: { contains: search, mode: 'insensitive' } },
+          },
+        },
+        { batch: { batchCode: { contains: search, mode: 'insensitive' } } },
+      ];
+    }
+
+    const [transactionItems, transactionCount] = await Promise.all([
+      prisma.transactionItem.findMany({
+        where: transactionWhere,
+        include: {
+          batch: {
+            include: {
+              product: {
+                include: {
+                  category: true,
+                  unit: true,
+                },
+              },
+            },
+          },
+          unit: true,
+          transaction: {
+            select: {
+              id: true,
+              tranId: true,
+              createdAt: true,
+            },
+          },
+        },
+        orderBy: { createdAt: sortDirection },
+        skip: 0, // We'll handle pagination after combining
+        take: limit * 2, // Get more to ensure we have enough after combining
+      }),
+      prisma.transactionItem.count({ where: transactionWhere }),
+    ]);
+
+    // Convert to unified format
+    const unifiedManualStockOuts: UnifiedStockOutComplete[] =
+      manualStockOuts.map((stockOut) => ({
+        id: stockOut.id,
+        batchId: stockOut.batchId,
+        quantity: stockOut.quantity,
+        unitId: stockOut.unitId,
+        date: stockOut.date,
+        reason: stockOut.reason,
+        type: 'MANUAL' as const,
+        createdAt: stockOut.createdAt,
+        updatedAt: stockOut.updatedAt,
+        batch: stockOut.batch as ProductBatchWithProduct,
+        unit: stockOut.unit,
+      }));
+
+    const unifiedTransactionStockOuts: UnifiedStockOutComplete[] =
+      transactionItems.map((item) => ({
+        id: `transaction_${item.id}`,
+        batchId: item.batchId,
+        quantity: item.quantity,
+        unitId: item.unitId,
+        date: item.transaction.createdAt,
+        reason: 'TRANSACTION',
+        type: 'TRANSACTION' as const,
+        transactionId: item.transactionId,
+        transactionItemId: item.id,
+        createdAt: item.createdAt,
+        updatedAt: item.updatedAt,
+        batch: item.batch as ProductBatchWithProduct,
+        unit: item.unit,
+        transaction: {
+          id: item.transaction.id,
+          tranId: item.transaction.tranId,
+          cashier: {
+            name: null,
+          },
+        },
+      }));
+
+    // Combine and sort
+    const allStockOuts = [
+      ...unifiedManualStockOuts,
+      ...unifiedTransactionStockOuts,
+    ];
+
+    // Sort by date
+    allStockOuts.sort((a, b) => {
+      const dateA = new Date(a.date).getTime();
+      const dateB = new Date(b.date).getTime();
+      return sortDirection === 'desc' ? dateB - dateA : dateA - dateB;
+    });
+
+    // Apply pagination to combined results
+    const paginatedData = allStockOuts.slice(skip, skip + limit);
+    const totalCount = manualCount + transactionCount;
+
     return {
-      data: data as StockOutComplete[],
+      data: paginatedData,
       meta: {
         totalRows: totalCount,
         totalPages: Math.ceil(totalCount / limit),

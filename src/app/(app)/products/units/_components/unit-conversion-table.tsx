@@ -1,6 +1,7 @@
 'use client';
 import * as React from 'react';
 import { useState, useMemo, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { ColumnDef } from '@tanstack/react-table';
 import { MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -36,6 +37,8 @@ export function UnitConversionTable({
   onEdit,
   onRefresh,
 }: UnitConversionTableProps) {
+  const t = useTranslations('unit.conversionTable');
+
   // State for delete dialog
   const [deleteDialog, setDeleteDialog] = useState(false);
   const [deleteData, setDeleteData] = useState<UnitConversionWithUnits | null>(
@@ -133,7 +136,7 @@ export function UnitConversionTable({
     (): ColumnDef<UnitConversionWithUnits>[] => [
       {
         accessorKey: 'fromUnit',
-        header: 'From Unit',
+        header: t('columns.fromUnit'),
         cell: ({ row }) => {
           const fromUnit = row.original.fromUnit;
           return (
@@ -142,11 +145,11 @@ export function UnitConversionTable({
             </div>
           );
         },
-        enableSorting: true,
+        enableSorting: false,
       },
       {
         accessorKey: 'toUnit',
-        header: 'To Unit',
+        header: t('columns.toUnit'),
         cell: ({ row }) => {
           const toUnit = row.original.toUnit;
           return (
@@ -155,33 +158,37 @@ export function UnitConversionTable({
             </div>
           );
         },
-        enableSorting: true,
+        enableSorting: false,
       },
       {
         accessorKey: 'conversionFactor',
-        header: 'Factor',
+        header: t('columns.factor'),
         cell: ({ row }) => (
           <div className="font-medium">{row.original.conversionFactor}</div>
         ),
-        enableSorting: true,
+        enableSorting: false,
       },
       {
         id: 'explanation',
-        header: 'Explanation',
+        header: t('columns.explanation'),
         cell: ({ row }) => {
           const conversion = row.original;
           return (
             <div className="text-sm">
-              1 {conversion.fromUnit.name} ({conversion.fromUnit.symbol}) ={' '}
-              {conversion.conversionFactor} {conversion.toUnit.name} (
-              {conversion.toUnit.symbol})
+              {t('explanationText', {
+                fromUnit: conversion.fromUnit.name,
+                fromSymbol: conversion.fromUnit.symbol,
+                factor: conversion.conversionFactor,
+                toUnit: conversion.toUnit.name,
+                toSymbol: conversion.toUnit.symbol,
+              })}
             </div>
           );
         },
         enableSorting: false,
       },
       {
-        header: 'Created',
+        header: t('columns.created'),
         accessorKey: 'createdAt',
         cell: ({ row }) => {
           const date = new Date(row.getValue('createdAt'));
@@ -203,24 +210,24 @@ export function UnitConversionTable({
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="h-8 w-8 p-0">
-                    <span className="sr-only">Open menu</span>
+                    <span className="sr-only">{t('actions.openMenu')}</span>
                     <MoreHorizontal className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                  <DropdownMenuLabel>{t('actions.actions')}</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     className="flex justify-between cursor-pointer"
                     onClick={() => handleEditClick(conversion)}
                   >
-                    Edit <IconEdit className="h-4 w-4" />
+                    {t('actions.edit')} <IconEdit className="h-4 w-4" />
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     className="flex justify-between cursor-pointer text-destructive focus:text-destructive"
                     onClick={() => handleDeleteClick(conversion)}
                   >
-                    Delete <IconTrash className="h-4 w-4" />
+                    {t('actions.delete')} <IconTrash className="h-4 w-4" />
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -230,7 +237,7 @@ export function UnitConversionTable({
         enableSorting: false,
       },
     ],
-    [handleEditClick, handleDeleteClick],
+    [handleEditClick, handleDeleteClick, t],
   );
 
   return (

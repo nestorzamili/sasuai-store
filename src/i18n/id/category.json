@@ -1,0 +1,73 @@
+{
+  "category": {
+    "title": "Kategori",
+    "description": "Kelola kategori Anda di sini. Anda dapat menambah, mengedit, atau menghapus kategori sesuai kebutuhan.",
+    "table": {
+      "columns": {
+        "name": "Nama",
+        "description": "Deskripsi",
+        "productsCount": "Jumlah Produk",
+        "created": "Dibuat"
+      },
+      "actions": {
+        "openMenu": "Buka menu",
+        "actions": "Aksi",
+        "edit": "Edit",
+        "delete": "Hapus"
+      },
+      "placeholders": {
+        "noDescription": "Tidak ada deskripsi"
+      },
+      "badges": {
+        "products": "produk"
+      }
+    },
+    "deleteDialog": {
+      "title": "Hapus Kategori",
+      "description": "Apakah Anda yakin ingin menghapus {name}?",
+      "permanentRemove": "Tindakan ini akan menghapus kategori ini secara permanen dari sistem. Tindakan ini tidak dapat dibatalkan.",
+      "cannotDelete": "Tidak Dapat Menghapus",
+      "hasProducts": "Kategori ini memiliki {count} produk yang terkait. Anda perlu mengalihkan atau menghapus produk tersebut sebelum menghapus kategori ini.",
+      "warning": "Peringatan!",
+      "warningMessage": "Harap berhati-hati, operasi ini tidak dapat dikembalikan.",
+      "deleting": "Menghapus...",
+      "deleteButton": "Hapus",
+      "cannotDeleteTitle": "Tidak Dapat Menghapus Kategori",
+      "cannotDeleteMessage": "Kategori ini memiliki {count} produk yang terkait. Alihkan atau hapus produk tersebut terlebih dahulu.",
+      "success": "Kategori dihapus",
+      "successMessage": "Kategori \"{name}\" telah berhasil dihapus",
+      "error": "Kesalahan",
+      "failedToDelete": "Gagal menghapus kategori",
+      "unexpectedError": "Terjadi kesalahan yang tidak terduga"
+    },
+    "formDialog": {
+      "create": "Buat",
+      "createTitle": "Buat Kategori",
+      "editTitle": "Edit Kategori",
+      "createDescription": "Tambahkan kategori baru ke katalog produk Anda",
+      "editDescription": "Edit informasi kategori di bawah ini",
+      "categoryName": "Nama Kategori",
+      "categoryNamePlaceholder": "Masukkan nama kategori",
+      "description": "Deskripsi",
+      "descriptionPlaceholder": "Masukkan deskripsi kategori (opsional)",
+      "cancel": "Batal",
+      "creating": "Membuat...",
+      "updating": "Memperbarui...",
+      "createButton": "Buat Kategori",
+      "updateButton": "Perbarui Kategori",
+      "success": {
+        "categoryCreated": "Kategori dibuat",
+        "categoryCreatedMessage": "Kategori baru telah dibuat",
+        "categoryUpdated": "Kategori diperbarui",
+        "categoryUpdatedMessage": "Kategori telah berhasil diperbarui"
+      },
+      "error": {
+        "somethingWrong": "Terjadi kesalahan",
+        "unexpectedError": "Terjadi kesalahan yang tidak terduga"
+      },
+      "validation": {
+        "nameRequired": "Nama kategori diperlukan"
+      }
+    }
+  }
+}

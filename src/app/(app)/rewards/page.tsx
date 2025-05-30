@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import RewardPrimaryButton from './_components/reward-primary-button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -13,6 +14,7 @@ import { RewardClaimsTable } from './_components/reward-claims-table';
 import { RewardWithClaimCount } from '@/lib/types/reward';
 
 export default function RewardsPage() {
+  const t = useTranslations('reward');
   const [activeTab, setActiveTab] = useState('rewards');
 
   // State for Dialogs
@@ -60,10 +62,8 @@ export default function RewardsPage() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-x-4">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Manage Rewards</h2>
-          <p className="text-muted-foreground">
-            Create, manage, and track membership rewards and claims.
-          </p>
+          <h2 className="text-2xl font-bold tracking-tight">{t('title')}</h2>
+          <p className="text-muted-foreground">{t('description')}</p>
         </div>
         <div className="flex gap-2">
           {activeTab === 'rewards' && (
@@ -75,7 +75,7 @@ export default function RewardsPage() {
             className="gap-1"
           >
             <IconGift size={16} />
-            Claim Reward
+            {t('buttons.claimReward')}
           </Button>
         </div>
       </div>
@@ -88,8 +88,8 @@ export default function RewardsPage() {
         className="w-full"
       >
         <TabsList>
-          <TabsTrigger value="rewards">Rewards</TabsTrigger>
-          <TabsTrigger value="claims">Claims History</TabsTrigger>
+          <TabsTrigger value="rewards">{t('tabs.rewards')}</TabsTrigger>
+          <TabsTrigger value="claims">{t('tabs.claims')}</TabsTrigger>
         </TabsList>
 
         {/* Rewards Tab */}

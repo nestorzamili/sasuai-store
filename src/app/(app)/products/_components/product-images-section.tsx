@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import Image from 'next/image';
 import { useProductForm } from './product-form-provider';
 import { Button } from '@/components/ui/button';
@@ -34,6 +35,8 @@ import { ProductImageWithUrl, TempProductImage } from '@/lib/types/product';
 type DisplayImage = ProductImageWithUrl | TempProductImage;
 
 export function ProductImagesSection() {
+  const t = useTranslations('product.imagesSection');
+
   const {
     isEditing,
     productId,
@@ -84,12 +87,12 @@ export function ProductImagesSection() {
         setIsPrimarySetting(imageId);
         const result = await setPrimaryImage(imageId, productId);
         if (result.success) {
-          toast({ title: 'Primary image updated' });
+          toast({ title: t('toast.primaryImageUpdated') });
           if (fetchProductImages) fetchProductImages(productId);
         } else {
           toast({
             title: 'Error',
-            description: result.error || 'Failed to update primary image',
+            description: result.error || t('toast.failedToUpdatePrimary'),
             variant: 'destructive',
           });
         }
@@ -97,7 +100,7 @@ export function ProductImagesSection() {
         console.error('Error setting primary image:', error);
         toast({
           title: 'Error',
-          description: 'An unexpected error occurred',
+          description: t('toast.unexpectedError'),
           variant: 'destructive',
         });
       } finally {
@@ -123,12 +126,12 @@ export function ProductImagesSection() {
         setIsDeleting(imageToDelete.id);
         const result = await deleteProductImage(imageToDelete.id, productId);
         if (result.success) {
-          toast({ title: 'Image deleted' });
+          toast({ title: t('toast.imageDeleted') });
           fetchProductImages?.(productId);
         } else {
           toast({
             title: 'Error',
-            description: result.error || 'Failed to delete image',
+            description: result.error || t('toast.failedToDelete'),
             variant: 'destructive',
           });
         }
@@ -136,7 +139,7 @@ export function ProductImagesSection() {
         console.error('Error deleting image:', error);
         toast({
           title: 'Error',
-          description: 'An unexpected error occurred',
+          description: t('toast.unexpectedError'),
           variant: 'destructive',
         });
       } finally {
@@ -167,25 +170,25 @@ export function ProductImagesSection() {
         });
 
         if (result.success) {
-          toast({ title: 'Image uploaded' });
+          toast({ title: t('toast.imageUploaded') });
           fetchProductImages?.(productId);
         } else {
           toast({
-            title: 'Upload failed',
-            description: result.error || 'Failed to add image to product',
+            title: t('toast.uploadFailed'),
+            description: result.error || t('toast.failedToAddImage'),
             variant: 'destructive',
           });
         }
       } else {
         // For new product, add to temp storage
         addTempImageToContext(imageUrl);
-        toast({ title: 'Image uploaded' });
+        toast({ title: t('toast.imageUploaded') });
       }
     } catch (error) {
       console.error('Error uploading image:', error);
       toast({
         title: 'Error',
-        description: 'An unexpected error occurred',
+        description: t('toast.unexpectedError'),
         variant: 'destructive',
       });
     } finally {
@@ -224,11 +227,8 @@ export function ProductImagesSection() {
     <div className="space-y-4">
       {/* Header */}
       <div>
-        <Label htmlFor="images">Product Images</Label>
-        <p className="text-sm text-muted-foreground mb-2">
-          Upload images for this product. The first image will be set as
-          primary.
-        </p>
+        <Label htmlFor="images">{t('title')}</Label>
+        <p className="text-sm text-muted-foreground mb-2">{t('description')}</p>
       </div>
 
       {/* Primary Image Display */}
@@ -244,7 +244,7 @@ export function ProductImagesSection() {
             />
             <Badge variant="secondary" className="absolute top-2 left-2">
               <IconStarFilled className="h-3 w-3 mr-1 text-yellow-500" />
-              Primary
+              {t('primary')}
             </Badge>
             <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
               <Button
@@ -253,14 +253,16 @@ export function ProductImagesSection() {
                 className="bg-background/80 hover:bg-background"
                 onClick={() => openLightbox(primaryImageUrl)}
               >
-                <IconMaximize className="h-4 w-4 mr-1" /> View
+                <IconMaximize className="h-4 w-4 mr-1" /> {t('view')}
               </Button>
             </div>
           </div>
         ) : (
           <div className="aspect-square flex flex-col items-center justify-center bg-muted">
             <IconPhoto size={48} className="text-muted-foreground mb-2" />
-            <p className="text-sm text-muted-foreground">No primary image</p>
+            <p className="text-sm text-muted-foreground">
+              {t('noPrimaryImage')}
+            </p>
           </div>
         )}
       </div>
@@ -270,7 +272,7 @@ export function ProductImagesSection() {
         <>
           <Separator />
           <div>
-            <Label>All Images</Label>
+            <Label>{t('allImages')}</Label>
             <ScrollArea className="h-[140px] py-2">
               <div className="flex gap-2 pb-2">
                 {displayImages.map(
@@ -296,7 +298,7 @@ export function ProductImagesSection() {
                               className="absolute top-1 left-1 px-1 py-0.5 text-[10px]"
                             >
                               <IconStarFilled className="h-2 w-2 mr-0.5" />{' '}
-                              Primary
+                              {t('primary')}
                             </Badge>
                           )}
                           <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
@@ -367,12 +369,12 @@ export function ProductImagesSection() {
         {isUploading ? (
           <>
             <IconUpload className="h-4 w-4 mr-2 animate-spin" />
-            Uploading...
+            {t('uploading')}
           </>
         ) : (
           <>
             <IconUpload className="h-4 w-4 mr-2" />
-            Upload Image
+            {t('uploadImage')}
           </>
         )}
       </Button>
@@ -382,8 +384,8 @@ export function ProductImagesSection() {
         open={uploadDialogOpen}
         onOpenChange={setUploadDialogOpen}
         onImageUploaded={handleImageUploaded}
-        title="Upload Product Image"
-        description="Upload an image for your product. Square images work best."
+        title={t('uploadDialogTitle')}
+        description={t('uploadDialogDesc')}
         folder={`sasuai-store/products/${productId || 'temp'}`}
         aspectRatio={1}
       />
@@ -392,9 +394,9 @@ export function ProductImagesSection() {
       <ConfirmDialog
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
-        title="Delete Image"
-        desc="Are you sure you want to delete this image? This action cannot be undone."
-        confirmText={isDeleting ? 'Deleting...' : 'Delete'}
+        title={t('deleteImageTitle')}
+        desc={t('deleteImageDesc')}
+        confirmText={isDeleting ? t('deleting') : t('delete')}
         handleConfirm={handleDelete}
         disabled={!!isDeleting}
         destructive
@@ -428,7 +430,7 @@ export function ProductImagesSection() {
                   size="icon"
                   className="absolute left-4 top-1/2 -translate-y-1/2 z-50 rounded-full bg-background/50 hover:bg-background/80"
                   onClick={(e) => navigateLightbox(-1, e)}
-                  aria-label="Previous image"
+                  aria-label={t('previousImage')}
                 >
                   <IconArrowLeft className="h-5 w-5" />
                 </Button>
@@ -437,7 +439,7 @@ export function ProductImagesSection() {
                   size="icon"
                   className="absolute right-4 top-1/2 -translate-y-1/2 z-50 rounded-full bg-background/50 hover:bg-background/80"
                   onClick={(e) => navigateLightbox(1, e)}
-                  aria-label="Next image"
+                  aria-label={t('nextImage')}
                 >
                   <IconArrowRight className="h-5 w-5" />
                 </Button>

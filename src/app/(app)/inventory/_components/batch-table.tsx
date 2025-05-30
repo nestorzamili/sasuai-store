@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import { ColumnDef } from '@tanstack/react-table';
 import { MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -49,6 +50,7 @@ export function BatchTable({
   onSetRefresh,
   isActive = false,
 }: BatchTableProps) {
+  const t = useTranslations('inventory.batchTable');
   const [selectedBatchForDelete, setSelectedBatchForDelete] =
     useState<ProductBatchWithProduct | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -215,26 +217,28 @@ export function BatchTable({
       // Product column
       {
         accessorKey: 'product.name',
-        header: 'Name',
+        header: t('columns.name'),
         cell: ({ row }) => {
           const product = row.original.product;
           return <div className="font-medium">{product.name}</div>;
         },
+        enableSorting: false,
       },
 
       // Batch Code column
       {
         accessorKey: 'batchCode',
-        header: 'batch code',
+        header: t('columns.batchCode'),
         cell: ({ row }) => {
           return <div>{row.getValue('batchCode')}</div>;
         },
+        enableSorting: false,
       },
 
       // Expiry Date column
       {
         accessorKey: 'expiryDate',
-        header: 'Expire Date',
+        header: t('columns.expireDate'),
         cell: ({ row }) => {
           const expiryDate = new Date(row.getValue('expiryDate'));
           const expired = isExpired(expiryDate);
@@ -245,32 +249,35 @@ export function BatchTable({
               </div>
               {expired && (
                 <Badge variant="destructive" className="ml-2">
-                  Expired
+                  {t('status.expired')}
                 </Badge>
               )}
             </div>
           );
         },
+        enableSorting: true,
       },
 
       // Quantity column
       {
         accessorKey: 'remainingQuantity',
-        header: 'remaining quantity',
+        header: t('columns.remainingQuantity'),
         cell: ({ row }) => {
           const quantity = row.getValue('remainingQuantity') as number;
           return <div>{quantity.toLocaleString()}</div>;
         },
+        enableSorting: true,
       },
 
       // Buy Price column
       {
         accessorKey: 'buyPrice',
-        header: 'buy price',
+        header: t('columns.buyPrice'),
         cell: ({ row }) => {
           const buyPrice = row.getValue('buyPrice') as number;
           return <div className="font-medium">{formatRupiah(buyPrice)}</div>;
         },
+        enableSorting: true,
       },
 
       // Actions column
@@ -284,18 +291,18 @@ export function BatchTable({
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="h-8 w-8 p-0">
-                    <span className="sr-only">Open menu</span>
+                    <span className="sr-only">{t('actions.openMenu')}</span>
                     <MoreHorizontal className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                  <DropdownMenuLabel>{t('actions.actions')}</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     className="flex justify-between cursor-pointer"
                     onClick={() => handleViewDetails(batch)}
                   >
-                    View Details <IconEye className="h-4 w-4" />
+                    {t('actions.viewDetails')} <IconEye className="h-4 w-4" />
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     className="flex justify-between cursor-pointer"
@@ -303,21 +310,21 @@ export function BatchTable({
                       handleAdjust(batch);
                     }}
                   >
-                    Adjust Quantity{' '}
+                    {t('actions.adjustQuantity')}{' '}
                     <IconAdjustmentsHorizontal className="h-4 w-4" />
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     className="flex justify-between cursor-pointer"
                     onClick={() => handleEdit(batch)}
                   >
-                    Edit <IconEdit className="h-4 w-4" />
+                    {t('actions.edit')} <IconEdit className="h-4 w-4" />
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     className="flex justify-between cursor-pointer text-destructive focus:text-destructive"
                     onClick={() => handleDeleteClick(batch)}
                     disabled={batch.remainingQuantity !== batch.initialQuantity}
                   >
-                    Delete <IconTrash className="h-4 w-4" />
+                    {t('actions.delete')} <IconTrash className="h-4 w-4" />
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -326,7 +333,7 @@ export function BatchTable({
         },
       },
     ],
-    [handleViewDetails, handleAdjust, handleEdit, handleDeleteClick],
+    [handleViewDetails, handleAdjust, handleEdit, handleDeleteClick, t],
   );
 
   // handle pagination change

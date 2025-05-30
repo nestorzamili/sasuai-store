@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { IconAlertTriangle } from '@tabler/icons-react';
 import { toast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -21,6 +22,8 @@ export function UserDeleteDialog({
   user,
   onSuccess,
 }: Props) {
+  const t = useTranslations('user.deleteDialog');
+  const tCommon = useTranslations('user.common');
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDelete = async () => {
@@ -31,22 +34,22 @@ export function UserDeleteDialog({
 
       if (result.success) {
         toast({
-          title: 'User deleted',
-          description: `The user "${user.name}" has been deleted successfully`,
+          title: t('success'),
+          description: t('successMessage', { name: user.name }),
         });
         onSuccess?.();
       } else {
         toast({
-          title: 'Error',
-          description: result.error || 'Failed to delete user',
+          title: tCommon('error'),
+          description: result.error || t('error.failed'),
           variant: 'destructive',
         });
       }
     } catch (error) {
       console.error('Error deleting user:', error);
       toast({
-        title: 'Error',
-        description: 'An unexpected error occurred',
+        title: tCommon('error'),
+        description: t('error.unexpected'),
         variant: 'destructive',
       });
     } finally {
@@ -67,29 +70,24 @@ export function UserDeleteDialog({
             className="mr-1 inline-block stroke-destructive"
             size={18}
           />{' '}
-          Delete User
+          {t('title')}
         </span>
       }
       desc={
         <div className="space-y-4">
           <p className="mb-2">
-            Are you sure you want to delete{' '}
-            <span className="font-bold">{user.name}</span>?
+            {t('description')} <span className="font-bold">{user.name}</span>?
             <br />
-            This action will permanently remove this user from the system. This
-            cannot be undone.
+            {t('content')}
           </p>
 
           <Alert variant="destructive">
-            <AlertTitle>Warning!</AlertTitle>
-            <AlertDescription>
-              Deleting a user will remove all associated data including their
-              account information, settings, and access rights.
-            </AlertDescription>
+            <AlertTitle>{t('warning')}</AlertTitle>
+            <AlertDescription>{t('actionUndone')}</AlertDescription>
           </Alert>
         </div>
       }
-      confirmText={isDeleting ? 'Deleting...' : 'Delete'}
+      confirmText={isDeleting ? t('deleting') : t('deleteButton')}
       destructive
     />
   );

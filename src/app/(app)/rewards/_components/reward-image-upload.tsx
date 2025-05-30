@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
 import {
@@ -32,6 +33,7 @@ export function RewardImageUpload({
   name = '',
   onImageChange,
 }: RewardImageUploadProps) {
+  const t = useTranslations('reward.form.fields');
   const [isUploading, setIsUploading] = useState(false);
   const [image, setImage] = useState(currentImage || '');
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -69,8 +71,8 @@ export function RewardImageUpload({
     setImage('');
     onImageChange('');
     toast({
-      title: 'Image removed',
-      description: 'The reward image has been removed.',
+      title: t('imageRemoved'),
+      description: t('imageRemovedDescription'),
     });
   };
 
@@ -84,8 +86,8 @@ export function RewardImageUpload({
     setIsUploading(false);
 
     toast({
-      title: 'Image uploaded',
-      description: 'Your image has been uploaded successfully.',
+      title: t('imageUploaded'),
+      description: t('imageUploadedDescription'),
     });
   };
 
@@ -111,7 +113,7 @@ export function RewardImageUpload({
               <div className="w-full aspect-video relative">
                 <Image
                   src={image}
-                  alt={name || 'Reward image'}
+                  alt={name || t('rewardImageAlt')}
                   fill
                   className="object-cover transition-opacity duration-200 hover:opacity-90"
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -125,9 +127,7 @@ export function RewardImageUpload({
             ) : (
               <div className="flex flex-col items-center justify-center py-10 px-5 text-muted-foreground">
                 <IconGift className="h-12 w-12 mb-2" />
-                <p className="text-sm text-center">
-                  Upload an image for this reward
-                </p>
+                <p className="text-sm text-center">{t('uploadImagePrompt')}</p>
               </div>
             )}
           </CardContent>
@@ -157,7 +157,7 @@ export function RewardImageUpload({
               </Button>
             </TooltipTrigger>
             <TooltipContent side="top">
-              {image ? 'Change image' : 'Upload image'}
+              {image ? t('changeImage') : t('uploadImage')}
             </TooltipContent>
           </Tooltip>
 
@@ -177,7 +177,7 @@ export function RewardImageUpload({
                   <IconTrash className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="top">Remove image</TooltipContent>
+              <TooltipContent side="top">{t('removeImage')}</TooltipContent>
             </Tooltip>
           )}
         </div>
@@ -186,7 +186,7 @@ export function RewardImageUpload({
       {isUploading && (
         <div className="flex items-center gap-2">
           <IconLoader className="h-3 w-3 animate-spin text-muted-foreground" />
-          <p className="text-xs text-muted-foreground">Uploading...</p>
+          <p className="text-xs text-muted-foreground">{t('uploading')}</p>
         </div>
       )}
 
@@ -212,7 +212,7 @@ export function RewardImageUpload({
             <div className="relative max-h-[80vh] max-w-full rounded-lg overflow-hidden">
               <Image
                 src={image}
-                alt={name || 'Reward image'}
+                alt={name || t('rewardImageAlt')}
                 width={800}
                 height={600}
                 className="object-contain"
@@ -228,8 +228,8 @@ export function RewardImageUpload({
         open={uploadDialogOpen}
         onOpenChange={setUploadDialogOpen}
         onImageUploaded={handleImageUploaded}
-        title="Upload Reward Image"
-        description="Upload an image for your reward. Recommended aspect ratio is 16:9."
+        title={t('uploadRewardImageTitle')}
+        description={t('uploadRewardImageDescription')}
         folder="sasuai-store/rewards"
         aspectRatio={16 / 9}
       />

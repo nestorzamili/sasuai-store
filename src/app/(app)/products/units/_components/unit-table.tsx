@@ -1,6 +1,7 @@
 'use client';
 import * as React from 'react';
 import { useState, useMemo, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { ColumnDef } from '@tanstack/react-table';
 import { MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -30,6 +31,8 @@ interface UnitTableProps {
 }
 
 export function UnitTable({ onEdit, onRefresh }: UnitTableProps) {
+  const t = useTranslations('unit.table');
+
   // State for delete dialog
   const [deleteDialog, setDeleteDialog] = useState(false);
   const [deleteData, setDeleteData] = useState<UnitWithCounts | null>(null);
@@ -132,23 +135,23 @@ export function UnitTable({ onEdit, onRefresh }: UnitTableProps) {
   const columns = useMemo(
     (): ColumnDef<UnitWithCounts>[] => [
       {
-        header: 'Name',
+        header: t('columns.name'),
         accessorKey: 'name',
         cell: ({ row }) => (
           <div className="font-medium">{row.getValue('name')}</div>
         ),
-        enableSorting: true,
+        enableSorting: false,
       },
       {
-        header: 'Symbol',
+        header: t('columns.symbol'),
         accessorKey: 'symbol',
         cell: ({ row }) => (
           <div className="font-mono">{row.getValue('symbol')}</div>
         ),
-        enableSorting: true,
+        enableSorting: false,
       },
       {
-        header: 'Usage',
+        header: t('columns.usage'),
         id: 'usage',
         cell: ({ row }) => {
           const unit = row.original;
@@ -162,22 +165,22 @@ export function UnitTable({ onEdit, onRefresh }: UnitTableProps) {
             <div className="flex flex-wrap gap-1">
               {products > 0 && (
                 <Badge variant="outline" className="text-xs">
-                  {products} products
+                  {products} {t('badges.products')}
                 </Badge>
               )}
               {stockIns > 0 && (
                 <Badge variant="outline" className="text-xs">
-                  {stockIns} stock-ins
+                  {stockIns} {t('badges.stockIns')}
                 </Badge>
               )}
               {stockOuts > 0 && (
                 <Badge variant="outline" className="text-xs">
-                  {stockOuts} stock-outs
+                  {stockOuts} {t('badges.stockOuts')}
                 </Badge>
               )}
               {transactions > 0 && (
                 <Badge variant="outline" className="text-xs">
-                  {transactions} transactions
+                  {transactions} {t('badges.transactions')}
                 </Badge>
               )}
               {products === 0 &&
@@ -185,7 +188,7 @@ export function UnitTable({ onEdit, onRefresh }: UnitTableProps) {
                 stockOuts === 0 &&
                 transactions === 0 && (
                   <span className="text-muted-foreground italic text-xs">
-                    Not in use
+                    {t('badges.notInUse')}
                   </span>
                 )}
             </div>
@@ -194,7 +197,7 @@ export function UnitTable({ onEdit, onRefresh }: UnitTableProps) {
         enableSorting: false,
       },
       {
-        header: 'Conversions',
+        header: t('columns.conversions'),
         id: 'conversions',
         cell: ({ row }) => {
           const unit = row.original;
@@ -205,14 +208,14 @@ export function UnitTable({ onEdit, onRefresh }: UnitTableProps) {
 
           return (
             <Badge variant="outline" className="text-xs">
-              {totalConversions} conversions
+              {totalConversions} {t('badges.conversions')}
             </Badge>
           );
         },
         enableSorting: false,
       },
       {
-        header: 'Created',
+        header: t('columns.created'),
         accessorKey: 'createdAt',
         cell: ({ row }) => {
           const date = new Date(row.getValue('createdAt'));
@@ -236,25 +239,25 @@ export function UnitTable({ onEdit, onRefresh }: UnitTableProps) {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="h-8 w-8 p-0">
-                    <span className="sr-only">Open menu</span>
+                    <span className="sr-only">{t('actions.openMenu')}</span>
                     <MoreHorizontal className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                  <DropdownMenuLabel>{t('actions.actions')}</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     className="flex justify-between cursor-pointer"
                     onClick={() => handleEditClick(unit)}
                   >
-                    Edit <IconEdit className="h-4 w-4" />
+                    {t('actions.edit')} <IconEdit className="h-4 w-4" />
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     className="flex justify-between cursor-pointer text-destructive focus:text-destructive"
                     onClick={() => handleDeleteClick(unit)}
                     disabled={inUse}
                   >
-                    Delete <IconTrash className="h-4 w-4" />
+                    {t('actions.delete')} <IconTrash className="h-4 w-4" />
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -264,7 +267,7 @@ export function UnitTable({ onEdit, onRefresh }: UnitTableProps) {
         enableSorting: false,
       },
     ],
-    [handleEditClick, handleDeleteClick, isUnitInUse],
+    [handleEditClick, handleDeleteClick, isUnitInUse, t],
   );
 
   return (

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -30,14 +31,16 @@ export function MemberBanDialog({
   member,
   onSuccess,
 }: MemberBanDialogProps) {
+  const t = useTranslations('member.banDialog');
+  const tCommon = useTranslations('member.common');
   const [reason, setReason] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleBan = async () => {
     if (!reason.trim()) {
       toast({
-        title: 'Error',
-        description: 'Please provide a reason for banning this member',
+        title: tCommon('error'),
+        description: t('reasonRequired'),
         variant: 'destructive',
       });
       return;
@@ -49,23 +52,23 @@ export function MemberBanDialog({
 
       if (result.success) {
         toast({
-          title: 'Member banned',
-          description: `${member.name} has been banned successfully`,
+          title: t('success'),
+          description: t('successMessage', { name: member.name }),
         });
         onOpenChange(false);
         onSuccess?.();
       } else {
         toast({
-          title: 'Error',
-          description: result.error || 'Failed to ban member',
+          title: tCommon('error'),
+          description: result.error || t('failed'),
           variant: 'destructive',
         });
       }
     } catch (error) {
       console.error('Failed to ban member:', error);
       toast({
-        title: 'Error',
-        description: 'An unexpected error occurred',
+        title: tCommon('error'),
+        description: tCommon('unexpectedError'),
         variant: 'destructive',
       });
     } finally {
@@ -79,27 +82,24 @@ export function MemberBanDialog({
         <DialogHeader>
           <DialogTitle className="text-destructive flex items-center gap-2">
             <IconBan size={18} />
-            Ban Member
+            {t('title')}
           </DialogTitle>
           <DialogDescription>
-            You are about to ban {member.name}. This will prevent them from
-            earning points, claiming rewards, or receiving discounts.
+            {t('description', { name: member.name })}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="reason">Reason for Ban</Label>
+            <Label htmlFor="reason">{t('reasonLabel')}</Label>
             <Textarea
               id="reason"
-              placeholder="Please provide a reason for banning this member..."
+              placeholder={t('reasonPlaceholder')}
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               rows={4}
               className="resize-none"
             />
-            <p className="text-sm text-muted-foreground">
-              This reason will be recorded and may be shown to administrators.
-            </p>
+            <p className="text-sm text-muted-foreground">{t('reasonNote')}</p>
           </div>
         </div>
         <DialogFooter>
@@ -108,14 +108,14 @@ export function MemberBanDialog({
             onClick={() => onOpenChange(false)}
             disabled={isSubmitting}
           >
-            Cancel
+            {tCommon('cancel')}
           </Button>
           <Button
             variant="destructive"
             onClick={handleBan}
             disabled={isSubmitting}
           >
-            {isSubmitting ? 'Banning...' : 'Ban Member'}
+            {isSubmitting ? t('banning') : t('banButton')}
           </Button>
         </DialogFooter>
       </DialogContent>

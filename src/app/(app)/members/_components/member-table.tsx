@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { format } from 'date-fns';
 import { ColumnDef } from '@tanstack/react-table';
 import { MoreHorizontal } from 'lucide-react';
@@ -51,6 +52,7 @@ import type { SortByOptions, TableFetchOptions } from '@/hooks/use-fetch';
 import { searchMembers, getAllMemberTiers, unbanMember } from '../action';
 
 export function MemberTable({ onEdit, onAwardPoints }: MemberTableProps) {
+  const t = useTranslations('member.table');
   const router = useRouter();
 
   // State for dialogs
@@ -155,27 +157,29 @@ export function MemberTable({ onEdit, onAwardPoints }: MemberTableProps) {
         const result = await unbanMember(member.id);
         if (result.success) {
           toast({
-            title: 'Member unbanned',
-            description: `${member.name} has been unbanned successfully`,
+            title: t('actions.unban.success'),
+            description: t('actions.unban.successMessage', {
+              name: member.name,
+            }),
           });
           refresh();
         } else {
           toast({
-            title: 'Error',
-            description: result.error || 'Failed to unban member',
+            title: t('common.error'),
+            description: result.error || t('actions.unban.failed'),
             variant: 'destructive',
           });
         }
       } catch (error) {
         console.error('Failed to unban member:', error);
         toast({
-          title: 'Error',
-          description: 'An unexpected error occurred',
+          title: t('common.error'),
+          description: t('common.unexpectedError'),
           variant: 'destructive',
         });
       }
     },
-    [refresh],
+    [refresh, t],
   );
 
   const handleBanMember = useCallback((member: MemberWithTier) => {
@@ -188,63 +192,69 @@ export function MemberTable({ onEdit, onAwardPoints }: MemberTableProps) {
     () => [
       {
         accessorKey: 'cardId',
-        header: 'Card ID',
+        header: t('columns.cardId'),
         cell: ({ row }) => (
           <div className="font-medium">{row.getValue('cardId')}</div>
         ),
+        enableSorting: false,
       },
       {
         accessorKey: 'name',
-        header: 'Name',
+        header: t('columns.name'),
         cell: ({ row }) => (
           <div className="font-medium uppercase">{row.getValue('name')}</div>
         ),
+        enableSorting: false,
       },
       {
         accessorKey: 'phone',
-        header: 'Phone',
+        header: t('columns.phone'),
         cell: ({ row }) => (
           <div className="font-medium text-xs text-muted-foreground">
             {row.getValue('phone')}
           </div>
         ),
+        enableSorting: false,
       },
       {
         accessorKey: 'address',
-        header: 'Address',
+        header: t('columns.address'),
         cell: ({ row }) => (
           <span className="text-muted-foreground text-xs uppercase">
             {row.original.address}
           </span>
         ),
+        enableSorting: false,
       },
       {
         id: 'tier',
-        header: 'Membership Tier',
+        header: t('columns.tier'),
         cell: ({ row }) => {
           const tier = row.original.tier;
           if (!tier) {
             return (
               <span className="text-xs italic text-muted-foreground">
-                No tier
+                {t('status.noTier')}
               </span>
             );
           }
           return <MemberTierBadge tier={tier} />;
         },
+        enableSorting: false,
       },
       {
         accessorKey: 'totalPoints',
-        header: 'Total Point',
+        header: t('columns.totalPoints'),
         cell: ({ row }) => (
           <div className="font-medium ml-4">
             {Number(row.original.totalPoints).toLocaleString()}
           </div>
         ),
+        enableSorting: true,
       },
       {
         accessorKey: 'joinDate',
-        header: 'Join Date',
+        header: t('columns.joinDate'),
         cell: ({ row }) => {
           const joinDate = row.original.joinDate;
           return (
@@ -253,25 +263,27 @@ export function MemberTable({ onEdit, onAwardPoints }: MemberTableProps) {
             </div>
           );
         },
+        enableSorting: true,
       },
       {
         id: 'status',
-        header: 'Status',
+        header: t('columns.status'),
         cell: ({ row }) => {
           const isBanned = row.original.isBanned;
           return isBanned ? (
             <Badge variant="destructive" className="whitespace-nowrap">
-              <IconBan className="h-3 w-3 mr-1" /> Banned
+              <IconBan className="h-3 w-3 mr-1" /> {t('status.banned')}
             </Badge>
           ) : (
             <Badge
               variant="outline"
               className="whitespace-nowrap bg-green-50 text-green-700 border-green-200"
             >
-              Active
+              {t('status.active')}
             </Badge>
           );
         },
+        enableSorting: false,
       },
       {
         id: 'actions',
@@ -283,7 +295,7 @@ export function MemberTable({ onEdit, onAwardPoints }: MemberTableProps) {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="h-8 w-8 p-0">
-                    <span className="sr-only">Open menu</span>
+                    <span className="sr-only">{t('actions.openMenu')}</span>
                     <MoreHorizontal className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -292,40 +304,41 @@ export function MemberTable({ onEdit, onAwardPoints }: MemberTableProps) {
                     className="flex justify-between cursor-pointer"
                     onClick={() => viewMemberDetails(member)}
                   >
-                    View Details <IconEye className="h-4 w-4" />
+                    {t('actions.viewDetails')} <IconEye className="h-4 w-4" />
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     className="flex justify-between cursor-pointer"
                     onClick={() => onEdit?.(member)}
                   >
-                    Edit <IconEdit className="h-4 w-4" />
+                    {t('actions.edit')} <IconEdit className="h-4 w-4" />
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     className="flex justify-between cursor-pointer"
                     onClick={() => onAwardPoints(member)}
                   >
-                    Award Points <IconGift className="h-4 w-4" />
+                    {t('actions.awardPoints')} <IconGift className="h-4 w-4" />
                   </DropdownMenuItem>
                   {member.isBanned ? (
                     <DropdownMenuItem
                       className="flex justify-between cursor-pointer text-green-600 focus:text-green-600"
                       onClick={() => handleUnban(member)}
                     >
-                      Unban Member <IconShieldCheck className="h-4 w-4" />
+                      {t('actions.unban.button')}{' '}
+                      <IconShieldCheck className="h-4 w-4" />
                     </DropdownMenuItem>
                   ) : (
                     <DropdownMenuItem
                       className="flex justify-between cursor-pointer text-amber-600 focus:text-amber-600"
                       onClick={() => handleBanMember(member)}
                     >
-                      Ban Member <IconBan className="h-4 w-4" />
+                      {t('actions.ban')} <IconBan className="h-4 w-4" />
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuItem
                     className="flex justify-between cursor-pointer text-destructive focus:text-destructive"
                     onClick={() => handleDeleteClick(member)}
                   >
-                    Delete <IconTrash className="h-4 w-4" />
+                    {t('actions.delete')} <IconTrash className="h-4 w-4" />
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -335,6 +348,7 @@ export function MemberTable({ onEdit, onAwardPoints }: MemberTableProps) {
       },
     ],
     [
+      t,
       viewMemberDetails,
       onEdit,
       onAwardPoints,
@@ -411,10 +425,10 @@ export function MemberTable({ onEdit, onAwardPoints }: MemberTableProps) {
     () => [
       {
         id: 'tier',
-        label: 'Tier',
+        label: t('filters.tier'),
         type: 'select',
         options: [
-          { value: 'ALL_TIERS', label: 'All Tiers' },
+          { value: 'ALL_TIERS', label: t('filters.allTiers') },
           ...memberTiers.map((tier) => ({
             value: tier.name,
             label: tier.name,
@@ -424,17 +438,17 @@ export function MemberTable({ onEdit, onAwardPoints }: MemberTableProps) {
       },
       {
         id: 'isBanned',
-        label: 'Status',
+        label: t('filters.status'),
         type: 'select',
         options: [
-          { value: 'ALL_STATUS', label: 'All Status' },
-          { value: 'false', label: 'Active' },
-          { value: 'true', label: 'Banned' },
+          { value: 'ALL_STATUS', label: t('filters.allStatus') },
+          { value: 'false', label: t('status.active') },
+          { value: 'true', label: t('status.banned') },
         ],
         handleFilterChange: (value) => handleFilterChange('isBanned', value),
       },
     ],
-    [memberTiers, handleFilterChange],
+    [memberTiers, handleFilterChange, t],
   );
 
   return (

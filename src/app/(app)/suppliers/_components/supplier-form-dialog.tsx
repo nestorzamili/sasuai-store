@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -28,14 +29,6 @@ import { IconPlus } from '@tabler/icons-react';
 import { createSupplier, updateSupplier } from '../action';
 import { SupplierFormInitialData } from '@/lib/types/supplier';
 
-// Form schema for supplier
-const formSchema = z.object({
-  name: z.string().min(1, 'Supplier name is required'),
-  contact: z.string().optional(),
-});
-
-type FormValues = z.infer<typeof formSchema>;
-
 interface SupplierFormDialogProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -51,6 +44,7 @@ export default function SupplierFormDialog({
   onSuccess,
   trigger = false,
 }: SupplierFormDialogProps) {
+  const t = useTranslations('supplier');
   const [loading, setLoading] = useState(false);
   const [internalOpen, setInternalOpen] = useState(false);
 
@@ -59,11 +53,18 @@ export default function SupplierFormDialog({
   const setIsOpen = isControlled
     ? (value: boolean) => {
         onOpenChange?.(value);
-        // If dialog is closing and we're in controlled mode, let parent handle it
       }
     : setInternalOpen;
 
   const isEditing = Boolean(initialData?.id);
+
+  // Form schema with translations
+  const formSchema = z.object({
+    name: z.string().min(1, t('validation.nameRequired')),
+    contact: z.string().optional(),
+  });
+
+  type FormValues = z.infer<typeof formSchema>;
 
   // Initialize the form
   const form = useForm<FormValues>({
@@ -88,7 +89,7 @@ export default function SupplierFormDialog({
     }
   }, [form, initialData, isOpen]);
 
-  // Handle form submission - stabilize with useCallback
+  // Handle form submission
   const onSubmit = useCallback(
     async (values: FormValues) => {
       try {
@@ -107,10 +108,12 @@ export default function SupplierFormDialog({
 
         if (result.success) {
           toast({
-            title: isEditing ? 'Supplier updated' : 'Supplier created',
+            title: isEditing
+              ? t('success.supplierUpdated')
+              : t('success.supplierCreated'),
             description: isEditing
-              ? 'Supplier has been updated successfully'
-              : 'New supplier has been created',
+              ? t('success.supplierUpdatedMessage')
+              : t('success.supplierCreatedMessage'),
           });
 
           form.reset();
@@ -118,23 +121,23 @@ export default function SupplierFormDialog({
           setIsOpen(false);
         } else {
           toast({
-            title: 'Error',
-            description: result.error || 'Something went wrong',
+            title: t('error.somethingWrong'),
+            description: result.error || t('error.somethingWrong'),
             variant: 'destructive',
           });
         }
       } catch (error) {
         console.error('Error creating/updating supplier:', error);
         toast({
-          title: 'Error',
-          description: 'An unexpected error occurred',
+          title: t('error.somethingWrong'),
+          description: t('error.unexpectedError'),
           variant: 'destructive',
         });
       } finally {
         setLoading(false);
       }
     },
-    [isEditing, initialData, form, onSuccess, setIsOpen],
+    [isEditing, initialData, form, onSuccess, setIsOpen, t],
   );
 
   const handleOpenChange = useCallback(
@@ -152,12 +155,10 @@ export default function SupplierFormDialog({
     <DialogContent className="sm:max-w-[500px]">
       <DialogHeader>
         <DialogTitle>
-          {isEditing ? 'Edit Supplier' : 'Create Supplier'}
+          {isEditing ? t('editTitle') : t('createTitle')}
         </DialogTitle>
         <DialogDescription>
-          {isEditing
-            ? 'Edit the supplier information below'
-            : 'Add a new supplier to your inventory system'}
+          {isEditing ? t('editDescription') : t('createDescription')}
         </DialogDescription>
       </DialogHeader>
 
@@ -168,9 +169,9 @@ export default function SupplierFormDialog({
             name="name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Supplier Name</FormLabel>
+                <FormLabel>{t('name')}</FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter supplier name" {...field} />
+                  <Input placeholder={t('namePlaceholder')} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -182,10 +183,10 @@ export default function SupplierFormDialog({
             name="contact"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Contact</FormLabel>
+                <FormLabel>{t('contact')}</FormLabel>
                 <FormControl>
                   <Input
-                    placeholder="Enter contact information (phone, email, etc.)"
+                    placeholder={t('contactPlaceholder')}
                     {...field}
                     value={field.value || ''}
                   />
@@ -201,13 +202,13 @@ export default function SupplierFormDialog({
               type="button"
               onClick={() => handleOpenChange(false)}
             >
-              Cancel
+              {t('cancel')}
             </Button>
             <Button type="submit" disabled={loading}>
               {loading ? (
-                <>{isEditing ? 'Updating...' : 'Creating...'}</>
+                <>{isEditing ? t('updating') : t('creating')}</>
               ) : (
-                <>{isEditing ? 'Update Supplier' : 'Create Supplier'}</>
+                <>{isEditing ? t('updateButton') : t('createButton')}</>
               )}
             </Button>
           </DialogFooter>
@@ -222,7 +223,7 @@ export default function SupplierFormDialog({
       <Dialog open={isOpen} onOpenChange={handleOpenChange}>
         <DialogTrigger asChild>
           <Button variant="default" className="space-x-1">
-            <span>Create</span> <IconPlus size={18} />
+            <span>{t('create')}</span> <IconPlus size={18} />
           </Button>
         </DialogTrigger>
         {dialogContent}

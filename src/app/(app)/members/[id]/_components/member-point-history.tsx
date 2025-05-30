@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { MemberPointHistoryItem, MemberTier } from '@/lib/types/member';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -26,6 +27,7 @@ export default function MemberPointHistory({
   points,
   memberTier,
 }: MemberPointHistoryProps) {
+  const t = useTranslations('member.pointHistory');
   const [tier, setTier] = useState<MemberTier | undefined>(memberTier);
 
   useEffect(() => {
@@ -59,19 +61,19 @@ export default function MemberPointHistory({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Point History & Transactions</CardTitle>
+        <CardTitle>{t('title')}</CardTitle>
       </CardHeader>
       <CardContent>
         {points.length > 0 ? (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>Points</TableHead>
-                <TableHead>Source</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Payment</TableHead>
-                <TableHead>Notes</TableHead>
+                <TableHead>{t('columns.date')}</TableHead>
+                <TableHead>{t('columns.points')}</TableHead>
+                <TableHead>{t('columns.source')}</TableHead>
+                <TableHead>{t('columns.amount')}</TableHead>
+                <TableHead>{t('columns.payment')}</TableHead>
+                <TableHead>{t('columns.notes')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -88,7 +90,9 @@ export default function MemberPointHistory({
                       +{point.pointsEarned.toLocaleString()}
                     </TableCell>
                     <TableCell>
-                      {isManualAward ? 'Manual award' : 'Transaction'}
+                      {isManualAward
+                        ? t('sources.manualAward')
+                        : t('sources.transaction')}
                     </TableCell>
                     <TableCell>
                       {hasTransaction
@@ -112,7 +116,7 @@ export default function MemberPointHistory({
           </Table>
         ) : (
           <div className="py-8 text-center text-muted-foreground">
-            No point history found for this member.
+            {t('emptyState')}
           </div>
         )}
       </CardContent>

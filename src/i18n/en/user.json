@@ -1,0 +1,268 @@
+{
+  "user": {
+    "page": {
+      "title": "Manage Users",
+      "description": "Create and manage user accounts."
+    },
+    "common": {
+      "error": "Error",
+      "success": "Success",
+      "loading": "Loading...",
+      "cancel": "Cancel",
+      "save": "Save",
+      "delete": "Delete",
+      "edit": "Edit",
+      "create": "Create",
+      "search": "Search users...",
+      "noResults": "No users found",
+      "noResultsDescription": "No users match your search criteria.",
+      "points": "points",
+      "user": "User",
+      "users": "Users",
+      "total": "Total",
+      "active": "Active",
+      "inactive": "Inactive",
+      "banned": "Banned",
+      "admin": "Admin",
+      "cashier": "Cashier",
+      "customer": "Customer"
+    },
+    "buttons": {
+      "createUser": "Create User",
+      "editUser": "Edit User",
+      "deleteUser": "Delete User",
+      "banUser": "Ban User",
+      "unbanUser": "Unban User",
+      "resetPassword": "Reset Password",
+      "viewProfile": "View Profile"
+    },
+    "table": {
+      "columns": {
+        "name": "Name",
+        "email": "Email",
+        "role": "Role",
+        "status": "Status",
+        "verified": "Verified",
+        "createdAt": "Joined",
+        "lastLogin": "Last Login",
+        "actions": "Actions"
+      },
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive",
+        "banned": "Banned",
+        "verified": "Yes",
+        "unverified": "No"
+      },
+      "roles": {
+        "admin": "Admin",
+        "cashier": "Cashier",
+        "user": "User"
+      },
+      "actions": {
+        "openMenu": "Open menu",
+        "actions": "Actions",
+        "viewDetails": "View Details",
+        "edit": "Edit",
+        "delete": "Delete",
+        "ban": "Ban User",
+        "unban": "Unban User",
+        "changeRole": "Change Role",
+        "sessions": "Sessions",
+        "resetPassword": "Reset Password"
+      },
+      "filters": {
+        "allRoles": "All Roles",
+        "allStatuses": "All Statuses",
+        "role": "Role",
+        "status": "Status",
+        "clearFilters": "Clear Filters",
+        "roles": {
+          "admin": "Admin",
+          "user": "User"
+        },
+        "statusOptions": {
+          "active": "Active",
+          "banned": "Banned"
+        }
+      }
+    },
+    "form": {
+      "createTitle": "Create New User",
+      "editTitle": "Edit User",
+      "createDescription": "Add a new user to your system",
+      "editDescription": "Edit the user information below",
+      "createButton": "Create User",
+      "updateButton": "Update User",
+      "creating": "Creating...",
+      "updating": "Updating...",
+      "cancel": "Cancel",
+      "roles": {
+        "user": "User",
+        "admin": "Admin"
+      },
+      "fields": {
+        "name": "Full Name",
+        "namePlaceholder": "Enter full name",
+        "nameRequired": "Full name is required",
+        "email": "Email",
+        "emailPlaceholder": "Email address",
+        "emailRequired": "Email address is required",
+        "emailInvalid": "Invalid email address",
+        "password": "Password",
+        "passwordPlaceholder": "Enter password",
+        "passwordRequired": "Password is required",
+        "passwordMinLength": "Password must be at least 8 characters",
+        "confirmPassword": "Confirm Password",
+        "confirmPasswordPlaceholder": "Confirm password",
+        "confirmPasswordRequired": "Please confirm password",
+        "passwordMismatch": "Passwords do not match",
+        "role": "Role",
+        "rolePlaceholder": "Select a role",
+        "roleRequired": "Role is required",
+        "username": "Username",
+        "usernamePlaceholder": "Enter username (optional)",
+        "displayUsername": "Display Username",
+        "displayUsernamePlaceholder": "Enter display username (optional)",
+        "emailVerified": "Email Verified",
+        "emailVerifiedDescription": "Mark this email as verified",
+        "active": "Active Account",
+        "activeDescription": "Allow this user to access the system"
+      },
+      "success": {
+        "created": "User created successfully",
+        "updated": "User updated successfully"
+      },
+      "error": {
+        "failed": "Failed to save user",
+        "emailExists": "Email address already exists",
+        "usernameExists": "Username already exists",
+        "unexpected": "An unexpected error occurred"
+      }
+    },
+    "deleteDialog": {
+      "title": "Delete User",
+      "description": "Are you sure you want to delete this user?",
+      "content": "This action cannot be undone. This will permanently delete the user account and remove all associated data.",
+      "userName": "User",
+      "userEmail": "Email",
+      "userRole": "Role",
+      "createdAt": "Created",
+      "warning": "Warning!",
+      "actionUndone": "This action cannot be undone and will permanently remove all user data.",
+      "deleting": "Deleting...",
+      "deleteButton": "Delete User",
+      "success": "User deleted successfully",
+      "successMessage": "The user \"{name}\" has been deleted successfully",
+      "error": {
+        "failed": "Failed to delete user",
+        "unexpected": "An unexpected error occurred",
+        "hasTransactions": "This user cannot be deleted because they have associated transactions.",
+        "isLastAdmin": "Cannot delete the last administrator account."
+      }
+    },
+    "banDialog": {
+      "banTitle": "Ban User",
+      "unbanTitle": "Unban User",
+      "banDescription": "Banning {name} will prevent them from accessing the system.",
+      "unbanDescription": "Are you sure you want to unban",
+      "reason": "Ban Reason",
+      "reasonPlaceholder": "Enter reason for ban",
+      "reasonRequired": "Ban reason is required",
+      "duration": "Ban Duration",
+      "durationPlaceholder": "Select ban duration",
+      "durations": {
+        "permanent": "Permanent",
+        "1d": "1 Day",
+        "7d": "7 Days",
+        "30d": "30 Days"
+      },
+      "information": "Information",
+      "unbanInfo": "Unbanning this user will restore their access to the system.",
+      "originalBanReason": "Original Ban Reason",
+      "warning": "Warning!",
+      "banWarning": "Banning this user will prevent them from accessing the system. They will be automatically logged out of all active sessions.",
+      "banning": "Banning...",
+      "unbanning": "Unbanning...",
+      "banButton": "Ban User",
+      "unbanButton": "Unban User",
+      "banSuccess": "User banned",
+      "unbanSuccess": "User unbanned",
+      "banSuccessMessage": "The user has been banned",
+      "unbanSuccessMessage": "The user has been unbanned",
+      "error": {
+        "failed": "Failed to update ban status",
+        "unexpected": "An unexpected error occurred"
+      }
+    },
+    "sessionsDialog": {
+      "title": "Manage User Sessions",
+      "description": "View and manage active sessions for {name}",
+      "sessionCount": "{count} active {count, plural, one {session} other {sessions}}",
+      "refresh": "Refresh",
+      "revokeAll": "Revoke All",
+      "noSessions": "No active sessions found for this user.",
+      "currentSession": "Current Session",
+      "current": "Current",
+      "revoke": "Revoke",
+      "deviceTypes": {
+        "desktop": "Desktop",
+        "mobile": "Mobile",
+        "tablet": "Tablet",
+        "unknown": "Unknown"
+      },
+      "sessionInfo": {
+        "app": "App",
+        "device": "Device",
+        "ipAddress": "IP Address",
+        "lastActive": "Last Active",
+        "unknown": "Unknown"
+      },
+      "sessionRevoked": "Session revoked",
+      "sessionRevokedMessage": "The user session has been terminated successfully",
+      "allSessionsRevoked": "All sessions revoked",
+      "allSessionsRevokedMessage": "All user sessions have been terminated successfully",
+      "signingOut": "Signing out",
+      "signingOutMessage": "You have been signed out due to session revocation",
+      "fetchFailed": "Failed to fetch sessions",
+      "revokeFailed": "Failed to revoke session",
+      "revokeAllFailed": "Failed to revoke all sessions",
+      "info": {
+        "currentSessionNote": "Current session cannot be revoked",
+        "revokeNote": "Revoking a session will force the user to sign in again on that device"
+      }
+    },
+    "roleDialog": {
+      "title": "Change User Role",
+      "description": "Update the role for {name}",
+      "selectRole": "Select Role",
+      "roles": {
+        "user": "User",
+        "admin": "Administrator",
+        "cashier": "Cashier"
+      },
+      "roleDescriptions": {
+        "user": "Regular user with standard permissions",
+        "admin": "Full access to all system features and settings",
+        "cashier": "Access to cashier functions and basic inventory management"
+      },
+      "updating": "Updating...",
+      "updateRole": "Update Role",
+      "success": "Role updated",
+      "successMessage": "{name}'s role has been updated to {role}",
+      "error": {
+        "failed": "Failed to update role",
+        "unexpected": "An unexpected error occurred",
+        "invalidRole": "Invalid role selected",
+        "unauthorized": "You don't have permission to change user roles"
+      }
+    },
+    "validation": {
+      "required": "This field is required",
+      "email": "Please enter a valid email address",
+      "minLength": "Must be at least {min} characters",
+      "maxLength": "Must be no more than {max} characters",
+      "invalidFormat": "Invalid format"
+    }
+  }
+}

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useTranslations } from 'next-intl';
 import { toast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import {
@@ -27,35 +28,8 @@ import { useAuth } from '@/context/auth-context';
 import { AvatarUpload } from './avatar-upload';
 import { UserUpdateData } from '@/lib/types/user';
 
-const profileFormSchema = z.object({
-  name: z
-    .string()
-    .trim()
-    .min(3, { message: 'Name must be at least 3 characters.' })
-    .max(50, { message: 'Name must not be longer than 50 characters.' }),
-  username: z
-    .string()
-    .trim()
-    .min(5, { message: 'Username must be at least 5 characters.' })
-    .max(20, { message: 'Username must not be longer than 20 characters.' })
-    .regex(/^[a-z0-9_-]+$/, {
-      message:
-        'Username can only contain lowercase letters, numbers, underscores, and hyphens.',
-    })
-    .optional()
-    .nullable(),
-  email: z.string({ required_error: 'Email is required' }).email(),
-  image: z
-    .string()
-    .url({ message: 'Please enter a valid image URL.' })
-    .optional()
-    .nullable()
-    .or(z.literal('')),
-});
-
-type ProfileFormValues = z.infer<typeof profileFormSchema>;
-
 export default function ProfileForm() {
+  const t = useTranslations('profile.form');
   const router = useRouter();
   const [isUpdating, setIsUpdating] = useState(false);
   const { user, isLoading: isAuthLoading, refreshSession } = useAuth();
@@ -65,6 +39,35 @@ export default function ProfileForm() {
     email: string;
     image: string;
   } | null>(null);
+
+  const profileFormSchema = z.object({
+    name: z
+      .string()
+      .trim()
+      .min(3, { message: t('validation.nameMinLength') })
+      .max(50, { message: t('validation.nameMaxLength') }),
+    username: z
+      .string()
+      .trim()
+      .min(5, { message: t('validation.usernameMinLength') })
+      .max(20, { message: t('validation.usernameMaxLength') })
+      .regex(/^[a-z0-9_-]+$/, {
+        message: t('validation.usernameFormat'),
+      })
+      .optional()
+      .nullable(),
+    email: z.string({ required_error: t('validation.emailRequired') }).email({
+      message: t('validation.emailInvalid'),
+    }),
+    image: z
+      .string()
+      .url({ message: t('validation.imageInvalidUrl') })
+      .optional()
+      .nullable()
+      .or(z.literal('')),
+  });
+
+  type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -113,9 +116,8 @@ export default function ProfileForm() {
           {
             onSuccess: () => {
               toast({
-                title: 'Verification Required',
-                description:
-                  'Please check your email to confirm the email change.',
+                title: t('verificationRequired'),
+                description: t('checkEmailConfirm'),
               });
               router.refresh();
             },
@@ -127,14 +129,13 @@ export default function ProfileForm() {
               ) {
                 form.setValue('email', userProfile?.email || '');
                 toast({
-                  title: 'Email Change Failed',
-                  description:
-                    'This email address is already registered with another account.',
+                  title: t('emailChangeFailed'),
+                  description: t('emailAlreadyRegistered'),
                   variant: 'destructive',
                 });
               } else {
                 toast({
-                  title: 'Email Change Failed',
+                  title: t('emailChangeFailed'),
                   description: errorMessage,
                   variant: 'destructive',
                 });
@@ -145,13 +146,13 @@ export default function ProfileForm() {
       } catch (error) {
         console.error('Error changing email:', error);
         toast({
-          title: 'Unexpected Error',
-          description: 'An unexpected error occurred while changing email.',
+          title: t('updateFailed'),
+          description: t('unexpectedError'),
           variant: 'destructive',
         });
       }
     },
-    [form, router, userProfile?.email],
+    [form, router, userProfile?.email, t],
   );
 
   const handleImageChange = useCallback(
@@ -192,7 +193,7 @@ export default function ProfileForm() {
           } catch (imageError) {
             console.error('Error updating image:', imageError);
             toast({
-              title: 'Profile Updated',
+              title: t('profileUpdated'),
               description:
                 'Profile updated but there was an issue with the profile picture.',
               variant: 'default',
@@ -205,8 +206,8 @@ export default function ProfileForm() {
           await handleEmailChange(data.email);
         } else {
           toast({
-            title: 'Profile Updated',
-            description: 'Your profile information has been updated.',
+            title: t('profileUpdated'),
+            description: t('profileUpdatedMessage'),
           });
           setUserProfile({
             name: data.name,
@@ -234,21 +235,18 @@ export default function ProfileForm() {
           ) {
             form.setError('username', {
               type: 'manual',
-              message:
-                'This username is already taken. Please try another one.',
+              message: t('usernameTaken'),
             });
           } else {
             form.setError('username', {
               type: 'manual',
-              message:
-                errorMessage || 'There was a problem updating your username.',
+              message: errorMessage || t('usernameUpdateProblem'),
             });
           }
         } else {
           toast({
-            title: 'Update Failed',
-            description:
-              errorMessage || 'There was a problem updating your profile.',
+            title: t('updateFailed'),
+            description: errorMessage || t('problemUpdating'),
             variant: 'destructive',
           });
         }
@@ -256,13 +254,13 @@ export default function ProfileForm() {
         setIsUpdating(false);
       }
     },
-    [userProfile, handleEmailChange, refreshSession, router, form],
+    [userProfile, handleEmailChange, refreshSession, router, form, t],
   );
 
   if (isAuthLoading) {
     return (
       <div className="flex justify-center items-center min-h-[200px]">
-        <div className="text-muted-foreground">Loading...</div>
+        <div className="text-muted-foreground">{t('loading')}</div>
       </div>
     );
   }
@@ -270,8 +268,8 @@ export default function ProfileForm() {
   return (
     <Card className="overflow-hidden">
       <CardHeader className="bg-muted/50">
-        <CardTitle>Profile Information</CardTitle>
-        <CardDescription>Update your personal information</CardDescription>
+        <CardTitle>{t('title')}</CardTitle>
+        <CardDescription>{t('description')}</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="grid md:grid-cols-[1fr_3fr] gap-8 pt-6">
@@ -283,7 +281,7 @@ export default function ProfileForm() {
               onImageChange={handleImageChange}
             />
             <p className="text-sm text-muted-foreground text-center px-2">
-              Upload a profile picture to personalize your account
+              {t('avatarDescription')}
             </p>
           </div>
 
@@ -299,12 +297,15 @@ export default function ProfileForm() {
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Full Name</FormLabel>
+                      <FormLabel>{t('fullName')}</FormLabel>
                       <FormControl>
-                        <Input placeholder="John Doe" {...field} />
+                        <Input
+                          placeholder={t('fullNamePlaceholder')}
+                          {...field}
+                        />
                       </FormControl>
                       <FormDescription>
-                        Your name as displayed on your profile
+                        {t('fullNameDescription')}
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -317,16 +318,16 @@ export default function ProfileForm() {
                     name="username"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Username</FormLabel>
+                        <FormLabel>{t('username')}</FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="username"
+                            placeholder={t('usernamePlaceholder')}
                             {...field}
                             value={field.value || ''}
                           />
                         </FormControl>
                         <FormDescription>
-                          Your unique username for signing in
+                          {t('usernameDescription')}
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -338,16 +339,16 @@ export default function ProfileForm() {
                     name="email"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Email</FormLabel>
+                        <FormLabel>{t('email')}</FormLabel>
                         <FormControl>
                           <Input
                             type="email"
-                            placeholder="your-email@example.com"
+                            placeholder={t('emailPlaceholder')}
                             {...field}
                           />
                         </FormControl>
                         <FormDescription>
-                          This is your verified email address
+                          {t('emailDescription')}
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -377,7 +378,7 @@ export default function ProfileForm() {
                       isUpdating || !hasFormChanges || !form.formState.isValid
                     }
                   >
-                    {isUpdating ? 'Updating...' : 'Update Profile'}
+                    {isUpdating ? t('updating') : t('updateProfile')}
                   </Button>
                 </div>
               </form>

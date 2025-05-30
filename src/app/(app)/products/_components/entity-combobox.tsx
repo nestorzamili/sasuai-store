@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import {
   Command,
@@ -49,6 +50,7 @@ export function EntityCombobox({
   allowNone = false,
   displayWithSymbol = false,
 }: EntityComboboxProps) {
+  const t = useTranslations('product.entityCombobox');
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -74,8 +76,8 @@ export function EntityCombobox({
           {value && selectedEntity
             ? getDisplayText(selectedEntity)
             : value === '' && allowNone
-            ? 'None'
-            : placeholder}
+              ? t('none')
+              : placeholder}
           <IconSelector className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
@@ -102,7 +104,7 @@ export function EntityCombobox({
                 >
                   <IconPlus className="mr-1 h-3 w-3" />
                   {searchQuery.trim()
-                    ? `Create "${searchQuery}"`
+                    ? t('create', { query: searchQuery })
                     : createEntityText}
                 </Button>
               </div>
@@ -122,7 +124,7 @@ export function EntityCombobox({
                       value === '' ? 'opacity-100' : 'opacity-0',
                     )}
                   />
-                  None
+                  {t('none')}
                 </CommandItem>
               )}
               {entities.map((entity) => (

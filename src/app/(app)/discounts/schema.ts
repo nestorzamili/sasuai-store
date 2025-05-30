@@ -53,3 +53,34 @@ export const discountSchema = baseDiscountSchema.refine(
 export const partialDiscountSchema = baseDiscountSchema.partial();
 
 export type DiscountFormValues = z.infer<typeof discountSchema>;
+
+// Translation-aware schema factory (for future use)
+export const createTranslatedDiscountSchema = (t: (key: string) => string) => {
+  return baseDiscountSchema
+    .extend({
+      name: z.string().min(1, t('validation.nameRequired')),
+      value: z.coerce.number().min(0, t('validation.valuePositive')),
+    })
+    .refine(
+      (data) => {
+        if (data.isGlobal) {
+          return data.applyTo === DiscountApplyTo.ALL;
+        }
+
+        if (data.applyTo === DiscountApplyTo.SPECIFIC_PRODUCTS) {
+          return data.productIds && data.productIds.length > 0;
+        }
+        if (data.applyTo === DiscountApplyTo.SPECIFIC_MEMBERS) {
+          return data.memberIds && data.memberIds.length > 0;
+        }
+        if (data.applyTo === DiscountApplyTo.SPECIFIC_MEMBER_TIERS) {
+          return data.memberTierIds && data.memberTierIds.length > 0;
+        }
+        return true;
+      },
+      {
+        message: t('validation.selectItems'),
+        path: ['applyTo'],
+      },
+    );
+};

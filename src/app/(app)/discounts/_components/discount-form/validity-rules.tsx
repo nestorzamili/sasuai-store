@@ -9,6 +9,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { useTranslations } from 'next-intl';
 import { UseFormReturn } from 'react-hook-form';
 import { DiscountFormValues } from '../../schema';
 
@@ -17,9 +18,11 @@ interface ValidityRulesProps {
 }
 
 export default function ValidityRules({ form }: ValidityRulesProps) {
+  const t = useTranslations('discount.form');
+
   return (
     <div className="space-y-6">
-      <h3 className="text-lg font-medium">Validity & Usage Rules</h3>
+      <h3 className="text-lg font-medium">{t('validityRules')}</h3>
       <div className="space-y-4">
         <div className="grid gap-4 grid-cols-2">
           <FormField
@@ -27,11 +30,9 @@ export default function ValidityRules({ form }: ValidityRulesProps) {
             name="startDate"
             render={({ field }) => (
               <FormItem className="flex flex-col">
-                <FormLabel>Start Date</FormLabel>
+                <FormLabel>{t('startDate')}</FormLabel>
                 <DatePicker date={field.value} setDate={field.onChange} />
-                <FormDescription>
-                  When the discount becomes active
-                </FormDescription>
+                <FormDescription>{t('whenActive')}</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -42,9 +43,9 @@ export default function ValidityRules({ form }: ValidityRulesProps) {
             name="endDate"
             render={({ field }) => (
               <FormItem className="flex flex-col">
-                <FormLabel>End Date</FormLabel>
+                <FormLabel>{t('endDate')}</FormLabel>
                 <DatePicker date={field.value} setDate={field.onChange} />
-                <FormDescription>When the discount expires</FormDescription>
+                <FormDescription>{t('whenExpires')}</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -57,11 +58,11 @@ export default function ValidityRules({ form }: ValidityRulesProps) {
             name="minPurchase"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Minimum Purchase (Optional)</FormLabel>
+                <FormLabel>{t('minPurchase')}</FormLabel>
                 <FormControl>
                   <Input
                     type="number"
-                    placeholder="Minimum purchase amount"
+                    placeholder={t('minPurchaseAmount')}
                     {...field}
                     value={field.value === null ? '' : field.value}
                     onChange={(e) =>
@@ -71,9 +72,7 @@ export default function ValidityRules({ form }: ValidityRulesProps) {
                     }
                   />
                 </FormControl>
-                <FormDescription>
-                  Minimum purchase amount required
-                </FormDescription>
+                <FormDescription>{t('minPurchaseRequired')}</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -84,11 +83,11 @@ export default function ValidityRules({ form }: ValidityRulesProps) {
             name="maxUses"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Maximum Uses (Optional)</FormLabel>
+                <FormLabel>{t('maxUses')}</FormLabel>
                 <FormControl>
                   <Input
                     type="number"
-                    placeholder="Leave empty for unlimited uses"
+                    placeholder={t('unlimitedUses')}
                     {...field}
                     value={field.value === null ? '' : field.value}
                     onChange={(e) =>
@@ -98,9 +97,7 @@ export default function ValidityRules({ form }: ValidityRulesProps) {
                     }
                   />
                 </FormControl>
-                <FormDescription>
-                  Maximum number of times this discount can be used
-                </FormDescription>
+                <FormDescription>{t('maxUsesDescription')}</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -119,10 +116,8 @@ export default function ValidityRules({ form }: ValidityRulesProps) {
                 />
               </FormControl>
               <div className="space-y-1 leading-none">
-                <FormLabel>Active</FormLabel>
-                <FormDescription>
-                  This discount is ready to be applied to purchases
-                </FormDescription>
+                <FormLabel>{t('active')}</FormLabel>
+                <FormDescription>{t('readyToApply')}</FormDescription>
               </div>
             </FormItem>
           )}

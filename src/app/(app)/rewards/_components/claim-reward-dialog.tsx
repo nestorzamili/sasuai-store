@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Dialog,
   DialogContent,
@@ -41,6 +42,9 @@ export function ClaimRewardDialog({
   onOpenChange,
   onSuccess,
 }: ClaimRewardDialogProps) {
+  const t = useTranslations('reward.claimDialog');
+  const tCommon = useTranslations('reward.common');
+
   // Main state
   const [selectedRewardId, setSelectedRewardId] = useState<string>('');
   const [availableRewards, setAvailableRewards] = useState<
@@ -97,29 +101,28 @@ export function ClaimRewardDialog({
 
         if (available.length === 0) {
           toast({
-            title: 'No rewards available',
-            description:
-              'There are currently no rewards available for claiming.',
+            title: t('fields.noRewardsFound'),
+            description: t('noRewardsAvailable'),
           });
         }
       } else {
         toast({
-          title: 'Error',
-          description: result.error || 'Failed to fetch rewards',
+          title: tCommon('error'),
+          description: result.error || t('error.failed'),
           variant: 'destructive',
         });
       }
     } catch (error) {
       console.error('Fetch rewards error:', error);
       toast({
-        title: 'Error',
-        description: 'An unexpected error occurred',
+        title: tCommon('error'),
+        description: t('error.unexpected'),
         variant: 'destructive',
       });
     } finally {
       setIsLoading((prev) => ({ ...prev, rewards: false }));
     }
-  }, []);
+  }, [t, tCommon]);
 
   const searchMembersHandler = useCallback(
     async (query: string): Promise<void> => {
@@ -155,20 +158,23 @@ export function ClaimRewardDialog({
     [],
   );
 
-  const handleSelectMember = useCallback((member: Member): void => {
-    if (member.isBanned === true) {
-      toast({
-        title: 'Member is banned',
-        description: 'This member cannot claim rewards',
-        variant: 'destructive',
-      });
-      return;
-    }
+  const handleSelectMember = useCallback(
+    (member: Member): void => {
+      if (member.isBanned === true) {
+        toast({
+          title: t('memberBanned'),
+          description: t('memberBannedDescription'),
+          variant: 'destructive',
+        });
+        return;
+      }
 
-    setSelectedMember(member);
-    setShowResults(false);
-    setSearchQuery('');
-  }, []);
+      setSelectedMember(member);
+      setShowResults(false);
+      setSearchQuery('');
+    },
+    [t],
+  );
 
   const getTierBadgeVariant = useCallback((tierName?: string): string => {
     if (!tierName) return 'secondary';
@@ -249,9 +255,8 @@ export function ClaimRewardDialog({
 
       if (!hasEnoughPoints) {
         toast({
-          title: 'Insufficient points',
-          description:
-            'Member does not have enough points to claim this reward',
+          title: t('error.insufficientPoints'),
+          description: t('error.insufficientPointsMessage'),
           variant: 'destructive',
         });
         return;
@@ -267,23 +272,23 @@ export function ClaimRewardDialog({
 
         if (result.success) {
           toast({
-            title: 'Reward claimed',
-            description: 'The reward has been successfully claimed',
+            title: t('success'),
+            description: t('successMessage'),
           });
           onSuccess();
           onOpenChange(false);
         } else {
           toast({
-            title: 'Error',
-            description: result.error || 'Failed to claim reward',
+            title: t('error.failed'),
+            description: result.error || t('error.failed'),
             variant: 'destructive',
           });
         }
       } catch (error) {
         console.error('Claim reward error:', error);
         toast({
-          title: 'Error',
-          description: 'An unexpected error occurred',
+          title: t('error.failed'),
+          description: t('error.unexpected'),
           variant: 'destructive',
         });
       } finally {
@@ -296,6 +301,7 @@ export function ClaimRewardDialog({
       hasEnoughPoints,
       onSuccess,
       onOpenChange,
+      t,
     ],
   );
 
@@ -303,40 +309,38 @@ export function ClaimRewardDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Claim Reward</DialogTitle>
-          <DialogDescription>
-            Select a reward and search for a member to claim.
-          </DialogDescription>
+          <DialogTitle>{t('title')}</DialogTitle>
+          <DialogDescription>{t('description')}</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             {/* Reward Selection */}
             <div className="grid gap-2">
-              <Label htmlFor="reward-select">Select Reward</Label>
+              <Label htmlFor="reward-select">{t('fields.reward')}</Label>
               <Select
                 value={selectedRewardId}
                 onValueChange={setSelectedRewardId}
               >
                 <SelectTrigger id="reward-select">
-                  <SelectValue placeholder="Select a reward" />
+                  <SelectValue placeholder={t('fields.rewardPlaceholder')} />
                 </SelectTrigger>
                 <SelectContent>
                   {isLoading.rewards ? (
                     <div className="flex items-center justify-center p-2">
                       <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      <span>Loading rewards...</span>
+                      <span>{tCommon('loading')}</span>
                     </div>
                   ) : availableRewards.length > 0 ? (
                     availableRewards.map((reward) => (
                       <SelectItem key={reward.id} value={reward.id}>
-                        {reward.name} - {reward.pointsCost} pts ({reward.stock}{' '}
-                        available)
+                        {reward.name} - {reward.pointsCost} {tCommon('points')}{' '}
+                        ({reward.stock} {t('stockAvailable')})
                       </SelectItem>
                     ))
                   ) : (
                     <div className="p-2 text-center text-muted-foreground">
-                      No rewards available
+                      {t('fields.noRewardsFound')}
                     </div>
                   )}
                 </SelectContent>
@@ -357,10 +361,11 @@ export function ClaimRewardDialog({
                       </div>
                     )}
                     <div className="font-semibold text-amber-600">
-                      {selectedReward.pointsCost} points required
+                      {selectedReward.pointsCost}{' '}
+                      {t('rewardInfo.pointsRequired')}
                     </div>
                     <div className="text-sm">
-                      {selectedReward.stock} available in stock
+                      {selectedReward.stock} {t('rewardInfo.stockAvailable')}
                     </div>
                   </div>
                 </CardContent>
@@ -369,11 +374,11 @@ export function ClaimRewardDialog({
 
             {/* Member Search */}
             <div className="grid gap-2">
-              <Label>Search Member</Label>
+              <Label>{t('fields.member')}</Label>
               <div className="relative">
                 <Input
                   ref={inputRef}
-                  placeholder="Search by name, phone or email..."
+                  placeholder={t('fields.memberPlaceholder')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pr-16 h-9"
@@ -445,7 +450,7 @@ export function ClaimRewardDialog({
                                     variant="destructive"
                                     className="text-xs"
                                   >
-                                    Banned
+                                    {t('banned')}
                                   </Badge>
                                 )}
                               </div>
@@ -469,11 +474,12 @@ export function ClaimRewardDialog({
                                     member.tier?.name,
                                   )}
                                 >
-                                  {member.tier?.name || 'Regular'}
+                                  {member.tier?.name || t('regularTier')}
                                 </Badge>
                               </div>
                               <p className="text-xs text-amber-500 mt-1">
-                                Points: {member.totalPoints}
+                                {t('memberInfo.currentPoints')}:{' '}
+                                {member.totalPoints}
                               </p>
                             </div>
                           </div>
@@ -491,7 +497,7 @@ export function ClaimRewardDialog({
                 !selectedMember && (
                   <div className="text-xs text-muted-foreground flex items-center pt-0.5">
                     <X className="h-3 w-3 mr-1" />
-                    No members found. Try a different search.
+                    {t('fields.noMembersFound')}
                   </div>
                 )}
             </div>
@@ -509,7 +515,7 @@ export function ClaimRewardDialog({
                             selectedMember.tier?.name,
                           )}
                         >
-                          {selectedMember.tier?.name || 'Regular'}
+                          {selectedMember.tier?.name || t('regularTier')}
                         </Badge>
                       </div>
                       {(selectedMember.phone || selectedMember.email) && (
@@ -525,11 +531,11 @@ export function ClaimRewardDialog({
                     </div>
                     <div className="text-right">
                       <div className="text-amber-600 font-medium">
-                        {selectedMember.totalPoints} points
+                        {selectedMember.totalPoints} {tCommon('points')}
                       </div>
                       {selectedReward && !hasEnoughPoints && (
                         <div className="text-destructive text-xs">
-                          Insufficient points
+                          {t('rewardInfo.insufficientPoints')}
                         </div>
                       )}
                     </div>
@@ -546,7 +552,7 @@ export function ClaimRewardDialog({
               onClick={() => onOpenChange(false)}
               disabled={isLoading.claim}
             >
-              Cancel
+              {tCommon('cancel')}
             </Button>
             <Button
               type="submit"
@@ -557,7 +563,7 @@ export function ClaimRewardDialog({
                 !hasEnoughPoints
               }
             >
-              {isLoading.claim ? 'Processing...' : 'Claim Reward'}
+              {isLoading.claim ? t('processing') : t('claimButton')}
             </Button>
           </DialogFooter>
         </form>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { IconAlertTriangle } from '@tabler/icons-react';
 import { toast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -21,6 +22,7 @@ export function BrandDeleteDialog({
   brand,
   onSuccess,
 }: Props) {
+  const t = useTranslations('brand.deleteDialog');
   const [isDeleting, setIsDeleting] = useState(false);
 
   const hasProducts = !!(brand._count?.products && brand._count.products > 0);
@@ -31,8 +33,10 @@ export function BrandDeleteDialog({
 
       if (hasProducts) {
         toast({
-          title: 'Cannot Delete Brand',
-          description: `This brand has ${brand._count?.products} products associated with it. Reassign or delete these products first.`,
+          title: t('cannotDeleteTitle'),
+          description: t('cannotDeleteMessage', {
+            count: brand._count?.products || 0,
+          }),
           variant: 'destructive',
         });
         onOpenChange(false);
@@ -43,29 +47,29 @@ export function BrandDeleteDialog({
 
       if (result.success) {
         toast({
-          title: 'Brand deleted',
-          description: `The brand "${brand.name}" has been deleted successfully`,
+          title: t('success'),
+          description: t('successMessage', { name: brand.name }),
         });
         onSuccess?.();
       } else {
         toast({
-          title: 'Error',
-          description: result.error || 'Failed to delete brand',
+          title: t('error'),
+          description: result.error || t('failedToDelete'),
           variant: 'destructive',
         });
       }
     } catch (error) {
       console.error('Failed to delete brand:', error);
       toast({
-        title: 'Error',
-        description: 'An unexpected error occurred',
+        title: t('error'),
+        description: t('unexpectedError'),
         variant: 'destructive',
       });
     } finally {
       setIsDeleting(false);
       onOpenChange(false);
     }
-  }, [brand, hasProducts, onOpenChange, onSuccess]);
+  }, [brand, hasProducts, onOpenChange, onSuccess, t]);
 
   return (
     <ConfirmDialog
@@ -79,39 +83,33 @@ export function BrandDeleteDialog({
             className="mr-1 inline-block stroke-destructive"
             size={18}
           />{' '}
-          Delete Brand
+          {t('title')}
         </span>
       }
       desc={
         <div className="space-y-4">
           <p className="mb-2">
-            Are you sure you want to delete{' '}
-            <span className="font-bold">{brand.name}</span>?
+            {t('description', { name: brand.name })}
             <br />
-            This action will permanently remove this brand from the system. This
-            cannot be undone.
+            {t('permanentRemove')}
           </p>
 
           {hasProducts ? (
             <Alert variant="destructive">
-              <AlertTitle>Cannot Delete</AlertTitle>
+              <AlertTitle>{t('cannotDelete')}</AlertTitle>
               <AlertDescription>
-                This brand has {brand._count?.products} products associated with
-                it. You need to reassign or delete those products before
-                deleting this brand.
+                {t('hasProducts', { count: brand._count?.products || 0 })}
               </AlertDescription>
             </Alert>
           ) : (
             <Alert variant="destructive">
-              <AlertTitle>Warning!</AlertTitle>
-              <AlertDescription>
-                Please be careful, this operation cannot be rolled back.
-              </AlertDescription>
+              <AlertTitle>{t('warning')}</AlertTitle>
+              <AlertDescription>{t('warningMessage')}</AlertDescription>
             </Alert>
           )}
         </div>
       }
-      confirmText={isDeleting ? 'Deleting...' : 'Delete'}
+      confirmText={isDeleting ? t('deleting') : t('deleteButton')}
       destructive
     />
   );

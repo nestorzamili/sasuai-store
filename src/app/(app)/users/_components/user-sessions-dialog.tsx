@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { toast } from '@/hooks/use-toast';
 import { User, UserSession } from '@/lib/types/user';
 import { useAuth } from '@/context/auth-context';
@@ -210,6 +211,8 @@ export function UserSessionsDialog({
   user,
   onSuccess,
 }: Props) {
+  const t = useTranslations('user.sessionsDialog');
+  const tCommon = useTranslations('user.common');
   const [loading, setLoading] = useState(true);
   const [sessions, setSessions] = useState<UserSession[]>([]);
   const [revokingSession, setRevokingSession] = useState<string | null>(null);
@@ -226,22 +229,22 @@ export function UserSessionsDialog({
         setSessions(result.sessions);
       } else {
         toast({
-          title: 'Error',
-          description: result.error || 'Failed to fetch sessions',
+          title: tCommon('error'),
+          description: result.error || t('fetchFailed'),
           variant: 'destructive',
         });
       }
     } catch (error) {
       console.error('Error fetching sessions:', error);
       toast({
-        title: 'Error',
-        description: 'An unexpected error occurred',
+        title: tCommon('error'),
+        description: tCommon('unexpected'),
         variant: 'destructive',
       });
     } finally {
       setLoading(false);
     }
-  }, [user.id]);
+  }, [user.id, t, tCommon]);
 
   useEffect(() => {
     if (open) {
@@ -257,29 +260,29 @@ export function UserSessionsDialog({
 
         if (result.success) {
           toast({
-            title: 'Session revoked',
-            description: 'The user session has been terminated successfully',
+            title: t('sessionRevoked'),
+            description: t('sessionRevokedMessage'),
           });
           fetchSessions();
         } else {
           toast({
-            title: 'Error',
-            description: result.error || 'Failed to revoke session',
+            title: tCommon('error'),
+            description: result.error || t('revokeFailed'),
             variant: 'destructive',
           });
         }
       } catch (error) {
         console.error('Error revoking session:', error);
         toast({
-          title: 'Error',
-          description: 'An unexpected error occurred',
+          title: tCommon('error'),
+          description: tCommon('unexpected'),
           variant: 'destructive',
         });
       } finally {
         setRevokingSession(null);
       }
     },
-    [fetchSessions],
+    [fetchSessions, t, tCommon],
   );
 
   const handleRevokeAllSessions = useCallback(async () => {
@@ -289,18 +292,16 @@ export function UserSessionsDialog({
 
       if (result.success) {
         toast({
-          title: 'All sessions revoked',
-          description: 'All user sessions have been terminated successfully',
+          title: t('allSessionsRevoked'),
+          description: t('allSessionsRevokedMessage'),
         });
 
-        // Check if the user being managed is the current user
         const isCurrentUser = currentUser && currentUser.id === user.id;
 
         if (isCurrentUser) {
-          // Sign out the current user since all their sessions were revoked
           toast({
-            title: 'Signing out',
-            description: 'You have been signed out due to session revocation',
+            title: t('signingOut'),
+            description: t('signingOutMessage'),
           });
 
           setTimeout(async () => {
@@ -309,7 +310,6 @@ export function UserSessionsDialog({
               router.push('/login');
             } catch (error) {
               console.error('Error signing out:', error);
-              // Force redirect even if sign out fails
               window.location.href = '/login';
             }
           }, 1000);
@@ -319,22 +319,31 @@ export function UserSessionsDialog({
         }
       } else {
         toast({
-          title: 'Error',
-          description: result.error || 'Failed to revoke all sessions',
+          title: tCommon('error'),
+          description: result.error || t('revokeAllFailed'),
           variant: 'destructive',
         });
       }
     } catch (error) {
       console.error('Error revoking all sessions:', error);
       toast({
-        title: 'Error',
-        description: 'An unexpected error occurred',
+        title: tCommon('error'),
+        description: tCommon('unexpected'),
         variant: 'destructive',
       });
     } finally {
       setRevokingAll(false);
     }
-  }, [user.id, currentUser, signOut, router, fetchSessions, onSuccess]);
+  }, [
+    user.id,
+    currentUser,
+    signOut,
+    router,
+    fetchSessions,
+    onSuccess,
+    t,
+    tCommon,
+  ]);
 
   // Enhanced icon functions with better logic
   const getDeviceIcon = useCallback((userAgent?: string | null) => {
@@ -360,28 +369,33 @@ export function UserSessionsDialog({
   }, []);
 
   // Format device information
-  const formatSessionInfo = useCallback((session: UserSession) => {
-    const parsed = parseUserAgent(session.userAgent || '');
+  const formatSessionInfo = useCallback(
+    (session: UserSession) => {
+      const parsed = parseUserAgent(session.userAgent || '');
 
-    return {
-      deviceType: parsed.isDesktop
-        ? 'Desktop'
-        : parsed.isMobile
-          ? 'Mobile'
-          : parsed.isTablet
-            ? 'Tablet'
-            : 'Unknown',
-      appInfo: `${parsed.appName} ${parsed.appVersion}`.trim(),
-      platform: parsed.platform,
-      device: parsed.device,
-      browser: parsed.browser,
-      lastSeen: session.lastActiveAt
-        ? formatDistanceToNow(new Date(session.lastActiveAt), {
-            addSuffix: true,
-          })
-        : formatDistanceToNow(new Date(session.createdAt), { addSuffix: true }),
-    };
-  }, []);
+      return {
+        deviceType: parsed.isDesktop
+          ? t('deviceTypes.desktop')
+          : parsed.isMobile
+            ? t('deviceTypes.mobile')
+            : parsed.isTablet
+              ? t('deviceTypes.tablet')
+              : t('deviceTypes.unknown'),
+        appInfo: `${parsed.appName} ${parsed.appVersion}`.trim(),
+        platform: parsed.platform,
+        device: parsed.device,
+        browser: parsed.browser,
+        lastSeen: session.lastActiveAt
+          ? formatDistanceToNow(new Date(session.lastActiveAt), {
+              addSuffix: true,
+            })
+          : formatDistanceToNow(new Date(session.createdAt), {
+              addSuffix: true,
+            }),
+      };
+    },
+    [t],
+  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -389,17 +403,16 @@ export function UserSessionsDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center">
             <IconDevices className="mr-2" size={18} />
-            Manage User Sessions
+            {t('title')}
           </DialogTitle>
           <DialogDescription>
-            View and manage active sessions for {user.name}
+            {t('description', { name: user.name })}
           </DialogDescription>
         </DialogHeader>
 
         <div className="flex items-center justify-between py-2">
           <div className="text-sm text-muted-foreground">
-            {sessions.length} active{' '}
-            {sessions.length === 1 ? 'session' : 'sessions'}
+            {t('sessionCount', { count: sessions.length })}
           </div>
           <div className="flex items-center space-x-2">
             <Button
@@ -412,7 +425,7 @@ export function UserSessionsDialog({
                 size={16}
                 className={loading ? 'animate-spin' : ''}
               />
-              <span className="ml-1">Refresh</span>
+              <span className="ml-1">{t('refresh')}</span>
             </Button>
             <Button
               variant="destructive"
@@ -425,7 +438,7 @@ export function UserSessionsDialog({
               ) : (
                 <IconX size={16} className="mr-1" />
               )}
-              <span>Revoke All</span>
+              <span>{t('revokeAll')}</span>
             </Button>
           </div>
         </div>
@@ -453,9 +466,7 @@ export function UserSessionsDialog({
           ) : sessions.length === 0 ? (
             <div className="p-4 h-full flex items-center justify-center">
               <Alert>
-                <AlertDescription>
-                  No active sessions found for this user.
-                </AlertDescription>
+                <AlertDescription>{t('noSessions')}</AlertDescription>
               </Alert>
             </div>
           ) : (
@@ -471,12 +482,10 @@ export function UserSessionsDialog({
                     className="flex items-start justify-between p-4 border rounded-lg hover:bg-muted/30 transition-colors"
                   >
                     <div className="flex items-start space-x-4 flex-1">
-                      {/* Device Icon */}
                       <div className="flex items-center justify-center h-12 w-12 rounded-lg bg-primary/10 text-primary">
                         <DeviceIcon size={24} />
                       </div>
 
-                      {/* Session Details */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-2">
                           <h4 className="font-medium text-base">
@@ -487,27 +496,28 @@ export function UserSessionsDialog({
                               variant="outline"
                               className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 text-xs"
                             >
-                              Current Session
+                              {t('currentSession')}
                             </Badge>
                           )}
                         </div>
 
-                        {/* App Info */}
                         <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-                          <span className="font-medium">App:</span>
+                          <span className="font-medium">
+                            {t('sessionInfo.app')}:
+                          </span>
                           <span>{sessionInfo.appInfo}</span>
                         </div>
 
-                        {/* Platform Info */}
                         <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                           <OSIcon size={14} />
                           <span>{sessionInfo.platform}</span>
                         </div>
 
-                        {/* Device Name */}
                         {sessionInfo.device !== 'Unknown Device' && (
                           <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-                            <span className="font-medium">Device:</span>
+                            <span className="font-medium">
+                              {t('sessionInfo.device')}:
+                            </span>
                             <span className="truncate">
                               {sessionInfo.device}
                             </span>
@@ -516,17 +526,20 @@ export function UserSessionsDialog({
 
                         <Separator className="my-2" />
 
-                        {/* Connection Info */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-muted-foreground">
                           <div>
-                            <span className="font-medium">IP Address:</span>
+                            <span className="font-medium">
+                              {t('sessionInfo.ipAddress')}:
+                            </span>
                             <br />
                             <span className="font-mono">
-                              {session.ipAddress || 'Unknown'}
+                              {session.ipAddress || t('sessionInfo.unknown')}
                             </span>
                           </div>
                           <div>
-                            <span className="font-medium">Last Active:</span>
+                            <span className="font-medium">
+                              {t('sessionInfo.lastActive')}:
+                            </span>
                             <br />
                             <span>{sessionInfo.lastSeen}</span>
                           </div>
@@ -534,7 +547,6 @@ export function UserSessionsDialog({
                       </div>
                     </div>
 
-                    {/* Action Button */}
                     <div className="ml-4">
                       <Button
                         variant="outline"
@@ -551,9 +563,9 @@ export function UserSessionsDialog({
                         {revokingSession === session.sessionToken ? (
                           <IconLoader2 size={16} className="animate-spin" />
                         ) : session.current ? (
-                          'Current'
+                          t('current')
                         ) : (
-                          'Revoke'
+                          t('revoke')
                         )}
                       </Button>
                     </div>
@@ -564,14 +576,10 @@ export function UserSessionsDialog({
           )}
         </ScrollArea>
 
-        {/* Info Footer */}
         <div className="border-t pt-3">
           <div className="text-xs text-muted-foreground">
-            <p>• Current session cannot be revoked</p>
-            <p>
-              • Revoking a session will force the user to sign in again on that
-              device
-            </p>
+            <p>• {t('info.currentSessionNote')}</p>
+            <p>• {t('info.revokeNote')}</p>
           </div>
         </div>
       </DialogContent>

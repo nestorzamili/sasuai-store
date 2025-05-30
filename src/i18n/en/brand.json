@@ -1,0 +1,67 @@
+{
+  "brand": {
+    "title": "Brand",
+    "description": "Manage your brands here. You can add, edit, or delete brands as needed.",
+    "table": {
+      "columns": {
+        "name": "Name",
+        "productsCount": "Products Count",
+        "created": "Created"
+      },
+      "actions": {
+        "openMenu": "Open menu",
+        "actions": "Actions",
+        "edit": "Edit",
+        "delete": "Delete"
+      },
+      "badges": {
+        "products": "products"
+      }
+    },
+    "formDialog": {
+      "create": "Create",
+      "createTitle": "Create Brand",
+      "editTitle": "Edit Brand",
+      "createDescription": "Add a new brand to your product catalog",
+      "editDescription": "Edit the brand information below",
+      "brandName": "Brand Name",
+      "brandNamePlaceholder": "Enter brand name",
+      "cancel": "Cancel",
+      "creating": "Creating...",
+      "updating": "Updating...",
+      "createButton": "Create Brand",
+      "updateButton": "Update Brand",
+      "success": {
+        "brandCreated": "Brand created",
+        "brandCreatedMessage": "New brand has been created",
+        "brandUpdated": "Brand updated",
+        "brandUpdatedMessage": "Brand has been updated successfully"
+      },
+      "error": {
+        "somethingWrong": "Something went wrong",
+        "unexpectedError": "An unexpected error occurred"
+      },
+      "validation": {
+        "nameRequired": "Brand name is required"
+      }
+    },
+    "deleteDialog": {
+      "title": "Delete Brand",
+      "description": "Are you sure you want to delete {name}?",
+      "permanentRemove": "This action will permanently remove this brand from the system. This cannot be undone.",
+      "cannotDelete": "Cannot Delete",
+      "hasProducts": "This brand has {count} products associated with it. You need to reassign or delete those products before deleting this brand.",
+      "warning": "Warning!",
+      "warningMessage": "Please be careful, this operation cannot be rolled back.",
+      "deleting": "Deleting...",
+      "deleteButton": "Delete",
+      "cannotDeleteTitle": "Cannot Delete Brand",
+      "cannotDeleteMessage": "This brand has {count} products associated with it. Reassign or delete these products first.",
+      "success": "Brand deleted",
+      "successMessage": "The brand \"{name}\" has been deleted successfully",
+      "error": "Error",
+      "failedToDelete": "Failed to delete brand",
+      "unexpectedError": "An unexpected error occurred"
+    }
+  }
+}

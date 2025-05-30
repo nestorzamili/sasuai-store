@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from '@/hooks/use-toast';
@@ -32,6 +33,7 @@ export function AvatarUpload({
   name = '',
   onImageChange,
 }: AvatarUploadProps) {
+  const t = useTranslations('profile.avatarUpload');
   const [isUploading] = useState(false);
   const [image, setImage] = useState(currentImage || '');
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -78,10 +80,10 @@ export function AvatarUpload({
     setImage('');
     onImageChange('');
     toast({
-      title: 'Profile photo removed',
-      description: 'Your profile photo has been removed.',
+      title: t('profilePhotoRemoved'),
+      description: t('profilePhotoRemovedMessage'),
     });
-  }, [onImageChange]);
+  }, [onImageChange, t]);
 
   const handleImageUploaded = useCallback(
     (imageUrl: string) => {
@@ -145,7 +147,7 @@ export function AvatarUpload({
               </Button>
             </TooltipTrigger>
             <TooltipContent side="bottom">
-              {image ? 'Change photo' : 'Upload photo'}
+              {image ? t('changePhoto') : t('uploadPhoto')}
             </TooltipContent>
           </Tooltip>
 
@@ -162,7 +164,7 @@ export function AvatarUpload({
                   <IconTrash className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="bottom">Remove photo</TooltipContent>
+              <TooltipContent side="bottom">{t('removePhoto')}</TooltipContent>
             </Tooltip>
           )}
         </div>
@@ -190,7 +192,7 @@ export function AvatarUpload({
             <div className="relative max-h-[80vh] max-w-full rounded-lg overflow-hidden">
               <Image
                 src={image}
-                alt={name || 'Profile picture'}
+                alt={name || t('profilePicture')}
                 width={600}
                 height={600}
                 className="object-contain"
@@ -206,8 +208,8 @@ export function AvatarUpload({
         open={uploadDialogOpen}
         onOpenChange={setUploadDialogOpen}
         onImageUploaded={handleImageUploaded}
-        title="Upload Profile Photo"
-        description="Upload a profile photo. A square image is recommended for best results."
+        title={t('uploadTitle')}
+        description={t('uploadDescription')}
         folder="sasuai-store/profiles"
         aspectRatio={1}
       />

@@ -1,0 +1,89 @@
+{
+  "supplier": {
+    "title": "Suppliers",
+    "description": "Manage your suppliers and view their stock-in history.",
+    "create": "Create",
+    "createTitle": "Create Supplier",
+    "editTitle": "Edit Supplier",
+    "createDescription": "Add a new supplier to your system",
+    "editDescription": "Edit the supplier information below",
+    "name": "Supplier Name",
+    "namePlaceholder": "Enter supplier name",
+    "contact": "Contact Information",
+    "contactPlaceholder": "Enter phone number, email, or address",
+    "cancel": "Cancel",
+    "creating": "Creating...",
+    "updating": "Updating...",
+    "createButton": "Create Supplier",
+    "updateButton": "Update Supplier",
+    "success": {
+      "supplierCreated": "Supplier created",
+      "supplierCreatedMessage": "New supplier has been created",
+      "supplierUpdated": "Supplier updated",
+      "supplierUpdatedMessage": "Supplier has been updated successfully"
+    },
+    "error": {
+      "somethingWrong": "Something went wrong",
+      "unexpectedError": "An unexpected error occurred"
+    },
+    "validation": {
+      "nameRequired": "Supplier name is required",
+      "nameMinLength": "Supplier name must be at least 2 characters",
+      "nameMaxLength": "Supplier name must not exceed 100 characters"
+    },
+    "table": {
+      "columns": {
+        "name": "Name",
+        "contact": "Contact",
+        "stockIns": "Stock Ins",
+        "created": "Created"
+      },
+      "actions": {
+        "openMenu": "Open menu",
+        "actions": "Actions",
+        "viewDetails": "View Details",
+        "edit": "Edit",
+        "delete": "Delete"
+      },
+      "noContact": "No contact info"
+    },
+    "deleteDialog": {
+      "title": "Delete Supplier",
+      "description": "Are you sure you want to delete {name}?",
+      "permanentRemove": "This action will permanently remove this supplier from the system. This cannot be undone.",
+      "cannotDelete": "Cannot Delete",
+      "inUse": "This supplier is currently used in {count} stock-in records. You need to remove these references before deleting this supplier.",
+      "warning": "Warning!",
+      "warningMessage": "Please be careful, this operation cannot be rolled back.",
+      "deleting": "Deleting...",
+      "deleteButton": "Delete",
+      "cannotDeleteTitle": "Cannot Delete Supplier",
+      "cannotDeleteMessage": "This supplier is currently in use and cannot be deleted.",
+      "success": "Supplier deleted",
+      "successMessage": "The supplier \"{name}\" has been deleted successfully",
+      "error": "Error",
+      "failedToDelete": "Failed to delete supplier",
+      "unexpectedError": "An unexpected error occurred"
+    },
+    "detailDialog": {
+      "title": "Supplier Details",
+      "loading": "Loading supplier details...",
+      "contactInformation": "Contact Information",
+      "noContactInfo": "No contact information provided",
+      "totalStockIns": "Total Stock-Ins",
+      "records": "records",
+      "addedOn": "Added On",
+      "stockInHistory": "Stock-In History",
+      "date": "Date",
+      "product": "Product",
+      "batch": "Batch",
+      "quantity": "Quantity",
+      "unit": "Unit",
+      "noStockInRecords": "No stock-in records found for this supplier",
+      "noSupplierInfo": "No supplier information available",
+      "close": "Close",
+      "errorFetching": "Error fetching supplier details",
+      "unexpectedError": "An unexpected error occurred while fetching supplier details"
+    }
+  }
+}

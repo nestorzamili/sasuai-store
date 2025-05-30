@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { IconAlertTriangle } from '@tabler/icons-react';
 import { toast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -21,6 +22,7 @@ export function UnitDeleteDialog({
   unit,
   onSuccess,
 }: Props) {
+  const t = useTranslations('unit.deleteDialog');
   const [isDeleting, setIsDeleting] = useState(false);
 
   const isInUse = !!(
@@ -36,8 +38,8 @@ export function UnitDeleteDialog({
 
       if (isInUse) {
         toast({
-          title: 'Cannot Delete Unit',
-          description: `This unit is currently in use and cannot be deleted.`,
+          title: t('cannotDeleteTitle'),
+          description: t('cannotDeleteMessage'),
           variant: 'destructive',
         });
         onOpenChange(false);
@@ -48,22 +50,22 @@ export function UnitDeleteDialog({
 
       if (result.success) {
         toast({
-          title: 'Unit deleted',
-          description: `The unit "${unit.name}" has been deleted successfully`,
+          title: t('success'),
+          description: t('successMessage', { name: unit.name }),
         });
         onSuccess?.();
       } else {
         toast({
-          title: 'Error',
-          description: result.error || 'Failed to delete unit',
+          title: t('error'),
+          description: result.error || t('failedToDelete'),
           variant: 'destructive',
         });
       }
     } catch (error) {
       console.error('Unit delete error:', error);
       toast({
-        title: 'Error',
-        description: 'An unexpected error occurred',
+        title: t('error'),
+        description: t('unexpectedError'),
         variant: 'destructive',
       });
     } finally {
@@ -74,20 +76,20 @@ export function UnitDeleteDialog({
 
   // Calculate usage details for error message
   const usageDetails = () => {
-    const items: string[] = []; // Explicitly type the array as string[]
+    const items: string[] = [];
     const counts = unit._count || {};
 
     if (counts.products && counts.products > 0) {
-      items.push(`${counts.products} products`);
+      items.push(`${counts.products} ${t('usage.products')}`);
     }
     if (counts.stockIns && counts.stockIns > 0) {
-      items.push(`${counts.stockIns} stock-in records`);
+      items.push(`${counts.stockIns} ${t('usage.stockInRecords')}`);
     }
     if (counts.stockOuts && counts.stockOuts > 0) {
-      items.push(`${counts.stockOuts} stock-out records`);
+      items.push(`${counts.stockOuts} ${t('usage.stockOutRecords')}`);
     }
     if (counts.transactionItems && counts.transactionItems > 0) {
-      items.push(`${counts.transactionItems} transaction items`);
+      items.push(`${counts.transactionItems} ${t('usage.transactionItems')}`);
     }
 
     return items.join(', ');
@@ -105,41 +107,33 @@ export function UnitDeleteDialog({
             className="mr-1 inline-block stroke-destructive"
             size={18}
           />{' '}
-          Delete Unit
+          {t('title')}
         </span>
       }
       desc={
         <div className="space-y-4">
           <p className="mb-2">
-            Are you sure you want to delete{' '}
-            <span className="font-bold">
-              {unit.name} ({unit.symbol})
-            </span>
-            ?
+            {t('description', { name: unit.name, symbol: unit.symbol })}
             <br />
-            This action will permanently remove this unit from the system. This
-            cannot be undone.
+            {t('permanentRemove')}
           </p>
 
           {isInUse ? (
             <Alert variant="destructive">
-              <AlertTitle>Cannot Delete</AlertTitle>
+              <AlertTitle>{t('cannotDelete')}</AlertTitle>
               <AlertDescription>
-                This unit is currently used in {usageDetails()}. You need to
-                reassign or remove these references before deleting this unit.
+                {t('inUse', { usage: usageDetails() })}
               </AlertDescription>
             </Alert>
           ) : (
             <Alert variant="destructive">
-              <AlertTitle>Warning!</AlertTitle>
-              <AlertDescription>
-                Please be careful, this operation cannot be rolled back.
-              </AlertDescription>
+              <AlertTitle>{t('warning')}</AlertTitle>
+              <AlertDescription>{t('warningMessage')}</AlertDescription>
             </Alert>
           )}
         </div>
       }
-      confirmText={isDeleting ? 'Deleting...' : 'Delete'}
+      confirmText={isDeleting ? t('deleting') : t('deleteButton')}
       destructive
     />
   );

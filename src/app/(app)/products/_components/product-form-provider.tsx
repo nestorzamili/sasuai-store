@@ -7,6 +7,7 @@ import {
   useEffect,
   ReactNode,
 } from 'react';
+import { useTranslations } from 'next-intl';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, FormProvider } from 'react-hook-form';
 import { z } from 'zod';
@@ -26,20 +27,18 @@ import {
   Unit,
 } from '@/lib/types/product';
 
-// Form schema for product
-const formSchema = z.object({
-  name: z.string().min(1, 'Product name is required'),
-  categoryId: z.string().min(1, 'Category is required'),
-  brandId: z.string().nullable().optional(),
-  description: z.string().nullable().optional(),
-  unitId: z.string().min(1, 'Unit is required'),
-  price: z.coerce.number().min(0, 'Price must be a positive number'),
-  skuCode: z.string().nullable().optional(),
-  barcode: z.string().nullable().optional(),
-  isActive: z.boolean().default(true),
-});
-
-export type ProductFormValues = z.infer<typeof formSchema>;
+// Define the type directly without creating an unused schema
+export type ProductFormValues = {
+  name: string;
+  categoryId: string;
+  brandId?: string | null;
+  description?: string | null;
+  unitId: string;
+  price: number;
+  skuCode?: string | null;
+  barcode?: string | null;
+  isActive: boolean;
+};
 
 // Simplified temporary image type
 interface TempImage {
@@ -100,6 +99,8 @@ export function ProductFormProvider({
   onOpenChange,
   onSuccess,
 }: ProductFormProviderProps) {
+  const t = useTranslations('product.formProvider');
+  const tCommon = useTranslations('common');
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
@@ -115,6 +116,19 @@ export function ProductFormProvider({
   const { toast } = useToast();
   const isEditing = Boolean(initialData?.id);
   const productId = initialData?.id;
+
+  // Form schema with translations - created inside component to use translations
+  const formSchema = z.object({
+    name: z.string().min(1, t('validation.nameRequired')),
+    categoryId: z.string().min(1, t('validation.categoryRequired')),
+    brandId: z.string().nullable().optional(),
+    description: z.string().nullable().optional(),
+    unitId: z.string().min(1, t('validation.unitRequired')),
+    price: z.coerce.number().min(0, t('validation.pricePositive')),
+    skuCode: z.string().nullable().optional(),
+    barcode: z.string().nullable().optional(),
+    isActive: z.boolean().default(true),
+  });
 
   // Initialize the form
   const methods = useForm<ProductFormValues>({
@@ -144,8 +158,8 @@ export function ProductFormProvider({
     } catch (error) {
       console.error('Failed to fetch form options:', error);
       toast({
-        title: 'Error',
-        description: 'Failed to fetch form options',
+        title: tCommon('error'),
+        description: t('error.failedToFetchOptions'),
         variant: 'destructive',
       });
     }
@@ -265,8 +279,8 @@ export function ProductFormProvider({
     } catch (error) {
       console.error('Failed to save temporary images:', error);
       toast({
-        title: 'Warning',
-        description: 'Some images may not have been saved properly',
+        title: tCommon('warning'),
+        description: t('error.imagesSaveWarning'),
         variant: 'destructive',
       });
     }
@@ -291,8 +305,8 @@ export function ProductFormProvider({
 
         if (result.success) {
           toast({
-            title: 'Product updated',
-            description: 'Product has been updated successfully',
+            title: t('success.productUpdated'),
+            description: t('success.productUpdatedMessage'),
           });
 
           methods.reset();
@@ -300,8 +314,8 @@ export function ProductFormProvider({
           onOpenChange?.(false);
         } else {
           toast({
-            title: 'Error',
-            description: result.error || 'Something went wrong',
+            title: tCommon('error'),
+            description: result.error || t('error.somethingWrong'),
             variant: 'destructive',
           });
         }
@@ -317,8 +331,8 @@ export function ProductFormProvider({
           await saveTempImagesToProduct(newProductId);
 
           toast({
-            title: 'Product created',
-            description: 'New product has been created',
+            title: t('success.productCreated'),
+            description: t('success.productCreatedMessage'),
           });
 
           methods.reset();
@@ -327,8 +341,8 @@ export function ProductFormProvider({
           onOpenChange?.(false);
         } else {
           toast({
-            title: 'Error',
-            description: result.error || 'Something went wrong',
+            title: tCommon('error'),
+            description: result.error || t('error.somethingWrong'),
             variant: 'destructive',
           });
         }
@@ -336,8 +350,8 @@ export function ProductFormProvider({
     } catch (error) {
       console.error('Error submitting product form:', error);
       toast({
-        title: 'Error',
-        description: 'An unexpected error occurred',
+        title: tCommon('error'),
+        description: t('error.unexpectedError'),
         variant: 'destructive',
       });
     } finally {

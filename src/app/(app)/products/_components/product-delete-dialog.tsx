@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { IconAlertTriangle } from '@tabler/icons-react';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -21,6 +22,8 @@ export function ProductDeleteDialog({
   product,
   onSuccess,
 }: Props) {
+  const t = useTranslations('product.deleteDialog');
+  const tCommon = useTranslations('common');
   const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
 
@@ -32,22 +35,22 @@ export function ProductDeleteDialog({
 
       if (result.success) {
         toast({
-          title: 'Product deleted',
-          description: `The product "${product.name}" has been deleted successfully`,
+          title: t('success'),
+          description: t('successMessage', { name: product.name }),
         });
         onSuccess?.();
       } else {
         toast({
-          title: 'Error',
-          description: result.error || 'Failed to delete product',
+          title: tCommon('error'),
+          description: result.error || t('failed'),
           variant: 'destructive',
         });
       }
     } catch (error) {
       console.error('Error deleting product:', error);
       toast({
-        title: 'Error',
-        description: 'An unexpected error occurred',
+        title: tCommon('error'),
+        description: tCommon('unexpectedError'),
         variant: 'destructive',
       });
     } finally {
@@ -68,29 +71,24 @@ export function ProductDeleteDialog({
             className="mr-1 inline-block stroke-destructive"
             size={18}
           />{' '}
-          Delete Product
+          {t('title')}
         </span>
       }
       desc={
         <div className="space-y-4">
           <p className="mb-2">
-            Are you sure you want to delete the product{' '}
-            <span className="font-bold">{product.name}</span>?
+            {t('description', { name: product.name })}
             <br />
-            This action will permanently remove this product from the system.
-            This cannot be undone.
+            {t('permanentRemove')}
           </p>
 
           <Alert variant="destructive">
-            <AlertTitle>Warning!</AlertTitle>
-            <AlertDescription>
-              This will also delete all associated product images and batch
-              data. Please be careful, this operation cannot be rolled back.
-            </AlertDescription>
+            <AlertTitle>{t('warning')}</AlertTitle>
+            <AlertDescription>{t('warningMessage')}</AlertDescription>
           </Alert>
         </div>
       }
-      confirmText={isDeleting ? 'Deleting...' : 'Delete'}
+      confirmText={isDeleting ? t('deleting') : t('deleteButton')}
       destructive
     />
   );
