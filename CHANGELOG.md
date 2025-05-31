@@ -10,6 +10,47 @@
 
 - optimize states in users/tasks context (#71)
 
+## [1.2.0](https://github.com/nestorzamili/sasuai-store/compare/v1.1.3...v1.2.0) (2025-05-31)
+
+
+### Features
+
+* add language switcher for English and Indonesian ([9039242](https://github.com/nestorzamili/sasuai-store/commit/9039242bf405e8a2ec907c71d26f87ab33bd5547))
+* **auth:** implement internationalization for authentication forms and messages ([d0bd36c](https://github.com/nestorzamili/sasuai-store/commit/d0bd36cf28ce01c3c8f754c432f22c788087ded3))
+* **auth:** migrate email sending from nodemailer to Resend API ([1a0349e](https://github.com/nestorzamili/sasuai-store/commit/1a0349ea80f1b2dbbc1addd737bb393d220f591c))
+* **auth:** refactor authentication methods and implement rate limiting ([94a4af3](https://github.com/nestorzamili/sasuai-store/commit/94a4af30718dc40c86e965df1bbfa8372b77aeec))
+* **i18n:** implement internationalization for sidebar and various components ([7dc92a7](https://github.com/nestorzamili/sasuai-store/commit/7dc92a7102b033e7c817a7e4b9f208335d7773c4))
+* Implement scheduler dashboard and job management features ([29446b7](https://github.com/nestorzamili/sasuai-store/commit/29446b7ae7dfcda60a0e879932ddcf86df136ae8))
+* **product:** implement barcode generation and update product form values ([0aa602c](https://github.com/nestorzamili/sasuai-store/commit/0aa602c0d1fc4d21d7e0e274ae14c54439810cbb))
+
+
+### Bug Fixes
+
+* Apply stabilization fixes to prevent infinite refresh. ([aa52eff](https://github.com/nestorzamili/sasuai-store/commit/aa52eff6bdc3ddfe0df3d697f110c28d1bcae37c))
+* **auth:** update authentication methods to include headers and improve session handling ([93e4c97](https://github.com/nestorzamili/sasuai-store/commit/93e4c97bfd2531783e43c7190405e38ca58093d3))
+
+
+### Code Refactoring
+
+* **brand:** enhance error handling and improve type safety ([2f0521f](https://github.com/nestorzamili/sasuai-store/commit/2f0521fd2671ad650aa7a94db21735cb3625b1c8))
+* **category:** enhance error handling and improve type safety across category components ([31571be](https://github.com/nestorzamili/sasuai-store/commit/31571be23192f18e7bbcaee854f7164699679b57))
+* **discount:** Refactor discount management components and services ([3fc5459](https://github.com/nestorzamili/sasuai-store/commit/3fc54591fbe5c73580909186ca86969bda83d0cd))
+* **docker:** exclude RESEND_API_KEY from environment variables for build-time safety ([d529179](https://github.com/nestorzamili/sasuai-store/commit/d5291790c00b88d6f3d8967cfd419beb5de6901e))
+* **docker:** remove unused email server environment variables and add email user configuration ([08c7a31](https://github.com/nestorzamili/sasuai-store/commit/08c7a31e2d92cd368258bfee8fce68cd4c860381))
+* **docker:** update environment variables for build-time safety and add RESEND_API_KEY ([44d5cf3](https://github.com/nestorzamili/sasuai-store/commit/44d5cf39e64f6de8f523e07263114cf3b6078c28))
+* Enhance RewardClaimsTable with improved fetch logic and status handling ([29d4283](https://github.com/nestorzamili/sasuai-store/commit/29d4283a0a8f11548f418896054f76b1b8b52f25))
+* Improve type safety of dashboard and components ([0969177](https://github.com/nestorzamili/sasuai-store/commit/096917733e9c92c531850971a9890c8c52bad707))
+* **inventory:** Refactor inventory and stock movement services; consolidate types into a single inventory module ([7219a1d](https://github.com/nestorzamili/sasuai-store/commit/7219a1d2af664b96979b05fc1daf1d0b91b5a599))
+* **mail:** initialize Resend client at runtime to improve performance ([9c3877a](https://github.com/nestorzamili/sasuai-store/commit/9c3877a43d81458721dbfe555cf7d78fea26fddc))
+* **mail:** initialize Resend client only when needed ([33f3bb6](https://github.com/nestorzamili/sasuai-store/commit/33f3bb6ca5c0abbd468f7586fc941c130c10f00b))
+* **mail:** lazy initialize Resend client to improve performance and prevent build-time errors ([12128f7](https://github.com/nestorzamili/sasuai-store/commit/12128f75129ca36e185f0288b4d699bd034449ce))
+* **member:** Enhance member management functionality with improved error handling and type definitions ([6e20f0b](https://github.com/nestorzamili/sasuai-store/commit/6e20f0ba4090a371a0f848774cb111730d477809))
+* **product:** enhance error handling and logging across product-related components ([4761ab4](https://github.com/nestorzamili/sasuai-store/commit/4761ab4c78ce18b1989af026ee17f727b313860c))
+* **transaction:** improve type safety ([bd16a28](https://github.com/nestorzamili/sasuai-store/commit/bd16a28e3f22217e77c5c0825c4fd38e28531505))
+* **types:** improve type safety by replacing 'any' with specific types ([426f2db](https://github.com/nestorzamili/sasuai-store/commit/426f2dba37753671fe0a367592a7939a7cb59e03))
+* **unit:** Refactor unit and conversion services for improved structure and functionality ([6585150](https://github.com/nestorzamili/sasuai-store/commit/6585150718a4a32e4ac5e96dfbc4d8270b0cb6aa))
+* **user:** update user role handling to use UserRole type for better type safety ([e43e650](https://github.com/nestorzamili/sasuai-store/commit/e43e650a6261f0caf0f3ae3559d09833ca7a11a7))
+
 ## [1.1.3](https://github.com/nestorzamili/sasuai-store/compare/v1.1.2...v1.1.3) (2025-05-20)
 
 
