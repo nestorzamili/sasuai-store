@@ -7,8 +7,10 @@ import { useEffect, useState } from 'react';
 import { AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslations } from 'next-intl';
 
 export default function ResetPasswordContent() {
+  const t = useTranslations('auth.resetPasswordContent');
   // useSearchParams is now safely wrapped in a Suspense boundary in the parent component
   const searchParams = useSearchParams();
   const token = searchParams?.get('token');
@@ -23,8 +25,8 @@ export default function ResetPasswordContent() {
 
       if (!token) {
         toast({
-          title: 'Invalid token',
-          description: 'Invalid or missing reset token.',
+          title: t('invalidToken'),
+          description: t('invalidTokenDescription'),
           variant: 'destructive',
         });
         setIsValidating(false);
@@ -37,16 +39,16 @@ export default function ResetPasswordContent() {
 
         if (token.length === 0) {
           toast({
-            title: 'Invalid token',
-            description: 'Your password reset link is invalid or has expired.',
+            title: t('invalidToken'),
+            description: t('linkExpired'),
             variant: 'destructive',
           });
         }
       } catch (error) {
         console.error('Error validating token:', error);
         toast({
-          title: 'Error',
-          description: 'An error occurred while validating your reset link.',
+          title: t('error'),
+          description: t('validationError'),
           variant: 'destructive',
         });
       } finally {
@@ -55,14 +57,12 @@ export default function ResetPasswordContent() {
     };
 
     validateToken();
-  }, [token, toast]);
+  }, [token, toast, t]);
 
   if (isValidating) {
     return (
       <div className="w-full text-center py-4">
-        <p className="text-sm text-muted-foreground">
-          Verifying your reset link...
-        </p>
+        <p className="text-sm text-muted-foreground">{t('verifying')}</p>
       </div>
     );
   }
@@ -72,30 +72,28 @@ export default function ResetPasswordContent() {
       <div className="w-full space-y-4">
         <div className="flex items-center space-x-2 text-destructive">
           <AlertCircle className="h-5 w-5" />
-          <p className="text-sm">
-            Your password reset link is invalid or has expired.
-          </p>
+          <p className="text-sm">{t('linkExpired')}</p>
         </div>
 
         <div className="flex flex-col items-center gap-2 pt-2">
           <p className="text-sm text-center text-muted-foreground">
-            Need a new password reset link?
+            {t('needNewLink')}
           </p>
           <Link href="/forgot-password" className="w-full">
             <Button variant="outline" className="w-full">
-              Request New Link
+              {t('requestNewLink')}
             </Button>
           </Link>
         </div>
 
         <div className="text-center text-sm pt-2">
           <p className="text-muted-foreground">
-            Remember your password?{' '}
+            {t('rememberPassword')}{' '}
             <Link
               href="/sign-in"
               className="text-primary font-medium hover:underline"
             >
-              Sign in
+              {t('signIn')}
             </Link>
           </p>
         </div>
@@ -106,18 +104,18 @@ export default function ResetPasswordContent() {
   return (
     <div className="w-full">
       <p className="text-sm text-muted-foreground mb-4">
-        Create a new password for your account
+        {t('createNewPassword')}
       </p>
       {token && <ResetForm token={token} />}
 
       <div className="text-center text-sm mt-6">
         <p className="text-muted-foreground">
-          Remember your password?{' '}
+          {t('rememberPassword')}{' '}
           <Link
             href="/sign-in"
             className="text-primary font-medium hover:underline"
           >
-            Sign in
+            {t('signIn')}
           </Link>
         </p>
       </div>

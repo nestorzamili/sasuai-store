@@ -4,6 +4,7 @@ import { HTMLAttributes, useState } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -22,29 +23,29 @@ type ResetFormProps = HTMLAttributes<HTMLDivElement> & {
   token: string;
 };
 
-const formSchema = z
-  .object({
-    password: z
-      .string()
-      .trim()
-      .min(8, { message: 'Password must be at least 8 characters' })
-      .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).{8,}$/, {
-        message:
-          'Password must include uppercase, lowercase, number, and special character',
-      }),
-    confirmPassword: z
-      .string()
-      .min(1, { message: 'Please confirm your password' }),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords don't match",
-    path: ['confirmPassword'],
-  });
-
 export function ResetForm({ className, token, ...props }: ResetFormProps) {
+  const t = useTranslations('auth.resetPasswordForm');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
+
+  const formSchema = z
+    .object({
+      password: z
+        .string()
+        .trim()
+        .min(8, { message: t('validation.passwordMinLength') })
+        .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).{8,}$/, {
+          message: t('validation.passwordComplexity'),
+        }),
+      confirmPassword: z
+        .string()
+        .min(1, { message: t('validation.confirmPasswordRequired') }),
+    })
+    .refine((data) => data.password === data.confirmPassword, {
+      message: t('validation.passwordsDontMatch'),
+      path: ['confirmPassword'],
+    });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -68,10 +69,10 @@ export function ResetForm({ className, token, ...props }: ResetFormProps) {
         const errorMessage =
           typeof resetError.message === 'string'
             ? resetError.message
-            : 'Failed to reset password';
+            : t('messages.failedToReset');
 
         toast({
-          title: 'Error',
+          title: t('messages.error'),
           description: errorMessage,
           variant: 'destructive',
         });
@@ -80,8 +81,8 @@ export function ResetForm({ className, token, ...props }: ResetFormProps) {
 
       // Success path
       toast({
-        title: 'Success',
-        description: 'Your password has been reset successfully!',
+        title: t('messages.success'),
+        description: t('messages.passwordResetSuccess'),
       });
 
       // Redirect to login after a brief delay
@@ -91,9 +92,8 @@ export function ResetForm({ className, token, ...props }: ResetFormProps) {
     } catch (error) {
       console.error('Error during password reset:', error);
       toast({
-        title: 'Error',
-        description:
-          'An error occurred while resetting your password. Please try again.',
+        title: t('messages.error'),
+        description: t('messages.unexpectedError'),
         variant: 'destructive',
       });
     } finally {
@@ -112,11 +112,11 @@ export function ResetForm({ className, token, ...props }: ResetFormProps) {
               render={({ field }) => (
                 <FormItem className="space-y-1 sm:space-y-1.5 w-full">
                   <FormLabel className="text-sm sm:text-base">
-                    New Password
+                    {t('newPassword')}
                   </FormLabel>
                   <FormControl>
                     <PasswordInput
-                      placeholder="********"
+                      placeholder={t('passwordPlaceholder')}
                       {...field}
                       className="h-9 sm:h-10 text-sm sm:text-base w-full"
                       disabled={isLoading}
@@ -133,11 +133,11 @@ export function ResetForm({ className, token, ...props }: ResetFormProps) {
               render={({ field }) => (
                 <FormItem className="space-y-1 sm:space-y-1.5 w-full">
                   <FormLabel className="text-sm sm:text-base">
-                    Confirm Password
+                    {t('confirmPassword')}
                   </FormLabel>
                   <FormControl>
                     <PasswordInput
-                      placeholder="********"
+                      placeholder={t('passwordPlaceholder')}
                       {...field}
                       className="h-9 sm:h-10 text-sm sm:text-base w-full"
                       disabled={isLoading}
@@ -153,7 +153,7 @@ export function ResetForm({ className, token, ...props }: ResetFormProps) {
               type="submit"
               disabled={isLoading}
             >
-              {isLoading ? 'Resetting...' : 'Reset Password'}
+              {isLoading ? t('resetting') : t('resetPassword')}
             </Button>
           </div>
         </form>

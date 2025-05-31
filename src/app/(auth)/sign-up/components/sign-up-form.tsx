@@ -4,6 +4,7 @@ import { HTMLAttributes, useState, useMemo } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -23,40 +24,40 @@ import { AuthLink } from '@/components/auth/auth-footers';
 
 type SignUpFormProps = HTMLAttributes<HTMLDivElement>;
 
-// Enhanced form validation schema
-const formSchema = z
-  .object({
-    name: z
-      .string()
-      .trim()
-      .min(3, { message: 'Name must be at least 3 characters' })
-      .max(50, { message: 'Name must not exceed 50 characters' })
-      .regex(/^[a-zA-Z\s'-]+$/, {
-        message: 'Name contains invalid characters',
-      }),
-    email: z
-      .string()
-      .trim()
-      .min(1, { message: 'Email is required' })
-      .email({ message: 'Invalid email address' }),
-    password: z
-      .string()
-      .trim()
-      .min(8, { message: 'Password must be at least 8 characters' })
-      .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).{8,}$/, {
-        message:
-          'Password must include uppercase, lowercase, number, and special character',
-      }),
-    confirmPassword: z.string().trim(),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords don't match",
-    path: ['confirmPassword'],
-  });
-
 export function SignUpForm({ className, ...props }: SignUpFormProps) {
+  const t = useTranslations('auth.signUpForm');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+
+  // Enhanced form validation schema
+  const formSchema = z
+    .object({
+      name: z
+        .string()
+        .trim()
+        .min(3, { message: t('validation.nameMinLength') })
+        .max(50, { message: t('validation.nameMaxLength') })
+        .regex(/^[a-zA-Z\s'-]+$/, {
+          message: t('validation.nameInvalidChars'),
+        }),
+      email: z
+        .string()
+        .trim()
+        .min(1, { message: t('validation.emailRequired') })
+        .email({ message: t('validation.emailInvalid') }),
+      password: z
+        .string()
+        .trim()
+        .min(8, { message: t('validation.passwordMinLength') })
+        .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).{8,}$/, {
+          message: t('validation.passwordComplexity'),
+        }),
+      confirmPassword: z.string().trim(),
+    })
+    .refine((data) => data.password === data.confirmPassword, {
+      message: t('validation.passwordsDontMatch'),
+      path: ['confirmPassword'],
+    });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -98,20 +99,20 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
 
       if (error) {
         toast({
-          title: 'Registration failed',
+          title: t('messages.registrationFailed'),
           description: extractErrorMessage(error),
           variant: 'destructive',
         });
       } else {
         form.reset();
         toast({
-          title: 'Registration successful',
-          description: 'Please check your email to verify your account.',
+          title: t('messages.registrationSuccessful'),
+          description: t('messages.checkEmailVerification'),
         });
       }
     } catch (err) {
       toast({
-        title: 'Error',
+        title: t('messages.error'),
         description: extractErrorMessage(err),
         variant: 'destructive',
       });
@@ -131,11 +132,11 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
               render={({ field }) => (
                 <FormItem className="space-y-1 sm:space-y-1.5 w-full">
                   <FormLabel className="text-sm sm:text-base">
-                    Full Name
+                    {t('fullName')}
                   </FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="John Doe"
+                      placeholder={t('fullNamePlaceholder')}
                       className="h-9 sm:h-10 text-sm sm:text-base w-full"
                       {...field}
                       disabled={isLoading}
@@ -151,10 +152,12 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
               name="email"
               render={({ field }) => (
                 <FormItem className="space-y-1 sm:space-y-1.5 w-full">
-                  <FormLabel className="text-sm sm:text-base">Email</FormLabel>
+                  <FormLabel className="text-sm sm:text-base">
+                    {t('email')}
+                  </FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="name@example.com"
+                      placeholder={t('emailPlaceholder')}
                       className="h-9 sm:h-10 text-sm sm:text-base w-full"
                       {...field}
                       disabled={isLoading}
@@ -171,11 +174,11 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
               render={({ field }) => (
                 <FormItem className="space-y-1 sm:space-y-1.5 w-full">
                   <FormLabel className="text-sm sm:text-base">
-                    Password
+                    {t('password')}
                   </FormLabel>
                   <FormControl>
                     <PasswordInput
-                      placeholder="********"
+                      placeholder={t('passwordPlaceholder')}
                       className="h-9 sm:h-10 text-sm sm:text-base w-full"
                       {...field}
                       disabled={isLoading}
@@ -192,11 +195,11 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
               render={({ field }) => (
                 <FormItem className="space-y-1 sm:space-y-1.5 w-full">
                   <FormLabel className="text-sm sm:text-base">
-                    Confirm Password
+                    {t('confirmPassword')}
                   </FormLabel>
                   <FormControl>
                     <PasswordInput
-                      placeholder="********"
+                      placeholder={t('passwordPlaceholder')}
                       className="h-9 sm:h-10 text-sm sm:text-base w-full"
                       {...field}
                       disabled={isLoading}
@@ -212,14 +215,14 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
               disabled={isSubmitDisabled}
               type="submit"
             >
-              {isLoading ? 'Creating account...' : 'Create Account'}
+              {isLoading ? t('creatingAccount') : t('createAccount')}
             </Button>
           </div>
         </form>
       </Form>
       <AuthLink
-        question="Already have an account?"
-        linkText="Sign in"
+        question={t('alreadyHaveAccount')}
+        linkText={t('signIn')}
         href="/sign-in"
       />
     </div>

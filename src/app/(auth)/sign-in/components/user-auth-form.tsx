@@ -5,6 +5,8 @@ import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useTranslations } from 'next-intl';
+
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -24,32 +26,33 @@ import { AuthLink } from '@/components/auth/auth-footers';
 
 type UserAuthFormProps = HTMLAttributes<HTMLDivElement>;
 
-// A combined schema that accepts either email or username
-const formSchema = z.object({
-  identifier: z
-    .string()
-    .min(1, { message: 'Please enter your email or username' })
-    .refine(
-      (value) => {
-        // Either valid email or username with minimum length
-        const isEmail = value.includes('@') && value.includes('.');
-        const isUsername = !value.includes('@') && value.length >= 3;
-        return isEmail || isUsername;
-      },
-      {
-        message: 'Please enter a valid email or username (min 3 characters)',
-      },
-    ),
-  password: z
-    .string()
-    .min(1, { message: 'Please enter your password' })
-    .min(7, { message: 'Password must be at least 7 characters long' }),
-});
-
 export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
+  const t = useTranslations('auth.form');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
+
+  // A combined schema that accepts either email or username
+  const formSchema = z.object({
+    identifier: z
+      .string()
+      .min(1, { message: t('validation.identifierRequired') })
+      .refine(
+        (value) => {
+          // Either valid email or username with minimum length
+          const isEmail = value.includes('@') && value.includes('.');
+          const isUsername = !value.includes('@') && value.length >= 3;
+          return isEmail || isUsername;
+        },
+        {
+          message: t('validation.identifierInvalid'),
+        },
+      ),
+    password: z
+      .string()
+      .min(1, { message: t('validation.passwordRequired') })
+      .min(7, { message: t('validation.passwordMinLength') }),
+  });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -73,8 +76,8 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
       if (result.success) {
         // Show success toast first
         toast({
-          title: 'Success',
-          description: 'Logged in successfully',
+          title: t('messages.success'),
+          description: t('messages.loggedInSuccessfully'),
         });
 
         // Force a more comprehensive redirect strategy
@@ -106,11 +109,11 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
       const errorMessage = result.errorMessage
         ? typeof result.errorMessage === 'string'
           ? result.errorMessage
-          : 'Invalid credentials'
-        : 'Authentication failed. Please try again.';
+          : t('messages.invalidCredentials')
+        : t('messages.authenticationFailed');
 
       toast({
-        title: 'Login failed',
+        title: t('messages.loginFailed'),
         description: errorMessage,
         variant: 'destructive',
       });
@@ -119,8 +122,8 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
       form.setValue('password', '');
 
       toast({
-        title: 'Error',
-        description: 'Authentication failed. Please try again.',
+        title: t('messages.error'),
+        description: t('messages.authenticationFailed'),
         variant: 'destructive',
       });
     } finally {
@@ -139,11 +142,11 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
               render={({ field }) => (
                 <FormItem className="space-y-1 sm:space-y-1.5 w-full">
                   <FormLabel className="text-sm sm:text-base">
-                    Email or Username
+                    {t('emailOrUsername')}
                   </FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="name@example.com or username"
+                      placeholder={t('emailOrUsernamePlaceholder')}
                       className="h-9 sm:h-10 text-sm sm:text-base w-full"
                       {...field}
                       disabled={isLoading}
@@ -160,18 +163,18 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
                 <FormItem className="space-y-1 sm:space-y-1.5 w-full">
                   <div className="flex items-center justify-between w-full">
                     <FormLabel className="text-sm sm:text-base">
-                      Password
+                      {t('password')}
                     </FormLabel>
                     <Link
                       href="/forgot-password"
                       className="text-xs sm:text-sm font-medium text-primary hover:opacity-80 transition-opacity"
                     >
-                      Forgot password?
+                      {t('forgotPassword')}
                     </Link>
                   </div>
                   <FormControl>
                     <PasswordInput
-                      placeholder="********"
+                      placeholder={t('passwordPlaceholder')}
                       className="h-9 sm:h-10 text-sm sm:text-base w-full"
                       {...field}
                       disabled={isLoading}
@@ -186,12 +189,12 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
               type="submit"
               disabled={isLoading}
             >
-              {isLoading ? 'Logging in...' : 'Sign in'}
+              {isLoading ? t('loggingIn') : t('signIn')}
             </Button>
 
             <AuthLink
-              question="Don't have an account?"
-              linkText="Create an account"
+              question={t('dontHaveAccount')}
+              linkText={t('createAccount')}
               href="/sign-up"
             />
           </div>
