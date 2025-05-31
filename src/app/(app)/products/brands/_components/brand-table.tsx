@@ -1,6 +1,7 @@
 'use client';
 import * as React from 'react';
 import { useState, useMemo, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { ColumnDef } from '@tanstack/react-table';
 import { MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -30,6 +31,8 @@ interface BrandTableProps {
 }
 
 export function BrandTable({ onEdit, onRefresh }: BrandTableProps) {
+  const t = useTranslations('brand.table');
+
   // State for delete dialog
   const [deleteDialog, setDeleteDialog] = useState(false);
   const [deleteData, setDeleteData] = useState<BrandWithCount | null>(null);
@@ -122,25 +125,25 @@ export function BrandTable({ onEdit, onRefresh }: BrandTableProps) {
   const columns = useMemo(
     (): ColumnDef<BrandWithCount>[] => [
       {
-        header: 'Name',
+        header: t('columns.name'),
         accessorKey: 'name',
         cell: ({ row }) => (
           <div className="font-medium">{row.getValue('name')}</div>
         ),
-        enableSorting: true,
+        enableSorting: false,
       },
       {
-        header: 'Products Count',
+        header: t('columns.productsCount'),
         accessorKey: '_count.products',
         cell: ({ row }) => (
           <Badge variant="outline" className="text-xs">
-            {row.original._count?.products || 0} products
+            {row.original._count?.products || 0} {t('badges.products')}
           </Badge>
         ),
         enableSorting: true,
       },
       {
-        header: 'Created',
+        header: t('columns.created'),
         accessorKey: 'createdAt',
         cell: ({ row }) => {
           const date = new Date(row.getValue('createdAt'));
@@ -162,24 +165,24 @@ export function BrandTable({ onEdit, onRefresh }: BrandTableProps) {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="h-8 w-8 p-0">
-                    <span className="sr-only">Open menu</span>
+                    <span className="sr-only">{t('actions.openMenu')}</span>
                     <MoreHorizontal className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                  <DropdownMenuLabel>{t('actions.actions')}</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     className="flex justify-between cursor-pointer"
                     onClick={() => handleEditClick(brand)}
                   >
-                    Edit <IconEdit className="h-4 w-4" />
+                    {t('actions.edit')} <IconEdit className="h-4 w-4" />
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     className="flex justify-between cursor-pointer text-destructive focus:text-destructive"
                     onClick={() => handleDeleteClick(brand)}
                   >
-                    Delete <IconTrash className="h-4 w-4" />
+                    {t('actions.delete')} <IconTrash className="h-4 w-4" />
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -188,7 +191,7 @@ export function BrandTable({ onEdit, onRefresh }: BrandTableProps) {
         },
       },
     ],
-    [handleEditClick, handleDeleteClick],
+    [handleEditClick, handleDeleteClick, t],
   );
 
   return (

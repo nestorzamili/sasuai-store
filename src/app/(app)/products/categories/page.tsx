@@ -1,11 +1,13 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { CategoryWithCount } from '@/lib/types/category';
 import CategoryPrimaryButton from './_components/category-primary-button';
 import { CategoryTable } from './_components/category-table';
 
 export default function CategoriesPage() {
+  const t = useTranslations('category');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] =
     useState<CategoryWithCount | null>(null);
@@ -34,11 +36,8 @@ export default function CategoriesPage() {
     <div className="space-y-1">
       <div className="flex items-center justify-between flex-wrap gap-x-4">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Category</h2>
-          <p className="text-muted-foreground">
-            Manage your categories here. You can add, edit, or delete categories
-            as needed.
-          </p>
+          <h2 className="text-2xl font-bold tracking-tight">{t('title')}</h2>
+          <p className="text-muted-foreground">{t('description')}</p>
         </div>
         <CategoryPrimaryButton
           open={isDialogOpen}

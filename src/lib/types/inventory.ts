@@ -145,6 +145,53 @@ export interface StockMovement {
   batch?: ProductBatchWithProduct;
 }
 
+// Add new interface for transaction-based stock out
+export interface TransactionStockOut {
+  id: string;
+  batchId: string;
+  quantity: number;
+  unitId: string;
+  date: Date;
+  reason: string; // Will be "TRANSACTION"
+  transactionId?: string;
+  transactionItemId?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Unified stock out type that can represent both manual stock outs and transaction-based ones
+export interface UnifiedStockOut {
+  id: string;
+  batchId: string;
+  quantity: number;
+  unitId: string;
+  date: Date;
+  reason: string;
+  type: 'MANUAL' | 'TRANSACTION';
+  transactionId?: string;
+  transactionItemId?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface StockOutComplete extends StockOut {
+  batch: ProductBatchWithProduct;
+  unit: Unit;
+}
+
+// Add new complete type for unified stock outs
+export interface UnifiedStockOutComplete extends UnifiedStockOut {
+  batch: ProductBatchWithProduct;
+  unit: Unit;
+  transaction?: {
+    id: string;
+    tranId: string | null;
+    cashier?: {
+      name: string | null;
+    };
+  };
+}
+
 // Stock movement creation types
 export interface CreateStockInData {
   batchId: string;

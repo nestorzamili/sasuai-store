@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -26,20 +27,22 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { createUnit } from '../units/action';
 
-const formSchema = z.object({
-  name: z.string().min(1, 'Unit name is required'),
-  symbol: z
-    .string()
-    .min(1, 'Unit symbol is required')
-    .max(5, 'Symbol should be short'),
-});
-
-type FormValues = z.infer<typeof formSchema>;
-
 export function CreateUnitDialog() {
+  const t = useTranslations('product.createUnitDialog');
+  const tCommon = useTranslations('common');
   const { openUnitCreate, setOpenUnitCreate, fetchOptions } = useProductForm();
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+
+  const formSchema = z.object({
+    name: z.string().min(1, t('validation.nameRequired')),
+    symbol: z
+      .string()
+      .min(1, t('validation.symbolRequired'))
+      .max(5, t('validation.symbolMaxLength')),
+  });
+
+  type FormValues = z.infer<typeof formSchema>;
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -59,8 +62,8 @@ export function CreateUnitDialog() {
 
       if (result.success) {
         toast({
-          title: 'Unit created',
-          description: 'New unit has been created successfully',
+          title: t('success'),
+          description: t('successMessage'),
         });
         form.reset();
         setOpenUnitCreate(false);
@@ -69,16 +72,16 @@ export function CreateUnitDialog() {
         await fetchOptions();
       } else {
         toast({
-          title: 'Error',
-          description: result.error || 'Failed to create unit',
+          title: tCommon('error'),
+          description: result.error || t('failed'),
           variant: 'destructive',
         });
       }
     } catch (error) {
       console.error('Error creating unit:', error);
       toast({
-        title: 'Error',
-        description: 'An unexpected error occurred',
+        title: tCommon('error'),
+        description: tCommon('unexpectedError'),
         variant: 'destructive',
       });
     } finally {
@@ -90,10 +93,8 @@ export function CreateUnitDialog() {
     <Dialog open={openUnitCreate} onOpenChange={setOpenUnitCreate}>
       <DialogContent className="sm:max-w-[400px]">
         <DialogHeader>
-          <DialogTitle>Create Unit</DialogTitle>
-          <DialogDescription>
-            Add a new unit for measuring products
-          </DialogDescription>
+          <DialogTitle>{t('title')}</DialogTitle>
+          <DialogDescription>{t('description')}</DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
@@ -103,12 +104,9 @@ export function CreateUnitDialog() {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Unit Name</FormLabel>
+                  <FormLabel>{t('unitName')}</FormLabel>
                   <FormControl>
-                    <Input
-                      placeholder="e.g., Kilogram, Liter, Piece"
-                      {...field}
-                    />
+                    <Input placeholder={t('unitNamePlaceholder')} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -120,9 +118,12 @@ export function CreateUnitDialog() {
               name="symbol"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Unit Symbol</FormLabel>
+                  <FormLabel>{t('unitSymbol')}</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., kg, L, pc" {...field} />
+                    <Input
+                      placeholder={t('unitSymbolPlaceholder')}
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -135,10 +136,10 @@ export function CreateUnitDialog() {
                 type="button"
                 onClick={() => setOpenUnitCreate(false)}
               >
-                Cancel
+                {t('cancel')}
               </Button>
               <Button type="submit" disabled={loading}>
-                {loading ? 'Creating...' : 'Create Unit'}
+                {loading ? t('creating') : t('createButton')}
               </Button>
             </DialogFooter>
           </form>

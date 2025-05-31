@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -37,6 +38,7 @@ export function SupplierDetailDialog({
   onOpenChange,
   supplierId,
 }: SupplierDetailDialogProps) {
+  const t = useTranslations('supplier.detailDialog');
   const [supplier, setSupplier] = useState<SupplierWithStockIns | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -56,15 +58,14 @@ export function SupplierDetailDialog({
     } catch (error) {
       console.error('Error fetching supplier details:', error);
       toast({
-        title: 'Error fetching supplier details',
-        description:
-          'An unexpected error occurred while fetching supplier details',
+        title: t('errorFetching'),
+        description: t('unexpectedError'),
         variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
     }
-  }, [supplierId, open]);
+  }, [supplierId, open, t]);
 
   useEffect(() => {
     fetchSupplier();
@@ -86,11 +87,7 @@ export function SupplierDetailDialog({
       <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold">
-            {isLoading
-              ? 'Loading supplier details...'
-              : supplier
-                ? supplier.name
-                : 'Supplier Details'}
+            {isLoading ? t('loading') : supplier ? supplier.name : t('title')}
           </DialogTitle>
         </DialogHeader>
 
@@ -101,27 +98,27 @@ export function SupplierDetailDialog({
             <div className="grid md:grid-cols-3 gap-6">
               <div>
                 <h3 className="font-medium text-muted-foreground mb-2">
-                  Contact Information
+                  {t('contactInformation')}
                 </h3>
                 <p className="font-medium">
                   {supplier.contact || (
                     <span className="text-muted-foreground italic">
-                      No contact information provided
+                      {t('noContactInfo')}
                     </span>
                   )}
                 </p>
               </div>
               <div>
                 <h3 className="font-medium text-muted-foreground mb-2">
-                  Total Stock-Ins
+                  {t('totalStockIns')}
                 </h3>
                 <p className="font-medium">
-                  {supplier.stockIns.length} records
+                  {supplier.stockIns.length} {t('records')}
                 </p>
               </div>
               <div>
                 <h3 className="font-medium text-muted-foreground mb-2">
-                  Added On
+                  {t('addedOn')}
                 </h3>
                 <p className="font-medium flex items-center">
                   <IconCalendar className="h-4 w-4 mr-1" />
@@ -132,16 +129,18 @@ export function SupplierDetailDialog({
 
             <Card>
               <CardContent className="pt-6">
-                <h3 className="text-lg font-medium mb-4">Stock-In History</h3>
+                <h3 className="text-lg font-medium mb-4">
+                  {t('stockInHistory')}
+                </h3>
                 {supplier.stockIns.length > 0 ? (
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Product</TableHead>
-                        <TableHead>Batch</TableHead>
-                        <TableHead>Quantity</TableHead>
-                        <TableHead>Unit</TableHead>
+                        <TableHead>{t('date')}</TableHead>
+                        <TableHead>{t('product')}</TableHead>
+                        <TableHead>{t('batch')}</TableHead>
+                        <TableHead>{t('quantity')}</TableHead>
+                        <TableHead>{t('unit')}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -166,7 +165,7 @@ export function SupplierDetailDialog({
                   <div className="py-8 text-center">
                     <IconInfoCircle className="h-12 w-12 mx-auto text-muted-foreground" />
                     <p className="mt-2 text-muted-foreground">
-                      No stock-in records found for this supplier
+                      {t('noStockInRecords')}
                     </p>
                   </div>
                 )}
@@ -176,14 +175,12 @@ export function SupplierDetailDialog({
         ) : (
           <div className="py-6 text-center">
             <IconInfoCircle className="h-12 w-12 mx-auto text-muted-foreground" />
-            <p className="mt-2 text-muted-foreground">
-              No supplier information available
-            </p>
+            <p className="mt-2 text-muted-foreground">{t('noSupplierInfo')}</p>
           </div>
         )}
 
         <DialogFooter>
-          <Button onClick={() => onOpenChange(false)}>Close</Button>
+          <Button onClick={() => onOpenChange(false)}>{t('close')}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

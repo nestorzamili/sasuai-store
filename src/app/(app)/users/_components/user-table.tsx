@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { useState, useCallback, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { ColumnDef } from '@tanstack/react-table';
 import { MoreHorizontal } from 'lucide-react';
 import {
@@ -47,6 +48,8 @@ interface UserTableProps {
 }
 
 export function UserTable({ onEdit, onRefresh }: UserTableProps) {
+  const t = useTranslations('user.table');
+
   // State for dialogs
   const [selectedUserForDelete, setSelectedUserForDelete] =
     useState<User | null>(null);
@@ -224,13 +227,13 @@ export function UserTable({ onEdit, onRefresh }: UserTableProps) {
     if (onRefresh) onRefresh();
   }, [refresh, onRefresh]);
 
-  // Define columns - memoize to prevent re-creation
+  // Define columns with translations
   const columns: ColumnDef<User>[] = useMemo(
     () => [
       // User info column with avatar
       {
         id: 'user',
-        header: 'User',
+        header: t('columns.name'),
         accessorFn: (row) => row.name,
         cell: ({ row }) => {
           const user = row.original;
@@ -251,7 +254,7 @@ export function UserTable({ onEdit, onRefresh }: UserTableProps) {
       // Email column
       {
         accessorKey: 'email',
-        header: 'Email',
+        header: t('columns.email'),
         cell: ({ row }) => {
           return (
             <div className="text-sm text-muted-foreground">
@@ -264,15 +267,21 @@ export function UserTable({ onEdit, onRefresh }: UserTableProps) {
       // Role column
       {
         accessorKey: 'role',
-        header: 'Role',
+        header: t('columns.role'),
         cell: ({ row }) => {
           const role = row.getValue('role') as string;
+          const roleLabel =
+            role === 'admin'
+              ? t('roles.admin')
+              : role === 'cashier'
+                ? t('roles.cashier')
+                : t('roles.user');
           return (
             <Badge
               variant={role === 'admin' ? 'default' : 'outline'}
               className="capitalize"
             >
-              {role || 'user'}
+              {roleLabel}
             </Badge>
           );
         },
@@ -281,18 +290,18 @@ export function UserTable({ onEdit, onRefresh }: UserTableProps) {
       // Status column
       {
         id: 'status',
-        header: 'Status',
+        header: t('columns.status'),
         accessorFn: (row) => row.banned,
         cell: ({ row }) => {
           const banned = row.original.banned;
           return banned ? (
-            <Badge variant="destructive">Banned</Badge>
+            <Badge variant="destructive">{t('status.banned')}</Badge>
           ) : (
             <Badge
               variant="outline"
               className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
             >
-              Active
+              {t('status.active')}
             </Badge>
           );
         },
@@ -301,16 +310,19 @@ export function UserTable({ onEdit, onRefresh }: UserTableProps) {
       // Verified column
       {
         id: 'verified',
-        header: 'Verified',
+        header: t('columns.verified'),
         accessorFn: (row) => row.data?.emailVerified,
         cell: ({ row }) => {
           const verified = row.original.data?.emailVerified;
           return verified ? (
             <div className="flex items-center text-green-600">
-              <IconUserCheck size={16} className="mr-1" /> Yes
+              <IconUserCheck size={16} className="mr-1" />{' '}
+              {t('status.verified')}
             </div>
           ) : (
-            <span className="text-muted-foreground">No</span>
+            <span className="text-muted-foreground">
+              {t('status.unverified')}
+            </span>
           );
         },
       },
@@ -318,7 +330,7 @@ export function UserTable({ onEdit, onRefresh }: UserTableProps) {
       // Created at column
       {
         accessorKey: 'createdAt',
-        header: 'Joined',
+        header: t('columns.createdAt'),
         cell: ({ row }) => {
           const createdAt =
             row.original.createdAt || row.original.data?.createdAt;
@@ -341,36 +353,36 @@ export function UserTable({ onEdit, onRefresh }: UserTableProps) {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="h-8 w-8 p-0">
-                    <span className="sr-only">Open menu</span>
+                    <span className="sr-only">{t('actions.openMenu')}</span>
                     <MoreHorizontal className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                  <DropdownMenuLabel>{t('actions.actions')}</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     className="flex justify-between cursor-pointer"
                     onClick={() => onEdit?.(user)}
                   >
-                    Edit <IconEdit className="h-4 w-4" />
+                    {t('actions.edit')} <IconEdit className="h-4 w-4" />
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     className="flex justify-between cursor-pointer"
                     onClick={() => handleRoleClick(user)}
                   >
-                    Change Role <IconKey className="h-4 w-4" />
+                    {t('actions.changeRole')} <IconKey className="h-4 w-4" />
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     className="flex justify-between cursor-pointer"
                     onClick={() => handleSessionsClick(user)}
                   >
-                    Sessions <IconDevices className="h-4 w-4" />
+                    {t('actions.sessions')} <IconDevices className="h-4 w-4" />
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     className="flex justify-between cursor-pointer"
                     onClick={() => handleBanClick(user)}
                   >
-                    {isBanned ? 'Unban User' : 'Ban User'}{' '}
+                    {isBanned ? t('actions.unban') : t('actions.ban')}{' '}
                     <IconBan className="h-4 w-4" />
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
@@ -378,7 +390,7 @@ export function UserTable({ onEdit, onRefresh }: UserTableProps) {
                     className="flex justify-between cursor-pointer text-destructive focus:text-destructive"
                     onClick={() => handleDeleteClick(user)}
                   >
-                    Delete <IconTrash className="h-4 w-4" />
+                    {t('actions.delete')} <IconTrash className="h-4 w-4" />
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -388,6 +400,7 @@ export function UserTable({ onEdit, onRefresh }: UserTableProps) {
       },
     ],
     [
+      t,
       getInitials,
       onEdit,
       handleRoleClick,

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { IconAlertTriangle } from '@tabler/icons-react';
 import { toast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -21,6 +22,7 @@ export function SupplierDeleteDialog({
   supplier,
   onSuccess,
 }: Props) {
+  const t = useTranslations('supplier.deleteDialog');
   const [isDeleting, setIsDeleting] = useState(false);
   const [canDelete, setCanDelete] = useState<boolean | null>(null);
   const [isCheckingDelete, setIsCheckingDelete] = useState(false);
@@ -58,8 +60,8 @@ export function SupplierDeleteDialog({
 
       if (!canDeleteCheck.success || !canDeleteCheck.canDelete) {
         toast({
-          title: 'Cannot Delete Supplier',
-          description: `This supplier has stock-in records associated with it. Remove these stock-in records first.`,
+          title: t('cannotDeleteTitle'),
+          description: t('cannotDeleteMessage'),
           variant: 'destructive',
         });
         onOpenChange(false);
@@ -70,29 +72,29 @@ export function SupplierDeleteDialog({
 
       if (result.success) {
         toast({
-          title: 'Supplier deleted',
-          description: `The supplier "${supplier.name}" has been deleted successfully`,
+          title: t('success'),
+          description: t('successMessage', { name: supplier.name }),
         });
         onSuccess?.();
       } else {
         toast({
-          title: 'Error',
-          description: result.error || 'Failed to delete supplier',
+          title: t('error'),
+          description: result.error || t('failedToDelete'),
           variant: 'destructive',
         });
       }
     } catch (error) {
       console.error('Error deleting supplier:', error);
       toast({
-        title: 'Error',
-        description: 'An unexpected error occurred',
+        title: t('error'),
+        description: t('unexpectedError'),
         variant: 'destructive',
       });
     } finally {
       setIsDeleting(false);
       onOpenChange(false);
     }
-  }, [supplier.id, supplier.name, onOpenChange, onSuccess]);
+  }, [supplier.id, supplier.name, onOpenChange, onSuccess, t]);
 
   return (
     <ConfirmDialog
@@ -106,45 +108,38 @@ export function SupplierDeleteDialog({
             className="mr-1 inline-block stroke-destructive"
             size={18}
           />{' '}
-          Delete Supplier
+          {t('title')}
         </span>
       }
       desc={
         <div className="space-y-4">
           <p className="mb-2">
-            Are you sure you want to delete{' '}
-            <span className="font-bold">{supplier.name}</span>?
+            {t('description', { name: supplier.name })}
             <br />
-            This action will permanently remove this supplier from the system.
-            This cannot be undone.
+            {t('permanentRemove')}
           </p>
 
           {isCheckingDelete ? (
             <Alert>
-              <AlertTitle>Checking supplier usage...</AlertTitle>
-              <AlertDescription>
-                Please wait while we check if this supplier can be deleted.
-              </AlertDescription>
+              <AlertTitle>{t('checkingStatus')}</AlertTitle>
+              <AlertDescription>{t('pleaseWait')}</AlertDescription>
             </Alert>
           ) : canDelete === false ? (
             <Alert variant="destructive">
-              <AlertTitle>Cannot Delete</AlertTitle>
+              <AlertTitle>{t('cannotDelete')}</AlertTitle>
               <AlertDescription>
-                This supplier has stock-in records associated with it. You need
-                to remove those records before deleting this supplier.
+                {t('inUse', { count: supplier._count?.stockIns || 0 })}
               </AlertDescription>
             </Alert>
           ) : (
             <Alert variant="destructive">
-              <AlertTitle>Warning!</AlertTitle>
-              <AlertDescription>
-                Please be careful, this operation cannot be rolled back.
-              </AlertDescription>
+              <AlertTitle>{t('warning')}</AlertTitle>
+              <AlertDescription>{t('warningMessage')}</AlertDescription>
             </Alert>
           )}
         </div>
       }
-      confirmText={isDeleting ? 'Deleting...' : 'Delete'}
+      confirmText={isDeleting ? t('deleting') : t('deleteButton')}
       destructive
     />
   );

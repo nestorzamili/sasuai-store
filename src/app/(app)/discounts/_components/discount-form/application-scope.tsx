@@ -21,12 +21,14 @@ import ProductSelector from './product-selector';
 import MemberSelector from './member-selector';
 import TierSelector from './tier-selector';
 import { useMemo, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 
 interface ApplicationScopeProps {
   form: UseFormReturn<DiscountFormValues>;
 }
 
 export default function ApplicationScope({ form }: ApplicationScopeProps) {
+  const t = useTranslations('discount.form');
   const isGlobal = form.watch('isGlobal');
   const applyTo = form.watch('applyTo');
 
@@ -51,9 +53,9 @@ export default function ApplicationScope({ form }: ApplicationScopeProps) {
           name="productIds"
           render={({ field }) => (
             <FormItem className="border rounded-md p-4">
-              <FormLabel className="text-base">Select Products</FormLabel>
+              <FormLabel className="text-base">{t('selectProducts')}</FormLabel>
               <FormDescription className="mt-1 mb-3">
-                Choose which products this discount will apply to
+                {t('chooseProducts')}
               </FormDescription>
               <FormControl>
                 <ProductSelector
@@ -68,7 +70,7 @@ export default function ApplicationScope({ form }: ApplicationScopeProps) {
       );
     }
     return null;
-  }, [form, isGlobal, applyTo]);
+  }, [form, isGlobal, applyTo, t]);
 
   const MemberSelectorMemoized = useMemo(() => {
     if (!isGlobal && applyTo === DiscountApplyTo.SPECIFIC_MEMBERS) {
@@ -78,9 +80,9 @@ export default function ApplicationScope({ form }: ApplicationScopeProps) {
           name="memberIds"
           render={({ field }) => (
             <FormItem className="border rounded-md p-4">
-              <FormLabel className="text-base">Select Members</FormLabel>
+              <FormLabel className="text-base">{t('selectMembers')}</FormLabel>
               <FormDescription className="mt-1 mb-3">
-                Choose which members will be eligible for this discount
+                {t('chooseMembersEligible')}
               </FormDescription>
               <FormControl>
                 <MemberSelector
@@ -95,7 +97,7 @@ export default function ApplicationScope({ form }: ApplicationScopeProps) {
       );
     }
     return null;
-  }, [form, isGlobal, applyTo]);
+  }, [form, isGlobal, applyTo, t]);
 
   const TierSelectorMemoized = useMemo(() => {
     if (!isGlobal && applyTo === DiscountApplyTo.SPECIFIC_MEMBER_TIERS) {
@@ -105,9 +107,11 @@ export default function ApplicationScope({ form }: ApplicationScopeProps) {
           name="memberTierIds"
           render={({ field }) => (
             <FormItem className="border rounded-md p-4">
-              <FormLabel className="text-base">Select Member Tiers</FormLabel>
+              <FormLabel className="text-base">
+                {t('selectMemberTiers')}
+              </FormLabel>
               <FormDescription className="mt-1 mb-3">
-                Choose which membership tiers will be eligible for this discount
+                {t('chooseTiersEligible')}
               </FormDescription>
               <FormControl>
                 <TierSelector
@@ -122,11 +126,11 @@ export default function ApplicationScope({ form }: ApplicationScopeProps) {
       );
     }
     return null;
-  }, [form, isGlobal, applyTo]);
+  }, [form, isGlobal, applyTo, t]);
 
   return (
     <div className="space-y-6">
-      <h3 className="text-lg font-medium">Discount Application</h3>
+      <h3 className="text-lg font-medium">{t('discountApplication')}</h3>
       <div className="space-y-4">
         <FormField
           control={form.control}
@@ -142,10 +146,8 @@ export default function ApplicationScope({ form }: ApplicationScopeProps) {
                 />
               </FormControl>
               <div className="space-y-1 leading-none">
-                <FormLabel>Global Discount</FormLabel>
-                <FormDescription>
-                  Apply this discount to all eligible purchases automatically
-                </FormDescription>
+                <FormLabel>{t('globalDiscount')}</FormLabel>
+                <FormDescription>{t('applyAutomatically')}</FormDescription>
               </div>
             </FormItem>
           )}
@@ -157,7 +159,7 @@ export default function ApplicationScope({ form }: ApplicationScopeProps) {
             name="applyTo"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Apply Discount To</FormLabel>
+                <FormLabel>{t('applyDiscountTo')}</FormLabel>
                 <Select
                   onValueChange={field.onChange}
                   defaultValue={field.value || undefined}
@@ -166,24 +168,22 @@ export default function ApplicationScope({ form }: ApplicationScopeProps) {
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select application scope" />
+                      <SelectValue placeholder={t('selectApplicationScope')} />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
                     <SelectItem value={DiscountApplyTo.SPECIFIC_PRODUCTS}>
-                      Specific Products
+                      {t('specificProducts')}
                     </SelectItem>
                     <SelectItem value={DiscountApplyTo.SPECIFIC_MEMBERS}>
-                      Specific Members
+                      {t('specificMembers')}
                     </SelectItem>
                     <SelectItem value={DiscountApplyTo.SPECIFIC_MEMBER_TIERS}>
-                      Member Tiers
+                      {t('memberTiers')}
                     </SelectItem>
                   </SelectContent>
                 </Select>
-                <FormDescription>
-                  Choose which items or members this discount applies to
-                </FormDescription>
+                <FormDescription>{t('chooseAppliesTo')}</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -191,8 +191,7 @@ export default function ApplicationScope({ form }: ApplicationScopeProps) {
         ) : (
           <div className="rounded-md border bg-muted/50 p-4">
             <p className="text-sm text-muted-foreground">
-              Global discounts apply to all purchases and don't require specific
-              targeting
+              {t('globalDiscountNote')}
             </p>
           </div>
         )}

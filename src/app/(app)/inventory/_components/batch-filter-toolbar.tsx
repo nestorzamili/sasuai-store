@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { DateRange } from 'react-day-picker';
 import { DateRangePickerWithPresets } from '@/components/ui/date-range-picker-with-presets';
 import { Input } from '@/components/ui/input';
@@ -57,6 +58,8 @@ export default function BatchFilterToolbar({
   setCategoryId,
   categories = [],
 }: BatchFilterToolbarProps) {
+  const t = useTranslations('inventory.batchFilter');
+
   // State for the quantity popover
   const [qtyOpen, setQtyOpen] = useState(false);
   const [tempMinQty, setTempMinQty] = useState(minQuantity);
@@ -84,13 +87,13 @@ export default function BatchFilterToolbar({
   // Generate quantity button label
   const getQtyButtonLabel = () => {
     if (minQuantity && maxQuantity) {
-      return `${minQuantity} - ${maxQuantity} units`;
+      return `${minQuantity} - ${maxQuantity} ${t('units')}`;
     } else if (minQuantity) {
-      return `Min: ${minQuantity} units`;
+      return `${t('min')}: ${minQuantity} ${t('units')}`;
     } else if (maxQuantity) {
-      return `Max: ${maxQuantity} units`;
+      return `${t('max')}: ${maxQuantity} ${t('units')}`;
     }
-    return 'Quantity Range';
+    return t('quantityRange');
   };
 
   // Handle quantity filter apply
@@ -130,6 +133,7 @@ export default function BatchFilterToolbar({
             align="start"
             className="w-full"
             isCompact={true}
+            placeholder={t('expiryDateRange')}
           />
         </div>
 
@@ -163,7 +167,7 @@ export default function BatchFilterToolbar({
           <PopoverContent className="w-[300px] p-4">
             <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <h4 className="font-medium">Quantity Range</h4>
+                <h4 className="font-medium">{t('quantityRange')}</h4>
                 {(tempMinQty || tempMaxQty) && (
                   <Button
                     variant="ghost"
@@ -171,7 +175,7 @@ export default function BatchFilterToolbar({
                     onClick={handleResetQtyFilter}
                     className="h-7 px-2 text-xs"
                   >
-                    Reset
+                    {t('reset')}
                   </Button>
                 )}
               </div>
@@ -180,7 +184,7 @@ export default function BatchFilterToolbar({
               <div className="flex gap-4 items-center">
                 <div className="flex-1">
                   <label className="text-xs text-muted-foreground block mb-1">
-                    Min Quantity
+                    {t('minQuantity')}
                   </label>
                   <Input
                     type="number"
@@ -190,7 +194,7 @@ export default function BatchFilterToolbar({
                 </div>
                 <div className="flex-1">
                   <label className="text-xs text-muted-foreground block mb-1">
-                    Max Quantity
+                    {t('maxQuantity')}
                   </label>
                   <Input
                     type="number"
@@ -201,7 +205,7 @@ export default function BatchFilterToolbar({
               </div>
 
               <Button className="w-full" onClick={handleApplyQtyFilter}>
-                Apply Filter
+                {t('applyFilter')}
               </Button>
             </div>
           </PopoverContent>
@@ -220,10 +224,10 @@ export default function BatchFilterToolbar({
                 className={cn(categoryId && 'border-primary text-primary')}
               >
                 <IconLayoutGrid size={16} className="mr-2" />
-                <SelectValue placeholder="All Categories" />
+                <SelectValue placeholder={t('allCategories')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
+                <SelectItem value="all">{t('allCategories')}</SelectItem>
                 {categories.map((category) => (
                   <SelectItem key={category.id} value={category.id}>
                     {category.name}
@@ -245,12 +249,12 @@ export default function BatchFilterToolbar({
               )}
             >
               <IconPackage size={16} className="mr-2" />
-              Advanced Filters
+              {t('advancedFilters')}
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-[300px] p-4">
             <div className="space-y-4">
-              <h4 className="font-medium">Stock Status</h4>
+              <h4 className="font-medium">{t('stockStatus')}</h4>
 
               {/* Stock Status Options */}
               {setIncludeExpired && (
@@ -266,7 +270,7 @@ export default function BatchFilterToolbar({
                     htmlFor="include-expired"
                     className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                   >
-                    Include Expired Products
+                    {t('includeExpired')}
                   </label>
                 </div>
               )}
@@ -284,7 +288,7 @@ export default function BatchFilterToolbar({
                     htmlFor="include-out-of-stock"
                     className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                   >
-                    Include Out of Stock Products
+                    {t('includeOutOfStock')}
                   </label>
                 </div>
               )}
@@ -301,7 +305,7 @@ export default function BatchFilterToolbar({
           className="shrink-0"
         >
           <IconFilterOff size={16} className="mr-2" />
-          <span>Clear Filters</span>
+          <span>{t('clearFilters')}</span>
         </Button>
       </div>
     </div>

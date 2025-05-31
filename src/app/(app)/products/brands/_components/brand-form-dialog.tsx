@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -28,13 +29,6 @@ import { toast } from '@/hooks/use-toast';
 import { IconPlus } from '@tabler/icons-react';
 import { createBrand, updateBrand } from '../action';
 
-// Define the form schema - removed logoUrl
-const formSchema = z.object({
-  name: z.string().min(1, 'Brand name is required'),
-});
-
-type FormValues = z.infer<typeof formSchema>;
-
 interface BrandFormDialogProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -48,8 +42,17 @@ export default function BrandFormDialog({
   initialData,
   onSuccess,
 }: BrandFormDialogProps) {
+  const t = useTranslations('brand.formDialog');
+  const tCommon = useTranslations('common');
   const [loading, setLoading] = useState(false);
   const isEditing = Boolean(initialData?.id);
+
+  // Define the form schema with translations
+  const formSchema = z.object({
+    name: z.string().min(1, t('validation.nameRequired')),
+  });
+
+  type FormValues = z.infer<typeof formSchema>;
 
   // Initialize the form
   const form = useForm<FormValues>({
@@ -88,26 +91,28 @@ export default function BrandFormDialog({
 
       if (result.success) {
         toast({
-          title: isEditing ? 'Brand updated' : 'Brand created',
+          title: isEditing
+            ? t('success.brandUpdated')
+            : t('success.brandCreated'),
           description: isEditing
-            ? 'Brand has been updated successfully'
-            : 'New brand has been created',
+            ? t('success.brandUpdatedMessage')
+            : t('success.brandCreatedMessage'),
         });
 
         form.reset();
         onSuccess?.();
       } else {
         toast({
-          title: 'Error',
-          description: result.error || 'Something went wrong',
+          title: tCommon('error'),
+          description: result.error || t('error.somethingWrong'),
           variant: 'destructive',
         });
       }
     } catch (error) {
       console.error('Error submitting form:', error);
       toast({
-        title: 'Error',
-        description: 'An unexpected error occurred',
+        title: tCommon('error'),
+        description: t('error.unexpectedError'),
         variant: 'destructive',
       });
     } finally {
@@ -119,16 +124,16 @@ export default function BrandFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
         <Button variant="default" className="space-x-1">
-          <span>Create</span> <IconPlus size={18} />
+          <span>{t('create')}</span> <IconPlus size={18} />
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>{isEditing ? 'Edit Brand' : 'Create Brand'}</DialogTitle>
+          <DialogTitle>
+            {isEditing ? t('editTitle') : t('createTitle')}
+          </DialogTitle>
           <DialogDescription>
-            {isEditing
-              ? 'Edit the brand information below'
-              : 'Add a new brand to your product catalog'}
+            {isEditing ? t('editDescription') : t('createDescription')}
           </DialogDescription>
         </DialogHeader>
 
@@ -139,9 +144,9 @@ export default function BrandFormDialog({
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Brand Name</FormLabel>
+                  <FormLabel>{t('brandName')}</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter brand name" {...field} />
+                    <Input placeholder={t('brandNamePlaceholder')} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -154,13 +159,13 @@ export default function BrandFormDialog({
                 type="button"
                 onClick={() => onOpenChange && onOpenChange(false)}
               >
-                Cancel
+                {t('cancel')}
               </Button>
               <Button type="submit" disabled={loading}>
                 {loading ? (
-                  <>{isEditing ? 'Updating...' : 'Creating...'}</>
+                  <>{isEditing ? t('updating') : t('creating')}</>
                 ) : (
-                  <>{isEditing ? 'Update Brand' : 'Create Brand'}</>
+                  <>{isEditing ? t('updateButton') : t('createButton')}</>
                 )}
               </Button>
             </DialogFooter>

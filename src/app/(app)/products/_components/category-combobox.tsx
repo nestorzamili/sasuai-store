@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useProductForm } from './product-form-provider';
 import { EntityCombobox } from './entity-combobox';
 
@@ -9,6 +10,7 @@ interface CategoryComboboxProps {
 }
 
 export function CategoryCombobox({ value, onChange }: CategoryComboboxProps) {
+  const t = useTranslations('product.categoryCombobox');
   const { categories, setOpenCategoryCreate } = useProductForm();
 
   return (
@@ -16,10 +18,10 @@ export function CategoryCombobox({ value, onChange }: CategoryComboboxProps) {
       value={value}
       onChange={onChange}
       entities={categories}
-      placeholder="Select category..."
-      emptyPlaceholder="No category found"
-      searchPlaceholder="Search categories..."
-      createEntityText="Create new category"
+      placeholder={t('placeholder')}
+      emptyPlaceholder={t('emptyPlaceholder')}
+      searchPlaceholder={t('searchPlaceholder')}
+      createEntityText={t('createEntityText')}
       onCreateEntity={() => setOpenCategoryCreate(true)}
     />
   );

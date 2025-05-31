@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -27,18 +28,6 @@ import { Input } from '@/components/ui/input';
 import { toast } from '@/hooks/use-toast';
 import { createMemberTier, updateMemberTier } from '../action';
 
-// Form schema for tier
-const tierFormSchema = z.object({
-  name: z.string().min(1, 'Tier name is required'),
-  minPoints: z.coerce
-    .number()
-    .int()
-    .min(0, 'Minimum points must be a non-negative integer'),
-  multiplier: z.coerce.number().min(0.1, 'Multiplier must be at least 0.1'),
-});
-
-type FormValues = z.infer<typeof tierFormSchema>;
-
 interface TierFormDialogProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -52,8 +41,22 @@ export default function TierFormDialog({
   initialData,
   onSuccess,
 }: TierFormDialogProps) {
+  const t = useTranslations('member.tierFormDialog');
+  const tCommon = useTranslations('member.common');
   const [loading, setLoading] = useState(false);
   const isEditing = Boolean(initialData?.id);
+
+  // Form schema for tier with translated validation messages
+  const tierFormSchema = z.object({
+    name: z.string().min(1, t('validation.nameRequired')),
+    minPoints: z.coerce
+      .number()
+      .int()
+      .min(0, t('validation.minPointsNonNegative')),
+    multiplier: z.coerce.number().min(0.1, t('validation.multiplierMin')),
+  });
+
+  type FormValues = z.infer<typeof tierFormSchema>;
 
   // Initialize the form
   const form = useForm<FormValues>({
@@ -102,26 +105,26 @@ export default function TierFormDialog({
 
       if (result.success) {
         toast({
-          title: isEditing ? 'Tier updated' : 'Tier created',
+          title: isEditing ? t('updateSuccess') : t('createSuccess'),
           description: isEditing
-            ? 'Membership tier has been updated successfully'
-            : 'New membership tier has been created',
+            ? t('updateSuccessMessage')
+            : t('createSuccessMessage'),
         });
 
         form.reset();
         onSuccess?.();
       } else {
         toast({
-          title: 'Error',
-          description: result.error || 'Something went wrong',
+          title: tCommon('error'),
+          description: result.error || tCommon('somethingWrong'),
           variant: 'destructive',
         });
       }
     } catch (error) {
       console.error('Failed to save member tier:', error);
       toast({
-        title: 'Error',
-        description: 'An unexpected error occurred',
+        title: tCommon('error'),
+        description: tCommon('unexpectedError'),
         variant: 'destructive',
       });
     } finally {
@@ -133,11 +136,11 @@ export default function TierFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>{isEditing ? 'Edit Tier' : 'Create Tier'}</DialogTitle>
+          <DialogTitle>
+            {isEditing ? t('editTitle') : t('createTitle')}
+          </DialogTitle>
           <DialogDescription>
-            {isEditing
-              ? 'Edit the membership tier information below'
-              : 'Add a new membership tier to your loyalty program'}
+            {isEditing ? t('editDescription') : t('createDescription')}
           </DialogDescription>
         </DialogHeader>
 
@@ -148,12 +151,15 @@ export default function TierFormDialog({
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Tier Name</FormLabel>
+                  <FormLabel>{t('fields.name.label')}</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter tier name" {...field} />
+                    <Input
+                      placeholder={t('fields.name.placeholder')}
+                      {...field}
+                    />
                   </FormControl>
                   <FormDescription>
-                    E.g., Bronze, Silver, Gold, Platinum
+                    {t('fields.name.description')}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -165,11 +171,11 @@ export default function TierFormDialog({
               name="minPoints"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Minimum Points</FormLabel>
+                  <FormLabel>{t('fields.minPoints.label')}</FormLabel>
                   <FormControl>
                     <Input
                       type="number"
-                      placeholder="Enter minimum points"
+                      placeholder={t('fields.minPoints.placeholder')}
                       value={field.value === 0 ? '' : field.value}
                       onFocus={(e) => {
                         if (e.target.value === '0') {
@@ -190,7 +196,7 @@ export default function TierFormDialog({
                     />
                   </FormControl>
                   <FormDescription>
-                    Minimum points required to reach this tier
+                    {t('fields.minPoints.description')}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -202,7 +208,7 @@ export default function TierFormDialog({
               name="multiplier"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Points Multiplier</FormLabel>
+                  <FormLabel>{t('fields.multiplier.label')}</FormLabel>
                   <FormControl>
                     <Input
                       type="number"
@@ -212,7 +218,7 @@ export default function TierFormDialog({
                     />
                   </FormControl>
                   <FormDescription>
-                    Points earned will be multiplied by this value
+                    {t('fields.multiplier.description')}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -225,13 +231,13 @@ export default function TierFormDialog({
                 type="button"
                 onClick={() => onOpenChange && onOpenChange(false)}
               >
-                Cancel
+                {tCommon('cancel')}
               </Button>
               <Button type="submit" disabled={loading}>
                 {loading ? (
-                  <>{isEditing ? 'Updating...' : 'Creating...'}</>
+                  <>{isEditing ? t('updating') : t('creating')}</>
                 ) : (
-                  <>{isEditing ? 'Update Tier' : 'Create Tier'}</>
+                  <>{isEditing ? t('updateButton') : t('createButton')}</>
                 )}
               </Button>
             </DialogFooter>

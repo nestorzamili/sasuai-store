@@ -1,5 +1,6 @@
 'use client';
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -83,6 +84,7 @@ export function TableLayout<TData = unknown>({
   initialSelectedRows = {},
   filterToolbar,
 }: TableLayoutProps<TData>) {
+  const t = useTranslations('common.table');
   const [searchValue, setSearchValue] = useState<string>('');
   const [sorting, setSorting] = useState<SortingState>([]);
   const [rowSelection, setRowSelection] =
@@ -194,26 +196,34 @@ export function TableLayout<TData = unknown>({
     column: Column<TData, unknown>;
     label: string;
   }) => {
+    const isSortable = column.getCanSort();
+
     const handleClick = () => {
-      column.toggleSorting(column.getIsSorted() === 'asc');
+      if (isSortable) {
+        column.toggleSorting(column.getIsSorted() === 'asc');
+      }
     };
 
     return (
       <button
         onClick={handleClick}
-        disabled={isLoading}
-        className="group flex items-center justify-between text-left text-xs font-bold uppercase tracking-wide text-muted-foreground hover:text-foreground transition-colors"
+        disabled={isLoading || !isSortable}
+        className={`group flex items-center justify-between text-left text-xs font-bold uppercase tracking-wide text-muted-foreground transition-colors ${
+          isSortable ? 'hover:text-foreground cursor-pointer' : 'cursor-default'
+        }`}
       >
         <span>{label}</span>
-        <div className="flex items-center">
-          {column.getIsSorted() === 'asc' ? (
-            <ArrowUp className="h-3.5 w-3.5" />
-          ) : column.getIsSorted() === 'desc' ? (
-            <ArrowDown className="h-3.5 w-3.5" />
-          ) : (
-            <div className="h-3.5 w-3.5 opacity-0 group-hover:opacity-40"></div>
-          )}
-        </div>
+        {isSortable && (
+          <div className="flex items-center">
+            {column.getIsSorted() === 'asc' ? (
+              <ArrowUp className="h-3.5 w-3.5" />
+            ) : column.getIsSorted() === 'desc' ? (
+              <ArrowDown className="h-3.5 w-3.5" />
+            ) : (
+              <div className="h-3.5 w-3.5 opacity-0 group-hover:opacity-40"></div>
+            )}
+          </div>
+        )}
       </button>
     );
   };
@@ -224,7 +234,7 @@ export function TableLayout<TData = unknown>({
         {/* Search input */}
         <div className="w-[250px] lg:w-[300px]">
           <Input
-            placeholder="Search..."
+            placeholder={t('search')}
             value={searchValue}
             onChange={(event) => setSearchValue(event.target.value)}
             className="h-9"
@@ -283,7 +293,7 @@ export function TableLayout<TData = unknown>({
                       onCheckedChange={(value) =>
                         table.toggleAllPageRowsSelected(!!value)
                       }
-                      aria-label="Select all rows on current page"
+                      aria-label={t('selectAll')}
                       className="ml-2"
                     />
                   </TableHead>
@@ -318,7 +328,7 @@ export function TableLayout<TData = unknown>({
                       <Checkbox
                         checked={row.getIsSelected()}
                         onCheckedChange={(value) => row.toggleSelected(!!value)}
-                        aria-label={`Select row ${row.id}`}
+                        aria-label={`${t('selectRow')} ${row.id}`}
                         className="ml-2"
                       />
                     </TableCell>
@@ -342,10 +352,9 @@ export function TableLayout<TData = unknown>({
                   className="h-32 text-center"
                 >
                   <div className="flex flex-col items-center justify-center gap-2 py-4">
-                    <p className="text-lg font-medium">No results found</p>
+                    <p className="text-lg font-medium">{t('noResults')}</p>
                     <p className="text-sm text-muted-foreground">
-                      Try adjusting your search or filter to find what you're
-                      looking for.
+                      {t('noResultsDescription')}
                     </p>
                   </div>
                 </TableCell>

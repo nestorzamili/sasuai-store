@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { IconAlertTriangle } from '@tabler/icons-react';
 import { toast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -22,6 +23,7 @@ export function BatchDeleteDialog({
   batch,
   onSuccess,
 }: Props) {
+  const t = useTranslations('inventory.batchDeleteDialog');
   const [isDeleting, setIsDeleting] = useState(false);
   const [canDelete, setCanDelete] = useState<boolean | null>(null);
   const [isCheckingDelete, setIsCheckingDelete] = useState(false);
@@ -63,8 +65,8 @@ export function BatchDeleteDialog({
 
       if (!canDeleteCheck.success || !canDeleteCheck.canDelete) {
         toast({
-          title: 'Cannot Delete Batch',
-          description: `This batch cannot be deleted as it has associated transactions or stock movements.`,
+          title: t('cannotDeleteTitle'),
+          description: t('cannotDeleteMessage'),
           variant: 'destructive',
         });
         onOpenChange(false);
@@ -75,22 +77,22 @@ export function BatchDeleteDialog({
 
       if (result.success) {
         toast({
-          title: 'Batch deleted',
-          description: `Batch "${batch.batchCode}" for ${batch.product.name} has been deleted successfully`,
+          title: t('success'),
+          description: `${t('batchCode')} "${batch.batchCode}" ${t('forProduct')} ${batch.product.name} ${t('successMessage')}`,
         });
         onSuccess?.();
       } else {
         toast({
-          title: 'Error',
-          description: result.error || 'Failed to delete batch',
+          title: t('error'),
+          description: result.error || t('failedToDelete'),
           variant: 'destructive',
         });
       }
     } catch (error) {
       console.error('Error deleting batch:', error);
       toast({
-        title: 'Error',
-        description: 'An unexpected error occurred',
+        title: t('error'),
+        description: t('unexpectedError'),
         variant: 'destructive',
       });
     } finally {
@@ -111,80 +113,71 @@ export function BatchDeleteDialog({
             className="mr-1 inline-block stroke-destructive"
             size={18}
           />{' '}
-          Delete Batch
+          {t('title')}
         </span>
       }
       desc={
         <div className="space-y-4">
           <p className="mb-2">
-            Are you sure you want to delete batch{' '}
-            <span className="font-bold">{batch.batchCode}</span> for{' '}
+            {t('description')}{' '}
+            <span className="font-bold">{batch.batchCode}</span>{' '}
+            {t('forProduct')}{' '}
             <span className="font-bold">{batch.product.name}</span>?
             <br />
-            This action will permanently remove this batch and its initial
-            stock-in record.
+            {t('permanentRemove')}
           </p>
 
           <div className="space-y-1">
             <p>
-              <span className="font-semibold">Product:</span>{' '}
+              <span className="font-semibold">{t('product')}:</span>{' '}
               {batch.product.name}
             </p>
             <p>
-              <span className="font-semibold">Batch Code:</span>{' '}
+              <span className="font-semibold">{t('batchCode')}:</span>{' '}
               {batch.batchCode}
             </p>
             <p>
-              <span className="font-semibold">Expiry Date:</span>{' '}
+              <span className="font-semibold">{t('expiryDate')}:</span>{' '}
               {format(new Date(batch.expiryDate), 'PPP')}
             </p>
             <p>
-              <span className="font-semibold">Initial Quantity:</span>{' '}
+              <span className="font-semibold">{t('initialQuantity')}:</span>{' '}
               {batch.initialQuantity}
             </p>
             <p>
-              <span className="font-semibold">Current Quantity:</span>{' '}
+              <span className="font-semibold">{t('currentQuantity')}:</span>{' '}
               {batch.remainingQuantity}
             </p>
           </div>
 
           {isCheckingDelete ? (
             <Alert>
-              <AlertTitle>Checking batch status...</AlertTitle>
-              <AlertDescription>
-                Please wait while we check if this batch can be deleted.
-              </AlertDescription>
+              <AlertTitle>{t('checkingStatus')}</AlertTitle>
+              <AlertDescription>{t('pleaseWait')}</AlertDescription>
             </Alert>
           ) : canDelete === false ? (
             <Alert variant="destructive">
-              <AlertTitle>Cannot Delete</AlertTitle>
-              <AlertDescription>
-                This batch cannot be deleted because it has associated
-                transactions or stock movements. Only batches that haven't been
-                used in any transactions or stock adjustments can be deleted.
-              </AlertDescription>
+              <AlertTitle>{t('cannotDelete')}</AlertTitle>
+              <AlertDescription>{t('hasTransactions')}</AlertDescription>
             </Alert>
           ) : isDifferentFromInitial ? (
             <Alert variant="destructive">
-              <AlertTitle>Cannot Delete</AlertTitle>
+              <AlertTitle>{t('cannotDelete')}</AlertTitle>
               <AlertDescription>
-                This batch cannot be deleted because its current quantity (
-                {batch.remainingQuantity}) differs from its initial quantity (
-                {batch.initialQuantity}), indicating it's been used.
+                {t('quantityChanged')} ({batch.remainingQuantity}){' '}
+                {t('differsFromInitial')} ({batch.initialQuantity}),{' '}
+                {t('indicatingUsed')}
               </AlertDescription>
             </Alert>
           ) : (
             <Alert variant="destructive">
-              <AlertTitle>Warning!</AlertTitle>
-              <AlertDescription>
-                This will permanently remove the batch and its initial stock-in
-                record. This action cannot be undone.
-              </AlertDescription>
+              <AlertTitle>{t('warning')}</AlertTitle>
+              <AlertDescription>{t('actionUndone')}</AlertDescription>
             </Alert>
           )}
         </div>
       }
-      confirmText={isDeleting ? 'Deleting...' : 'Delete Batch'}
+      confirmText={isDeleting ? t('deleting') : t('deleteButton')}
       destructive
     />
   );

@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { RewardClaimHistoryItem } from '@/lib/types/member';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -21,29 +22,31 @@ interface MemberRewardHistoryProps {
 export default function MemberRewardHistory({
   claims,
 }: MemberRewardHistoryProps) {
+  const t = useTranslations('member.rewardHistory');
+
   // Get status badge for claim status
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'Claimed':
-        return <Badge variant="secondary">Claimed</Badge>;
+        return <Badge variant="secondary">{t('status.claimed')}</Badge>;
       case 'Fulfilled':
         return (
           <Badge
             variant="secondary"
             className="bg-green-500 hover:bg-green-600"
           >
-            Fulfilled
+            {t('status.fulfilled')}
           </Badge>
         );
       case 'Cancelled':
-        return <Badge variant="destructive">Cancelled</Badge>;
+        return <Badge variant="destructive">{t('status.cancelled')}</Badge>;
       case 'Pending':
         return (
           <Badge
             variant="outline"
             className="bg-yellow-100 text-yellow-800 border-yellow-200"
           >
-            Pending
+            {t('status.pending')}
           </Badge>
         );
       default:
@@ -54,17 +57,17 @@ export default function MemberRewardHistory({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Reward Claims</CardTitle>
+        <CardTitle>{t('title')}</CardTitle>
       </CardHeader>
       <CardContent>
         {claims.length > 0 ? (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>Reward</TableHead>
-                <TableHead>Points Cost</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>{t('columns.date')}</TableHead>
+                <TableHead>{t('columns.reward')}</TableHead>
+                <TableHead>{t('columns.pointsCost')}</TableHead>
+                <TableHead>{t('columns.status')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -84,7 +87,7 @@ export default function MemberRewardHistory({
           </Table>
         ) : (
           <div className="py-8 text-center text-muted-foreground">
-            This member hasn't claimed any rewards yet.
+            {t('emptyState')}
           </div>
         )}
       </CardContent>

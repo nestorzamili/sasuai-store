@@ -1,0 +1,180 @@
+{
+  "unit": {
+    "title": "Unit",
+    "description": "Kelola unit pengukuran untuk produk dan inventori Anda.",
+    "tabs": {
+      "units": "Unit",
+      "conversions": "Konversi Unit",
+      "calculator": "Kalkulator Konversi"
+    },
+    "error": {
+      "fetchFailed": "Gagal mengambil unit. Silakan coba lagi nanti."
+    },
+    "table": {
+      "columns": {
+        "name": "Nama",
+        "symbol": "Simbol",
+        "usage": "Penggunaan",
+        "conversions": "Konversi",
+        "created": "Dibuat"
+      },
+      "actions": {
+        "openMenu": "Buka menu",
+        "actions": "Aksi",
+        "edit": "Edit",
+        "delete": "Hapus"
+      },
+      "badges": {
+        "products": "produk",
+        "stockIns": "stok masuk",
+        "stockOuts": "stok keluar",
+        "transactions": "transaksi",
+        "conversions": "konversi",
+        "notInUse": "Tidak digunakan"
+      }
+    },
+    "formDialog": {
+      "create": "Buat",
+      "createTitle": "Buat Unit",
+      "editTitle": "Edit Unit",
+      "createDescription": "Tambahkan unit pengukuran baru ke sistem inventori Anda",
+      "editDescription": "Edit informasi unit pengukuran di bawah ini",
+      "unitName": "Nama Unit",
+      "unitNamePlaceholder": "Masukkan nama unit (misalnya, Kilogram)",
+      "symbol": "Simbol",
+      "symbolPlaceholder": "Masukkan simbol unit (misalnya, kg)",
+      "cancel": "Batal",
+      "creating": "Membuat...",
+      "updating": "Memperbarui...",
+      "createButton": "Buat Unit",
+      "updateButton": "Perbarui Unit",
+      "success": {
+        "unitCreated": "Unit dibuat",
+        "unitCreatedMessage": "Unit baru telah dibuat",
+        "unitUpdated": "Unit diperbarui",
+        "unitUpdatedMessage": "Unit telah berhasil diperbarui"
+      },
+      "error": {
+        "somethingWrong": "Terjadi kesalahan",
+        "unexpectedError": "Terjadi kesalahan yang tidak terduga"
+      },
+      "validation": {
+        "nameRequired": "Nama unit diperlukan",
+        "symbolRequired": "Simbol unit diperlukan"
+      }
+    },
+    "deleteDialog": {
+      "title": "Hapus Unit",
+      "description": "Apakah Anda yakin ingin menghapus {name} ({symbol})?",
+      "permanentRemove": "Tindakan ini akan menghapus unit ini secara permanen dari sistem. Tindakan ini tidak dapat dibatalkan.",
+      "cannotDelete": "Tidak Dapat Menghapus",
+      "inUse": "Unit ini sedang digunakan dalam {usage}. Anda perlu mengalihkan atau menghapus referensi tersebut sebelum menghapus unit ini.",
+      "warning": "Peringatan!",
+      "warningMessage": "Harap berhati-hati, operasi ini tidak dapat dikembalikan.",
+      "deleting": "Menghapus...",
+      "deleteButton": "Hapus",
+      "cannotDeleteTitle": "Tidak Dapat Menghapus Unit",
+      "cannotDeleteMessage": "Unit ini sedang digunakan dan tidak dapat dihapus.",
+      "success": "Unit dihapus",
+      "successMessage": "Unit \"{name}\" telah berhasil dihapus",
+      "error": "Kesalahan",
+      "failedToDelete": "Gagal menghapus unit",
+      "unexpectedError": "Terjadi kesalahan yang tidak terduga",
+      "usage": {
+        "products": "produk",
+        "stockInRecords": "catatan stok masuk",
+        "stockOutRecords": "catatan stok keluar",
+        "transactionItems": "item transaksi"
+      }
+    },
+    "conversionTable": {
+      "columns": {
+        "fromUnit": "Dari Unit",
+        "toUnit": "Ke Unit",
+        "factor": "Faktor",
+        "explanation": "Penjelasan",
+        "created": "Dibuat"
+      },
+      "actions": {
+        "openMenu": "Buka menu",
+        "actions": "Aksi",
+        "edit": "Edit",
+        "delete": "Hapus"
+      },
+      "explanationText": "1 {fromUnit} ({fromSymbol}) = {factor} {toUnit} ({toSymbol})"
+    },
+    "conversionFormDialog": {
+      "createConversion": "Buat Konversi",
+      "createTitle": "Buat Konversi Unit",
+      "editTitle": "Edit Konversi Unit",
+      "createDescription": "Tentukan bagaimana unit dikonversi satu sama lain dalam sistem inventori Anda",
+      "editDescription": "Edit faktor konversi unit di bawah ini",
+      "sourceUnit": "Unit Sumber",
+      "selectSourceUnit": "Pilih unit sumber",
+      "targetUnit": "Unit Target",
+      "selectTargetUnit": "Pilih unit target",
+      "conversionFactor": "Faktor Konversi",
+      "conversionFactorPlaceholder": "Masukkan faktor konversi",
+      "cancel": "Batal",
+      "creating": "Membuat...",
+      "updating": "Memperbarui...",
+      "createButton": "Buat Konversi",
+      "updateButton": "Perbarui Konversi",
+      "success": {
+        "conversionCreated": "Konversi dibuat",
+        "conversionCreatedMessage": "Konversi unit baru telah dibuat",
+        "conversionUpdated": "Konversi diperbarui",
+        "conversionUpdatedMessage": "Konversi unit telah berhasil diperbarui"
+      },
+      "error": {
+        "somethingWrong": "Terjadi kesalahan",
+        "unexpectedError": "Terjadi kesalahan yang tidak terduga",
+        "sameUnits": "Unit sumber dan target tidak boleh sama"
+      },
+      "validation": {
+        "sourceUnitRequired": "Unit sumber diperlukan",
+        "targetUnitRequired": "Unit target diperlukan",
+        "factorPositive": "Faktor konversi harus positif",
+        "factorTooLarge": "Faktor konversi terlalu besar"
+      }
+    },
+    "conversionDeleteDialog": {
+      "title": "Hapus Konversi Unit",
+      "description": "Apakah Anda yakin ingin menghapus konversi dari {fromUnit} ({fromSymbol}) ke {toUnit} ({toSymbol})?",
+      "actionUndone": "Tindakan ini tidak dapat dibatalkan.",
+      "warning": "Peringatan!",
+      "warningMessage": "Konversi ini mungkin digunakan untuk konversi unit dalam sistem. Menghapusnya dapat mempengaruhi perhitungan inventori.",
+      "deleting": "Menghapus...",
+      "deleteButton": "Hapus",
+      "success": "Konversi dihapus",
+      "successMessage": "Konversi unit telah berhasil dihapus",
+      "error": "Kesalahan",
+      "failedToDelete": "Gagal menghapus konversi unit",
+      "unexpectedError": "Terjadi kesalahan yang tidak terduga"
+    },
+    "conversionCalculator": {
+      "title": "Kalkulator Konversi Unit",
+      "description": "Konversi kuantitas antara unit pengukuran yang berbeda",
+      "quantity": "Kuantitas",
+      "quantityPlaceholder": "Masukkan kuantitas",
+      "fromUnit": "Dari Unit",
+      "selectSourceUnit": "Pilih unit sumber",
+      "toUnit": "Ke Unit",
+      "selectTargetUnit": "Pilih unit target",
+      "calculating": "Menghitung...",
+      "calculate": "Hitung",
+      "conversionError": "Kesalahan Konversi",
+      "conversionTip": "Tips: Pastikan Anda telah mendefinisikan konversi antara unit ini di tab \"Konversi Unit\".",
+      "result": "Hasil:",
+      "conversionFailed": "Konversi Gagal",
+      "unableToConvert": "Tidak dapat mengkonversi antara unit ini",
+      "error": "Kesalahan",
+      "failedToPerform": "Gagal melakukan konversi unit",
+      "validation": {
+        "sourceUnitRequired": "Unit sumber diperlukan",
+        "targetUnitRequired": "Unit target diperlukan",
+        "quantityPositive": "Kuantitas harus positif"
+      }
+    }
+  }
+}

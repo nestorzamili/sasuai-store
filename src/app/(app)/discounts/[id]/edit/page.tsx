@@ -6,7 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Form } from '@/components/ui/form';
 import { toast } from '@/hooks/use-toast';
-import { discountSchema, DiscountFormValues } from '../../schema';
+import {
+  createTranslatedDiscountSchema,
+  DiscountFormValues,
+} from '../../schema';
 import { DiscountType, DiscountApplyTo } from '@/lib/types/discount';
 import { getDiscount, updateDiscount } from '../../action';
 import { useEffect, useState } from 'react';
@@ -16,6 +19,7 @@ import { Separator } from '@/components/ui/separator';
 import BasicInfo from '../../_components/discount-form/basic-info';
 import ValidityRules from '../../_components/discount-form/validity-rules';
 import ApplicationScope from '../../_components/discount-form/application-scope';
+import { useTranslations } from 'next-intl';
 
 const defaultValues: DiscountFormValues = {
   name: '',
@@ -36,6 +40,8 @@ const defaultValues: DiscountFormValues = {
 };
 
 export default function EditDiscountPage() {
+  const t = useTranslations('discount');
+
   // Use the useParams hook to get the ID from the route
   const params = useParams();
   const discountId = params.id as string;
@@ -44,9 +50,14 @@ export default function EditDiscountPage() {
   const [initialLoading, setInitialLoading] = useState(true);
   const router = useRouter();
 
-  // Initialize the form
+  // Create translated schema
+  const translatedSchema = createTranslatedDiscountSchema((key: string) =>
+    t(key),
+  );
+
+  // Initialize the form with translated schema
   const form = useForm<DiscountFormValues>({
-    resolver: zodResolver(discountSchema),
+    resolver: zodResolver(translatedSchema),
     defaultValues,
     mode: 'onChange',
   });
@@ -101,8 +112,8 @@ export default function EditDiscountPage() {
         return true;
       } else {
         toast({
-          title: 'Error',
-          description: "Couldn't load discount. Please try again later.",
+          title: t('deleteDialog.error'),
+          description: t('pages.couldNotLoad'),
           variant: 'destructive',
         });
         router.push('/discounts');
@@ -111,9 +122,8 @@ export default function EditDiscountPage() {
     } catch (error) {
       console.error('Error loading discount:', error);
       toast({
-        title: 'Error',
-        description:
-          'An unexpected error occurred while loading discount data.',
+        title: t('deleteDialog.error'),
+        description: t('pages.unexpectedErrorLoading'),
         variant: 'destructive',
       });
       router.push('/discounts');
@@ -144,15 +154,15 @@ export default function EditDiscountPage() {
 
       if (result.success) {
         toast({
-          title: 'Discount updated',
-          description: 'Discount has been updated successfully',
+          title: t('pages.discountUpdated'),
+          description: t('pages.discountUpdateSuccess'),
         });
 
         // Navigate back to the discounts page
         router.push('/discounts');
       } else {
         toast({
-          title: 'Error',
+          title: t('deleteDialog.error'),
           description: result.message || 'Something went wrong',
           variant: 'destructive',
         });
@@ -160,8 +170,8 @@ export default function EditDiscountPage() {
     } catch (error) {
       console.error('Error updating discount:', error);
       toast({
-        title: 'Error',
-        description: 'An unexpected error occurred',
+        title: t('deleteDialog.error'),
+        description: t('deleteDialog.unexpectedError'),
         variant: 'destructive',
       });
     } finally {
@@ -172,8 +182,8 @@ export default function EditDiscountPage() {
   // Add an onError handler for form validation errors
   const onError = () => {
     toast({
-      title: 'Validation Error',
-      description: 'Please check the form for errors',
+      title: t('pages.validationError'),
+      description: t('pages.checkFormErrors'),
       variant: 'destructive',
     });
   };
@@ -182,7 +192,7 @@ export default function EditDiscountPage() {
     return (
       <div className="flex items-center justify-center h-[50vh]">
         <div className="text-center">
-          <h2 className="text-lg font-medium mb-2">Loading discount data...</h2>
+          <h2 className="text-lg font-medium mb-2">{t('pages.loadingData')}</h2>
           <div className="animate-spin h-8 w-8 border-4 border-primary/30 border-t-primary rounded-full mx-auto"></div>
         </div>
       </div>
@@ -194,11 +204,11 @@ export default function EditDiscountPage() {
       <div className="flex items-center justify-between">
         <div className="space-y-0.5">
           <div className="flex items-center gap-2">
-            <h2 className="text-2xl font-bold tracking-tight">Edit Discount</h2>
+            <h2 className="text-2xl font-bold tracking-tight">
+              {t('pages.editTitle')}
+            </h2>
           </div>
-          <p className="text-muted-foreground">
-            Update the information for this discount
-          </p>
+          <p className="text-muted-foreground">{t('pages.editDescription')}</p>
         </div>
       </div>
 
@@ -234,11 +244,11 @@ export default function EditDiscountPage() {
           <div className="flex justify-end gap-4">
             <Link href="/discounts">
               <Button variant="outline" type="button">
-                Cancel
+                {t('pages.cancel')}
               </Button>
             </Link>
             <Button type="submit" disabled={loading}>
-              {loading ? 'Updating...' : 'Update Discount'}
+              {loading ? t('pages.updating') : t('pages.updateButton')}
             </Button>
           </div>
         </form>

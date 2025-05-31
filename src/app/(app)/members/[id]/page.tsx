@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { toast } from '@/hooks/use-toast';
 import { getMember } from '../action';
 import {
@@ -16,6 +17,8 @@ import MemberRewardHistory from './_components/member-reward-history';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function MemberDetailsPage() {
+  const t = useTranslations('member.detailPage');
+  const tCommon = useTranslations('member.common');
   const router = useRouter();
   const params = useParams();
 
@@ -31,8 +34,8 @@ export default function MemberDetailsPage() {
   const fetchMember = async () => {
     if (!memberId.current) {
       toast({
-        title: 'Error',
-        description: 'Member ID is missing',
+        title: tCommon('error'),
+        description: t('errors.missingId'),
         variant: 'destructive',
       });
       router.push('/members');
@@ -57,8 +60,8 @@ export default function MemberDetailsPage() {
         }
       } else {
         toast({
-          title: 'Error',
-          description: result.error || 'Failed to fetch member details',
+          title: tCommon('error'),
+          description: result.error || t('errors.fetchFailed'),
           variant: 'destructive',
         });
         router.push('/members');
@@ -66,8 +69,8 @@ export default function MemberDetailsPage() {
     } catch (error) {
       console.error('Failed to fetch member:', error);
       toast({
-        title: 'Error',
-        description: 'An unexpected error occurred',
+        title: tCommon('error'),
+        description: tCommon('unexpectedError'),
         variant: 'destructive',
       });
       router.push('/members');
@@ -91,8 +94,10 @@ export default function MemberDetailsPage() {
 
           <Tabs defaultValue="points" className="w-full">
             <TabsList>
-              <TabsTrigger value="points">Point History</TabsTrigger>
-              <TabsTrigger value="rewards">Reward Claims</TabsTrigger>
+              <TabsTrigger value="points">{t('tabs.pointHistory')}</TabsTrigger>
+              <TabsTrigger value="rewards">
+                {t('tabs.rewardClaims')}
+              </TabsTrigger>
             </TabsList>
             <TabsContent value="points">
               <MemberPointHistory
@@ -111,15 +116,15 @@ export default function MemberDetailsPage() {
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center py-10">
-          <h2 className="text-xl font-semibold">Member not found</h2>
+          <h2 className="text-xl font-semibold">{t('notFound.title')}</h2>
           <p className="text-muted-foreground mb-4">
-            The requested member could not be found
+            {t('notFound.description')}
           </p>
           <button
             className="text-primary underline hover:no-underline"
             onClick={() => router.push('/members')}
           >
-            Return to Members List
+            {t('notFound.returnButton')}
           </button>
         </div>
       )}

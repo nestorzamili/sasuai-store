@@ -1,0 +1,81 @@
+{
+  "profile": {
+    "title": "Pengaturan Profil",
+    "description": "Kelola pengaturan akun dan preferensi Anda",
+    "tabs": {
+      "profile": "Profil",
+      "security": "Keamanan"
+    },
+    "form": {
+      "title": "Informasi Profil",
+      "description": "Perbarui informasi pribadi Anda",
+      "loading": "Memuat...",
+      "fullName": "Nama Lengkap",
+      "fullNamePlaceholder": "John Doe",
+      "fullNameDescription": "Nama Anda yang ditampilkan di profil",
+      "username": "Nama Pengguna",
+      "usernamePlaceholder": "namapengguna",
+      "usernameDescription": "Nama pengguna unik Anda untuk masuk",
+      "email": "Email",
+      "emailPlaceholder": "email-anda@example.com",
+      "emailDescription": "Ini adalah alamat email terverifikasi Anda",
+      "avatarDescription": "Unggah foto profil untuk mempersonalisasi akun Anda",
+      "updating": "Memperbarui...",
+      "updateProfile": "Perbarui Profil",
+      "verificationRequired": "Verifikasi Diperlukan",
+      "checkEmailConfirm": "Silakan periksa email Anda untuk mengkonfirmasi perubahan email.",
+      "emailChangeFailed": "Gagal Mengubah Email",
+      "emailAlreadyRegistered": "Alamat email ini sudah terdaftar dengan akun lain.",
+      "profileUpdated": "Profil Diperbarui",
+      "profileUpdatedMessage": "Informasi profil Anda telah diperbarui.",
+      "profileUpdatedImageIssue": "Profil diperbarui tetapi ada masalah dengan foto profil.",
+      "updateFailed": "Gagal Memperbarui",
+      "problemUpdating": "Ada masalah saat memperbarui profil Anda.",
+      "unexpectedError": "Terjadi kesalahan tak terduga saat mengubah email.",
+      "usernameTaken": "Nama pengguna ini sudah digunakan. Silakan coba yang lain.",
+      "usernameUpdateProblem": "Ada masalah saat memperbarui nama pengguna Anda.",
+      "validation": {
+        "nameMinLength": "Nama harus minimal 3 karakter.",
+        "nameMaxLength": "Nama tidak boleh lebih dari 50 karakter.",
+        "usernameMinLength": "Nama pengguna harus minimal 5 karakter.",
+        "usernameMaxLength": "Nama pengguna tidak boleh lebih dari 20 karakter.",
+        "usernameFormat": "Nama pengguna hanya boleh mengandung huruf kecil, angka, garis bawah, dan tanda hubung.",
+        "emailRequired": "Email diperlukan",
+        "emailInvalid": "Silakan masukkan alamat email yang valid.",
+        "imageInvalidUrl": "Silakan masukkan URL gambar yang valid."
+      }
+    },
+    "changePassword": {
+      "title": "Ubah Kata Sandi",
+      "description": "Perbarui kata sandi akun Anda dengan aman",
+      "currentPassword": "Kata Sandi Saat Ini",
+      "newPassword": "Kata Sandi Baru",
+      "confirmPassword": "Konfirmasi Kata Sandi",
+      "passwordRequirements": "Kata sandi harus minimal 8 karakter, termasuk huruf besar, huruf kecil, angka, dan karakter khusus",
+      "changingPassword": "Mengubah Kata Sandi...",
+      "changePasswordButton": "Ubah Kata Sandi",
+      "currentPasswordIncorrect": "Kata sandi saat ini yang Anda masukkan salah.",
+      "passwordChangeSuccess": "Kata sandi berhasil diubah",
+      "passwordChangeSuccessMessage": "Kata sandi Anda telah diperbarui dan sesi lain telah dikeluarkan.",
+      "passwordChangeFailed": "Gagal mengubah kata sandi",
+      "problemChanging": "Ada masalah saat mengubah kata sandi Anda.",
+      "validation": {
+        "currentPasswordMinLength": "Kata sandi saat ini harus minimal 8 karakter",
+        "newPasswordMinLength": "Kata sandi baru harus minimal 8 karakter",
+        "passwordComplexity": "Kata sandi harus mencakup huruf besar, huruf kecil, angka, dan karakter khusus",
+        "passwordsDontMatch": "Kata sandi tidak cocok",
+        "passwordMustBeDifferent": "Kata sandi baru harus berbeda dari kata sandi saat ini"
+      }
+    },
+    "avatarUpload": {
+      "changePhoto": "Ubah foto",
+      "uploadPhoto": "Unggah foto",
+      "removePhoto": "Hapus foto",
+      "profilePhotoRemoved": "Foto profil dihapus",
+      "profilePhotoRemovedMessage": "Foto profil Anda telah dihapus.",
+      "profilePicture": "Foto profil",
+      "uploadTitle": "Unggah Foto Profil",
+      "uploadDescription": "Unggah foto profil. Gambar persegi direkomendasikan untuk hasil terbaik."
+    }
+  }
+}

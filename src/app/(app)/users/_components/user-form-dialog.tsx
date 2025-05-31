@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -35,19 +36,20 @@ import { toast } from '@/hooks/use-toast';
 import { IconPlus } from '@tabler/icons-react';
 import { createUser } from '../action';
 
-// Define the form schema
-const formSchema = z.object({
-  name: z.string().min(1, 'Full name is required'),
-  email: z.string().email('Invalid email address'),
-  password: z
-    .string()
-    .min(8, 'Password must be at least 8 characters')
-    .optional()
-    .or(z.literal('')),
-  role: z.string().optional(),
-});
+// Define the form schema with translated error messages
+const createFormSchema = (t) =>
+  z.object({
+    name: z.string().min(1, t('fields.nameRequired')),
+    email: z.string().email(t('fields.emailInvalid')),
+    password: z
+      .string()
+      .min(8, t('fields.passwordMinLength'))
+      .optional()
+      .or(z.literal('')),
+    role: z.string().optional(),
+  });
 
-type FormValues = z.infer<typeof formSchema>;
+type FormValues = z.infer<ReturnType<typeof createFormSchema>>;
 
 interface UserFormDialogProps {
   open?: boolean;
@@ -62,12 +64,14 @@ export default function UserFormDialog({
   initialData,
   onSuccess,
 }: UserFormDialogProps) {
+  const t = useTranslations('user.form');
+  const tCommon = useTranslations('user.common');
   const [loading, setLoading] = useState(false);
   const isEditing = Boolean(initialData?.id);
 
-  // Initialize the form
+  // Initialize the form with translated schema
   const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(createFormSchema(t)),
     defaultValues: {
       name: '',
       email: '',
@@ -95,17 +99,15 @@ export default function UserFormDialog({
     }
   }, [form, initialData]);
 
-  // Handle form submission - stabilize with useCallback
+  // Handle form submission with translations
   const onSubmit = useCallback(
     async (values: FormValues) => {
       try {
         setLoading(true);
 
         if (isEditing) {
-          // In a real app, we would implement update functionality
-          // For now, let's just show a toast message
           toast({
-            title: 'Not implemented',
+            title: t('error.failed'),
             description: 'User editing is not implemented yet',
             variant: 'destructive',
           });
@@ -119,16 +121,16 @@ export default function UserFormDialog({
 
           if (result.success) {
             toast({
-              title: 'User created',
-              description: 'New user has been created successfully',
+              title: t('success.created'),
+              description: t('success.created'),
             });
 
             form.reset();
             onSuccess?.();
           } else {
             toast({
-              title: 'Error',
-              description: result.error || 'Something went wrong',
+              title: tCommon('error'),
+              description: result.error || t('error.failed'),
               variant: 'destructive',
             });
           }
@@ -136,31 +138,31 @@ export default function UserFormDialog({
       } catch (error) {
         console.error('Error creating user:', error);
         toast({
-          title: 'Error',
-          description: 'An unexpected error occurred',
+          title: tCommon('error'),
+          description: t('error.unexpected'),
           variant: 'destructive',
         });
       } finally {
         setLoading(false);
       }
     },
-    [isEditing, form, onSuccess],
+    [isEditing, form, onSuccess, t, tCommon],
   );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
         <Button variant="default" className="space-x-1">
-          <span>Create User</span> <IconPlus size={18} />
+          <span>{t('createButton')}</span> <IconPlus size={18} />
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>{isEditing ? 'Edit User' : 'Create User'}</DialogTitle>
+          <DialogTitle>
+            {isEditing ? t('editTitle') : t('createTitle')}
+          </DialogTitle>
           <DialogDescription>
-            {isEditing
-              ? 'Edit the user information below'
-              : 'Add a new user to your system'}
+            {isEditing ? t('editDescription') : t('createDescription')}
           </DialogDescription>
         </DialogHeader>
 
@@ -171,9 +173,12 @@ export default function UserFormDialog({
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Full Name</FormLabel>
+                  <FormLabel>{t('fields.name')}</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter full name" {...field} />
+                    <Input
+                      placeholder={t('fields.namePlaceholder')}
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -185,13 +190,13 @@ export default function UserFormDialog({
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>{t('fields.email')}</FormLabel>
                   <FormControl>
                     <Input
                       type="email"
-                      placeholder="Email address"
+                      placeholder={t('fields.emailPlaceholder')}
                       {...field}
-                      disabled={isEditing} // Email cannot be changed if editing
+                      disabled={isEditing}
                     />
                   </FormControl>
                   <FormMessage />
@@ -205,15 +210,15 @@ export default function UserFormDialog({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    {isEditing ? 'New Password' : 'Password'}
+                    {isEditing ? t('fields.newPassword') : t('fields.password')}
                   </FormLabel>
                   <FormControl>
                     <Input
                       type="password"
                       placeholder={
                         isEditing
-                          ? 'Leave blank to keep current password'
-                          : 'Enter password'
+                          ? t('fields.newPasswordPlaceholder')
+                          : t('fields.passwordPlaceholder')
                       }
                       {...field}
                     />
@@ -228,7 +233,7 @@ export default function UserFormDialog({
               name="role"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Role</FormLabel>
+                  <FormLabel>{t('fields.role')}</FormLabel>
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
@@ -236,12 +241,14 @@ export default function UserFormDialog({
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select a role" />
+                        <SelectValue
+                          placeholder={t('fields.rolePlaceholder')}
+                        />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="user">User</SelectItem>
-                      <SelectItem value="admin">Admin</SelectItem>
+                      <SelectItem value="user">{t('roles.user')}</SelectItem>
+                      <SelectItem value="admin">{t('roles.admin')}</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -255,13 +262,13 @@ export default function UserFormDialog({
                 type="button"
                 onClick={() => onOpenChange && onOpenChange(false)}
               >
-                Cancel
+                {tCommon('cancel')}
               </Button>
               <Button type="submit" disabled={loading}>
                 {loading ? (
-                  <>{isEditing ? 'Updating...' : 'Creating...'}</>
+                  <>{isEditing ? t('updating') : t('creating')}</>
                 ) : (
-                  <>{isEditing ? 'Update User' : 'Create User'}</>
+                  <>{isEditing ? t('updateButton') : t('createButton')}</>
                 )}
               </Button>
             </DialogFooter>

@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { useState, useCallback, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { ColumnDef } from '@tanstack/react-table';
 import { MoreHorizontal } from 'lucide-react';
 import { IconTrash, IconEdit } from '@tabler/icons-react';
@@ -39,6 +40,8 @@ export function ProductTable({
   filterParams,
   filterToolbar,
 }: ProductTableProps) {
+  const t = useTranslations('product.table');
+
   // Combine deletion dialog state
   const [deleteState, setDeleteState] = useState<{
     isOpen: boolean;
@@ -143,53 +146,64 @@ export function ProductTable({
   const columns: ColumnDef<ProductWithRelations>[] = useMemo(
     () => [
       {
-        header: 'Product Name',
+        header: t('columns.productName'),
         accessorKey: 'name',
         cell: ({ row }) => (
           <div className="font-medium">{row.getValue('name')}</div>
         ),
+        enableSorting: false,
       },
       {
-        header: 'Description',
+        header: t('columns.description'),
         accessorKey: 'description',
         cell: ({ row }) => {
-          const description = row.original.description || 'No description';
+          const description =
+            row.original.description || t('placeholders.noDescription');
           return (
             <div className="text-sm text-muted-foreground truncate max-w-[200px]">
               {description}
             </div>
           );
         },
+        enableSorting: false,
       },
       {
-        header: 'Category',
+        header: t('columns.category'),
         accessorKey: 'category.name',
         cell: ({ row }) => <div>{row.original.category.name}</div>,
+        enableSorting: false,
       },
       {
-        header: 'Brand',
+        header: t('columns.brand'),
         accessorKey: 'brand.name',
-        cell: ({ row }) => <div>{row.original.brand?.name || 'N/A'}</div>,
+        cell: ({ row }) => (
+          <div>{row.original.brand?.name || t('placeholders.noBrand')}</div>
+        ),
+        enableSorting: false,
       },
       {
-        header: 'Barcode',
+        header: t('columns.barcode'),
         accessorKey: 'barcode',
-        cell: ({ row }) => <div>{row.original.barcode || 'N/A'}</div>,
+        cell: ({ row }) => (
+          <div>{row.original.barcode || t('placeholders.noBarcode')}</div>
+        ),
+        enableSorting: false,
       },
       {
-        header: 'Price',
+        header: t('columns.price'),
         accessorKey: 'price',
         cell: ({ row }) => (
-          <div className="text-right">{formatRupiah(row.original.price)}</div>
+          <div className="text-left">{formatRupiah(row.original.price)}</div>
         ),
+        enableSorting: true,
       },
       {
-        header: 'Stock',
+        header: t('columns.stock'),
         accessorKey: 'currentStock',
         cell: ({ row }) => {
           const stock = row.original.currentStock;
           return (
-            <div className="flex items-center justify-center">
+            <div className="text-left">
               <Badge
                 variant={
                   stock <= 5
@@ -204,17 +218,19 @@ export function ProductTable({
             </div>
           );
         },
+        enableSorting: true,
       },
       {
-        header: 'Status',
+        header: t('columns.status'),
         accessorKey: 'isActive',
         cell: ({ row }) => {
           return row.original.isActive ? (
-            <Badge>Active</Badge>
+            <Badge>{t('status.active')}</Badge>
           ) : (
-            <Badge variant="secondary">Inactive</Badge>
+            <Badge variant="secondary">{t('status.inactive')}</Badge>
           );
         },
+        enableSorting: true,
       },
       {
         id: 'actions',
@@ -226,7 +242,7 @@ export function ProductTable({
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="h-8 w-8 p-0">
-                    <span className="sr-only">Open menu</span>
+                    <span className="sr-only">{t('actions.openMenu')}</span>
                     <MoreHorizontal className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -235,13 +251,13 @@ export function ProductTable({
                     className="flex justify-between cursor-pointer"
                     onClick={() => onEdit?.(product)}
                   >
-                    Edit <IconEdit className="h-4 w-4" />
+                    {t('actions.edit')} <IconEdit className="h-4 w-4" />
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     className="flex justify-between cursor-pointer text-destructive focus:text-destructive"
                     onClick={() => handleDeleteClick(product)}
                   >
-                    Delete <IconTrash className="h-4 w-4" />
+                    {t('actions.delete')} <IconTrash className="h-4 w-4" />
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -250,7 +266,7 @@ export function ProductTable({
         },
       },
     ],
-    [onEdit, handleDeleteClick],
+    [t, onEdit, handleDeleteClick],
   );
 
   return (

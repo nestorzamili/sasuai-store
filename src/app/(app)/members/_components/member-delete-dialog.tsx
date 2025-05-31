@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { IconAlertTriangle } from '@tabler/icons-react';
 import { toast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -21,6 +22,8 @@ export function MemberDeleteDialog({
   member,
   onSuccess,
 }: Props) {
+  const t = useTranslations('member.deleteDialog');
+  const tCommon = useTranslations('member.common');
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDelete = async () => {
@@ -31,22 +34,22 @@ export function MemberDeleteDialog({
 
       if (result.success) {
         toast({
-          title: 'Member deleted',
-          description: `The member "${member.name}" has been deleted successfully`,
+          title: t('success'),
+          description: t('successMessage', { name: member.name }),
         });
         onSuccess?.();
       } else {
         toast({
-          title: 'Error',
-          description: result.error || 'Failed to delete member',
+          title: tCommon('error'),
+          description: result.error || t('failed'),
           variant: 'destructive',
         });
       }
     } catch (error) {
       console.error('Failed to delete member:', error);
       toast({
-        title: 'Error',
-        description: 'An unexpected error occurred',
+        title: tCommon('error'),
+        description: tCommon('unexpectedError'),
         variant: 'destructive',
       });
     } finally {
@@ -67,29 +70,24 @@ export function MemberDeleteDialog({
             className="mr-1 inline-block stroke-destructive"
             size={18}
           />{' '}
-          Delete Member
+          {t('title')}
         </span>
       }
       desc={
         <div className="space-y-4">
           <p className="mb-2">
-            Are you sure you want to delete{' '}
-            <span className="font-bold">{member.name}</span>?
+            {t('description', { name: member.name })}
             <br />
-            This action will permanently remove this member from the system.
-            This cannot be undone.
+            {t('permanentAction')}
           </p>
 
           <Alert variant="destructive">
-            <AlertTitle>Warning!</AlertTitle>
-            <AlertDescription>
-              Deleting this member will remove all their transaction history,
-              point history, and reward claims.
-            </AlertDescription>
+            <AlertTitle>{t('warning')}</AlertTitle>
+            <AlertDescription>{t('warningMessage')}</AlertDescription>
           </Alert>
         </div>
       }
-      confirmText={isDeleting ? 'Deleting...' : 'Delete'}
+      confirmText={isDeleting ? t('deleting') : t('deleteButton')}
       destructive
     />
   );

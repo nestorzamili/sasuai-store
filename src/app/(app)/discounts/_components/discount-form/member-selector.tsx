@@ -1,5 +1,7 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+
 import { getMembersForSelection } from '../../action';
 import EntitySelector from './entity-selector';
 import {
@@ -12,6 +14,8 @@ export default function MemberSelector({
   selectedIds,
   onChange,
 }: MemberSelectorProps) {
+  const t = useTranslations('discount.form');
+
   const fetchMembers = async (
     search: string,
   ): Promise<{ success: boolean; data?: MemberForSelection[] }> => {
@@ -49,19 +53,23 @@ export default function MemberSelector({
   const renderMemberDetails = (member: MemberForSelection) => (
     <>
       {member.tier && <span>{member.tier.name}</span>}
-      {member.cardId && <span>Card: {member.cardId}</span>}
+      {member.cardId && (
+        <span>
+          {t('cardId')}: {member.cardId}
+        </span>
+      )}
     </>
   );
 
   // Define columns for the selected members table
   const memberColumns: Column<MemberForSelection>[] = [
-    { header: 'Member Name', accessor: 'name' },
+    { header: t('memberName'), accessor: 'name' },
     {
-      header: 'Membership Tier',
+      header: t('membershipTier'),
       accessor: (member: MemberForSelection) => member.tier?.name || 'N/A',
     },
     {
-      header: 'Card ID',
+      header: t('cardId'),
       accessor: (member: MemberForSelection) => member.cardId || 'N/A',
     },
   ];
@@ -72,8 +80,8 @@ export default function MemberSelector({
       onChange={onChange}
       fetchItems={fetchMembers}
       renderItemDetails={renderMemberDetails}
-      placeholder="Search members..."
-      noSelectionText="No members selected"
+      placeholder={t('searchMembers')}
+      noSelectionText={t('noMembersSelected')}
       columns={memberColumns}
     />
   );

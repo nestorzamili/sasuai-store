@@ -1,11 +1,13 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { BrandWithCount } from '@/lib/types/brand';
 import BrandPrimaryButton from './_components/brand-primary-button';
 import { BrandTable } from './_components/brand-table';
 
 export default function BrandsPage() {
+  const t = useTranslations('brand');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedBrand, setSelectedBrand] = useState<BrandWithCount | null>(
     null,
@@ -35,11 +37,8 @@ export default function BrandsPage() {
     <div className="space-y-1">
       <div className="flex items-center justify-between flex-wrap gap-x-4">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Brand</h2>
-          <p className="text-muted-foreground">
-            Manage your brands here. You can add, edit, or delete brands as
-            needed.
-          </p>
+          <h2 className="text-2xl font-bold tracking-tight">{t('title')}</h2>
+          <p className="text-muted-foreground">{t('description')}</p>
         </div>
         <BrandPrimaryButton
           open={isDialogOpen}

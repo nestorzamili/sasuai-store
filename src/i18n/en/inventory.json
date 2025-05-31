@@ -1,0 +1,221 @@
+{
+  "inventory": {
+    "title": "Inventory",
+    "description": "Track and manage your inventory batches, expiration dates, and stock levels.",
+    "tabs": {
+      "batches": "Product Batches",
+      "stockIn": "Stock In",
+      "stockOut": "Stock Out"
+    },
+    "batches": {
+      "title": "Manage Product Batches",
+      "description": "Track and manage your inventory batches, expiration dates, and stock levels."
+    },
+    "stockIn": {
+      "title": "Stock In Records",
+      "description": "View all stock additions to your inventory"
+    },
+    "stockOut": {
+      "title": "Stock Out Records",
+      "description": "View all stock removals from your inventory"
+    },
+    "batchTable": {
+      "columns": {
+        "name": "Name",
+        "batchCode": "Batch Code",
+        "expireDate": "Expire Date",
+        "remainingQuantity": "Remaining Quantity",
+        "buyPrice": "Buy Price"
+      },
+      "actions": {
+        "openMenu": "Open menu",
+        "actions": "Actions",
+        "viewDetails": "View Details",
+        "adjustQuantity": "Adjust Quantity",
+        "edit": "Edit",
+        "delete": "Delete"
+      },
+      "status": {
+        "expired": "Expired"
+      }
+    },
+    "stockInTable": {
+      "columns": {
+        "date": "Date",
+        "productName": "Product Name",
+        "batchCode": "Batch Code",
+        "quantity": "Quantity",
+        "supplier": "Supplier"
+      },
+      "status": {
+        "noSupplier": "No Supplier"
+      }
+    },
+    "stockOutTable": {
+      "columns": {
+        "product": "Product",
+        "batchCode": "Batch Code",
+        "quantityOut": "Quantity Out",
+        "reason": "Reason",
+        "date": "Date",
+        "type": "Type",
+        "customer": "Customer",
+        "receiptNumber": "Receipt #"
+      },
+      "types": {
+        "adjustment": "Adjustment",
+        "transaction": "Sale",
+        "walkInCustomer": "Walk-in Customer"
+      }
+    },
+    "batchFilter": {
+      "expiryDateRange": "Select expiry date range",
+      "quantityRange": "Quantity Range",
+      "min": "Min",
+      "max": "Max",
+      "units": "units",
+      "minQuantity": "Min Quantity",
+      "maxQuantity": "Max Quantity",
+      "reset": "Reset",
+      "applyFilter": "Apply Filter",
+      "allCategories": "All Categories",
+      "advancedFilters": "Advanced Filters",
+      "stockStatus": "Stock Status",
+      "includeExpired": "Include expired items",
+      "includeOutOfStock": "Include out of stock items",
+      "clearFilters": "Clear Filters"
+    },
+    "batchDeleteDialog": {
+      "title": "Delete Batch",
+      "description": "Are you sure you want to delete batch",
+      "forProduct": "for",
+      "permanentRemove": "This action will permanently remove this batch and its initial stock-in record.",
+      "product": "Product",
+      "batchCode": "Batch Code",
+      "expiryDate": "Expiry Date",
+      "initialQuantity": "Initial Quantity",
+      "currentQuantity": "Current Quantity",
+      "checkingStatus": "Checking batch status...",
+      "pleaseWait": "Please wait while we check if this batch can be deleted.",
+      "cannotDelete": "Cannot Delete",
+      "hasTransactions": "This batch cannot be deleted because it has associated transactions or stock movements. Only batches that haven't been used in any transactions or stock adjustments can be deleted.",
+      "quantityChanged": "This batch cannot be deleted because its current quantity",
+      "differsFromInitial": "differs from its initial quantity",
+      "indicatingUsed": "indicating it's been used.",
+      "warning": "Warning!",
+      "actionUndone": "This will permanently remove the batch and its initial stock-in record. This action cannot be undone.",
+      "deleting": "Deleting...",
+      "deleteButton": "Delete Batch",
+      "success": "Batch deleted",
+      "successMessage": "has been deleted successfully",
+      "error": "Error",
+      "failedToDelete": "Failed to delete batch",
+      "unexpectedError": "An unexpected error occurred",
+      "cannotDeleteTitle": "Cannot Delete Batch",
+      "cannotDeleteMessage": "This batch cannot be deleted as it has associated transactions or stock movements."
+    },
+    "batchDetailDialog": {
+      "title": "Batch Details",
+      "description": "Detailed information about the product batch",
+      "loading": "Loading Batch Details",
+      "loadingMessage": "Loading batch details...",
+      "notFound": "Batch Not Found",
+      "notFoundMessage": "Batch not found",
+      "basicInfo": "Basic Information",
+      "productName": "Product Name",
+      "batchCode": "Batch Code",
+      "category": "Category",
+      "unit": "Unit",
+      "quantityPricing": "Quantity & Pricing",
+      "initialQuantity": "Initial Quantity",
+      "remainingQuantity": "Remaining Quantity",
+      "buyPrice": "Buy Price",
+      "expiryDate": "Expiry Date",
+      "stockMovementHistory": "Stock Movement History",
+      "stockMovementHistoryLegacy": "Stock Movement History (Legacy)",
+      "stockInRecords": "Stock In Records",
+      "stockOutRecords": "Stock Out Records",
+      "transactionHistory": "Transaction History",
+      "sold": "Sold",
+      "transactionId": "Transaction ID",
+      "perUnit": "per unit",
+      "expired": "Expired"
+    },
+    "batchAdjustmentDialog": {
+      "title": "Adjust Quantity",
+      "description": "Adjust the quantity for batch",
+      "product": "Product",
+      "currentQuantity": "Current Quantity",
+      "adjustment": "Adjustment",
+      "adjustmentPlaceholder": "Enter adjustment (positive to add, negative to subtract)",
+      "newQuantity": "New quantity will be",
+      "cannotBeNegative": "(Cannot be negative)",
+      "unit": "Unit",
+      "selectUnit": "Select unit",
+      "reason": "Reason",
+      "reasonPlaceholder": "Enter reason for adjustment",
+      "cancel": "Cancel",
+      "adjusting": "Adjusting...",
+      "adjustQuantityButton": "Adjust Quantity",
+      "invalidAdjustment": "Invalid adjustment",
+      "adjustmentCannotZero": "Adjustment quantity cannot be zero",
+      "reasonRequired": "Reason required",
+      "provideReason": "Please provide a reason for the adjustment",
+      "quantityAdjusted": "Quantity adjusted",
+      "adjustmentSuccess": "Batch quantity has been adjusted successfully",
+      "error": "Error",
+      "failedToAdjust": "Failed to adjust quantity",
+      "unexpectedError": "An unexpected error occurred"
+    },
+    "batchFormDialog": {
+      "createTitle": "Create Batch",
+      "editTitle": "Edit Batch",
+      "createDescription": "Add a new product batch to your inventory",
+      "editDescription": "Edit the batch information below",
+      "createButton": "Create Batch",
+      "updateButton": "Update Batch",
+      "creating": "Creating...",
+      "updating": "Updating...",
+      "cancel": "Cancel",
+      "product": "Product",
+      "selectProduct": "Select a product",
+      "noProductsFound": "No products found",
+      "batchCode": "Batch Code",
+      "autoGeneratedBatchCode": "Auto-generated batch code",
+      "generateNewBatchCode": "Generate new batch code",
+      "batchCodeNote": "Batch code is auto-generated but can be edited if needed",
+      "expiryDate": "Expiry Date",
+      "pickDate": "Pick a date",
+      "initialQuantity": "Initial Quantity",
+      "enterInitialQuantity": "Enter initial quantity",
+      "buyPrice": "Buy Price (IDR)",
+      "enterBuyPrice": "Enter buy price",
+      "buyPriceNote": "Total purchase price for the entire batch, not per unit",
+      "unit": "Unit",
+      "selectUnit": "Select a unit",
+      "noUnitsFound": "No units found",
+      "unitAutoSelected": "Unit is automatically selected based on the product.",
+      "supplier": "Supplier (optional)",
+      "selectSupplier": "Select a supplier (optional)",
+      "noSuppliersFound": "No suppliers found",
+      "none": "None",
+      "batchCreated": "Batch created",
+      "newBatchSuccess": "New batch has been created",
+      "batchUpdated": "Batch updated",
+      "batchUpdateSuccess": "Batch has been updated successfully",
+      "error": "Error",
+      "somethingWrong": "Something went wrong",
+      "unexpectedError": "An unexpected error occurred",
+      "failedToLoadData": "Failed to load necessary data",
+      "tooltips": {
+        "product": "Select the product you're adding inventory for",
+        "batchCode": "Unique code to identify this batch. Auto-generated based on product name and date",
+        "expiryDate": "The date when this product batch expires. Important for inventory management",
+        "initialQuantity": "The number of items in this batch. This will increase the product's total stock",
+        "buyPrice": "The purchase price for the ENTIRE batch, not per unit. Used to calculate profit margins",
+        "unit": "The unit of measurement for this product (e.g., pieces, boxes)",
+        "supplier": "The supplier who provided this batch (optional)"
+      }
+    }
+  }
+}

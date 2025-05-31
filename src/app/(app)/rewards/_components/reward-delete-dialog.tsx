@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { IconAlertTriangle } from '@tabler/icons-react';
 import { toast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -21,6 +22,7 @@ export function RewardDeleteDialog({
   reward,
   onSuccess,
 }: Props) {
+  const t = useTranslations('reward.deleteDialog');
   const [isDeleting, setIsDeleting] = useState(false);
 
   const hasClaims = !!(
@@ -33,8 +35,8 @@ export function RewardDeleteDialog({
 
       if (hasClaims) {
         toast({
-          title: 'Cannot Delete Reward',
-          description: `This reward has been claimed ${reward._count?.rewardClaims} times. It cannot be deleted.`,
+          title: t('error.failed'),
+          description: t('hasClaimsWarning'),
           variant: 'destructive',
         });
         onOpenChange(false);
@@ -45,22 +47,22 @@ export function RewardDeleteDialog({
 
       if (result.success) {
         toast({
-          title: 'Reward deleted',
-          description: `The reward "${reward.name}" has been deleted successfully`,
+          title: t('success'),
+          description: t('successMessage', { name: reward.name }),
         });
         onSuccess?.();
       } else {
         toast({
-          title: 'Error',
-          description: result.error || 'Failed to delete reward',
+          title: t('error.failed'),
+          description: result.error || t('error.failedToDelete'),
           variant: 'destructive',
         });
       }
     } catch (error) {
       console.error('Delete reward error:', error);
       toast({
-        title: 'Error',
-        description: 'An unexpected error occurred',
+        title: t('error.failed'),
+        description: t('error.unexpected'),
         variant: 'destructive',
       });
     } finally {
@@ -81,38 +83,47 @@ export function RewardDeleteDialog({
             className="mr-1 inline-block stroke-destructive"
             size={18}
           />{' '}
-          Delete Reward
+          {t('title')}
         </span>
       }
       desc={
         <div className="space-y-4">
           <p className="mb-2">
-            Are you sure you want to delete{' '}
-            <span className="font-bold">{reward.name}</span>?
+            {t('description')} <span className="font-bold">{reward.name}</span>?
             <br />
-            This action will permanently remove this reward from the system.
-            This cannot be undone.
+            {t('content')}
           </p>
 
           {hasClaims ? (
             <Alert variant="destructive">
-              <AlertTitle>Cannot Delete</AlertTitle>
-              <AlertDescription>
-                This reward has been claimed {reward._count?.rewardClaims}{' '}
-                times. Rewards with claim history cannot be deleted.
-              </AlertDescription>
+              <AlertTitle>{t('cannotDelete')}</AlertTitle>
+              <AlertDescription>{t('hasClaimsWarning')}</AlertDescription>
             </Alert>
           ) : (
             <Alert variant="destructive">
-              <AlertTitle>Warning!</AlertTitle>
-              <AlertDescription>
-                Please be careful, this operation cannot be rolled back.
-              </AlertDescription>
+              <AlertTitle>{t('warning')}</AlertTitle>
+              <AlertDescription>{t('actionUndone')}</AlertDescription>
             </Alert>
           )}
+
+          {/* Reward details section */}
+          <div className="bg-muted p-3 rounded-md space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">{t('rewardName')}:</span>
+              <span className="font-medium">{reward.name}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">{t('pointsCost')}:</span>
+              <span className="font-medium">{reward.pointsCost}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">{t('stock')}:</span>
+              <span className="font-medium">{reward.stock}</span>
+            </div>
+          </div>
         </div>
       }
-      confirmText={isDeleting ? 'Deleting...' : 'Delete'}
+      confirmText={isDeleting ? t('deleting') : t('deleteButton')}
       destructive
     />
   );

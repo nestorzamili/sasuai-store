@@ -1,22 +1,25 @@
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 
 export function TermsFooter() {
+  const t = useTranslations('auth');
+
   return (
     <div className="pt-2 text-center text-xs sm:text-sm text-muted-foreground">
       <p className="leading-relaxed">
-        By signing in, you agree to our{' '}
+        {t('termsAgreement')}{' '}
         <a
           href="/terms"
           className="underline underline-offset-4 hover:text-primary"
         >
-          Terms of Service
+          {t('termsOfService')}
         </a>{' '}
-        and{' '}
+        {t('and')}{' '}
         <a
           href="/privacy"
           className="underline underline-offset-4 hover:text-primary"
         >
-          Privacy Policy
+          {t('privacyPolicy')}
         </a>
       </p>
     </div>
@@ -41,6 +44,8 @@ export function AuthLink({ question, linkText, href }: AuthLinkProps) {
 }
 
 export function BackToLoginLink() {
+  const t = useTranslations('auth');
+
   return (
     <div className="text-center">
       <Link
@@ -61,7 +66,7 @@ export function BackToLoginLink() {
         >
           <path d="m15 18-6-6 6-6" />
         </svg>
-        Back to Login
+        {t('backToLogin')}
       </Link>
     </div>
   );
