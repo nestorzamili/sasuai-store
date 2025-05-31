@@ -4,6 +4,7 @@ import { HTMLAttributes, useState } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -21,19 +22,20 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 
 type ForgotFormProps = HTMLAttributes<HTMLDivElement>;
 
-const formSchema = z.object({
-  email: z
-    .string()
-    .min(1, { message: 'Please enter your email' })
-    .email({ message: 'Invalid email address' }),
-});
-
 export function ForgotForm({ className, ...props }: ForgotFormProps) {
+  const t = useTranslations('auth.forgotPasswordForm');
   const [isLoading, setIsLoading] = useState(false);
   const [formState, setFormState] = useState<{
     status: 'idle' | 'success' | 'error';
     message: string;
   }>({ status: 'idle', message: '' });
+
+  const formSchema = z.object({
+    email: z
+      .string()
+      .min(1, { message: t('validation.emailRequired') })
+      .email({ message: t('validation.emailInvalid') }),
+  });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -67,8 +69,7 @@ export function ForgotForm({ className, ...props }: ForgotFormProps) {
       // Success path
       setFormState({
         status: 'success',
-        message:
-          'If the email exists in our database, an email will be sent to your inbox to reset your password.',
+        message: t('successMessage'),
       });
 
       // Clear the form on success
@@ -77,7 +78,7 @@ export function ForgotForm({ className, ...props }: ForgotFormProps) {
       console.error('Error during password reset:', error);
       setFormState({
         status: 'error',
-        message: 'Unable to process your request. Please try again later.',
+        message: t('errorMessage'),
       });
     } finally {
       setIsLoading(false);
@@ -114,10 +115,12 @@ export function ForgotForm({ className, ...props }: ForgotFormProps) {
               name="email"
               render={({ field }) => (
                 <FormItem className="space-y-1 sm:space-y-1.5 w-full">
-                  <FormLabel className="text-sm sm:text-base">Email</FormLabel>
+                  <FormLabel className="text-sm sm:text-base">
+                    {t('email')}
+                  </FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="name@example.com"
+                      placeholder={t('emailPlaceholder')}
                       className="h-9 sm:h-10 text-sm sm:text-base w-full"
                       {...field}
                       disabled={isLoading}
@@ -132,7 +135,7 @@ export function ForgotForm({ className, ...props }: ForgotFormProps) {
               type="submit"
               disabled={isLoading}
             >
-              {isLoading ? 'Sending...' : 'Continue'}
+              {isLoading ? t('sending') : t('continue')}
             </Button>
           </div>
         </form>

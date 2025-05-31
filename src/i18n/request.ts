@@ -20,6 +20,7 @@ export default getRequestConfig(async () => {
     ...(await import(`./en/transaction.json`)).default,
     ...(await import(`./en/reward.json`)).default,
     ...(await import(`./en/user.json`)).default
+  , ...(await import(`./en/auth.json`)).default
   };
 
   // Override with locale-specific translations if not English
@@ -38,6 +39,7 @@ export default getRequestConfig(async () => {
       const localeTransaction = (await import(`./${locale}/transaction.json`)).default;
       const localeReward = (await import(`./${locale}/reward.json`)).default;
       const localeUser = (await import(`./${locale}/user.json`)).default;
+      const localeAuth = (await import(`./${locale}/auth.json`)).default;
 
       Object.assign(
         messages,
@@ -53,7 +55,8 @@ export default getRequestConfig(async () => {
         localeSupplier,
         localeTransaction,
         localeReward,
-        localeUser
+        localeUser,
+        localeAuth
       );
     } catch (error) {
       console.error(`Error loading translations for locale: ${locale}`, error);
