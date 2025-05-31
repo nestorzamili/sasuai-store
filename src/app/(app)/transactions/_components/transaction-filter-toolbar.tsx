@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -40,6 +41,8 @@ export default function TransactionFilterToolbar({
   paymentMethod,
   setPaymentMethod,
 }: TransactionFilterToolbarProps) {
+  const t = useTranslations('transaction.filters');
+
   // State for the amount popover
   const [amountOpen, setAmountOpen] = useState(false);
   const [tempMinAmount, setTempMinAmount] = useState(minAmount);
@@ -53,18 +56,38 @@ export default function TransactionFilterToolbar({
     paymentMethod !== 'ALL_METHODS'
   );
 
-  // Payment method options
+  // Payment method options with translations - fix the translation keys
   const paymentMethods = [
-    { value: 'cash', label: 'Cash', icon: <IconCash size={16} /> },
-    { value: 'debit', label: 'Debit', icon: <IconCreditCard size={16} /> },
-    { value: 'e_wallet', label: 'E-Wallet', icon: <IconWallet size={16} /> },
-    { value: 'qris', label: 'QRIS', icon: <IconQrcode size={16} /> },
+    {
+      value: 'cash',
+      label: t('paymentMethods.cash'),
+      icon: <IconCash size={16} />,
+    },
+    {
+      value: 'debit',
+      label: t('paymentMethods.debit'),
+      icon: <IconCreditCard size={16} />,
+    },
+    {
+      value: 'e_wallet',
+      label: t('paymentMethods.e_wallet'),
+      icon: <IconWallet size={16} />,
+    },
+    {
+      value: 'qris',
+      label: t('paymentMethods.qris'),
+      icon: <IconQrcode size={16} />,
+    },
     {
       value: 'transfer',
-      label: 'Transfer',
+      label: t('paymentMethods.transfer'),
       icon: <IconBuildingBank size={16} />,
     },
-    { value: 'other', label: 'Other', icon: <IconDots size={16} /> },
+    {
+      value: 'other',
+      label: t('paymentMethods.other'),
+      icon: <IconDots size={16} />,
+    },
   ];
 
   // Update temporary amount values when main values change
@@ -73,16 +96,16 @@ export default function TransactionFilterToolbar({
     setTempMaxAmount(maxAmount);
   }, [minAmount, maxAmount]);
 
-  // Generate amount button label
+  // Generate amount button label with translations
   const getAmountButtonLabel = () => {
     if (minAmount && maxAmount) {
       return `${formatRupiah(minAmount)} - ${formatRupiah(maxAmount)}`;
     } else if (minAmount) {
-      return `Min: ${formatRupiah(minAmount)}`;
+      return `${t('minAmount')}: ${formatRupiah(minAmount)}`;
     } else if (maxAmount) {
-      return `Max: ${formatRupiah(maxAmount)}`;
+      return `${t('maxAmount')}: ${formatRupiah(maxAmount)}`;
     }
-    return 'Amount Range';
+    return t('amountRange');
   };
 
   // Handle amount filter apply - stabilize with useCallback
@@ -120,6 +143,7 @@ export default function TransactionFilterToolbar({
             align="start"
             className="w-full"
             isCompact={true}
+            placeholder={t('dateRange')}
           />
         </div>
 
@@ -153,7 +177,7 @@ export default function TransactionFilterToolbar({
           <PopoverContent className="w-[300px] p-4">
             <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <h4 className="font-medium">Amount Range</h4>
+                <h4 className="font-medium">{t('amountRange')}</h4>
                 {(tempMinAmount || tempMaxAmount) && (
                   <Button
                     variant="ghost"
@@ -161,7 +185,7 @@ export default function TransactionFilterToolbar({
                     onClick={handleResetAmountFilter}
                     className="h-7 px-2 text-xs"
                   >
-                    Reset
+                    {t('reset')}
                   </Button>
                 )}
               </div>
@@ -170,7 +194,7 @@ export default function TransactionFilterToolbar({
               <div className="flex gap-4 items-center">
                 <div className="flex-1">
                   <label className="text-xs text-muted-foreground block mb-1">
-                    Min Amount
+                    {t('minAmount')}
                   </label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
@@ -186,7 +210,7 @@ export default function TransactionFilterToolbar({
                 </div>
                 <div className="flex-1">
                   <label className="text-xs text-muted-foreground block mb-1">
-                    Max Amount
+                    {t('maxAmount')}
                   </label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
@@ -203,7 +227,7 @@ export default function TransactionFilterToolbar({
               </div>
 
               <Button className="w-full" onClick={handleApplyAmountFilter}>
-                Apply Filter
+                {t('applyFilter')}
               </Button>
             </div>
           </PopoverContent>
@@ -213,8 +237,8 @@ export default function TransactionFilterToolbar({
         <div className="w-[160px] shrink-0">
           <Select value={paymentMethod} onValueChange={setPaymentMethod}>
             <SelectTrigger className="w-full">
-              <SelectValue placeholder="Payment Method">
-                {paymentMethod && (
+              <SelectValue placeholder={t('paymentMethod')}>
+                {paymentMethod && paymentMethod !== 'ALL_METHODS' && (
                   <div className="flex items-center gap-2">
                     {
                       paymentMethods.find((m) => m.value === paymentMethod)
@@ -222,13 +246,19 @@ export default function TransactionFilterToolbar({
                     }
                     <span className="overflow-hidden text-ellipsis">
                       {paymentMethods.find((m) => m.value === paymentMethod)
-                        ?.label || 'Payment Method'}
+                        ?.label || t('paymentMethod')}
                     </span>
                   </div>
+                )}
+                {paymentMethod === 'ALL_METHODS' && (
+                  <span>{t('allPaymentMethods')}</span>
                 )}
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="ALL_METHODS">
+                {t('allPaymentMethods')}
+              </SelectItem>
               {paymentMethods.map((method) => (
                 <SelectItem key={method.value} value={method.value}>
                   <div className="flex items-center gap-2 w-full">
@@ -250,7 +280,7 @@ export default function TransactionFilterToolbar({
           className="shrink-0"
         >
           <IconFilterOff size={16} className="mr-2" />
-          <span>Clear Filters</span>
+          <span>{t('clearFilters')}</span>
         </Button>
       </div>
     </div>

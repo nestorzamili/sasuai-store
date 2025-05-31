@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { MemberTier, TiersContentProps, TierStyle } from '@/lib/types/member';
 import { Button } from '@/components/ui/button';
 import {
@@ -69,6 +70,7 @@ export default function TiersContent({
   onSuccess,
   isLoading,
 }: TiersContentProps) {
+  const t = useTranslations('member.tiersContent');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedTier, setSelectedTier] = useState<MemberTier | null>(null);
@@ -116,14 +118,14 @@ export default function TiersContent({
         <div>
           <h3 className="text-xl font-semibold flex items-center">
             <IconCrown className="w-5 h-5 mr-2 text-amber-500" />
-            Membership Tiers
+            {t('title')}
           </h3>
           <p className="text-sm text-muted-foreground mt-1">
-            Configure the membership tiers for your loyalty program
+            {t('description')}
           </p>
         </div>
         <Button onClick={handleCreate} className="shadow-sm">
-          <IconPlus className="w-4 h-4 mr-2" /> Create New Tier
+          <IconPlus className="w-4 h-4 mr-2" /> {t('createNewTier')}
         </Button>
       </div>
 
@@ -167,18 +169,19 @@ export default function TiersContent({
 
 // Empty state component
 function EmptyTierState({ onCreate }: { onCreate: () => void }) {
+  const t = useTranslations('member.tiersContent');
+
   return (
     <div className="flex flex-col items-center justify-center py-16 px-4 border rounded-xl bg-muted/30 border-dashed">
       <div className="bg-primary/10 p-4 rounded-full mb-4">
         <IconCrown className="w-8 h-8 text-primary" />
       </div>
-      <h3 className="text-xl font-semibold mb-2">No tiers defined yet</h3>
+      <h3 className="text-xl font-semibold mb-2">{t('emptyState.title')}</h3>
       <p className="text-center text-muted-foreground mb-6 max-w-md">
-        Create your first membership tier to kickstart your loyalty program and
-        reward your members
+        {t('emptyState.description')}
       </p>
       <Button onClick={onCreate} size="lg" className="shadow-sm">
-        <IconPlus className="w-4 h-4 mr-2" /> Create First Tier
+        <IconPlus className="w-4 h-4 mr-2" /> {t('emptyState.createButton')}
       </Button>
     </div>
   );
@@ -198,6 +201,7 @@ function TierCard({
   onEdit: (tier: MemberTier) => void;
   onDelete: (tier: MemberTier) => void;
 }) {
+  const t = useTranslations('member.tiersContent');
   const colors = getTierStyle(tier);
 
   return (
@@ -207,7 +211,7 @@ function TierCard({
       {isHighest && (
         <div className="absolute top-0 right-0">
           <div className="bg-amber-500 text-white text-xs px-4 py-1 translate-x-5 translate-y-3 rotate-45 font-semibold">
-            TOP TIER
+            {t('card.topTier')}
           </div>
         </div>
       )}
@@ -219,7 +223,7 @@ function TierCard({
             {isHighest && <IconCrown className="h-4 w-4 ml-2 text-amber-500" />}
           </CardTitle>
           <Badge variant="secondary" className="font-medium px-3 py-1">
-            {tier.multiplier}x points
+            {tier.multiplier}x {t('card.points')}
           </Badge>
         </div>
       </CardHeader>
@@ -228,17 +232,17 @@ function TierCard({
           {tier.minPoints.toLocaleString()}+
         </div>
         <p className="text-sm text-muted-foreground">
-          Min. points required for this tier
+          {t('card.minPointsRequired')}
         </p>
 
         <div className="mt-4 pt-4 border-t">
           <div className="text-sm">
             <div className="flex justify-between mb-2">
-              <span>Points multiplier:</span>
+              <span>{t('card.pointsMultiplier')}:</span>
               <span className="font-medium">{tier.multiplier}x</span>
             </div>
             <div className="flex justify-between">
-              <span>Tier level:</span>
+              <span>{t('card.tierLevel')}:</span>
               <span className="font-medium">{index + 1}</span>
             </div>
           </div>
@@ -251,7 +255,7 @@ function TierCard({
           onClick={() => onEdit(tier)}
           className="hover:bg-black/10 dark:hover:bg-white/10"
         >
-          <IconEdit className="h-4 w-4 mr-1" /> Edit
+          <IconEdit className="h-4 w-4 mr-1" /> {t('card.edit')}
         </Button>
         <Button
           size="sm"
@@ -259,7 +263,7 @@ function TierCard({
           className="text-destructive hover:bg-destructive/10"
           onClick={() => onDelete(tier)}
         >
-          <IconTrash className="h-4 w-4 mr-1" /> Delete
+          <IconTrash className="h-4 w-4 mr-1" /> {t('card.delete')}
         </Button>
       </CardFooter>
     </Card>

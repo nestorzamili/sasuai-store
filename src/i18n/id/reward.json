@@ -1,0 +1,225 @@
+{
+  "reward": {
+    "title": "Kelola Reward",
+    "description": "Buat, kelola, dan lacak reward keanggotaan serta klaimnya.",
+    "tabs": {
+      "rewards": "Reward",
+      "claims": "Riwayat Klaim"
+    },
+    "buttons": {
+      "createReward": "Buat Reward",
+      "claimReward": "Klaim Reward",
+      "edit": "Edit",
+      "delete": "Hapus",
+      "save": "Simpan",
+      "cancel": "Batal",
+      "actions": "Aksi"
+    },
+    "table": {
+      "columns": {
+        "image": "Gambar",
+        "name": "Nama Reward",
+        "pointsCost": "Biaya Poin",
+        "stock": "Stok",
+        "status": "Status",
+        "expiryDate": "Tanggal Kedaluwarsa",
+        "description": "Deskripsi",
+        "claims": "Klaim",
+        "actions": "Aksi"
+      },
+      "status": {
+        "active": "Aktif",
+        "inactive": "Tidak Aktif",
+        "expired": "Kedaluwarsa"
+      },
+      "stock": {
+        "outOfStock": "Stok Habis",
+        "remaining": "{count} tersisa"
+      },
+      "expiry": {
+        "noExpiry": "Tidak ada kedaluwarsa"
+      },
+      "claims": {
+        "count": "{count} klaim"
+      },
+      "actions": {
+        "openMenu": "Buka menu",
+        "viewDetails": "Lihat Detail",
+        "edit": "Edit",
+        "delete": "Hapus"
+      },
+      "pointsLabel": "poin",
+      "noResults": "Tidak ada reward ditemukan",
+      "noResultsDescription": "Buat reward pertama Anda untuk memulai."
+    },
+    "claimsTable": {
+      "columns": {
+        "member": "Member",
+        "reward": "Reward",
+        "pointsUsed": "Poin Digunakan",
+        "claimDate": "Tanggal Klaim",
+        "status": "Status"
+      },
+      "status": {
+        "pending": "Menunggu",
+        "completed": "Selesai",
+        "cancelled": "Dibatalkan",
+        "claimed": "Diklaim"
+      },
+      "actions": "Aksi",
+      "openMenu": "Buka menu",
+      "changeStatus": "Ubah Status",
+      "statusUpdated": "Status diperbarui",
+      "statusUpdatedMessage": "Status klaim telah diperbarui menjadi {status}",
+      "statusUpdateFailed": "Gagal memperbarui status klaim",
+      "noResults": "Tidak ada klaim ditemukan",
+      "noResultsDescription": "Belum ada klaim reward yang dibuat."
+    },
+    "form": {
+      "createTitle": "Buat Reward Baru",
+      "editTitle": "Edit Reward",
+      "createDescription": "Tambahkan reward baru ke program loyalitas Anda",
+      "editDescription": "Perbarui informasi reward",
+      "createButton": "Buat Reward",
+      "updateButton": "Perbarui Reward",
+      "cancel": "Batal",
+      "sections": {
+        "basicInfo": "Informasi Dasar",
+        "rewardValue": "Nilai Reward",
+        "availability": "Ketersediaan"
+      },
+      "fields": {
+        "image": "Gambar Reward",
+        "imageDescription": "Unggah gambar untuk membuat reward Anda lebih menarik (rasio yang disarankan: 16:9)",
+        "name": "Nama Reward",
+        "namePlaceholder": "Masukkan nama reward",
+        "nameRequired": "Nama reward diperlukan",
+        "description": "Deskripsi",
+        "descriptionPlaceholder": "Masukkan deskripsi reward",
+        "descriptionHelper": "Berikan detail tentang apa yang termasuk dalam reward",
+        "pointsCost": "Biaya Poin",
+        "pointsCostPlaceholder": "Masukkan poin yang diperlukan",
+        "pointsCostRequired": "Biaya poin diperlukan",
+        "pointsCostMin": "Biaya poin minimal 1",
+        "stock": "Jumlah Stok",
+        "stockPlaceholder": "Masukkan stok yang tersedia",
+        "stockRequired": "Jumlah stok diperlukan",
+        "stockMin": "Stok minimal 0",
+        "expiryDate": "Tanggal Kedaluwarsa (Opsional)",
+        "expiryDatePlaceholder": "Pilih tanggal",
+        "isActive": "Status Aktif",
+        "isActiveDescription": "Aktifkan reward ini agar member dapat mengklaimnya",
+        "rewardImageAlt": "Gambar reward",
+        "uploadImagePrompt": "Unggah gambar untuk reward ini",
+        "changeImage": "Ubah gambar",
+        "uploadImage": "Unggah gambar",
+        "removeImage": "Hapus gambar",
+        "uploading": "Mengunggah...",
+        "uploadRewardImageTitle": "Unggah Gambar Reward",
+        "uploadRewardImageDescription": "Unggah gambar untuk reward Anda. Rasio aspek yang disarankan adalah 16:9.",
+        "imageRemoved": "Gambar dihapus",
+        "imageRemovedDescription": "Gambar reward telah dihapus.",
+        "imageUploaded": "Gambar diunggah",
+        "imageUploadedDescription": "Gambar Anda telah berhasil diunggah."
+      },
+      "success": {
+        "created": "Reward berhasil dibuat",
+        "updated": "Reward berhasil diperbarui"
+      },
+      "error": {
+        "failed": "Gagal menyimpan reward",
+        "unexpected": "Terjadi kesalahan yang tidak terduga"
+      }
+    },
+    "deleteDialog": {
+      "title": "Hapus Reward",
+      "description": "Apakah Anda yakin ingin menghapus reward ini?",
+      "content": "Tindakan ini tidak dapat dibatalkan. Ini akan menghapus reward secara permanen dan menghapusnya dari sistem.",
+      "rewardName": "Reward",
+      "pointsCost": "Biaya Poin",
+      "stock": "Stok",
+      "cannotDelete": "Tidak Dapat Dihapus",
+      "hasClaimsWarning": "Reward ini memiliki klaim yang ada dan tidak dapat dihapus.",
+      "warning": "Peringatan!",
+      "actionUndone": "Harap berhati-hati, operasi ini tidak dapat dibatalkan.",
+      "deleteButton": "Hapus Reward",
+      "deleting": "Menghapus...",
+      "success": "Reward berhasil dihapus",
+      "successMessage": "Reward \"{name}\" telah berhasil dihapus",
+      "error": {
+        "failed": "Gagal menghapus reward",
+        "failedToDelete": "Gagal menghapus reward",
+        "unexpected": "Terjadi kesalahan yang tidak terduga"
+      }
+    },
+    "claimDialog": {
+      "title": "Klaim Reward",
+      "description": "Proses klaim reward untuk member",
+      "fields": {
+        "member": "Pilih Member",
+        "memberPlaceholder": "Cari member",
+        "memberRequired": "Silakan pilih member",
+        "reward": "Pilih Reward",
+        "rewardPlaceholder": "Pilih reward",
+        "rewardRequired": "Silakan pilih reward",
+        "noMembersFound": "Tidak ada member ditemukan. Coba pencarian yang berbeda.",
+        "noRewardsFound": "Tidak ada reward tersedia"
+      },
+      "memberInfo": {
+        "currentPoints": "Poin",
+        "tier": "Tingkatan"
+      },
+      "rewardInfo": {
+        "pointsRequired": "poin diperlukan",
+        "stockAvailable": "tersedia di stok",
+        "insufficientPoints": "Poin tidak mencukupi",
+        "outOfStock": "Stok habis",
+        "expired": "Reward kedaluwarsa"
+      },
+      "processing": "Memproses...",
+      "claimButton": "Klaim Reward",
+      "success": "Reward berhasil diklaim",
+      "successMessage": "Reward telah berhasil diklaim",
+      "memberBanned": "Member diblokir",
+      "memberBannedDescription": "Member ini tidak dapat mengklaim reward",
+      "banned": "Diblokir",
+      "regularTier": "Reguler",
+      "noRewardsAvailable": "Saat ini tidak ada reward yang tersedia untuk diklaim.",
+      "error": {
+        "insufficientPoints": "Poin tidak mencukupi",
+        "insufficientPointsMessage": "Member tidak memiliki poin yang cukup untuk mengklaim reward ini",
+        "outOfStock": "Reward kehabisan stok",
+        "expired": "Reward telah kedaluwarsa",
+        "failed": "Gagal memproses klaim",
+        "unexpected": "Terjadi kesalahan yang tidak terduga"
+      }
+    },
+    "filters": {
+      "search": "Cari reward...",
+      "status": "Status",
+      "allStatuses": "Semua Status",
+      "active": "Aktif",
+      "inactive": "Tidak Aktif",
+      "expired": "Kedaluwarsa",
+      "clearFilters": "Hapus Filter"
+    },
+    "validation": {
+      "required": "Field ini diperlukan",
+      "minValue": "Nilai minimal {min}",
+      "maxValue": "Nilai maksimal {max}",
+      "invalidDate": "Silakan pilih tanggal yang valid"
+    },
+    "common": {
+      "loading": "Memuat...",
+      "noData": "Tidak ada data tersedia",
+      "error": "Terjadi kesalahan",
+      "retry": "Coba Lagi",
+      "close": "Tutup",
+      "confirm": "Konfirmasi",
+      "points": "poin",
+      "unlimited": "Tidak Terbatas",
+      "never": "Tidak Pernah",
+      "cancel": "Batalkan"
+    }
+  }
+}

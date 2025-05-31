@@ -1,0 +1,67 @@
+{
+  "brand": {
+    "title": "Merek",
+    "description": "Kelola merek Anda di sini. Anda dapat menambah, mengedit, atau menghapus merek sesuai kebutuhan.",
+    "table": {
+      "columns": {
+        "name": "Nama",
+        "productsCount": "Jumlah Produk",
+        "created": "Dibuat"
+      },
+      "actions": {
+        "openMenu": "Buka menu",
+        "actions": "Aksi",
+        "edit": "Edit",
+        "delete": "Hapus"
+      },
+      "badges": {
+        "products": "produk"
+      }
+    },
+    "formDialog": {
+      "create": "Buat",
+      "createTitle": "Buat Merek",
+      "editTitle": "Edit Merek",
+      "createDescription": "Tambahkan merek baru ke katalog produk Anda",
+      "editDescription": "Edit informasi merek di bawah ini",
+      "brandName": "Nama Merek",
+      "brandNamePlaceholder": "Masukkan nama merek",
+      "cancel": "Batal",
+      "creating": "Membuat...",
+      "updating": "Memperbarui...",
+      "createButton": "Buat Merek",
+      "updateButton": "Perbarui Merek",
+      "success": {
+        "brandCreated": "Merek dibuat",
+        "brandCreatedMessage": "Merek baru telah dibuat",
+        "brandUpdated": "Merek diperbarui",
+        "brandUpdatedMessage": "Merek telah berhasil diperbarui"
+      },
+      "error": {
+        "somethingWrong": "Terjadi kesalahan",
+        "unexpectedError": "Terjadi kesalahan yang tidak terduga"
+      },
+      "validation": {
+        "nameRequired": "Nama merek diperlukan"
+      }
+    },
+    "deleteDialog": {
+      "title": "Hapus Merek",
+      "description": "Apakah Anda yakin ingin menghapus {name}?",
+      "permanentRemove": "Tindakan ini akan menghapus merek ini secara permanen dari sistem. Tindakan ini tidak dapat dibatalkan.",
+      "cannotDelete": "Tidak Dapat Menghapus",
+      "hasProducts": "Merek ini memiliki {count} produk yang terkait. Anda perlu mengalihkan atau menghapus produk tersebut sebelum menghapus merek ini.",
+      "warning": "Peringatan!",
+      "warningMessage": "Harap berhati-hati, operasi ini tidak dapat dikembalikan.",
+      "deleting": "Menghapus...",
+      "deleteButton": "Hapus",
+      "cannotDeleteTitle": "Tidak Dapat Menghapus Merek",
+      "cannotDeleteMessage": "Merek ini memiliki {count} produk yang terkait. Alihkan atau hapus produk tersebut terlebih dahulu.",
+      "success": "Merek dihapus",
+      "successMessage": "Merek \"{name}\" telah berhasil dihapus",
+      "error": "Kesalahan",
+      "failedToDelete": "Gagal menghapus merek",
+      "unexpectedError": "Terjadi kesalahan yang tidak terduga"
+    }
+  }
+}

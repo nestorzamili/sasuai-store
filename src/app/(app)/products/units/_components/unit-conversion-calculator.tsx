@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -33,15 +34,6 @@ import { toast } from '@/hooks/use-toast';
 import { IconArrowRight, IconCalculator } from '@tabler/icons-react';
 import { convertQuantity } from '../conversion-actions';
 
-// Form schema for conversion calculator
-const formSchema = z.object({
-  fromUnitId: z.string().min(1, 'Source unit is required'),
-  toUnitId: z.string().min(1, 'Target unit is required'),
-  quantity: z.coerce.number().positive('Quantity must be positive'),
-});
-
-type FormValues = z.infer<typeof formSchema>;
-
 interface UnitConversionCalculatorProps {
   units: UnitWithCounts[];
 }
@@ -49,9 +41,19 @@ interface UnitConversionCalculatorProps {
 export default function UnitConversionCalculator({
   units,
 }: UnitConversionCalculatorProps) {
+  const t = useTranslations('unit.conversionCalculator');
   const [result, setResult] = useState<number | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
   const [conversionError, setConversionError] = useState<string | null>(null);
+
+  // Form schema with translations
+  const formSchema = z.object({
+    fromUnitId: z.string().min(1, t('validation.sourceUnitRequired')),
+    toUnitId: z.string().min(1, t('validation.targetUnitRequired')),
+    quantity: z.coerce.number().positive(t('validation.quantityPositive')),
+  });
+
+  type FormValues = z.infer<typeof formSchema>;
 
   // Initialize form
   const form = useForm<FormValues>({
@@ -92,12 +94,11 @@ export default function UnitConversionCalculator({
       if (response.success && response.data !== undefined) {
         setResult(response.data);
       } else {
-        const errorMessage =
-          response.error || 'Unable to convert between these units';
+        const errorMessage = response.error || t('unableToConvert');
         setConversionError(errorMessage);
 
         toast({
-          title: 'Conversion Failed',
+          title: t('conversionFailed'),
           description: errorMessage,
           variant: 'destructive',
         });
@@ -105,13 +106,13 @@ export default function UnitConversionCalculator({
     } catch (error) {
       const errorMessage =
         error instanceof Error
-          ? `Failed to convert: ${error.message}`
-          : 'Failed to perform unit conversion';
+          ? `${t('failedToPerform')}: ${error.message}`
+          : t('failedToPerform');
 
       setConversionError(errorMessage);
 
       toast({
-        title: 'Error',
+        title: t('error'),
         description: errorMessage,
         variant: 'destructive',
       });
@@ -125,11 +126,9 @@ export default function UnitConversionCalculator({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <IconCalculator className="h-5 w-5" />
-          Unit Conversion Calculator
+          {t('title')}
         </CardTitle>
-        <CardDescription>
-          Convert quantities between different units of measurement
-        </CardDescription>
+        <CardDescription>{t('description')}</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -140,12 +139,12 @@ export default function UnitConversionCalculator({
                 name="quantity"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Quantity</FormLabel>
+                    <FormLabel>{t('quantity')}</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
                         step="any"
-                        placeholder="Enter quantity"
+                        placeholder={t('quantityPlaceholder')}
                         {...field}
                       />
                     </FormControl>
@@ -159,14 +158,14 @@ export default function UnitConversionCalculator({
                 name="fromUnitId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>From Unit</FormLabel>
+                    <FormLabel>{t('fromUnit')}</FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={field.value}
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select source unit" />
+                          <SelectValue placeholder={t('selectSourceUnit')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -191,14 +190,14 @@ export default function UnitConversionCalculator({
                 name="toUnitId"
                 render={({ field }) => (
                   <FormItem className="col-span-1 md:col-span-1">
-                    <FormLabel>To Unit</FormLabel>
+                    <FormLabel>{t('toUnit')}</FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={field.value}
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select target unit" />
+                          <SelectValue placeholder={t('selectTargetUnit')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -219,7 +218,7 @@ export default function UnitConversionCalculator({
                 disabled={isCalculating || !fromUnitId || !toUnitId}
                 className="w-full md:w-auto"
               >
-                {isCalculating ? 'Calculating...' : 'Calculate'}
+                {isCalculating ? t('calculating') : t('calculate')}
               </Button>
             </div>
           </form>
@@ -228,19 +227,18 @@ export default function UnitConversionCalculator({
         {conversionError && (
           <div className="mt-6 p-4 bg-destructive/10 border border-destructive rounded-md">
             <p className="text-lg font-medium text-destructive">
-              Conversion Error
+              {t('conversionError')}
             </p>
             <p className="text-destructive">{conversionError}</p>
             <p className="text-sm text-muted-foreground mt-2">
-              Tip: Make sure you have defined a conversion between these units
-              in the "Unit Conversions" tab.
+              {t('conversionTip')}
             </p>
           </div>
         )}
 
         {result !== null && fromUnit && toUnit && (
           <div className="mt-6 p-4 bg-secondary/30 rounded-md">
-            <p className="text-lg font-medium">Result:</p>
+            <p className="text-lg font-medium">{t('result')}</p>
             <p className="text-2xl font-semibold">
               {quantity} {fromUnit.name} ({fromUnit.symbol}) ={' '}
               {result.toLocaleString(undefined, {

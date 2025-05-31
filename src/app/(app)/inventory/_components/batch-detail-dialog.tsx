@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Dialog,
   DialogContent,
@@ -28,6 +29,7 @@ export function BatchDetailDialog({
   onOpenChange,
   batchId,
 }: BatchDetailDialogProps) {
+  const t = useTranslations('inventory.batchDetailDialog');
   const [batch, setBatch] = useState<ProductBatchWithDetails | null>(null);
   const [stockMovements, setStockMovements] = useState<StockMovement[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -71,11 +73,11 @@ export function BatchDetailDialog({
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Loading Batch Details</DialogTitle>
+            <DialogTitle>{t('loading')}</DialogTitle>
           </DialogHeader>
           <div className="flex items-center justify-center p-8">
             <Loader2 className="h-8 w-8 animate-spin" />
-            <span className="ml-2">Loading batch details...</span>
+            <span className="ml-2">{t('loadingMessage')}</span>
           </div>
         </DialogContent>
       </Dialog>
@@ -87,10 +89,10 @@ export function BatchDetailDialog({
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Batch Not Found</DialogTitle>
+            <DialogTitle>{t('notFound')}</DialogTitle>
           </DialogHeader>
           <div className="flex items-center justify-center p-8">
-            <span>Batch not found</span>
+            <span>{t('notFoundMessage')}</span>
           </div>
         </DialogContent>
       </Dialog>
@@ -103,10 +105,8 @@ export function BatchDetailDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Batch Details</DialogTitle>
-          <DialogDescription>
-            Detailed information about the product batch
-          </DialogDescription>
+          <DialogTitle>{t('title')}</DialogTitle>
+          <DialogDescription>{t('description')}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6">
@@ -114,32 +114,36 @@ export function BatchDetailDialog({
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
-                <span>Basic Information</span>
-                {expired && <Badge variant="destructive">Expired</Badge>}
+                <span>{t('basicInfo')}</span>
+                {expired && <Badge variant="destructive">{t('expired')}</Badge>}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <div className="text-sm text-muted-foreground">
-                    Product Name
+                    {t('productName')}
                   </div>
                   <div className="font-medium">{batch.product.name}</div>
                 </div>
                 <div>
                   <div className="text-sm text-muted-foreground">
-                    Batch Code
+                    {t('batchCode')}
                   </div>
                   <div className="font-medium">{batch.batchCode}</div>
                 </div>
                 <div>
-                  <div className="text-sm text-muted-foreground">Category</div>
+                  <div className="text-sm text-muted-foreground">
+                    {t('category')}
+                  </div>
                   <div className="font-medium">
                     {batch.product.category?.name}
                   </div>
                 </div>
                 <div>
-                  <div className="text-sm text-muted-foreground">Unit</div>
+                  <div className="text-sm text-muted-foreground">
+                    {t('unit')}
+                  </div>
                   <div className="font-medium">{batch.product.unit?.name}</div>
                 </div>
               </div>
@@ -149,13 +153,13 @@ export function BatchDetailDialog({
           {/* Quantity & Pricing */}
           <Card>
             <CardHeader>
-              <CardTitle>Quantity & Pricing</CardTitle>
+              <CardTitle>{t('quantityPricing')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <div className="text-sm text-muted-foreground">
-                    Initial Quantity
+                    {t('initialQuantity')}
                   </div>
                   <div className="font-medium">
                     {batch.initialQuantity.toLocaleString()}
@@ -163,21 +167,23 @@ export function BatchDetailDialog({
                 </div>
                 <div>
                   <div className="text-sm text-muted-foreground">
-                    Remaining Quantity
+                    {t('remainingQuantity')}
                   </div>
                   <div className="font-medium">
                     {batch.remainingQuantity.toLocaleString()}
                   </div>
                 </div>
                 <div>
-                  <div className="text-sm text-muted-foreground">Buy Price</div>
+                  <div className="text-sm text-muted-foreground">
+                    {t('buyPrice')}
+                  </div>
                   <div className="font-medium">
                     {formatRupiah(batch.buyPrice)}
                   </div>
                 </div>
                 <div>
                   <div className="text-sm text-muted-foreground">
-                    Expiry Date
+                    {t('expiryDate')}
                   </div>
                   <div
                     className={`font-medium ${expired ? 'text-destructive' : ''}`}
@@ -193,7 +199,7 @@ export function BatchDetailDialog({
           {stockMovements.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle>Stock Movement History</CardTitle>
+                <CardTitle>{t('stockMovementHistory')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
@@ -242,7 +248,7 @@ export function BatchDetailDialog({
             stockMovements.length === 0 && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Stock Movement History (Legacy)</CardTitle>
+                  <CardTitle>{t('stockMovementHistoryLegacy')}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
@@ -250,7 +256,7 @@ export function BatchDetailDialog({
                     {batch.stockIns.length > 0 && (
                       <div>
                         <h4 className="font-medium text-green-600 mb-2">
-                          Stock In Records
+                          {t('stockInRecords')}
                         </h4>
                         <div className="space-y-2">
                           {batch.stockIns.map((stockIn) => (
@@ -281,7 +287,7 @@ export function BatchDetailDialog({
                     {batch.stockOuts.length > 0 && (
                       <div>
                         <h4 className="font-medium text-red-600 mb-2">
-                          Stock Out Records
+                          {t('stockOutRecords')}
                         </h4>
                         <div className="space-y-2">
                           {batch.stockOuts.map((stockOut) => (
@@ -312,7 +318,7 @@ export function BatchDetailDialog({
           {batch.transactionItems.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle>Transaction History</CardTitle>
+                <CardTitle>{t('transactionHistory')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
@@ -323,10 +329,10 @@ export function BatchDetailDialog({
                     >
                       <div>
                         <div className="font-medium">
-                          Sold: {item.quantity} {item.unit.symbol}
+                          {t('sold')}: {item.quantity} {item.unit.symbol}
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          Transaction ID: {item.transaction.id}
+                          {t('transactionId')}: {item.transaction.id}
                         </div>
                         <div className="text-xs text-muted-foreground">
                           {format(new Date(item.transaction.createdAt), 'PPp')}
@@ -337,7 +343,7 @@ export function BatchDetailDialog({
                           {formatRupiah(item.unitPrice)}
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          per unit
+                          {t('perUnit')}
                         </div>
                       </div>
                     </div>

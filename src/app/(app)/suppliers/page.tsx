@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { SupplierTable } from './_components/supplier-table';
 import SupplierFormDialog from './_components/supplier-form-dialog';
 import {
@@ -9,6 +10,7 @@ import {
 } from '@/lib/types/supplier';
 
 export default function SuppliersPage() {
+  const t = useTranslations('supplier');
   const [formDialogOpen, setFormDialogOpen] = useState(false);
   const [formInitialData, setFormInitialData] = useState<
     SupplierFormInitialData | undefined
@@ -39,10 +41,8 @@ export default function SuppliersPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Suppliers</h2>
-          <p className="text-muted-foreground">
-            Manage your suppliers and view their stock-in history.
-          </p>
+          <h2 className="text-2xl font-bold tracking-tight">{t('title')}</h2>
+          <p className="text-muted-foreground">{t('description')}</p>
         </div>
         <SupplierFormDialog trigger />
       </div>

@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useProductForm } from './product-form-provider';
 import { EntityCombobox } from './entity-combobox';
 
@@ -9,6 +10,7 @@ interface BrandComboboxProps {
 }
 
 export function BrandCombobox({ value, onChange }: BrandComboboxProps) {
+  const t = useTranslations('product.brandCombobox');
   const { brands, setOpenBrandCreate } = useProductForm();
 
   return (
@@ -16,10 +18,10 @@ export function BrandCombobox({ value, onChange }: BrandComboboxProps) {
       value={value}
       onChange={onChange}
       entities={brands}
-      placeholder="Select brand..."
-      emptyPlaceholder="No brand found"
-      searchPlaceholder="Search brands..."
-      createEntityText="Create new brand"
+      placeholder={t('placeholder')}
+      emptyPlaceholder={t('emptyPlaceholder')}
+      searchPlaceholder={t('searchPlaceholder')}
+      createEntityText={t('createEntityText')}
       onCreateEntity={() => setOpenBrandCreate(true)}
       allowNone={true}
     />

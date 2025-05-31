@@ -7,6 +7,7 @@ import { MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { IconTrash, IconEdit, IconEye, IconPower } from '@tabler/icons-react';
 import { Badge } from '@/components/ui/badge';
+import { useTranslations } from 'next-intl';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -48,6 +49,7 @@ type FetchResult = TableFetchResult<DiscountWithCounts[]>;
 
 export function DiscountTable({ onRefresh }: DiscountTableProps) {
   const router = useRouter();
+  const t = useTranslations('discount');
 
   // Memoize the fetchDiscounts function to prevent unnecessary re-renders
   const fetchDiscounts = useCallback(
@@ -228,28 +230,28 @@ export function DiscountTable({ onRefresh }: DiscountTableProps) {
   const filterOptions = useMemo(
     () => ({
       discountTypeOptions: [
-        { value: 'ALL_TYPES', label: 'All Types' },
-        { value: 'PERCENTAGE', label: 'Percentage' },
-        { value: 'FIXED_AMOUNT', label: 'Fixed Amount' },
+        { value: 'ALL_TYPES', label: t('filters.allTypes') },
+        { value: 'PERCENTAGE', label: t('filters.percentage') },
+        { value: 'FIXED_AMOUNT', label: t('filters.fixedAmount') },
       ],
       applyToOptions: [
-        { value: 'ALL_APPLICATIONS', label: 'All Applications' },
-        { value: 'SPECIFIC_PRODUCTS', label: 'Specific Products' },
-        { value: 'SPECIFIC_MEMBERS', label: 'Specific Members' },
-        { value: 'SPECIFIC_MEMBER_TIERS', label: 'Member Tiers' },
+        { value: 'ALL_APPLICATIONS', label: t('filters.allApplications') },
+        { value: 'SPECIFIC_PRODUCTS', label: t('filters.specificProducts') },
+        { value: 'SPECIFIC_MEMBERS', label: t('filters.specificMembers') },
+        { value: 'SPECIFIC_MEMBER_TIERS', label: t('filters.memberTiers') },
       ],
       statusOptions: [
-        { value: 'ALL_STATUSES', label: 'All Statuses' },
-        { value: 'true', label: 'Active' },
-        { value: 'false', label: 'Inactive' },
+        { value: 'ALL_STATUSES', label: t('filters.allStatuses') },
+        { value: 'true', label: t('table.active') },
+        { value: 'false', label: t('table.inactive') },
       ],
     }),
-    [],
+    [t],
   );
 
   const columns: ColumnDef<DiscountWithCounts>[] = [
     {
-      header: 'Name',
+      header: t('table.name'),
       accessorKey: 'name',
       cell: ({ row }) => (
         <div className="font-medium">{row.getValue('name')}</div>
@@ -257,7 +259,7 @@ export function DiscountTable({ onRefresh }: DiscountTableProps) {
       enableSorting: true,
     },
     {
-      header: 'Code',
+      header: t('table.code'),
       accessorKey: 'code',
       cell: ({ row }) => {
         const code = row.getValue('code') as string | null;
@@ -266,12 +268,14 @@ export function DiscountTable({ onRefresh }: DiscountTableProps) {
             {code}
           </Badge>
         ) : (
-          <span className="text-muted-foreground italic">No code</span>
+          <span className="text-muted-foreground italic">
+            {t('table.noCode')}
+          </span>
         );
       },
     },
     {
-      header: 'Type & Value',
+      header: t('table.typeValue'),
       accessorKey: 'type',
       cell: ({ row }) => {
         const type = row.getValue('type') as PrismaDiscountType;
@@ -284,7 +288,7 @@ export function DiscountTable({ onRefresh }: DiscountTableProps) {
       },
     },
     {
-      header: 'Date Range',
+      header: t('table.dateRange'),
       accessorKey: 'startDate',
       cell: ({ row }) => {
         const startDate = new Date(row.getValue('startDate'));
@@ -300,7 +304,7 @@ export function DiscountTable({ onRefresh }: DiscountTableProps) {
       },
     },
     {
-      header: 'Applies To',
+      header: t('table.appliesTo'),
       accessorKey: 'applyTo',
       cell: ({ row }) => {
         const applyTo = row.getValue('applyTo') as PrismaDiscountApplyTo | null;
@@ -311,18 +315,18 @@ export function DiscountTable({ onRefresh }: DiscountTableProps) {
             <div>{formatApplyTo(applyTo as DiscountApplyTo)}</div>
             {applyTo === 'SPECIFIC_PRODUCTS' && relationCounts.products > 0 && (
               <div className="text-xs text-muted-foreground">
-                {relationCounts.products} products
+                {relationCounts.products} {t('table.products')}
               </div>
             )}
             {applyTo === 'SPECIFIC_MEMBERS' && relationCounts.members > 0 && (
               <div className="text-xs text-muted-foreground">
-                {relationCounts.members} members
+                {relationCounts.members} {t('table.members')}
               </div>
             )}
             {applyTo === 'SPECIFIC_MEMBER_TIERS' &&
               relationCounts.memberTiers > 0 && (
                 <div className="text-xs text-muted-foreground">
-                  {relationCounts.memberTiers} tiers
+                  {relationCounts.memberTiers} {t('table.tiers')}
                 </div>
               )}
           </div>
@@ -330,7 +334,7 @@ export function DiscountTable({ onRefresh }: DiscountTableProps) {
       },
     },
     {
-      header: 'Usage',
+      header: t('table.usage'),
       accessorKey: 'usedCount',
       cell: ({ row }) => {
         const usage = row.original.usage;
@@ -341,7 +345,7 @@ export function DiscountTable({ onRefresh }: DiscountTableProps) {
             </div>
             {usage.maxUses && usage.usagePercentage !== null && (
               <div className="text-xs text-muted-foreground">
-                {usage.usagePercentage}% used
+                {usage.usagePercentage}% {t('table.used')}
               </div>
             )}
           </div>
@@ -349,7 +353,7 @@ export function DiscountTable({ onRefresh }: DiscountTableProps) {
       },
     },
     {
-      header: 'Status',
+      header: t('table.status'),
       accessorKey: 'isActive',
       cell: ({ row }) => {
         const isActive = row.getValue('isActive') as boolean;
@@ -357,15 +361,15 @@ export function DiscountTable({ onRefresh }: DiscountTableProps) {
 
         return isActive && isValid ? (
           <Badge variant="default">
-            <span>Active</span>
+            <span>{t('table.active')}</span>
           </Badge>
         ) : isActive && !isValid ? (
           <Badge variant="secondary">
-            <span>Inactive</span>
+            <span>{t('table.inactive')}</span>
           </Badge>
         ) : (
           <Badge variant="outline">
-            <span>Disabled</span>
+            <span>{t('table.disabled')}</span>
           </Badge>
         );
       },
@@ -385,7 +389,7 @@ export function DiscountTable({ onRefresh }: DiscountTableProps) {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                <DropdownMenuLabel>{t('table.actions')}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   className="flex justify-between cursor-pointer"
@@ -394,19 +398,19 @@ export function DiscountTable({ onRefresh }: DiscountTableProps) {
                     setDetailDialog(true);
                   }}
                 >
-                  View Details <IconEye className="h-4 w-4" />
+                  {t('table.viewDetails')} <IconEye className="h-4 w-4" />
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="flex justify-between cursor-pointer"
                   onClick={() => handleEdit(discount)}
                 >
-                  Edit <IconEdit className="h-4 w-4" />
+                  {t('edit')} <IconEdit className="h-4 w-4" />
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="flex justify-between cursor-pointer"
                   onClick={() => handleToggleStatus(discount)}
                 >
-                  {discount.isActive ? 'Disable' : 'Enable'}{' '}
+                  {discount.isActive ? t('table.disable') : t('table.enable')}{' '}
                   <IconPower className="h-4 w-4" />
                 </DropdownMenuItem>
                 <DropdownMenuItem
@@ -416,7 +420,7 @@ export function DiscountTable({ onRefresh }: DiscountTableProps) {
                     setDeleteDialog(true);
                   }}
                 >
-                  Delete <IconTrash className="h-4 w-4" />
+                  {t('delete')} <IconTrash className="h-4 w-4" />
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -441,7 +445,7 @@ export function DiscountTable({ onRefresh }: DiscountTableProps) {
         filters={[
           {
             id: 'type',
-            label: 'Type',
+            label: t('filters.type'),
             type: 'select',
             options: filterOptions.discountTypeOptions,
             handleFilterChange: (value: string) =>
@@ -449,7 +453,7 @@ export function DiscountTable({ onRefresh }: DiscountTableProps) {
           },
           {
             id: 'applyTo',
-            label: 'Applies To',
+            label: t('table.appliesTo'),
             type: 'select',
             options: filterOptions.applyToOptions,
             handleFilterChange: (value: string) =>
@@ -457,7 +461,7 @@ export function DiscountTable({ onRefresh }: DiscountTableProps) {
           },
           {
             id: 'isActive',
-            label: 'Status',
+            label: t('filters.status'),
             type: 'select',
             options: filterOptions.statusOptions,
             handleFilterChange: (value: string) =>

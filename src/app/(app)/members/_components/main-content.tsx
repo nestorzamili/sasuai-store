@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { getAllMemberTiers, awardPointsToMember } from '../action';
 import { MemberWithTier, MemberTier } from '@/lib/types/member';
 import MemberPrimaryButton from './member-primary-button';
@@ -24,6 +25,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 
 export default function MainContent() {
+  const t = useTranslations('member');
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<MemberWithTier | null>(
@@ -50,8 +52,8 @@ export default function MainContent() {
     } catch (error) {
       console.error('Failed to fetch member tiers:', error);
       toast({
-        title: 'Error',
-        description: 'Failed to fetch member tiers',
+        title: t('common.error'),
+        description: t('errors.failedToFetchTiers'),
         variant: 'destructive',
       });
     } finally {
@@ -112,8 +114,8 @@ export default function MainContent() {
   const handleAwardPoints = async () => {
     if (!memberForPoints || pointsToAdd <= 0) {
       toast({
-        title: 'Invalid input',
-        description: 'Please select a member and enter a valid point amount',
+        title: t('awardPoints.invalidInput'),
+        description: t('awardPoints.invalidInputDescription'),
         variant: 'destructive',
       });
       return;
@@ -130,23 +132,26 @@ export default function MainContent() {
 
       if (result.success) {
         toast({
-          title: 'Points awarded',
-          description: `${pointsToAdd} points have been added to ${memberForPoints.name}`,
+          title: t('awardPoints.success'),
+          description: t('awardPoints.successDescription', {
+            points: pointsToAdd,
+            name: memberForPoints.name,
+          }),
         });
         setIsAwardPointsOpen(false);
         resetAwardPointsForm();
       } else {
         toast({
-          title: 'Error',
-          description: result.error || 'Failed to award points',
+          title: t('common.error'),
+          description: result.error || t('awardPoints.failed'),
           variant: 'destructive',
         });
       }
     } catch (error) {
       console.error('Failed to award points:', error);
       toast({
-        title: 'Error',
-        description: 'An unexpected error occurred',
+        title: t('common.error'),
+        description: t('common.unexpectedError'),
         variant: 'destructive',
       });
     } finally {
@@ -158,12 +163,8 @@ export default function MainContent() {
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-x-4">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">
-            Membership Management
-          </h2>
-          <p className="text-muted-foreground">
-            Manage your member data, loyalty tiers, and rewards.
-          </p>
+          <h2 className="text-2xl font-bold tracking-tight">{t('title')}</h2>
+          <p className="text-muted-foreground">{t('description')}</p>
         </div>
         {activeTab === 'members' && (
           <div className="flex gap-2">
@@ -185,9 +186,9 @@ export default function MainContent() {
         className="w-full"
       >
         <TabsList>
-          <TabsTrigger value="members">Members</TabsTrigger>
-          <TabsTrigger value="tiers">Membership Tiers</TabsTrigger>
-          <TabsTrigger value="pointRules">Point Rules</TabsTrigger>
+          <TabsTrigger value="members">{t('tabs.members')}</TabsTrigger>
+          <TabsTrigger value="tiers">{t('tabs.tiers')}</TabsTrigger>
+          <TabsTrigger value="pointRules">{t('tabs.pointRules')}</TabsTrigger>
         </TabsList>
         <TabsContent value="members" className="mt-6">
           <MemberTable
@@ -214,17 +215,17 @@ export default function MainContent() {
       >
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Award Points to Member</DialogTitle>
+            <DialogTitle>{t('awardPoints.title')}</DialogTitle>
             <DialogDescription>
               {memberForPoints
-                ? `Award loyalty points to ${memberForPoints.name}`
-                : 'Award loyalty points to this member'}
+                ? t('awardPoints.description', { name: memberForPoints.name })
+                : t('awardPoints.defaultDescription')}
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="points">Points to Award</Label>
+                <Label htmlFor="points">{t('awardPoints.pointsToAward')}</Label>
                 <Input
                   id="points"
                   type="number"
@@ -232,18 +233,18 @@ export default function MainContent() {
                   onChange={(e) =>
                     setPointsToAdd(parseInt(e.target.value) || 0)
                   }
-                  placeholder="Enter points"
+                  placeholder={t('awardPoints.pointsPlaceholder')}
                   min="1"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="notes">Notes (Optional)</Label>
+                <Label htmlFor="notes">{t('awardPoints.notes')}</Label>
                 <Textarea
                   id="notes"
                   value={pointNotes}
                   onChange={(e) => setPointNotes(e.target.value)}
-                  placeholder="Enter a reason for awarding these points"
+                  placeholder={t('awardPoints.notesPlaceholder')}
                 />
               </div>
 
@@ -251,12 +252,13 @@ export default function MainContent() {
                 <div className="rounded-md bg-secondary/50 p-3 text-sm">
                   <div className="font-semibold mb-1 flex items-center">
                     <IconCrown size={16} className="mr-1 text-amber-500" />
-                    Point Multiplier Active
+                    {t('awardPoints.multiplierActive')}
                   </div>
                   <p>
-                    This member has a {memberForPoints.tier.multiplier}x point
-                    multiplier from their {memberForPoints.tier.name} tier
-                    status.
+                    {t('awardPoints.multiplierDescription', {
+                      multiplier: memberForPoints.tier.multiplier,
+                      tierName: memberForPoints.tier.name,
+                    })}
                   </p>
                 </div>
               )}
@@ -267,13 +269,15 @@ export default function MainContent() {
               variant="outline"
               onClick={() => setIsAwardPointsOpen(false)}
             >
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button
               onClick={handleAwardPoints}
               disabled={isAwarding || pointsToAdd <= 0 || !memberForPoints}
             >
-              {isAwarding ? 'Awarding...' : 'Award Points'}
+              {isAwarding
+                ? t('awardPoints.awarding')
+                : t('awardPoints.awardButton')}
             </Button>
           </DialogFooter>
         </DialogContent>

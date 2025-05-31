@@ -1,6 +1,7 @@
 'use client';
 
 import { ColumnDef } from '@tanstack/react-table';
+import { useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import {
   StockInComplete,
@@ -20,6 +21,7 @@ interface StockInTableProps {
 export const StockInTable = memo(function StockInTable({
   isActive = false,
 }: StockInTableProps) {
+  const t = useTranslations('inventory.stockInTable');
   const abortControllerRef = useRef<AbortController | null>(null);
 
   // Format date function - memoized
@@ -32,26 +34,29 @@ export const StockInTable = memo(function StockInTable({
     (): ColumnDef<StockInComplete>[] => [
       {
         accessorKey: 'date',
-        header: 'date',
+        header: t('columns.date'),
         cell: ({ row }) => formatDate(row.original.date),
+        enableSorting: true,
       },
       {
         accessorKey: 'batch.product.name',
-        header: 'product name',
+        header: t('columns.productName'),
         cell: ({ row }) => {
           return (
             <div className="font-medium">{row.original.batch.product.name}</div>
           );
         },
+        enableSorting: false,
       },
       {
         accessorKey: 'batch.batchCode',
-        header: 'batch code',
+        header: t('columns.batchCode'),
         cell: ({ row }) => <div>{row.original.batch.batchCode}</div>,
+        enableSorting: false,
       },
       {
         accessorKey: 'quantity',
-        header: 'quantity',
+        header: t('columns.quantity'),
         cell: ({ row }) => {
           const quantity = row.getValue('quantity') as number;
           const unit = row.original.unit?.symbol || '';
@@ -61,21 +66,23 @@ export const StockInTable = memo(function StockInTable({
             </div>
           );
         },
+        enableSorting: true,
       },
       {
         accessorKey: 'supplier.name',
-        header: 'supplier',
+        header: t('columns.supplier'),
         cell: ({ row }) => {
           const supplier = row.original.supplier;
           return supplier ? (
             <div>{supplier.name}</div>
           ) : (
-            <Badge variant="outline">No Supplier</Badge>
+            <Badge variant="outline">{t('status.noSupplier')}</Badge>
           );
         },
+        enableSorting: false,
       },
     ],
-    [formatDate],
+    [formatDate, t],
   );
 
   // Stabilize fetchDataTable with abort controller

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, lazy, Suspense, useRef, useCallback, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { IconBox, IconLogout, IconLogin } from '@tabler/icons-react';
 import { BatchTable } from './_components/batch-table';
@@ -20,6 +21,7 @@ const LazyStockOutTable = lazy(() =>
 );
 
 export default function InventoryPage() {
+  const t = useTranslations('inventory');
   const [activeTab, setActiveTab] = useState('batches');
   const [dialogOpen, setDialogOpen] = useState(false);
   // Create a ref to store the refresh function from BatchTable
@@ -62,21 +64,21 @@ export default function InventoryPage() {
         <TabsList className="grid grid-cols-3 w-[400px]">
           <TabsTrigger value="batches" className="flex items-center gap-1">
             <IconBox size={16} />
-            <span>Product Batches</span>
+            <span>{t('tabs.batches')}</span>
           </TabsTrigger>
           <TabsTrigger
             value="stock-in"
             className="flex items-center gap-1 text-green-500"
           >
             <IconLogin size={16} />
-            <span>Stock In</span>
+            <span>{t('tabs.stockIn')}</span>
           </TabsTrigger>
           <TabsTrigger
             value="stock-out"
             className="flex items-center gap-1 text-orange-500"
           >
             <IconLogout size={16} />
-            <span>Stock Out</span>
+            <span>{t('tabs.stockOut')}</span>
           </TabsTrigger>
         </TabsList>
 
@@ -86,11 +88,10 @@ export default function InventoryPage() {
             <div className="flex items-center justify-between flex-wrap gap-x-4">
               <div>
                 <h2 className="text-2xl font-bold tracking-tight">
-                  Manage Product Batches
+                  {t('batches.title')}
                 </h2>
                 <p className="text-muted-foreground">
-                  Track and manage your inventory batches, expiration dates, and
-                  stock levels.
+                  {t('batches.description')}
                 </p>
               </div>
               <BatchPrimaryButton
@@ -112,9 +113,9 @@ export default function InventoryPage() {
         <TabsContent value="stock-in" className="mt-6">
           <div className="space-y-6">
             <div>
-              <h2 className="text-xl font-semibold">Stock In Records</h2>
+              <h2 className="text-xl font-semibold">{t('stockIn.title')}</h2>
               <p className="text-muted-foreground">
-                View all stock additions to your inventory
+                {t('stockIn.description')}
               </p>
             </div>
 
@@ -129,9 +130,9 @@ export default function InventoryPage() {
         <TabsContent value="stock-out" className="mt-6">
           <div className="space-y-6">
             <div>
-              <h2 className="text-xl font-semibold">Stock Out Records</h2>
+              <h2 className="text-xl font-semibold">{t('stockOut.title')}</h2>
               <p className="text-muted-foreground">
-                View all stock removals from your inventory
+                {t('stockOut.description')}
               </p>
             </div>
 

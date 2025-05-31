@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import Image from 'next/image';
+import { useTranslations } from 'next-intl';
 import logo from '../../../public/images/logo.png';
 import { Toaster } from '@/components/ui/toaster';
 
@@ -18,8 +19,10 @@ export default function AuthLayout({
   illustration,
   title,
   subtitle,
-  tagline = 'Modern solutions for modern business',
+  tagline,
 }: Props) {
+  const t = useTranslations('auth');
+
   useEffect(() => {
     document.body.classList.add('auth-page-loaded');
     return () => {
@@ -56,7 +59,7 @@ export default function AuthLayout({
                     Sasuai Store
                   </h2>
                   <p className="text-muted-foreground mt-1.5 text-base leading-relaxed">
-                    {tagline}
+                    {tagline || t('tagline')}
                   </p>
                 </div>
               </div>
@@ -96,14 +99,14 @@ export default function AuthLayout({
 
                 {/* Support link */}
                 <div className="text-center text-sm sm:text-base text-muted-foreground mt-10">
-                  Need help?{' '}
+                  {t('needHelp')}{' '}
                   <a
                     href="https://nestorzamili.works/#contact"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-primary font-medium hover:underline transition-colors"
                   >
-                    Contact support
+                    {t('contactSupport')}
                   </a>
                 </div>
               </div>

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useTranslations } from 'next-intl';
 import { toast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import {
@@ -26,46 +27,45 @@ import { useRouter } from 'next/navigation';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 
-// Enhanced password validation schema
-const passwordFormSchema = z
-  .object({
-    currentPassword: z
-      .string()
-      .trim()
-      .min(8, { message: 'Current password must be at least 8 characters' }),
-    newPassword: z
-      .string()
-      .trim()
-      .min(8, { message: 'New password must be at least 8 characters' })
-      .refine(
-        (password) => {
-          // Optional: Add password complexity requirements
-          const complexityRegex =
-            /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).{8,}$/;
-          return complexityRegex.test(password);
-        },
-        {
-          message:
-            'Password must include uppercase, lowercase, number, and special character',
-        },
-      ),
-    confirmPassword: z.string().trim(),
-  })
-  .refine((data) => data.newPassword === data.confirmPassword, {
-    message: "Passwords don't match",
-    path: ['confirmPassword'],
-  })
-  .refine((data) => data.currentPassword !== data.newPassword, {
-    message: 'New password must be different from current password',
-    path: ['newPassword'],
-  });
-
-type PasswordFormValues = z.infer<typeof passwordFormSchema>;
-
 export default function ChangePasswordForm() {
+  const t = useTranslations('profile.changePassword');
   const router = useRouter();
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
+
+  // Enhanced password validation schema with translations
+  const passwordFormSchema = z
+    .object({
+      currentPassword: z
+        .string()
+        .trim()
+        .min(8, { message: t('validation.currentPasswordMinLength') }),
+      newPassword: z
+        .string()
+        .trim()
+        .min(8, { message: t('validation.newPasswordMinLength') })
+        .refine(
+          (password) => {
+            const complexityRegex =
+              /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).{8,}$/;
+            return complexityRegex.test(password);
+          },
+          {
+            message: t('validation.passwordComplexity'),
+          },
+        ),
+      confirmPassword: z.string().trim(),
+    })
+    .refine((data) => data.newPassword === data.confirmPassword, {
+      message: t('validation.passwordsDontMatch'),
+      path: ['confirmPassword'],
+    })
+    .refine((data) => data.currentPassword !== data.newPassword, {
+      message: t('validation.passwordMustBeDifferent'),
+      path: ['newPassword'],
+    });
+
+  type PasswordFormValues = z.infer<typeof passwordFormSchema>;
 
   // Password change form with improved configuration
   const form = useForm<PasswordFormValues>({
@@ -95,18 +95,17 @@ export default function ChangePasswordForm() {
           (err) => errorMessage.toLowerCase().includes(err),
         )
       ) {
-        setPasswordError('The current password you entered is incorrect.');
+        setPasswordError(t('currentPasswordIncorrect'));
         form.setFocus('currentPassword');
       } else {
         toast({
-          title: 'Password change failed',
-          description:
-            errorMessage || 'There was a problem changing your password.',
+          title: t('passwordChangeFailed'),
+          description: errorMessage || t('problemChanging'),
           variant: 'destructive',
         });
       }
     },
-    [form],
+    [form, t],
   );
 
   // Handle password change
@@ -125,9 +124,8 @@ export default function ChangePasswordForm() {
           {
             onSuccess: () => {
               toast({
-                title: 'Password changed successfully',
-                description:
-                  'Your password has been updated and other sessions have been logged out.',
+                title: t('passwordChangeSuccess'),
+                description: t('passwordChangeSuccessMessage'),
               });
               form.reset();
               router.refresh();
@@ -138,7 +136,6 @@ export default function ChangePasswordForm() {
           },
         );
       } catch (error: unknown) {
-        // Extract error message safely with type narrowing
         const errorMessage =
           error instanceof Error
             ? error.message
@@ -147,23 +144,22 @@ export default function ChangePasswordForm() {
               : 'An unknown error occurred';
 
         toast({
-          title: 'Password change failed',
-          description:
-            errorMessage || 'There was a problem changing your password.',
+          title: t('passwordChangeFailed'),
+          description: errorMessage || t('problemChanging'),
           variant: 'destructive',
         });
       } finally {
         setIsChangingPassword(false);
       }
     },
-    [form, router, handlePasswordChangeError],
+    [form, router, handlePasswordChangeError, t],
   );
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Change Password</CardTitle>
-        <CardDescription>Update your account password securely</CardDescription>
+        <CardTitle>{t('title')}</CardTitle>
+        <CardDescription>{t('description')}</CardDescription>
       </CardHeader>
       <CardContent>
         {passwordError && (
@@ -181,7 +177,7 @@ export default function ChangePasswordForm() {
               name="currentPassword"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Current Password</FormLabel>
+                  <FormLabel>{t('currentPassword')}</FormLabel>
                   <FormControl>
                     <Input
                       type="password"
@@ -201,7 +197,7 @@ export default function ChangePasswordForm() {
               name="newPassword"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>New Password</FormLabel>
+                  <FormLabel>{t('newPassword')}</FormLabel>
                   <FormControl>
                     <Input
                       type="password"
@@ -210,10 +206,7 @@ export default function ChangePasswordForm() {
                       autoComplete="new-password"
                     />
                   </FormControl>
-                  <FormDescription>
-                    Password must be at least 8 characters, include uppercase,
-                    lowercase, number, and special character
-                  </FormDescription>
+                  <FormDescription>{t('passwordRequirements')}</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -225,7 +218,7 @@ export default function ChangePasswordForm() {
               name="confirmPassword"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Confirm Password</FormLabel>
+                  <FormLabel>{t('confirmPassword')}</FormLabel>
                   <FormControl>
                     <Input
                       type="password"
@@ -247,7 +240,9 @@ export default function ChangePasswordForm() {
                 !formValidation.isValid
               }
             >
-              {isChangingPassword ? 'Changing Password...' : 'Change Password'}
+              {isChangingPassword
+                ? t('changingPassword')
+                : t('changePasswordButton')}
             </Button>
           </form>
         </Form>

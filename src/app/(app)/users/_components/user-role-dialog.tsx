@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -49,6 +50,8 @@ export function UserRoleDialog({
   user,
   onSuccess,
 }: UserRoleDialogProps) {
+  const t = useTranslations('user.roleDialog');
+  const tCommon = useTranslations('user.common');
   const [loading, setLoading] = useState(false);
 
   // Initialize the form with properly typed role value
@@ -59,7 +62,7 @@ export function UserRoleDialog({
     },
   });
 
-  // Handle form submission
+  // Handle form submission with translations
   const onSubmit = async (values: FormValues) => {
     try {
       setLoading(true);
@@ -71,22 +74,25 @@ export function UserRoleDialog({
 
       if (result.success) {
         toast({
-          title: 'Role updated',
-          description: `${user.name}'s role has been updated to ${values.role}`,
+          title: t('success'),
+          description: t('successMessage', {
+            name: user.name,
+            role: values.role === 'admin' ? t('roles.admin') : t('roles.user'),
+          }),
         });
         onSuccess?.();
       } else {
         toast({
-          title: 'Error',
-          description: result.error || 'Failed to update role',
+          title: tCommon('error'),
+          description: result.error || t('error.failed'),
           variant: 'destructive',
         });
       }
     } catch (error) {
       console.error('Error updating role:', error);
       toast({
-        title: 'Error',
-        description: 'An unexpected error occurred',
+        title: tCommon('error'),
+        description: t('error.unexpected'),
         variant: 'destructive',
       });
     } finally {
@@ -101,9 +107,11 @@ export function UserRoleDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center">
             <IconKey className="mr-2" size={18} />
-            Change User Role
+            {t('title')}
           </DialogTitle>
-          <DialogDescription>Update the role for {user.name}</DialogDescription>
+          <DialogDescription>
+            {t('description', { name: user.name })}
+          </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
@@ -113,7 +121,7 @@ export function UserRoleDialog({
               name="role"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Select Role</FormLabel>
+                  <FormLabel>{t('selectRole')}</FormLabel>
                   <FormControl>
                     <RadioGroup
                       onValueChange={field.onChange}
@@ -125,9 +133,9 @@ export function UserRoleDialog({
                         <Label htmlFor="user" className="flex items-center">
                           <IconUser className="mr-2 h-4 w-4" />
                           <div>
-                            <div className="font-medium">User</div>
+                            <div className="font-medium">{t('roles.user')}</div>
                             <div className="text-xs text-muted-foreground">
-                              Regular user with standard permissions
+                              {t('roleDescriptions.user')}
                             </div>
                           </div>
                         </Label>
@@ -137,9 +145,11 @@ export function UserRoleDialog({
                         <Label htmlFor="admin" className="flex items-center">
                           <IconShieldCheck className="mr-2 h-4 w-4" />
                           <div>
-                            <div className="font-medium">Administrator</div>
+                            <div className="font-medium">
+                              {t('roles.admin')}
+                            </div>
                             <div className="text-xs text-muted-foreground">
-                              Full access to all system features and settings
+                              {t('roleDescriptions.admin')}
                             </div>
                           </div>
                         </Label>
@@ -157,10 +167,10 @@ export function UserRoleDialog({
                 type="button"
                 onClick={() => onOpenChange(false)}
               >
-                Cancel
+                {tCommon('cancel')}
               </Button>
               <Button type="submit" disabled={loading}>
-                {loading ? 'Updating...' : 'Update Role'}
+                {loading ? t('updating') : t('updateRole')}
               </Button>
             </DialogFooter>
           </form>

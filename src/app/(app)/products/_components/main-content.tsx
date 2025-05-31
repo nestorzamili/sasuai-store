@@ -1,12 +1,14 @@
 'use client';
 
 import { useState, useCallback, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { ProductWithRelations } from '@/lib/types/product';
 import ProductPrimaryButton from './product-primary-button';
 import { ProductTable } from './product-table';
 import ProductFilterToolbar from './product-filter-toolbar';
 
 export default function MainContent() {
+  const t = useTranslations('product.mainContent');
   const [selectedProduct, setSelectedProduct] =
     useState<ProductWithRelations | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -84,10 +86,8 @@ export default function MainContent() {
       {/* Header with title and add button */}
       <div className="flex items-center justify-between flex-wrap gap-x-4">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Manage Products</h2>
-          <p className="text-muted-foreground">
-            View and manage your product inventory
-          </p>
+          <h2 className="text-2xl font-bold tracking-tight">{t('title')}</h2>
+          <p className="text-muted-foreground">{t('description')}</p>
         </div>
         <ProductPrimaryButton
           open={isDialogOpen}

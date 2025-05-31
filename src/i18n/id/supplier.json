@@ -1,0 +1,89 @@
+{
+  "supplier": {
+    "title": "Pemasok",
+    "description": "Kelola pemasok Anda dan lihat riwayat stok masuk mereka.",
+    "create": "Buat",
+    "createTitle": "Buat Pemasok",
+    "editTitle": "Edit Pemasok",
+    "createDescription": "Tambahkan pemasok baru ke sistem Anda",
+    "editDescription": "Edit informasi pemasok di bawah ini",
+    "name": "Nama Pemasok",
+    "namePlaceholder": "Masukkan nama pemasok",
+    "contact": "Informasi Kontak",
+    "contactPlaceholder": "Masukkan nomor telepon, email, atau alamat",
+    "cancel": "Batal",
+    "creating": "Membuat...",
+    "updating": "Memperbarui...",
+    "createButton": "Buat Pemasok",
+    "updateButton": "Perbarui Pemasok",
+    "success": {
+      "supplierCreated": "Pemasok dibuat",
+      "supplierCreatedMessage": "Pemasok baru telah dibuat",
+      "supplierUpdated": "Pemasok diperbarui",
+      "supplierUpdatedMessage": "Pemasok telah berhasil diperbarui"
+    },
+    "error": {
+      "somethingWrong": "Terjadi kesalahan",
+      "unexpectedError": "Terjadi kesalahan yang tidak terduga"
+    },
+    "validation": {
+      "nameRequired": "Nama pemasok diperlukan",
+      "nameMinLength": "Nama pemasok harus minimal 2 karakter",
+      "nameMaxLength": "Nama pemasok tidak boleh melebihi 100 karakter"
+    },
+    "table": {
+      "columns": {
+        "name": "Nama",
+        "contact": "Kontak",
+        "stockIns": "Stok Masuk",
+        "created": "Dibuat"
+      },
+      "actions": {
+        "openMenu": "Buka menu",
+        "actions": "Aksi",
+        "viewDetails": "Lihat Detail",
+        "edit": "Edit",
+        "delete": "Hapus"
+      },
+      "noContact": "Tidak ada info kontak"
+    },
+    "deleteDialog": {
+      "title": "Hapus Pemasok",
+      "description": "Apakah Anda yakin ingin menghapus {name}?",
+      "permanentRemove": "Tindakan ini akan menghapus pemasok ini secara permanen dari sistem. Tindakan ini tidak dapat dibatalkan.",
+      "cannotDelete": "Tidak Dapat Menghapus",
+      "inUse": "Pemasok ini sedang digunakan dalam {count} catatan stok masuk. Anda perlu menghapus referensi tersebut sebelum menghapus pemasok ini.",
+      "warning": "Peringatan!",
+      "warningMessage": "Harap berhati-hati, operasi ini tidak dapat dikembalikan.",
+      "deleting": "Menghapus...",
+      "deleteButton": "Hapus",
+      "cannotDeleteTitle": "Tidak Dapat Menghapus Pemasok",
+      "cannotDeleteMessage": "Pemasok ini sedang digunakan dan tidak dapat dihapus.",
+      "success": "Pemasok dihapus",
+      "successMessage": "Pemasok \"{name}\" telah berhasil dihapus",
+      "error": "Kesalahan",
+      "failedToDelete": "Gagal menghapus pemasok",
+      "unexpectedError": "Terjadi kesalahan yang tidak terduga"
+    },
+    "detailDialog": {
+      "title": "Detail Pemasok",
+      "loading": "Memuat detail pemasok...",
+      "contactInformation": "Informasi Kontak",
+      "noContactInfo": "Tidak ada informasi kontak yang diberikan",
+      "totalStockIns": "Total Stok Masuk",
+      "records": "catatan",
+      "addedOn": "Ditambahkan Pada",
+      "stockInHistory": "Riwayat Stok Masuk",
+      "date": "Tanggal",
+      "product": "Produk",
+      "batch": "Batch",
+      "quantity": "Kuantitas",
+      "unit": "Unit",
+      "noStockInRecords": "Tidak ada catatan stok masuk untuk pemasok ini",
+      "noSupplierInfo": "Tidak ada informasi pemasok yang tersedia",
+      "close": "Tutup",
+      "errorFetching": "Kesalahan mengambil detail pemasok",
+      "unexpectedError": "Terjadi kesalahan tak terduga saat mengambil detail pemasok"
+    }
+  }
+}

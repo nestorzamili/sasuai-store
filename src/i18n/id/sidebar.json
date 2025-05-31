@@ -1,0 +1,33 @@
+{
+  "sidebar": {
+    "store": {
+      "name": "Toko Sasuai",
+      "plan": "Manajemen Toko"
+    },
+    "groups": {
+      "general": "Umum",
+      "inventoryManagement": "Manajemen Inventaris",
+      "supplyChain": "Rantai Pasokan",
+      "marketing": "Pemasaran",
+      "administration": "Administrasi",
+      "integrations": "Integrasi",
+      "support": "Dukungan"
+    },
+    "items": {
+      "dashboard": "Dasboard",
+      "transactions": "Transaksi",
+      "products": "Produk",
+      "categories": "Kategori",
+      "brands": "Merek",
+      "units": "Satuan",
+      "inventory": "Inventaris",
+      "suppliers": "Pemasok",
+      "discounts": "Diskon",
+      "members": "Pelanggan",
+      "rewards": "Hadiah",
+      "users": "Pengguna",
+      "blastify": "Blastify",
+      "helpCenter": "Pusat Bantuan"
+    }
+  }
+}

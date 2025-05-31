@@ -1,0 +1,180 @@
+{
+  "unit": {
+    "title": "Units",
+    "description": "Manage your measurement units for products and inventory.",
+    "tabs": {
+      "units": "Units",
+      "conversions": "Unit Conversions",
+      "calculator": "Conversion Calculator"
+    },
+    "error": {
+      "fetchFailed": "Failed to fetch units. Please try again later."
+    },
+    "table": {
+      "columns": {
+        "name": "Name",
+        "symbol": "Symbol",
+        "usage": "Usage",
+        "conversions": "Conversions",
+        "created": "Created"
+      },
+      "actions": {
+        "openMenu": "Open menu",
+        "actions": "Actions",
+        "edit": "Edit",
+        "delete": "Delete"
+      },
+      "badges": {
+        "products": "products",
+        "stockIns": "stock-ins",
+        "stockOuts": "stock-outs",
+        "transactions": "transactions",
+        "conversions": "conversions",
+        "notInUse": "Not in use"
+      }
+    },
+    "formDialog": {
+      "create": "Create",
+      "createTitle": "Create Unit",
+      "editTitle": "Edit Unit",
+      "createDescription": "Add a new measurement unit to your inventory system",
+      "editDescription": "Edit the measurement unit information below",
+      "unitName": "Unit Name",
+      "unitNamePlaceholder": "Enter unit name (e.g., Kilogram)",
+      "symbol": "Symbol",
+      "symbolPlaceholder": "Enter unit symbol (e.g., kg)",
+      "cancel": "Cancel",
+      "creating": "Creating...",
+      "updating": "Updating...",
+      "createButton": "Create Unit",
+      "updateButton": "Update Unit",
+      "success": {
+        "unitCreated": "Unit created",
+        "unitCreatedMessage": "New unit has been created",
+        "unitUpdated": "Unit updated",
+        "unitUpdatedMessage": "Unit has been updated successfully"
+      },
+      "error": {
+        "somethingWrong": "Something went wrong",
+        "unexpectedError": "An unexpected error occurred"
+      },
+      "validation": {
+        "nameRequired": "Unit name is required",
+        "symbolRequired": "Unit symbol is required"
+      }
+    },
+    "deleteDialog": {
+      "title": "Delete Unit",
+      "description": "Are you sure you want to delete {name} ({symbol})?",
+      "permanentRemove": "This action will permanently remove this unit from the system. This cannot be undone.",
+      "cannotDelete": "Cannot Delete",
+      "inUse": "This unit is currently used in {usage}. You need to reassign or remove these references before deleting this unit.",
+      "warning": "Warning!",
+      "warningMessage": "Please be careful, this operation cannot be rolled back.",
+      "deleting": "Deleting...",
+      "deleteButton": "Delete",
+      "cannotDeleteTitle": "Cannot Delete Unit",
+      "cannotDeleteMessage": "This unit is currently in use and cannot be deleted.",
+      "success": "Unit deleted",
+      "successMessage": "The unit \"{name}\" has been deleted successfully",
+      "error": "Error",
+      "failedToDelete": "Failed to delete unit",
+      "unexpectedError": "An unexpected error occurred",
+      "usage": {
+        "products": "products",
+        "stockInRecords": "stock-in records",
+        "stockOutRecords": "stock-out records",
+        "transactionItems": "transaction items"
+      }
+    },
+    "conversionTable": {
+      "columns": {
+        "fromUnit": "From Unit",
+        "toUnit": "To Unit",
+        "factor": "Factor",
+        "explanation": "Explanation",
+        "created": "Created"
+      },
+      "actions": {
+        "openMenu": "Open menu",
+        "actions": "Actions",
+        "edit": "Edit",
+        "delete": "Delete"
+      },
+      "explanationText": "1 {fromUnit} ({fromSymbol}) = {factor} {toUnit} ({toSymbol})"
+    },
+    "conversionFormDialog": {
+      "createConversion": "Create Conversion",
+      "createTitle": "Create Unit Conversion",
+      "editTitle": "Edit Unit Conversion",
+      "createDescription": "Define how units convert to each other in your inventory system",
+      "editDescription": "Edit the unit conversion factor below",
+      "sourceUnit": "Source Unit",
+      "selectSourceUnit": "Select source unit",
+      "targetUnit": "Target Unit",
+      "selectTargetUnit": "Select target unit",
+      "conversionFactor": "Conversion Factor",
+      "conversionFactorPlaceholder": "Enter conversion factor",
+      "cancel": "Cancel",
+      "creating": "Creating...",
+      "updating": "Updating...",
+      "createButton": "Create Conversion",
+      "updateButton": "Update Conversion",
+      "success": {
+        "conversionCreated": "Conversion created",
+        "conversionCreatedMessage": "New unit conversion has been created",
+        "conversionUpdated": "Conversion updated",
+        "conversionUpdatedMessage": "Unit conversion has been updated successfully"
+      },
+      "error": {
+        "somethingWrong": "Something went wrong",
+        "unexpectedError": "An unexpected error occurred",
+        "sameUnits": "Source and target units cannot be the same"
+      },
+      "validation": {
+        "sourceUnitRequired": "Source unit is required",
+        "targetUnitRequired": "Target unit is required",
+        "factorPositive": "Conversion factor must be positive",
+        "factorTooLarge": "Conversion factor is too large"
+      }
+    },
+    "conversionDeleteDialog": {
+      "title": "Delete Unit Conversion",
+      "description": "Are you sure you want to delete this conversion from {fromUnit} ({fromSymbol}) to {toUnit} ({toSymbol})?",
+      "actionUndone": "This action cannot be undone.",
+      "warning": "Warning!",
+      "warningMessage": "This conversion may be used for unit conversions in the system. Removing it might affect inventory calculations.",
+      "deleting": "Deleting...",
+      "deleteButton": "Delete",
+      "success": "Conversion deleted",
+      "successMessage": "The unit conversion has been deleted successfully",
+      "error": "Error",
+      "failedToDelete": "Failed to delete unit conversion",
+      "unexpectedError": "An unexpected error occurred"
+    },
+    "conversionCalculator": {
+      "title": "Unit Conversion Calculator",
+      "description": "Convert quantities between different units of measurement",
+      "quantity": "Quantity",
+      "quantityPlaceholder": "Enter quantity",
+      "fromUnit": "From Unit",
+      "selectSourceUnit": "Select source unit",
+      "toUnit": "To Unit",
+      "selectTargetUnit": "Select target unit",
+      "calculating": "Calculating...",
+      "calculate": "Calculate",
+      "conversionError": "Conversion Error",
+      "conversionTip": "Tip: Make sure you have defined a conversion between these units in the \"Unit Conversions\" tab.",
+      "result": "Result:",
+      "conversionFailed": "Conversion Failed",
+      "unableToConvert": "Unable to convert between these units",
+      "error": "Error",
+      "failedToPerform": "Failed to perform unit conversion",
+      "validation": {
+        "sourceUnitRequired": "Source unit is required",
+        "targetUnitRequired": "Target unit is required",
+        "quantityPositive": "Quantity must be positive"
+      }
+    }
+  }
+}

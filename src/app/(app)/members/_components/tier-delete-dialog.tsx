@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { IconAlertTriangle } from '@tabler/icons-react';
 import { toast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -21,6 +22,8 @@ export default function TierDeleteDialog({
   tier,
   onSuccess,
 }: Props) {
+  const t = useTranslations('member.tierDeleteDialog');
+  const tCommon = useTranslations('member.common');
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDelete = async () => {
@@ -31,22 +34,22 @@ export default function TierDeleteDialog({
 
       if (result.success) {
         toast({
-          title: 'Tier deleted',
-          description: `The tier "${tier.name}" has been deleted successfully`,
+          title: t('success'),
+          description: t('successMessage', { name: tier.name }),
         });
         onSuccess?.();
       } else {
         toast({
-          title: 'Error',
-          description: result.error || 'Failed to delete tier',
+          title: tCommon('error'),
+          description: result.error || t('failed'),
           variant: 'destructive',
         });
       }
     } catch (error) {
       console.error('Failed to delete member tier:', error);
       toast({
-        title: 'Error',
-        description: 'An unexpected error occurred',
+        title: tCommon('error'),
+        description: tCommon('unexpectedError'),
         variant: 'destructive',
       });
     } finally {
@@ -67,30 +70,24 @@ export default function TierDeleteDialog({
             className="mr-1 inline-block stroke-destructive"
             size={18}
           />{' '}
-          Delete Membership Tier
+          {t('title')}
         </span>
       }
       desc={
         <div className="space-y-4">
           <p className="mb-2">
-            Are you sure you want to delete{' '}
-            <span className="font-bold">{tier.name}</span> tier?
+            {t('description', { name: tier.name })}
             <br />
-            This action will permanently remove this membership tier from the
-            system.
+            {t('permanentRemove')}
           </p>
 
           <Alert variant="destructive">
-            <AlertTitle>Warning!</AlertTitle>
-            <AlertDescription>
-              If any members are currently assigned to this tier, the operation
-              will fail. You need to reassign those members to a different tier
-              first.
-            </AlertDescription>
+            <AlertTitle>{t('warning')}</AlertTitle>
+            <AlertDescription>{t('warningMessage')}</AlertDescription>
           </Alert>
         </div>
       }
-      confirmText={isDeleting ? 'Deleting...' : 'Delete Tier'}
+      confirmText={isDeleting ? t('deleting') : t('deleteButton')}
       destructive
     />
   );

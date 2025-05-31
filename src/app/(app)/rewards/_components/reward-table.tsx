@@ -1,6 +1,7 @@
 'use client';
 import * as React from 'react';
 import { useState, useCallback, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { ColumnDef } from '@tanstack/react-table';
 import { MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -31,6 +32,8 @@ import { TableLayout } from '@/components/layout/table-layout';
 import { ImagePreviewDialog } from '@/components/image-preview-dialog';
 
 export function RewardTable({ onEdit, onDelete }: RewardTableProps) {
+  const t = useTranslations('reward.table');
+
   // State for image preview dialog
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
@@ -97,13 +100,13 @@ export function RewardTable({ onEdit, onDelete }: RewardTableProps) {
     [setSearch],
   );
 
-  // Define columns - memoize to prevent re-creation
+  // Define columns - memoize to prevent re-creation with translations
   const columns: ColumnDef<RewardWithClaimCount>[] = useMemo(
     () => [
       // Image column
       {
         id: 'image',
-        header: 'Image',
+        header: t('columns.image'),
         cell: ({ row }) => {
           const reward = row.original;
           if (reward.imageUrl) {
@@ -133,22 +136,24 @@ export function RewardTable({ onEdit, onDelete }: RewardTableProps) {
       // Name column
       {
         accessorKey: 'name',
-        header: 'Reward Name',
+        header: t('columns.name'),
         cell: ({ row }) => (
           <div className="flex items-center">
             <IconTrophy className="mr-2 h-4 w-4 text-yellow-500" />
             <div className="font-medium">{row.getValue('name')}</div>
           </div>
         ),
-        enableSorting: true,
+        enableSorting: false,
       },
 
       // Points cost column
       {
         accessorKey: 'pointsCost',
-        header: 'Points Cost',
+        header: t('columns.pointsCost'),
         cell: ({ row }) => (
-          <div className="font-medium">{row.getValue('pointsCost')} points</div>
+          <div className="font-medium">
+            {row.getValue('pointsCost')} {t('pointsLabel')}
+          </div>
         ),
         enableSorting: true,
       },
@@ -156,19 +161,19 @@ export function RewardTable({ onEdit, onDelete }: RewardTableProps) {
       // Stock column
       {
         accessorKey: 'stock',
-        header: 'Stock',
+        header: t('columns.stock'),
         cell: ({ row }) => {
           const stock = row.getValue('stock') as number;
           return (
             <div className="font-medium">
               {stock === 0 ? (
-                <Badge variant="destructive">Out of Stock</Badge>
+                <Badge variant="destructive">{t('stock.outOfStock')}</Badge>
               ) : stock < 10 ? (
                 <Badge
                   variant="secondary"
                   className="bg-amber-500 hover:bg-amber-600 text-white"
                 >
-                  {stock} remaining
+                  {t('stock.remaining', { count: stock })}
                 </Badge>
               ) : (
                 <Badge variant="outline">{stock}</Badge>
@@ -182,7 +187,7 @@ export function RewardTable({ onEdit, onDelete }: RewardTableProps) {
       // Active status column
       {
         accessorKey: 'isActive',
-        header: 'Status',
+        header: t('columns.status'),
         cell: ({ row }) => {
           const isActive = row.getValue('isActive') as boolean;
           return (
@@ -190,7 +195,7 @@ export function RewardTable({ onEdit, onDelete }: RewardTableProps) {
               variant={isActive ? 'default' : 'secondary'}
               className={isActive ? 'bg-green-500 hover:bg-green-600' : ''}
             >
-              {isActive ? 'Active' : 'Inactive'}
+              {isActive ? t('status.active') : t('status.inactive')}
             </Badge>
           );
         },
@@ -200,12 +205,14 @@ export function RewardTable({ onEdit, onDelete }: RewardTableProps) {
       // Expiry date column
       {
         accessorKey: 'expiryDate',
-        header: 'Expiry',
+        header: t('columns.expiryDate'),
         cell: ({ row }) => {
           const expiryDate = row.original.expiryDate;
           if (!expiryDate)
             return (
-              <span className="text-muted-foreground text-sm">No expiry</span>
+              <span className="text-muted-foreground text-sm">
+                {t('expiry.noExpiry')}
+              </span>
             );
 
           const today = new Date();
@@ -222,7 +229,7 @@ export function RewardTable({ onEdit, onDelete }: RewardTableProps) {
                 variant="destructive"
                 className="whitespace-nowrap text-xs"
               >
-                Expired
+                {t('status.expired')}
               </Badge>
             );
           }
@@ -238,10 +245,12 @@ export function RewardTable({ onEdit, onDelete }: RewardTableProps) {
       // Claims count column
       {
         id: 'claimsCount',
-        header: 'Claims',
+        header: t('columns.claims'),
         cell: ({ row }) => (
           <Badge variant="outline" className="text-xs">
-            {row.original._count?.rewardClaims || 0} claims
+            {t('claims.count', {
+              count: row.original._count?.rewardClaims || 0,
+            })}
           </Badge>
         ),
       },
@@ -257,7 +266,7 @@ export function RewardTable({ onEdit, onDelete }: RewardTableProps) {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="h-8 w-8 p-0">
-                    <span className="sr-only">Open menu</span>
+                    <span className="sr-only">{t('actions.openMenu')}</span>
                     <MoreHorizontal className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -266,13 +275,13 @@ export function RewardTable({ onEdit, onDelete }: RewardTableProps) {
                     className="flex justify-between cursor-pointer"
                     onClick={() => onEdit?.(reward)}
                   >
-                    Edit <IconEdit className="h-4 w-4" />
+                    {t('actions.edit')} <IconEdit className="h-4 w-4" />
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     className="flex justify-between cursor-pointer text-destructive focus:text-destructive"
                     onClick={() => onDelete(reward)}
                   >
-                    Delete <IconTrash className="h-4 w-4" />
+                    {t('actions.delete')} <IconTrash className="h-4 w-4" />
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -281,7 +290,7 @@ export function RewardTable({ onEdit, onDelete }: RewardTableProps) {
         },
       },
     ],
-    [onEdit, onDelete],
+    [t, onEdit, onDelete],
   );
 
   return (

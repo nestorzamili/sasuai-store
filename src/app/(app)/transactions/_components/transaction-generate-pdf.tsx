@@ -210,199 +210,278 @@ const styles = StyleSheet.create({
   },
 });
 
+interface TransactionPDFProps {
+  transaction: PDFTransaction;
+  translations?: {
+    storeName: string;
+    storeAddress: string;
+    storePhone: string;
+    storeEmail: string;
+    receiptTitle: string;
+    dateTime: string;
+    cashier: string;
+    customer: string;
+    guest: string;
+    paymentMethod: string;
+    tableHeaders: {
+      no: string;
+      item: string;
+      unit: string;
+      price: string;
+      qty: string;
+      total: string;
+    };
+    discount: string;
+    subtotal: string;
+    memberDiscount: string;
+    productDiscounts: string;
+    totalAmount: string;
+    paymentDetails: string;
+    amountPaid: string;
+    change: string;
+    pointsEarned: string;
+    pointsMessage: string;
+    totalPoints: string;
+    thankYou: string;
+    poweredBy: string;
+    unknown: string;
+  };
+}
+
+// Default English translations
+const defaultTranslations = {
+  storeName: 'Sasuai Store',
+  storeAddress: 'Jl. Contoh No. 123, Jakarta',
+  storePhone: 'Phone: (021) 1234-5678',
+  storeEmail: 'Email: hello@sasuaistore.com',
+  receiptTitle: 'Transaction Receipt',
+  dateTime: 'Date & Time',
+  cashier: 'Cashier',
+  customer: 'Customer',
+  guest: 'Guest',
+  paymentMethod: 'Payment Method',
+  tableHeaders: {
+    no: 'No',
+    item: 'Item',
+    unit: 'Unit',
+    price: 'Price',
+    qty: 'Qty',
+    total: 'Total',
+  },
+  discount: 'Disc',
+  subtotal: 'Subtotal',
+  memberDiscount: 'Member Discount',
+  productDiscounts: 'Product Discounts',
+  totalAmount: 'Total Amount',
+  paymentDetails: 'PAYMENT DETAILS',
+  amountPaid: 'Amount Paid',
+  change: 'Change',
+  pointsEarned: 'Points Earned',
+  pointsMessage: 'points have been added to your account.',
+  totalPoints: 'Your total points:',
+  thankYou: 'Thank you for your purchase at Sasuai Store!',
+  poweredBy: 'Powered by Samunu Team',
+  unknown: 'Unknown',
+};
+
 export const TransactionPDF = ({
   transaction,
-}: {
-  transaction: PDFTransaction;
-}) => (
-  <Document>
-    <Page size="A4" style={styles.page}>
-      <View style={styles.header}>
-        <View style={styles.headerTop}>
-          {/* eslint-disable-next-line jsx-a11y/alt-text */}
-          <Image
-            source={STORE_LOGO}
-            style={styles.logo}
-            cache={true}
-            fixed={false}
-          />
-          <View style={styles.storeInfoHeader}>
-            <Text style={styles.storeName}>Sasuai Store</Text>
-            <Text style={styles.storeContact}>Jl. Contoh No. 123, Jakarta</Text>
-            <Text style={styles.storeContact}>Phone: (021) 1234-5678</Text>
-            <Text style={styles.storeContact}>
-              Email: hello@sasuaistore.com
-            </Text>
-          </View>
-        </View>
-        <Text style={styles.receiptTitle}>
-          Transaction Receipt #{transaction.tranId}
-        </Text>
-        <View style={styles.metaInfo}>
-          <View style={styles.metaColumn}>
-            <Text style={styles.metaLabel}>Date & Time</Text>
-            <Text style={styles.metaValue}>
-              {new Date(transaction.createdAt).toLocaleString('id-ID', {
-                day: '2-digit',
-                month: 'long',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
-            </Text>
-          </View>
-          <View style={styles.metaColumn}>
-            <Text style={styles.metaLabel}>Cashier</Text>
-            <Text style={styles.metaValue}>
-              {transaction.cashier?.name || 'Unknown'}
-            </Text>
-          </View>
-          <View style={styles.metaColumn}>
-            <Text style={styles.metaLabel}>Customer</Text>
-            <Text style={styles.metaValue}>
-              {transaction.member ? transaction.member.name : 'Guest'}
-            </Text>
-          </View>
-          <View style={styles.metaColumn}>
-            <Text style={styles.metaLabel}>Payment Method</Text>
-            <Text style={styles.metaValue}>
-              {transaction.payment?.method ||
-                transaction.paymentMethod ||
-                'Cash'}
-            </Text>
-          </View>
-        </View>
-      </View>
+  translations = defaultTranslations,
+}: TransactionPDFProps) => {
+  const t = { ...defaultTranslations, ...translations };
 
-      <View style={styles.table}>
-        <View style={styles.tableHeader}>
-          <Text style={styles.colNum}>No</Text>
-          <Text style={styles.col1}>Item</Text>
-          <Text style={styles.col2}>Unit</Text>
-          <Text style={styles.col3}>Price</Text>
-          <Text style={styles.col4}>Qty</Text>
-          <Text style={styles.col5}>Total</Text>
-        </View>
-
-        {transaction.items?.map((item: PDFTransactionItem, index: number) => (
-          <View
-            key={index}
-            style={
-              index % 2 === 0
-                ? [styles.tableRow, styles.zebraRow]
-                : styles.tableRow
-            }
-          >
-            <Text style={styles.colNum}>{index + 1}</Text>
-            <View style={styles.col1}>
-              <Text style={styles.productName}>
-                {item.product?.name || 'Unknown Product'}
-              </Text>
-              {item.discountApplied && (
-                <Text style={styles.badge}>
-                  Disc: {formatRupiah(item.discountApplied.amount)}
-                </Text>
-              )}
+  return (
+    <Document>
+      <Page size="A4" style={styles.page}>
+        <View style={styles.header}>
+          <View style={styles.headerTop}>
+            {/* eslint-disable-next-line jsx-a11y/alt-text */}
+            <Image
+              source={STORE_LOGO}
+              style={styles.logo}
+              cache={true}
+              fixed={false}
+            />
+            <View style={styles.storeInfoHeader}>
+              <Text style={styles.storeName}>{t.storeName}</Text>
+              <Text style={styles.storeContact}>{t.storeAddress}</Text>
+              <Text style={styles.storeContact}>{t.storePhone}</Text>
+              <Text style={styles.storeContact}>{t.storeEmail}</Text>
             </View>
-            <Text style={styles.col2}>{item.product?.unit || '-'}</Text>
-            <Text style={[styles.col3, styles.summaryValue]}>
-              {formatRupiah(item.product?.price || 0)}
-            </Text>
-            <Text style={[styles.col4, styles.summaryValue]}>
-              {item.quantity}
-            </Text>
-            <Text style={[styles.col5, styles.summaryValue]}>
-              {formatRupiah(item.originalAmount || item.subtotal || 0)}
-            </Text>
           </View>
-        ))}
-      </View>
-
-      <View style={styles.summary}>
-        <View style={styles.summaryRow}>
-          <Text style={styles.summaryLabel}>Subtotal</Text>
-          <Text style={styles.summaryValue}>
-            {formatRupiah(transaction.pricing?.originalAmount || 0)}
+          <Text style={styles.receiptTitle}>
+            {t.receiptTitle} #{transaction.tranId}
           </Text>
+          <View style={styles.metaInfo}>
+            <View style={styles.metaColumn}>
+              <Text style={styles.metaLabel}>{t.dateTime}</Text>
+              <Text style={styles.metaValue}>
+                {new Date(transaction.createdAt).toLocaleString('id-ID', {
+                  day: '2-digit',
+                  month: 'long',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </Text>
+            </View>
+            <View style={styles.metaColumn}>
+              <Text style={styles.metaLabel}>{t.cashier}</Text>
+              <Text style={styles.metaValue}>
+                {transaction.cashier?.name || t.unknown}
+              </Text>
+            </View>
+            <View style={styles.metaColumn}>
+              <Text style={styles.metaLabel}>{t.customer}</Text>
+              <Text style={styles.metaValue}>
+                {transaction.member ? transaction.member.name : t.guest}
+              </Text>
+            </View>
+            <View style={styles.metaColumn}>
+              <Text style={styles.metaLabel}>{t.paymentMethod}</Text>
+              <Text style={styles.metaValue}>
+                {transaction.payment?.method ||
+                  transaction.paymentMethod ||
+                  'Cash'}
+              </Text>
+            </View>
+          </View>
         </View>
 
-        {transaction.pricing?.discounts?.member && (
+        <View style={styles.table}>
+          <View style={styles.tableHeader}>
+            <Text style={styles.colNum}>{t.tableHeaders.no}</Text>
+            <Text style={styles.col1}>{t.tableHeaders.item}</Text>
+            <Text style={styles.col2}>{t.tableHeaders.unit}</Text>
+            <Text style={styles.col3}>{t.tableHeaders.price}</Text>
+            <Text style={styles.col4}>{t.tableHeaders.qty}</Text>
+            <Text style={styles.col5}>{t.tableHeaders.total}</Text>
+          </View>
+
+          {transaction.items?.map((item: PDFTransactionItem, index: number) => (
+            <View
+              key={index}
+              style={
+                index % 2 === 0
+                  ? [styles.tableRow, styles.zebraRow]
+                  : styles.tableRow
+              }
+            >
+              <Text style={styles.colNum}>{index + 1}</Text>
+              <View style={styles.col1}>
+                <Text style={styles.productName}>
+                  {item.product?.name || t.unknown}
+                </Text>
+                {item.discountApplied && (
+                  <Text style={styles.badge}>
+                    {t.discount}: {formatRupiah(item.discountApplied.amount)}
+                  </Text>
+                )}
+              </View>
+              <Text style={styles.col2}>{item.product?.unit || '-'}</Text>
+              <Text style={[styles.col3, styles.summaryValue]}>
+                {formatRupiah(item.product?.price || 0)}
+              </Text>
+              <Text style={[styles.col4, styles.summaryValue]}>
+                {item.quantity}
+              </Text>
+              <Text style={[styles.col5, styles.summaryValue]}>
+                {formatRupiah(item.originalAmount || item.subtotal || 0)}
+              </Text>
+            </View>
+          ))}
+        </View>
+
+        <View style={styles.summary}>
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Member Discount</Text>
-            <Text style={styles.discountValue}>
-              -{formatRupiah(transaction.pricing.discounts.member.amount)}
+            <Text style={styles.summaryLabel}>{t.subtotal}</Text>
+            <Text style={styles.summaryValue}>
+              {formatRupiah(transaction.pricing?.originalAmount || 0)}
             </Text>
           </View>
-        )}
 
-        {transaction.pricing?.discounts?.products > 0 && (
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Product Discounts</Text>
-            <Text style={styles.discountValue}>
-              -{formatRupiah(transaction.pricing.discounts.products)}
-            </Text>
+          {transaction.pricing?.discounts?.member && (
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>{t.memberDiscount}</Text>
+              <Text style={styles.discountValue}>
+                -{formatRupiah(transaction.pricing.discounts.member.amount)}
+              </Text>
+            </View>
+          )}
+
+          {transaction.pricing?.discounts?.products > 0 && (
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>{t.productDiscounts}</Text>
+              <Text style={styles.discountValue}>
+                -{formatRupiah(transaction.pricing.discounts.products)}
+              </Text>
+            </View>
+          )}
+
+          <View style={styles.totalRow}>
+            <Text>{t.totalAmount}</Text>
+            <Text>{formatRupiah(transaction.pricing?.finalAmount || 0)}</Text>
           </View>
-        )}
-
-        <View style={styles.totalRow}>
-          <Text>Total Amount</Text>
-          <Text>{formatRupiah(transaction.pricing?.finalAmount || 0)}</Text>
         </View>
-      </View>
 
-      <View style={styles.paymentMethod}>
-        <Text style={styles.summaryLabel}>PAYMENT DETAILS</Text>
-        <View style={styles.summaryRow}>
-          <Text style={styles.summaryLabel}>Amount Paid</Text>
-          <Text style={styles.summaryValue}>
-            {formatRupiah(
-              transaction.payment?.amount ||
-                transaction.amountPaid ||
-                transaction.pricing?.finalAmount ||
-                0,
-            )}
-          </Text>
-        </View>
-        {(transaction.payment?.amount || transaction.amountPaid || 0) >
-          (transaction.pricing?.finalAmount || 0) && (
+        <View style={styles.paymentMethod}>
+          <Text style={styles.summaryLabel}>{t.paymentDetails}</Text>
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Change</Text>
+            <Text style={styles.summaryLabel}>{t.amountPaid}</Text>
             <Text style={styles.summaryValue}>
               {formatRupiah(
-                transaction.payment?.change ||
-                  (transaction.payment?.amount || transaction.amountPaid || 0) -
-                    (transaction.pricing?.finalAmount || 0) ||
+                transaction.payment?.amount ||
+                  transaction.amountPaid ||
+                  transaction.pricing?.finalAmount ||
                   0,
               )}
             </Text>
           </View>
-        )}
-      </View>
-
-      {transaction.pointsEarned > 0 && (
-        <View style={styles.pointsBox}>
-          <Text style={styles.pointsTitle}>Points Earned</Text>
-          <Text>
-            {transaction.pointsEarned} points have been added to your account.
-            {transaction.member?.points && (
-              <Text> Your total points: {transaction.member.points}</Text>
-            )}
-          </Text>
+          {(transaction.payment?.amount || transaction.amountPaid || 0) >
+            (transaction.pricing?.finalAmount || 0) && (
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>{t.change}</Text>
+              <Text style={styles.summaryValue}>
+                {formatRupiah(
+                  transaction.payment?.change ||
+                    (transaction.payment?.amount ||
+                      transaction.amountPaid ||
+                      0) - (transaction.pricing?.finalAmount || 0) ||
+                    0,
+                )}
+              </Text>
+            </View>
+          )}
         </View>
-      )}
 
-      <View style={styles.footer}>
-        <Text>Thank you for your purchase at Sasuai Store!</Text>
-        <Text>Powered by Samunu Team</Text>
-      </View>
+        {transaction.pointsEarned > 0 && (
+          <View style={styles.pointsBox}>
+            <Text style={styles.pointsTitle}>{t.pointsEarned}</Text>
+            <Text>
+              {transaction.pointsEarned} {t.pointsMessage}
+              {transaction.member?.points && (
+                <Text>
+                  {' '}
+                  {t.totalPoints} {transaction.member.points}
+                </Text>
+              )}
+            </Text>
+          </View>
+        )}
 
-      <Text
-        style={styles.pageNumber}
-        render={({ pageNumber, totalPages }) =>
-          `Page ${pageNumber} of ${totalPages}`
-        }
-        fixed
-      />
-    </Page>
-  </Document>
-);
+        <View style={styles.footer}>
+          <Text>{t.thankYou}</Text>
+          <Text>{t.poweredBy}</Text>
+        </View>
+
+        <Text
+          style={styles.pageNumber}
+          render={({ pageNumber, totalPages }) =>
+            `Page ${pageNumber} of ${totalPages}`
+          }
+          fixed
+        />
+      </Page>
+    </Document>
+  );
+};

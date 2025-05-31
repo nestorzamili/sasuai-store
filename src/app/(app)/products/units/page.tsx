@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { getAllUnits } from './action';
 import UnitPrimaryButton from './_components/unit-primary-button';
 import { UnitTable } from './_components/unit-table';
@@ -12,6 +13,8 @@ import UnitConversionCalculator from './_components/unit-conversion-calculator';
 import { toast } from '@/hooks/use-toast';
 
 export default function UnitsPage() {
+  const t = useTranslations('unit');
+  const tCommon = useTranslations('common');
   const [units, setUnits] = useState<UnitWithCounts[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isConversionDialogOpen, setIsConversionDialogOpen] = useState(false);
@@ -30,8 +33,8 @@ export default function UnitsPage() {
     } catch (error) {
       console.error('Failed to fetch units:', error);
       toast({
-        title: 'Error',
-        description: 'Failed to fetch units. Please try again later.',
+        title: tCommon('error'),
+        description: t('error.fetchFailed'),
         variant: 'destructive',
       });
     }
@@ -86,10 +89,8 @@ export default function UnitsPage() {
     <div className="space-y-1">
       <div className="flex items-center justify-between flex-wrap gap-x-4">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Units</h2>
-          <p className="text-muted-foreground">
-            Manage your measurement units for products and inventory.
-          </p>
+          <h2 className="text-2xl font-bold tracking-tight">{t('title')}</h2>
+          <p className="text-muted-foreground">{t('description')}</p>
         </div>
         {activeTab === 'units' ? (
           <UnitPrimaryButton
@@ -116,9 +117,9 @@ export default function UnitsPage() {
         className="w-full"
       >
         <TabsList>
-          <TabsTrigger value="units">Units</TabsTrigger>
-          <TabsTrigger value="conversions">Unit Conversions</TabsTrigger>
-          <TabsTrigger value="calculator">Conversion Calculator</TabsTrigger>
+          <TabsTrigger value="units">{t('tabs.units')}</TabsTrigger>
+          <TabsTrigger value="conversions">{t('tabs.conversions')}</TabsTrigger>
+          <TabsTrigger value="calculator">{t('tabs.calculator')}</TabsTrigger>
         </TabsList>
         <TabsContent value="units" className="mt-2">
           <UnitTable onEdit={handleEdit} onRefresh={handleSuccess} />

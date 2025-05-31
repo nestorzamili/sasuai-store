@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -73,28 +74,41 @@ const TIER_MULTIPLIERS = {
   Diamond: 2.5,
 };
 
-// Tooltip descriptions
-const TOOLTIPS = {
-  enabled:
-    'When enabled, customers will earn points for every purchase based on the settings below. Disabling this will stop all point accumulation.',
-  baseAmount:
-    'This is the transaction amount required to earn 1 point. For example, if set to 10,000, then a 50,000 purchase will earn 5 points (before multipliers).',
-  pointMultiplier:
-    'A global multiplier applied to all point calculations. For example, setting this to 2 will double all points earned by all customers.',
-  tierMultiplier:
-    'Each membership tier has its own multiplier that is applied after the global multiplier. Higher tiers receive more points for the same purchase amount.',
-};
-
 export default function PointRulesContent() {
+  const t = useTranslations('member.pointRules');
+  const tCommon = useTranslations('member.common');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [exampleAmount, setExampleAmount] = useState(1000);
   const [originalValues, setOriginalValues] = useState<FormValues | null>(null);
   const [formChanged, setFormChanged] = useState(false);
 
-  // Initialize the form
+  // Initialize the form with translated validation messages
   const form = useForm<FormValues>({
-    resolver: zodResolver(pointRulesSchema),
+    resolver: zodResolver(
+      pointRulesSchema.superRefine((data, ctx) => {
+        if (data.baseAmount < 1000) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.too_small,
+            minimum: 1000,
+            type: 'number',
+            inclusive: true,
+            path: ['baseAmount'],
+            message: t('validation.baseAmountMin'),
+          });
+        }
+        if (data.pointMultiplier < 0.1) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.too_small,
+            minimum: 0.1,
+            type: 'number',
+            inclusive: true,
+            path: ['pointMultiplier'],
+            message: t('validation.multiplierMin'),
+          });
+        }
+      }),
+    ),
     defaultValues: {
       enabled: true,
       baseAmount: 10000,
@@ -144,16 +158,16 @@ export default function PointRulesContent() {
           form.reset(formValues);
         } else {
           toast({
-            title: 'Error',
-            description: error || 'Failed to load point rule settings',
+            title: tCommon('error'),
+            description: error || t('errors.failedToLoad'),
             variant: 'destructive',
           });
         }
       } catch (error) {
         console.error('Failed to load point rule settings:', error);
         toast({
-          title: 'Error',
-          description: 'Failed to load point rule settings',
+          title: tCommon('error'),
+          description: t('errors.failedToLoad'),
           variant: 'destructive',
         });
       } finally {
@@ -162,7 +176,7 @@ export default function PointRulesContent() {
     }
 
     loadPointRuleSettings();
-  }, [form]);
+  }, [form, t, tCommon]);
 
   // Handle form submission
   const onSubmit = async (values: FormValues) => {
@@ -177,23 +191,23 @@ export default function PointRulesContent() {
 
       if (success) {
         toast({
-          title: 'Settings updated',
-          description: 'Point rule settings have been updated successfully',
+          title: t('success.title'),
+          description: t('success.message'),
         });
         setOriginalValues(values);
         setFormChanged(false);
       } else {
         toast({
-          title: 'Error',
-          description: error || 'Failed to update point rule settings',
+          title: tCommon('error'),
+          description: error || t('errors.failedToUpdate'),
           variant: 'destructive',
         });
       }
     } catch (error) {
       console.error('Failed to update point rule settings:', error);
       toast({
-        title: 'Error',
-        description: 'Failed to update point rule settings',
+        title: tCommon('error'),
+        description: t('errors.failedToUpdate'),
         variant: 'destructive',
       });
     } finally {
@@ -242,10 +256,10 @@ export default function PointRulesContent() {
         <div>
           <h3 className="text-xl font-semibold flex items-center">
             <IconCoin className="w-5 h-5 mr-2 text-amber-500" />
-            Point Rules Configuration
+            {t('title')}
           </h3>
           <p className="text-sm text-muted-foreground mt-1">
-            Configure how points are awarded to members for their purchases
+            {t('description')}
           </p>
         </div>
       </div>
@@ -254,12 +268,9 @@ export default function PointRulesContent() {
         <CardHeader>
           <CardTitle className="flex items-center">
             <IconSettings className="w-5 h-5 mr-2" />
-            Point Calculation Settings
+            {t('settings.title')}
           </CardTitle>
-          <CardDescription>
-            These settings determine how points are calculated for each
-            transaction
-          </CardDescription>
+          <CardDescription>{t('settings.description')}</CardDescription>
         </CardHeader>
 
         <Form {...form}>
@@ -272,21 +283,20 @@ export default function PointRulesContent() {
                   <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                     <div className="space-y-0.5">
                       <FormLabel className="text-base flex items-center">
-                        Enable Points System
+                        {t('fields.enabled.label')}
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <IconInfoCircle className="w-4 h-4 ml-2 text-muted-foreground cursor-help" />
                             </TooltipTrigger>
                             <TooltipContent className="max-w-xs">
-                              {TOOLTIPS.enabled}
+                              {t('tooltips.enabled')}
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
                       </FormLabel>
                       <FormDescription>
-                        When disabled, no points will be awarded for any
-                        purchases
+                        {t('fields.enabled.description')}
                       </FormDescription>
                     </div>
                     <FormControl>
@@ -306,14 +316,14 @@ export default function PointRulesContent() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="flex items-center">
-                        Base Amount
+                        {t('fields.baseAmount.label')}
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <IconInfoCircle className="w-4 h-4 ml-2 text-muted-foreground cursor-help" />
                             </TooltipTrigger>
                             <TooltipContent className="max-w-xs">
-                              {TOOLTIPS.baseAmount}
+                              {t('tooltips.baseAmount')}
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
@@ -327,8 +337,9 @@ export default function PointRulesContent() {
                         />
                       </FormControl>
                       <FormDescription>
-                        For every {formatRupiah(field.value)} spent, customers
-                        earn 1 point
+                        {t('fields.baseAmount.description', {
+                          amount: formatRupiah(field.value),
+                        })}
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -341,14 +352,14 @@ export default function PointRulesContent() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="flex items-center">
-                        Global Point Multiplier
+                        {t('fields.pointMultiplier.label')}
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <IconInfoCircle className="w-4 h-4 ml-2 text-muted-foreground cursor-help" />
                             </TooltipTrigger>
                             <TooltipContent className="max-w-xs">
-                              {TOOLTIPS.pointMultiplier}
+                              {t('tooltips.pointMultiplier')}
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
@@ -357,7 +368,7 @@ export default function PointRulesContent() {
                         <Input type="number" {...field} step="0.1" min="0.1" />
                       </FormControl>
                       <FormDescription>
-                        Multiply all points earned by this value
+                        {t('fields.pointMultiplier.description')}
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -370,21 +381,20 @@ export default function PointRulesContent() {
                   <AccordionTrigger className="px-4 py-3 bg-muted/30 border rounded-t-md hover:no-underline hover:bg-muted/50">
                     <div className="flex items-center text-base">
                       <IconCalculator className="w-4 h-4 mr-2 text-blue-500" />
-                      Example Point Calculation
+                      {t('calculator.title')}
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="border border-t-0 rounded-b-md p-4 bg-muted/30">
                     <div className="mb-4">
                       <div className="text-sm mb-2 flex items-center">
-                        Example transaction amount:
+                        {t('calculator.exampleAmount')}:
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <IconInfoCircle className="w-4 h-4 ml-2 text-muted-foreground cursor-help" />
                             </TooltipTrigger>
                             <TooltipContent className="max-w-xs">
-                              Enter any amount to see how many points each tier
-                              would earn for this purchase.
+                              {t('tooltips.exampleCalculation')}
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
@@ -405,14 +415,14 @@ export default function PointRulesContent() {
                     </div>
 
                     <div className="mt-4 mb-2 flex items-center text-sm font-medium">
-                      Points earned by tier:
+                      {t('calculator.pointsByTier')}:
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <IconInfoCircle className="w-4 h-4 ml-2 text-muted-foreground cursor-help" />
                           </TooltipTrigger>
                           <TooltipContent className="max-w-xs">
-                            {TOOLTIPS.tierMultiplier}
+                            {t('tooltips.tierMultiplier')}
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
@@ -431,7 +441,7 @@ export default function PointRulesContent() {
                             </div>
                             <div className="text-right font-semibold">
                               {calculatePoints(exampleAmount, multiplier)}{' '}
-                              points
+                              {t('calculator.points')}
                             </div>
                           </div>
                         ),
@@ -449,10 +459,10 @@ export default function PointRulesContent() {
                 onClick={resetToDefaults}
                 disabled={isSaving}
               >
-                Reset to Default
+                {t('actions.resetToDefault')}
               </Button>
               <Button type="submit" disabled={isSaving || !formChanged}>
-                {isSaving ? 'Saving...' : 'Save Settings'}
+                {isSaving ? t('actions.saving') : t('actions.saveSettings')}
               </Button>
             </CardFooter>
           </form>

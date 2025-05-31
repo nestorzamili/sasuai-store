@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -41,6 +42,7 @@ export function BatchAdjustmentDialog({
   units,
   onSuccess,
 }: BatchAdjustmentDialogProps) {
+  const t = useTranslations('inventory.batchAdjustmentDialog');
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     adjustment: 0,
@@ -53,8 +55,8 @@ export function BatchAdjustmentDialog({
 
     if (!formData.adjustment || formData.adjustment === 0) {
       toast({
-        title: 'Invalid adjustment',
-        description: 'Adjustment quantity cannot be zero',
+        title: t('invalidAdjustment'),
+        description: t('adjustmentCannotZero'),
         variant: 'destructive',
       });
       return;
@@ -62,8 +64,8 @@ export function BatchAdjustmentDialog({
 
     if (!formData.reason.trim()) {
       toast({
-        title: 'Reason required',
-        description: 'Please provide a reason for the adjustment',
+        title: t('reasonRequired'),
+        description: t('provideReason'),
         variant: 'destructive',
       });
       return;
@@ -80,23 +82,23 @@ export function BatchAdjustmentDialog({
 
       if (result.success) {
         toast({
-          title: 'Quantity adjusted',
-          description: 'Batch quantity has been adjusted successfully',
+          title: t('quantityAdjusted'),
+          description: t('adjustmentSuccess'),
         });
         onSuccess();
         onOpenChange(false);
       } else {
         toast({
-          title: 'Error',
-          description: result.error || 'Failed to adjust quantity',
+          title: t('error'),
+          description: result.error || t('failedToAdjust'),
           variant: 'destructive',
         });
       }
     } catch (error) {
       console.error('Error adjusting quantity:', error);
       toast({
-        title: 'Error',
-        description: 'An unexpected error occurred',
+        title: t('error'),
+        description: t('unexpectedError'),
         variant: 'destructive',
       });
     } finally {
@@ -110,9 +112,9 @@ export function BatchAdjustmentDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Adjust Quantity</DialogTitle>
+          <DialogTitle>{t('title')}</DialogTitle>
           <DialogDescription>
-            Adjust the quantity for batch {batch.batchCode}
+            {t('description')} {batch.batchCode}
           </DialogDescription>
         </DialogHeader>
 
@@ -122,11 +124,11 @@ export function BatchAdjustmentDialog({
             <div className="bg-muted/50 p-4 rounded-lg">
               <div className="space-y-2">
                 <div>
-                  <span className="font-medium">Product:</span>{' '}
+                  <span className="font-medium">{t('product')}:</span>{' '}
                   {batch.product?.name}
                 </div>
                 <div>
-                  <span className="font-medium">Current Quantity:</span>{' '}
+                  <span className="font-medium">{t('currentQuantity')}:</span>{' '}
                   {batch.remainingQuantity}
                 </div>
               </div>
@@ -134,7 +136,7 @@ export function BatchAdjustmentDialog({
 
             {/* Adjustment input */}
             <div className="grid gap-2">
-              <Label htmlFor="adjustment">Adjustment</Label>
+              <Label htmlFor="adjustment">{t('adjustment')}</Label>
               <Input
                 id="adjustment"
                 type="number"
@@ -145,14 +147,14 @@ export function BatchAdjustmentDialog({
                     adjustment: parseInt(e.target.value) || 0,
                   })
                 }
-                placeholder="Enter adjustment (positive to add, negative to subtract)"
+                placeholder={t('adjustmentPlaceholder')}
                 required
               />
               <div className="text-xs text-muted-foreground">
-                New quantity will be: {newQuantity}{' '}
+                {t('newQuantity')}: {newQuantity}{' '}
                 {newQuantity < 0 && (
                   <span className="text-destructive ml-1">
-                    (Cannot be negative)
+                    {t('cannotBeNegative')}
                   </span>
                 )}
               </div>
@@ -160,7 +162,7 @@ export function BatchAdjustmentDialog({
 
             {/* Unit selection */}
             <div className="grid gap-2">
-              <Label htmlFor="unit">Unit</Label>
+              <Label htmlFor="unit">{t('unit')}</Label>
               <Select
                 value={formData.unitId}
                 onValueChange={(value) =>
@@ -168,7 +170,7 @@ export function BatchAdjustmentDialog({
                 }
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select unit" />
+                  <SelectValue placeholder={t('selectUnit')} />
                 </SelectTrigger>
                 <SelectContent>
                   {units.map((unit) => (
@@ -182,14 +184,14 @@ export function BatchAdjustmentDialog({
 
             {/* Reason input */}
             <div className="grid gap-2">
-              <Label htmlFor="reason">Reason</Label>
+              <Label htmlFor="reason">{t('reason')}</Label>
               <Textarea
                 id="reason"
                 value={formData.reason}
                 onChange={(e) =>
                   setFormData({ ...formData, reason: e.target.value })
                 }
-                placeholder="Enter reason for adjustment"
+                placeholder={t('reasonPlaceholder')}
                 required
               />
             </div>
@@ -202,10 +204,10 @@ export function BatchAdjustmentDialog({
               onClick={() => onOpenChange(false)}
               disabled={isLoading}
             >
-              Cancel
+              {t('cancel')}
             </Button>
             <Button type="submit" disabled={isLoading || newQuantity < 0}>
-              {isLoading ? 'Adjusting...' : 'Adjust Quantity'}
+              {isLoading ? t('adjusting') : t('adjustQuantityButton')}
             </Button>
           </DialogFooter>
         </form>

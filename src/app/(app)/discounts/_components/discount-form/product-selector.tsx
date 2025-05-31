@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { getProductsForSelection } from '../../action';
 import EntitySelector from './entity-selector';
 import {
@@ -12,6 +13,8 @@ export default function ProductSelector({
   selectedIds,
   onChange,
 }: ProductSelectorProps) {
+  const t = useTranslations('discount.form');
+
   const fetchProducts = async (
     search: string,
     isIdSearch = false,
@@ -57,26 +60,38 @@ export default function ProductSelector({
 
   const renderProductDetails = (product: ProductForSelection) => (
     <>
-      {product.barcode && <span>Barcode: {product.barcode}</span>}
-      {product.category && <span>Category: {product.category.name}</span>}
-      {product.brand && <span>Brand: {product.brand.name}</span>}
+      {product.barcode && (
+        <span>
+          {t('barcode')}: {product.barcode}
+        </span>
+      )}
+      {product.category && (
+        <span>
+          {t('category')}: {product.category.name}
+        </span>
+      )}
+      {product.brand && (
+        <span>
+          {t('brand')}: {product.brand.name}
+        </span>
+      )}
     </>
   );
 
   // Define columns for the selected products table
   const productColumns: Column<ProductForSelection>[] = [
-    { header: 'Product Name', accessor: 'name' },
+    { header: t('productName'), accessor: 'name' },
     {
-      header: 'Barcode',
+      header: t('barcode'),
       accessor: (product: ProductForSelection) => product.barcode || 'N/A',
     },
     {
-      header: 'Category',
+      header: t('category'),
       accessor: (product: ProductForSelection) =>
         product.category?.name || 'N/A',
     },
     {
-      header: 'Brand',
+      header: t('brand'),
       accessor: (product: ProductForSelection) => product.brand?.name || 'N/A',
     },
   ];
@@ -88,8 +103,8 @@ export default function ProductSelector({
       fetchItems={fetchProducts}
       fetchItemById={fetchItemById}
       renderItemDetails={renderProductDetails}
-      placeholder="Search products by name or barcode..."
-      noSelectionText="No products selected"
+      placeholder={t('searchProducts')}
+      noSelectionText={t('noProductsSelected')}
       columns={productColumns}
     />
   );

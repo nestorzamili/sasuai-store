@@ -1,0 +1,81 @@
+{
+  "profile": {
+    "title": "Profile Settings",
+    "description": "Manage your account settings and preferences",
+    "tabs": {
+      "profile": "Profile",
+      "security": "Security"
+    },
+    "form": {
+      "title": "Profile Information",
+      "description": "Update your personal information",
+      "loading": "Loading...",
+      "fullName": "Full Name",
+      "fullNamePlaceholder": "John Doe",
+      "fullNameDescription": "Your name as displayed on your profile",
+      "username": "Username",
+      "usernamePlaceholder": "username",
+      "usernameDescription": "Your unique username for signing in",
+      "email": "Email",
+      "emailPlaceholder": "your-email@example.com",
+      "emailDescription": "This is your verified email address",
+      "avatarDescription": "Upload a profile picture to personalize your account",
+      "updating": "Updating...",
+      "updateProfile": "Update Profile",
+      "verificationRequired": "Verification Required",
+      "checkEmailConfirm": "Please check your email to confirm the email change.",
+      "emailChangeFailed": "Email Change Failed",
+      "emailAlreadyRegistered": "This email address is already registered with another account.",
+      "profileUpdated": "Profile Updated",
+      "profileUpdatedMessage": "Your profile information has been updated.",
+      "profileUpdatedImageIssue": "Profile updated but there was an issue with the profile picture.",
+      "updateFailed": "Update Failed",
+      "problemUpdating": "There was a problem updating your profile.",
+      "unexpectedError": "An unexpected error occurred while changing email.",
+      "usernameTaken": "This username is already taken. Please try another one.",
+      "usernameUpdateProblem": "There was a problem updating your username.",
+      "validation": {
+        "nameMinLength": "Name must be at least 3 characters.",
+        "nameMaxLength": "Name must not be longer than 50 characters.",
+        "usernameMinLength": "Username must be at least 5 characters.",
+        "usernameMaxLength": "Username must not be longer than 20 characters.",
+        "usernameFormat": "Username can only contain lowercase letters, numbers, underscores, and hyphens.",
+        "emailRequired": "Email is required",
+        "emailInvalid": "Please enter a valid email address.",
+        "imageInvalidUrl": "Please enter a valid image URL."
+      }
+    },
+    "changePassword": {
+      "title": "Change Password",
+      "description": "Update your account password securely",
+      "currentPassword": "Current Password",
+      "newPassword": "New Password",
+      "confirmPassword": "Confirm Password",
+      "passwordRequirements": "Password must be at least 8 characters, include uppercase, lowercase, number, and special character",
+      "changingPassword": "Changing Password...",
+      "changePasswordButton": "Change Password",
+      "currentPasswordIncorrect": "The current password you entered is incorrect.",
+      "passwordChangeSuccess": "Password changed successfully",
+      "passwordChangeSuccessMessage": "Your password has been updated and other sessions have been logged out.",
+      "passwordChangeFailed": "Password change failed",
+      "problemChanging": "There was a problem changing your password.",
+      "validation": {
+        "currentPasswordMinLength": "Current password must be at least 8 characters",
+        "newPasswordMinLength": "New password must be at least 8 characters",
+        "passwordComplexity": "Password must include uppercase, lowercase, number, and special character",
+        "passwordsDontMatch": "Passwords don't match",
+        "passwordMustBeDifferent": "New password must be different from current password"
+      }
+    },
+    "avatarUpload": {
+      "changePhoto": "Change photo",
+      "uploadPhoto": "Upload photo",
+      "removePhoto": "Remove photo",
+      "profilePhotoRemoved": "Profile photo removed",
+      "profilePhotoRemovedMessage": "Your profile photo has been removed.",
+      "profilePicture": "Profile picture",
+      "uploadTitle": "Upload Profile Photo",
+      "uploadDescription": "Upload a profile photo. A square image is recommended for best results."
+    }
+  }
+}
