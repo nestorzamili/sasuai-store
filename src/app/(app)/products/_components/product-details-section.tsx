@@ -3,7 +3,8 @@
 import { useFormContext, useWatch } from 'react-hook-form';
 import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
-import { ProductFormValues, useProductForm } from './product-form-provider';
+import { useProductForm } from './product-form-provider';
+import { ProductFormValues } from '@/lib/types/product';
 import {
   FormControl,
   FormDescription,
@@ -21,6 +22,7 @@ import { CategoryCombobox } from './category-combobox';
 import { BrandCombobox } from './brand-combobox';
 import { UnitCombobox } from './unit-combobox';
 import { generateSKU, generateCategoryPrefix } from '@/utils/sku-generator';
+import { generateEAN13Barcode } from '@/utils/barcode-generator';
 
 export function ProductDetailsSection() {
   const t = useTranslations('product.detailsSection');
@@ -69,6 +71,12 @@ export function ProductDetailsSection() {
     const generatedSKU = generateSKU(productName, categoryPrefix);
     setValue('skuCode', generatedSKU);
     setSkuGenerated(true);
+  };
+
+  // Handle manual barcode generation
+  const handleGenerateBarcode = () => {
+    const generatedBarcode = generateEAN13Barcode();
+    setValue('barcode', generatedBarcode);
   };
 
   return (
@@ -208,20 +216,36 @@ export function ProductDetailsSection() {
           )}
         />
 
-        {/* Barcode */}
+        {/* Barcode with generation */}
         <FormField
           control={control}
           name="barcode"
           render={({ field }) => (
             <FormItem>
               <FormLabel>{t('barcode')}</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder={t('barcodePlaceholder')}
-                  {...field}
-                  value={field.value || ''}
-                />
-              </FormControl>
+              <div className="flex gap-2 items-center">
+                <FormControl>
+                  <Input
+                    placeholder={t('barcodePlaceholder')}
+                    {...field}
+                    value={field.value || ''}
+                  />
+                </FormControl>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={handleGenerateBarcode}
+                  title={t('generateBarcode')}
+                >
+                  <IconRefresh size={16} />
+                </Button>
+              </div>
+              <FormDescription>
+                {!isEditing
+                  ? t('barcodeDescriptionNew')
+                  : t('barcodeDescriptionEdit')}
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}

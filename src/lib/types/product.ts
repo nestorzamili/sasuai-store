@@ -16,6 +16,25 @@ export interface Product {
   updatedAt: Date;
 }
 
+export type ProductFormValues = {
+  name: string;
+  categoryId: string;
+  brandId?: string | null;
+  description?: string | null;
+  unitId: string;
+  price: number;
+  skuCode?: string | null;
+  barcode?: string | null;
+  isActive: boolean;
+};
+
+export interface TempImage {
+  id: string;
+  imageUrl: string;
+  fullUrl: string;
+  isPrimary: boolean;
+}
+
 // Base interfaces for related entities
 export interface Category {
   id: string;

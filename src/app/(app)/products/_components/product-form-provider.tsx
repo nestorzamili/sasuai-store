@@ -22,31 +22,12 @@ import {
 import {
   ProductWithRelations,
   ProductImageWithUrl,
+  ProductFormValues,
   Category,
   Brand,
   Unit,
+  TempImage,
 } from '@/lib/types/product';
-
-// Define the type directly without creating an unused schema
-export type ProductFormValues = {
-  name: string;
-  categoryId: string;
-  brandId?: string | null;
-  description?: string | null;
-  unitId: string;
-  price: number;
-  skuCode?: string | null;
-  barcode?: string | null;
-  isActive: boolean;
-};
-
-// Simplified temporary image type
-interface TempImage {
-  id: string;
-  imageUrl: string;
-  fullUrl: string;
-  isPrimary: boolean;
-}
 
 interface ProductFormContextProps {
   isEditing: boolean;
