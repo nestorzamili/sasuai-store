@@ -69,19 +69,20 @@
       }
     },
     "batchFilter": {
+      "expiryDateRange": "Select expiry date range",
       "quantityRange": "Quantity Range",
-      "minQuantity": "Min Quantity",
-      "maxQuantity": "Max Quantity",
-      "units": "units",
       "min": "Min",
       "max": "Max",
-      "applyFilter": "Apply Filter",
+      "units": "units",
+      "minQuantity": "Min Quantity",
+      "maxQuantity": "Max Quantity",
       "reset": "Reset",
+      "applyFilter": "Apply Filter",
       "allCategories": "All Categories",
       "advancedFilters": "Advanced Filters",
       "stockStatus": "Stock Status",
-      "includeExpired": "Include Expired Products",
-      "includeOutOfStock": "Include Out of Stock Products",
+      "includeExpired": "Include expired items",
+      "includeOutOfStock": "Include out of stock items",
       "clearFilters": "Clear Filters"
     },
     "batchDeleteDialog": {

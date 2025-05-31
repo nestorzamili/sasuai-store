@@ -5,6 +5,7 @@ import { CalendarIcon } from '@radix-ui/react-icons';
 import { format } from 'date-fns';
 import { DateRange } from 'react-day-picker';
 import { cn } from '@/lib/utils';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import {
@@ -30,6 +31,7 @@ interface DateRangePickerProps {
   className?: string;
   align?: 'center' | 'start' | 'end';
   isCompact?: boolean;
+  placeholder?: string;
 }
 
 export function DateRangePickerWithPresets({
@@ -38,7 +40,9 @@ export function DateRangePickerWithPresets({
   className,
   align = 'center',
   isCompact = false,
+  placeholder = 'Pick a date range',
 }: DateRangePickerProps) {
+  const t = useTranslations('common.datePresets');
   const [date, setDate] = React.useState<DateRange | undefined>(value);
   const [isOpen, setIsOpen] = React.useState(false);
 
@@ -54,7 +58,7 @@ export function DateRangePickerWithPresets({
 
   // Get display text for date range
   const getDateRangeText = () => {
-    if (!date?.from) return <span>Pick a date range</span>;
+    if (!date?.from) return <span>{placeholder}</span>;
 
     if (!date.to) return formatDate(date.from);
 
@@ -170,7 +174,7 @@ export function DateRangePickerWithPresets({
                 onClick={() => applyDatePreset('today')}
                 className="justify-start text-xs"
               >
-                Today
+                {t('today')}
               </Button>
               <Button
                 variant="outline"
@@ -178,7 +182,7 @@ export function DateRangePickerWithPresets({
                 onClick={() => applyDatePreset('yesterday')}
                 className="justify-start text-xs"
               >
-                Yesterday
+                {t('yesterday')}
               </Button>
               <Button
                 variant="outline"
@@ -186,7 +190,7 @@ export function DateRangePickerWithPresets({
                 onClick={() => applyDatePreset('last7days')}
                 className="justify-start text-xs"
               >
-                Last 7 Days
+                {t('last7days')}
               </Button>
               <Button
                 variant="outline"
@@ -194,7 +198,7 @@ export function DateRangePickerWithPresets({
                 onClick={() => applyDatePreset('last30days')}
                 className="justify-start text-xs"
               >
-                Last 30 Days
+                {t('last30days')}
               </Button>
               <Button
                 variant="outline"
@@ -202,7 +206,7 @@ export function DateRangePickerWithPresets({
                 onClick={() => applyDatePreset('thisWeek')}
                 className="justify-start text-xs"
               >
-                This Week
+                {t('thisWeek')}
               </Button>
               <Button
                 variant="outline"
@@ -210,7 +214,7 @@ export function DateRangePickerWithPresets({
                 onClick={() => applyDatePreset('thisMonth')}
                 className="justify-start text-xs"
               >
-                This Month
+                {t('thisMonth')}
               </Button>
               <Button
                 variant="outline"
@@ -218,7 +222,7 @@ export function DateRangePickerWithPresets({
                 onClick={() => applyDatePreset('thisYear')}
                 className="justify-start text-xs"
               >
-                This Year
+                {t('thisYear')}
               </Button>
             </div>
           </div>

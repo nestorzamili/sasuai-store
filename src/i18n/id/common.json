@@ -26,6 +26,36 @@
       "goToPreviousPage": "Ke halaman sebelumnya",
       "goToNextPage": "Ke halaman selanjutnya",
       "goToLastPage": "Ke halaman terakhir"
+    },
+    "commandMenu": {
+      "placeholder": "Ketik perintah atau cari...",
+      "noResults": "Tidak ada hasil ditemukan.",
+      "theme": "Tema",
+      "light": "Terang",
+      "dark": "Gelap",
+      "system": "Sistem"
+    },
+    "profile": {
+      "user": "Pengguna",
+      "profile": "Profil",
+      "logOut": "Keluar",
+      "error": "Kesalahan",
+      "failedToLogOut": "Gagal keluar"
+    },
+    "themeSwitch": {
+      "toggleTheme": "Ubah tema",
+      "light": "Terang",
+      "dark": "Gelap",
+      "system": "Sistem"
+    },
+    "datePresets": {
+      "today": "Hari Ini",
+      "yesterday": "Kemarin",
+      "last7days": "7 Hari Terakhir",
+      "last30days": "30 Hari Terakhir",
+      "thisWeek": "Minggu Ini",
+      "thisMonth": "Bulan Ini",
+      "thisYear": "Tahun Ini"
     }
   }
 }

@@ -133,6 +133,7 @@ export default function BatchFilterToolbar({
             align="start"
             className="w-full"
             isCompact={true}
+            placeholder={t('expiryDateRange')}
           />
         </div>
 

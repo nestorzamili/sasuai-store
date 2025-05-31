@@ -69,19 +69,20 @@
       }
     },
     "batchFilter": {
+      "expiryDateRange": "Pilih rentang tanggal",
       "quantityRange": "Rentang Kuantitas",
-      "minQuantity": "Kuantitas Minimum",
-      "maxQuantity": "Kuantitas Maksimum",
-      "units": "unit",
       "min": "Min",
       "max": "Maks",
+      "units": "unit",
+      "minQuantity": "Kuantitas Minimum",
+      "maxQuantity": "Kuantitas Maksimum",
+      "reset": "Atur Ulang",
       "applyFilter": "Terapkan Filter",
-      "reset": "Reset",
       "allCategories": "Semua Kategori",
       "advancedFilters": "Filter Lanjutan",
       "stockStatus": "Status Stok",
-      "includeExpired": "Sertakan Produk Kedaluwarsa",
-      "includeOutOfStock": "Sertakan Produk Stok Habis",
+      "includeExpired": "Termasuk item kedaluwarsa",
+      "includeOutOfStock": "Termasuk item stok habis",
       "clearFilters": "Hapus Filter"
     },
     "batchDeleteDialog": {

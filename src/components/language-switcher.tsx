@@ -1,6 +1,6 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -8,7 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Languages } from 'lucide-react';
+import { Languages, Check } from 'lucide-react';
 
 const languages = [
   { code: 'en', name: 'English', flag: '🇺🇸' },
@@ -17,6 +17,7 @@ const languages = [
 
 export function LanguageSwitcher() {
   const t = useTranslations('language');
+  const currentLocale = useLocale();
 
   const handleLanguageChange = (locale: string) => {
     document.cookie = `locale=${locale}; path=/; max-age=31536000`;
@@ -36,9 +37,15 @@ export function LanguageSwitcher() {
           <DropdownMenuItem
             key={language.code}
             onClick={() => handleLanguageChange(language.code)}
+            className="flex items-center justify-between"
           >
-            <span className="mr-2">{language.flag}</span>
-            {language.code === 'en' ? t('english') : t('indonesian')}
+            <div className="flex items-center">
+              <span className="mr-2">{language.flag}</span>
+              {language.code === 'en' ? t('english') : t('indonesian')}
+            </div>
+            {currentLocale === language.code && (
+              <Check className="h-4 w-4 text-primary" />
+            )}
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>

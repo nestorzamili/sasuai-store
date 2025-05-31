@@ -67,7 +67,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 )}
               >
                 <Header fixed>
-                  <Search placeholder="Search..." />
+                  <Search />
                   <div className="ml-auto flex items-center gap-2">
                     <LanguageSwitcher />
                     <ThemeSwitch />

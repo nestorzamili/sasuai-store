@@ -143,6 +143,7 @@ export default function TransactionFilterToolbar({
             align="start"
             className="w-full"
             isCompact={true}
+            placeholder={t('dateRange')}
           />
         </div>
 

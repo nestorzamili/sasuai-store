@@ -26,6 +26,36 @@
       "goToPreviousPage": "Go to previous page",
       "goToNextPage": "Go to next page",
       "goToLastPage": "Go to last page"
+    },
+    "commandMenu": {
+      "placeholder": "Type a command or search...",
+      "noResults": "No results found.",
+      "theme": "Theme",
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System"
+    },
+    "profile": {
+      "user": "User",
+      "profile": "Profile",
+      "logOut": "Log out",
+      "error": "Error",
+      "failedToLogOut": "Failed to log out"
+    },
+    "themeSwitch": {
+      "toggleTheme": "Toggle theme",
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System"
+    },
+    "datePresets": {
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "last7days": "Last 7 Days",
+      "last30days": "Last 30 Days",
+      "thisWeek": "This Week",
+      "thisMonth": "This Month",
+      "thisYear": "This Year"
     }
   }
 }
