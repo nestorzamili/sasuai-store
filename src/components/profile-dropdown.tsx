@@ -15,11 +15,13 @@ import { User, LogOut } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
+import { useTranslations } from 'next-intl';
 import { toast } from '@/hooks/use-toast';
 
 export function ProfileDropdown() {
   const router = useRouter();
   const { user, isLoading, signOut } = useAuth();
+  const t = useTranslations('common.profile');
 
   const handleLogout = async () => {
     try {
@@ -28,8 +30,8 @@ export function ProfileDropdown() {
     } catch (error) {
       console.error('Logout error:', error);
       toast({
-        title: 'Error',
-        description: 'Failed to log out',
+        title: t('error'),
+        description: t('failedToLogOut'),
         variant: 'destructive',
       });
     }
@@ -93,7 +95,7 @@ export function ProfileDropdown() {
           </Avatar>
           <div className="flex flex-col items-center space-y-1">
             <p className="text-sm font-medium leading-none">
-              {user.name || 'User'}
+              {user.name || t('user')}
             </p>
             <p className="text-xs leading-none text-muted-foreground">
               {user.email}
@@ -109,7 +111,7 @@ export function ProfileDropdown() {
           >
             <Link href="/profile" className="flex items-center gap-2">
               <User size={16} className="text-muted-foreground" />
-              <span>Profile</span>
+              <span>{t('profile')}</span>
               <DropdownMenuShortcut className="text-xs opacity-60">
                 ⇧⌘P
               </DropdownMenuShortcut>
@@ -123,7 +125,7 @@ export function ProfileDropdown() {
         >
           <div className="flex items-center gap-2">
             <LogOut size={16} />
-            <span>Log out</span>
+            <span>{t('logOut')}</span>
           </div>
           <DropdownMenuShortcut className="text-xs opacity-60">
             ⇧⌘Q

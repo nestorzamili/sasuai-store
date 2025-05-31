@@ -11,14 +11,17 @@ import {
 } from '@/components/ui/sidebar';
 import { NavGroup } from '@/components/layout/nav-group';
 import { StoreSwitcher } from '@/components/layout/store-switcher';
-import { sidebarData } from './data/sidebar-data';
+import { getSidebarData } from './data/sidebar-data';
 import { Footer } from '@/components/layout/footer';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useEffect, useState, useMemo } from 'react';
 
 export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
   const { state } = useSidebar();
   const [isMounted, setIsMounted] = useState(false);
+  const t = useTranslations();
+  const sidebarData = getSidebarData(t);
 
   useEffect(() => {
     setIsMounted(true);
@@ -53,7 +56,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
       sidebarData.navGroups.map((groupProps) => (
         <NavGroup key={groupProps.title} {...groupProps} />
       )),
-    [],
+    [sidebarData.navGroups],
   );
 
   return (

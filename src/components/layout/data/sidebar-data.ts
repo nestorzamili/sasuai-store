@@ -18,119 +18,122 @@ import {
 import { type SidebarData } from '../types';
 import logo from '../../../../public/images/logo.png';
 
-export const sidebarData: SidebarData = {
+export const getSidebarData = (t: (key: string) => string): SidebarData => ({
   stores: [
     {
-      name: 'Sasuai Store',
+      name: t('sidebar.store.name'),
       logo: logo.src,
-      plan: 'Store Management',
+      plan: t('sidebar.store.plan'),
     },
   ],
   navGroups: [
     {
-      title: 'General',
+      title: t('sidebar.groups.general'),
       items: [
         {
-          title: 'Dashboard',
+          title: t('sidebar.items.dashboard'),
           url: '/',
           icon: IconLayoutDashboard,
         },
         {
-          title: 'Transactions',
+          title: t('sidebar.items.transactions'),
           url: '/transactions',
           icon: IconShoppingCart,
         },
       ],
     },
     {
-      title: 'Inventory Management',
+      title: t('sidebar.groups.inventoryManagement'),
       items: [
         {
-          title: 'Products',
+          title: t('sidebar.items.products'),
           url: '/products',
           icon: IconBoxSeam,
         },
         {
-          title: 'Categories',
+          title: t('sidebar.items.categories'),
           url: '/products/categories',
           icon: IconCategory,
         },
         {
-          title: 'Brands',
+          title: t('sidebar.items.brands'),
           url: '/products/brands',
           icon: IconBuildingStore,
         },
         {
-          title: 'Units',
+          title: t('sidebar.items.units'),
           url: '/products/units',
           icon: IconPackage,
         },
         {
-          title: 'Inventory',
+          title: t('sidebar.items.inventory'),
           url: '/inventory',
           icon: IconPackage,
         },
       ],
     },
     {
-      title: 'Supply Chain',
+      title: t('sidebar.groups.supplyChain'),
       items: [
         {
-          title: 'Suppliers',
+          title: t('sidebar.items.suppliers'),
           url: '/suppliers',
           icon: IconTruck,
         },
       ],
     },
     {
-      title: 'Marketing',
+      title: t('sidebar.groups.marketing'),
       items: [
         {
-          title: 'Discounts',
+          title: t('sidebar.items.discounts'),
           url: '/discounts',
           icon: IconDiscount,
         },
         {
-          title: 'Members',
+          title: t('sidebar.items.members'),
           url: '/members',
           icon: IconUsersGroup,
         },
         {
-          title: 'Rewards',
+          title: t('sidebar.items.rewards'),
           url: '/rewards',
           icon: IconGift,
         },
       ],
     },
     {
-      title: 'Administration',
+      title: t('sidebar.groups.administration'),
       items: [
         {
-          title: 'Users',
+          title: t('sidebar.items.users'),
           url: '/users',
           icon: IconUsers,
         },
       ],
     },
     {
-      title: 'Integrations',
+      title: t('sidebar.groups.integrations'),
       items: [
         {
-          title: 'Blastify',
+          title: t('sidebar.items.blastify'),
           url: 'https://blastify.tech',
           icon: IconPlane,
         },
       ],
     },
     {
-      title: 'Support',
+      title: t('sidebar.groups.support'),
       items: [
         {
-          title: 'Help Center',
+          title: t('sidebar.items.helpCenter'),
           url: '/help-center',
           icon: IconHelp,
         },
       ],
     },
   ],
-};
+});
+
+// Default export for backward compatibility
+export const sidebarData: SidebarData = getSidebarData(() => '');
