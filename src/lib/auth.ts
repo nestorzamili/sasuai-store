@@ -90,30 +90,6 @@ export const auth = betterAuth({
     },
   },
 
-  rateLimit: {
-    enabled: true,
-    window: 10,
-    max: 3,
-    customRules: {
-      '/sign-in/email': {
-        window: 10,
-        max: 3,
-      },
-      '/sign-in/username': {
-        window: 10,
-        max: 3,
-      },
-      '/send-verification-email': {
-        window: 60,
-        max: 3,
-      },
-      '/forget-password': {
-        window: 60,
-        max: 3,
-      },
-    },
-  },
-
   advanced: {
     ipAddress: {
       ipAddressHeaders: ['x-client-ip', 'x-forwarded-for'],
