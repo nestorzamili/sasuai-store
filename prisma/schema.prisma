@@ -388,6 +388,46 @@ model Setting {
   @@map("setting")
 }
 
+model SchedulerJob {
+  id          String            @id @default(uuid())
+  name        String            @unique
+  description String
+  tableName   String            @map("table_name")
+  handler     String // Function name to execute
+  schedule    String // Cron expression
+  isEnabled   Boolean           @default(true) @map("is_enabled")
+  lastRun     DateTime?         @map("last_run") @db.Timestamptz
+  nextRun     DateTime?         @map("next_run") @db.Timestamptz
+  logs        SchedulerJobLog[]
+  createdAt   DateTime          @default(now()) @db.Timestamptz
+  updatedAt   DateTime          @updatedAt @db.Timestamptz
+
+  @@map("scheduler_job")
+}
+
+model SchedulerJobLog {
+  id        String       @id @default(uuid())
+  job       SchedulerJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  jobId     String       @map("job_id")
+  status    JobStatus
+  startTime DateTime     @map("start_time") @db.Timestamptz
+  endTime   DateTime?    @map("end_time") @db.Timestamptz
+  duration  Int? // Duration in milliseconds
+  records   Int? // Number of records affected
+  message   String? // Success message or error details
+  error     String? // Full error stack trace
+  createdAt DateTime     @default(now()) @db.Timestamptz
+
+  @@map("scheduler_job_log")
+}
+
+enum JobStatus {
+  RUNNING
+  SUCCESS
+  FAILED
+  CANCELLED
+}
+
 enum DiscountType {
   PERCENTAGE
   FIXED_AMOUNT

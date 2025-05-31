@@ -11,6 +11,13 @@ export const metadata: Metadata = {
   description: 'Store Management System',
 };
 
+// Initialize scheduler on server-side only
+if (typeof window === 'undefined') {
+  import('@/lib/services/scheduler.service').then(({ SchedulerService }) => {
+    SchedulerService.initialize().catch(console.error);
+  });
+}
+
 export default async function RootLayout({
   children,
 }: {
