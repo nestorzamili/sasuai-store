@@ -21,7 +21,7 @@ import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/password-input';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
-import { authClient } from '@/lib/auth-client';
+import { signInWithEmail, signInWithUsername } from './actions';
 import { AuthLink } from '@/components/auth/auth-footers';
 
 type UserAuthFormProps = HTMLAttributes<HTMLDivElement>;
@@ -68,62 +68,57 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
       let result;
 
       if (isEmail) {
-        result = await authClient.signIn.email({
-          email: data.identifier,
-          password: data.password,
-          callbackURL: '/',
-        });
+        result = await signInWithEmail(data.identifier, data.password);
       } else {
-        result = await authClient.signIn.username({
-          username: data.identifier,
-          password: data.password,
-        });
+        result = await signInWithUsername(data.identifier, data.password);
       }
 
-      if (result.data && !result.error) {
+      if (result.success) {
         // Show success toast first
         toast({
           title: t('messages.success'),
           description: t('messages.loggedInSuccessfully'),
         });
 
-        // Handle redirect based on sign-in method
-        if (isEmail) {
-          // Email sign-in with callbackURL will redirect automatically
-          return;
-        } else {
-          // Username sign-in needs manual redirect
-          router.push('/');
-          return;
+        // Force a more comprehensive redirect strategy
+        try {
+          // First, try to refresh the page to update session
+          await new Promise((resolve) => setTimeout(resolve, 500));
+
+          // Use window.location for more reliable navigation
+          window.location.href = '/';
+
+          // Fallback: use Next.js router after a delay
+          setTimeout(() => {
+            router.push('/');
+            router.refresh();
+          }, 1000);
+        } catch (navigationError) {
+          console.error('Navigation error:', navigationError);
+          // Ultimate fallback
+          window.location.replace('/');
         }
+
+        return;
       }
-
-      // Handle error from Better Auth response
-      if (result.error) {
-        // Reset password field but keep identifier
-        form.setValue('password', '');
-
-        const errorMessage = result.error.message || 'Authentication failed';
-
-        toast({
-          title: t('messages.loginFailed'),
-          description: errorMessage,
-          variant: 'destructive',
-        });
-      } else if (!result.data) {
-        // No data and no error - this shouldn't happen but handle it
-        form.setValue('password', '');
-
-        toast({
-          title: t('messages.loginFailed'),
-          description: t('messages.authenticationFailed'),
-          variant: 'destructive',
-        });
-      }
-    } catch (error: unknown) {
-      console.error('Unexpected error:', error);
 
       // Reset password field but keep identifier
+      form.setValue('password', '');
+
+      // Use a user-friendly error message
+      const errorMessage = result.errorMessage
+        ? typeof result.errorMessage === 'string'
+          ? result.errorMessage
+          : t('messages.invalidCredentials')
+        : t('messages.authenticationFailed');
+
+      toast({
+        title: t('messages.loginFailed'),
+        description: errorMessage,
+        variant: 'destructive',
+      });
+    } catch (error) {
+      console.error('Login error:', error);
       form.setValue('password', '');
 
       toast({
