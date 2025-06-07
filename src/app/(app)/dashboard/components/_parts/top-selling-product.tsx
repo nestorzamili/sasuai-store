@@ -114,7 +114,7 @@ export function TopSellingProduct({ filter }: TopSellingProductProps) {
   const { totalUnits, totalRevenue } = useMemo(() => {
     const units = products.reduce(
       (sum, product) => sum + (product._sum.quantity || 0),
-      0,
+      0
     );
     const revenue = products.reduce((sum, product) => {
       const quantity = product._sum.quantity || 0;
@@ -171,17 +171,14 @@ export function TopSellingProduct({ filter }: TopSellingProductProps) {
 
                 return (
                   <TableRow key={product.batchId}>
-                    <TableCell className="font-medium">
+                    <TableCell className="font-medium uppercase">
                       {product.batch?.product.name || 'Unknown Product'}
-                      {index < 3 && (
-                        <Badge className="ml-2 bg-green-500">↑</Badge>
-                      )}
                     </TableCell>
-                    <TableCell>
-                      {product.batch?.product.categoryId || 'Unknown'}
+                    <TableCell className="uppercase text-xs">
+                      {product.batch?.product.name || 'Unknown'}
                     </TableCell>
                     <TableCell className="text-right">{quantity}</TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right font-semibold">
                       {formatRupiah(revenue)}
                     </TableCell>
                   </TableRow>
