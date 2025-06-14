@@ -12,11 +12,13 @@ import {
   BatchGroupCount,
   SalesDataItem,
   GroupedSalesData,
+  TopMemberResponse,
+  TopDiscountResponse,
 } from '@/lib/types/dashboard';
 
 export class DashboardService {
   static async getPerformanceMetrics(
-    dateFilter?: DateFilter,
+    dateFilter?: DateFilter
   ): Promise<PerformanceMetricsResponse> {
     // Default dates if no filter provided
     const defaultStart = '2024-09-01';
@@ -27,7 +29,7 @@ export class DashboardService {
       dateFilter?.from || dateFilter?.to
         ? dateToCompare(
             dateFilter.from || defaultStart,
-            dateFilter.to || defaultEnd,
+            dateFilter.to || defaultEnd
           )
         : dateToCompare(defaultStart, defaultEnd);
     // Format all dates at once
@@ -138,11 +140,11 @@ export class DashboardService {
       // Calculate total costs
       const currentTotalCost = currentItems.reduce(
         (acc: number, item: { cost: number }) => acc + item.cost,
-        0,
+        0
       );
       const prevTotalCost = prevItems.reduce(
         (acc: number, item: { cost: number }) => acc + item.cost,
-        0,
+        0
       );
 
       // Extract current values with fallback to 0
@@ -175,31 +177,31 @@ export class DashboardService {
 
       const salesGrowth = calculateGrowth(
         currentTotalSalesValue,
-        prevTotalSalesValue,
+        prevTotalSalesValue
       );
       const transactionsGrowth = calculateGrowth(
         currentTransactions,
-        prevTransactions,
+        prevTransactions
       );
       const avgSalesGrowth = calculateGrowth(
         currentAvgSalesValue,
-        prevAvgSalesValue,
+        prevAvgSalesValue
       );
       const costGrowth = calculateGrowth(currentTotalCost, prevTotalCost);
       const profitGrowth = calculateGrowth(currentProfit, prevProfit);
       const profitMarginGrowth = calculateGrowth(
         currentProfitMargin,
-        prevProfitMargin,
+        prevProfitMargin
       );
 
       // Format date range for display
       const currentDateRange = `${format(
         new Date(startDate),
-        'MMM d, yyyy',
+        'MMM d, yyyy'
       )} - ${format(new Date(endDate), 'MMM d, yyyy')}`;
       const prevDateRange = `${format(
         new Date(startDate),
-        'MMM d, yyyy',
+        'MMM d, yyyy'
       )} - ${format(new Date(endDate), 'MMM d, yyyy')}`;
 
       return {
@@ -238,11 +240,11 @@ export class DashboardService {
       // Format date range for display
       const currentDateRange = `${format(
         new Date(startDate),
-        'MMM d, yyyy',
+        'MMM d, yyyy'
       )} - ${format(new Date(endDate), 'MMM d, yyyy')}`;
       const prevDateRange = `${format(
         new Date(startDate),
-        'MMM d, yyyy',
+        'MMM d, yyyy'
       )} - ${format(new Date(endDate), 'MMM d, yyyy')}`;
 
       return {
@@ -262,7 +264,7 @@ export class DashboardService {
     }
   }
   static async getSalesStatistics(
-    year: string,
+    year: string
   ): Promise<SalesStatisticsResponse> {
     // Current period
     const startDate = `${year}-01-01`;
@@ -322,7 +324,7 @@ export class DashboardService {
             total_transactions: transaction._count._all,
             total_sales: transaction._sum.finalAmount,
           };
-        },
+        }
       );
 
       // Group transaction items by year and month for cost calculation
@@ -336,7 +338,7 @@ export class DashboardService {
             costsByMonth[key] = 0;
           }
           costsByMonth[key] += item.cost * item.quantity;
-        },
+        }
       );
 
       // Remove the generic type parameter from reduce and use proper typing
@@ -360,7 +362,7 @@ export class DashboardService {
           acc[key].profit_margin = acc[key].total_sales - acc[key].total_cost;
           return acc;
         },
-        {},
+        {}
       );
 
       // Calculate average sales per month after all data is aggregated
@@ -385,7 +387,7 @@ export class DashboardService {
     }
   }
   static async getTopPaymentMethods(
-    dateFilter: ExtendedDateFilter,
+    dateFilter: ExtendedDateFilter
   ): Promise<PaymentMethodResponse> {
     // Default dates if no filter provided
     const defaultStart = '2024-09-01';
@@ -395,7 +397,7 @@ export class DashboardService {
       dateFilter?.filter?.from || dateFilter?.filter?.to
         ? dateToCompare(
             dateFilter.filter.from || defaultStart,
-            dateFilter.filter.to || defaultEnd,
+            dateFilter.filter.to || defaultEnd
           )
         : dateToCompare(defaultStart, defaultEnd);
 
@@ -424,7 +426,7 @@ export class DashboardService {
           results.map((item) => ({
             type: item.paymentMethod,
             total: item._count.paymentMethod,
-          })),
+          }))
         );
 
       return {
@@ -440,7 +442,7 @@ export class DashboardService {
     }
   }
   static async getTopCategories(
-    dateFilter: ExtendedDateFilter,
+    dateFilter: ExtendedDateFilter
   ): Promise<CategoryResponse> {
     // Default dates if no filter provided
     const defaultStart = '2024-09-01';
@@ -450,7 +452,7 @@ export class DashboardService {
       dateFilter?.filter?.from || dateFilter?.filter?.to
         ? dateToCompare(
             dateFilter.filter.from || defaultStart,
-            dateFilter.filter.to || defaultEnd,
+            dateFilter.filter.to || defaultEnd
           )
         : dateToCompare(defaultStart, defaultEnd);
 
@@ -499,7 +501,7 @@ export class DashboardService {
             categoryName: batch?.product.category.name || 'Unknown',
             transactionCount: group._count.batchId,
           };
-        }),
+        })
       );
       return {
         success: true,
@@ -507,6 +509,252 @@ export class DashboardService {
       };
     } catch (error) {
       console.error('Error getting top categories:', error);
+      return {
+        success: false,
+        error: error,
+      };
+    }
+  }
+  static async getTopMembers(
+    dateFilter: ExtendedDateFilter
+  ): Promise<TopMemberResponse> {
+    try {
+      // Implementation based on the provided SQL query:
+      // SELECT
+      //   m.id,
+      //   m.name,
+      //   m.total_points_earned as total_point,
+      //   m.total_points as current_points,
+      //   (SELECT "createdAt" FROM transaction t WHERE t.member_id = m.id ORDER BY "createdAt" DESC LIMIT 1) as last_transaction_date
+      // FROM member m
+      // ORDER BY m.total_points_earned DESC
+      // LIMIT 5;
+
+      // Get top members by total points earned
+      const topMembers = await prisma.member.findMany({
+        take: 5,
+        orderBy: {
+          totalPointsEarned: 'desc',
+        },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          totalPointsEarned: true,
+          totalPoints: true, // Adding current points
+          joinDate: true,
+          tier: {
+            select: {
+              name: true,
+            },
+          },
+        },
+      });
+
+      // For each member, get their last transaction date
+      const membersWithLastTransaction = await Promise.all(
+        topMembers.map(async (member) => {
+          // Get the last transaction for this member
+          const lastTransaction = await prisma.transaction.findFirst({
+            where: {
+              memberId: member.id,
+            },
+            orderBy: {
+              createdAt: 'desc',
+            },
+            select: {
+              createdAt: true,
+            },
+          });
+
+          return {
+            ...member,
+            lastTransactionDate: lastTransaction?.createdAt || null,
+          };
+        })
+      );
+
+      console.log(`Returning ${membersWithLastTransaction.length} top members`);
+
+      return {
+        success: true,
+        data: membersWithLastTransaction,
+      };
+    } catch (error) {
+      console.error('Error getting top members:', error);
+      return {
+        success: false,
+        error: error,
+      };
+    }
+  }
+  static async getTopDiscounts(
+    dateFilter: ExtendedDateFilter,
+    limit = 5
+  ): Promise<TopDiscountResponse> {
+    // Default dates if no filter provided
+    const defaultStart = '2024-09-01';
+    const defaultEnd = '2024-09-02';
+
+    // Process dates - either use provided dates or defaults
+    const dates =
+      dateFilter?.filter?.from || dateFilter?.filter?.to
+        ? dateToCompare(
+            dateFilter.filter.from || defaultStart,
+            dateFilter.filter.to || defaultEnd
+          )
+        : dateToCompare(defaultStart, defaultEnd);
+
+    // Format all dates at once
+    const [startDate, endDate] = [
+      dates.current.startDate,
+      dates.current.endDate,
+    ].map((date) => format(date, 'yyyy-MM-dd'));
+    try {
+      // First get discounts used in transactions in the given period
+      const transactionDiscounts = await prisma.transaction.groupBy({
+        by: ['discountId'],
+        _count: {
+          id: true, // Count of transactions
+        },
+        _sum: {
+          discountAmount: true, // Total discount amount
+        },
+        where: {
+          discountId: {
+            not: null,
+          },
+          createdAt: {
+            gte: new Date(startDate),
+            lte: new Date(endDate),
+          },
+        },
+        orderBy: {
+          _count: {
+            id: 'desc',
+          },
+        },
+      });
+
+      // Get discounts used in transaction items in the given period
+      const transactionItemDiscounts = await prisma.transactionItem.groupBy({
+        by: ['discountId'],
+        _count: {
+          id: true, // Count of transaction items
+        },
+        _sum: {
+          discountAmount: true, // Total discount amount
+        },
+        where: {
+          discountId: {
+            not: null,
+          },
+          createdAt: {
+            gte: new Date(startDate),
+            lte: new Date(endDate),
+          },
+        },
+        orderBy: {
+          _count: {
+            id: 'desc',
+          },
+        },
+      });
+
+      // Create a map to combine discount usage counts
+      const discountMap = new Map();
+
+      // Process transaction discounts
+      for (const item of transactionDiscounts) {
+        if (item.discountId) {
+          discountMap.set(item.discountId, {
+            id: item.discountId,
+            transactionCount: item._count.id,
+            totalRevenueImpact: item._sum.discountAmount || 0,
+            itemCount: 0,
+            itemRevenueImpact: 0,
+          });
+        }
+      }
+
+      // Process transaction item discounts
+      for (const item of transactionItemDiscounts) {
+        if (item.discountId) {
+          const existing = discountMap.get(item.discountId);
+          if (existing) {
+            existing.itemCount = item._count.id;
+            existing.itemRevenueImpact = item._sum.discountAmount || 0;
+          } else {
+            discountMap.set(item.discountId, {
+              id: item.discountId,
+              transactionCount: 0,
+              totalRevenueImpact: 0,
+              itemCount: item._count.id,
+              itemRevenueImpact: item._sum.discountAmount || 0,
+            });
+          }
+        }
+      }
+
+      // Get all discount IDs to fetch full discount information
+      const discountIds = Array.from(discountMap.keys());
+
+      if (discountIds.length === 0) {
+        return {
+          success: true,
+          data: [],
+        };
+      }
+
+      // Fetch full discount details
+      const discounts = await prisma.discount.findMany({
+        where: {
+          id: {
+            in: discountIds,
+          },
+        },
+      }); // Combine all data
+      const topDiscounts = discounts
+        .map((discount) => {
+          const usageData = discountMap.get(discount.id);
+          // Calculate total revenue impact from transaction and item discounts
+          const totalRevenue =
+            (usageData?.totalRevenueImpact || 0) +
+            (usageData?.itemRevenueImpact || 0);
+
+          // Calculate percentage if maxUses is set
+          const usagePercent = discount.maxUses
+            ? Math.min(
+                100,
+                Math.round((discount.usedCount / discount.maxUses) * 100)
+              )
+            : null;
+
+          return {
+            id: discount.id,
+            name: discount.name,
+            code: discount.code,
+            type: discount.type,
+            value: discount.value,
+            startDate: discount.startDate,
+            endDate: discount.endDate,
+            isActive: discount.isActive,
+            transactionCount: usageData?.transactionCount || 0,
+            totalRevenueImpact: totalRevenue,
+            usageCount: discount.usedCount,
+            usagePercent: usagePercent,
+            maxUses: discount.maxUses,
+          };
+        })
+        .sort((a, b) => b.transactionCount - a.transactionCount)
+        .slice(0, limit);
+
+      return {
+        success: true,
+        data: topDiscounts,
+      };
+    } catch (error) {
+      console.error('Error getting top discounts:', error);
       return {
         success: false,
         error: error,
