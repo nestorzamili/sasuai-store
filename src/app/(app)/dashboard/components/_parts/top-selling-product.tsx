@@ -14,7 +14,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { getTopSellingProductsByQuantity } from '@/app/(app)/dashboard/actions';
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { DateFilter as FilterDateFilter } from '@/lib/types/filter';
@@ -164,7 +163,7 @@ export function TopSellingProduct({ filter }: TopSellingProductProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {products.slice(0, 5).map((product, index) => {
+              {products.slice(0, 5).map((product) => {
                 const quantity = product._sum.quantity || 0;
                 const price = product.batch?.product.price || 0;
                 const revenue = quantity * price;

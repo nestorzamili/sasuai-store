@@ -9,6 +9,9 @@ import {
   TopSellingByQuantityResponse,
   PaymentMethodResponse,
   CategoryResponse,
+  TopMemberResponse,
+  LowStockProductResponse,
+  TopDiscountResponse,
 } from '@/lib/types/dashboard';
 
 export async function metricPeformance(filter?: DateFilter): Promise<{
@@ -53,7 +56,7 @@ export async function salesStatistics(year: string): Promise<{
 }
 
 export async function getTopSellingProductsByQuantity(
-  filter: ExtendedDateFilter,
+  filter: ExtendedDateFilter
 ): Promise<{
   data?: TopSellingByQuantityResponse['data'];
   success: boolean;
@@ -111,6 +114,75 @@ export async function getTopCategories(filter: ExtendedDateFilter): Promise<{
     return {
       success: false,
       error: 'Failed to fetch top categories' + error,
+    };
+  }
+}
+
+export async function getTopMembers(filter: ExtendedDateFilter): Promise<{
+  data?: TopMemberResponse['data'];
+  success: boolean;
+  error?: string;
+}> {
+  try {
+    console.log('Action - getTopMembers with filter:', JSON.stringify(filter));
+    const response = await DashboardService.getTopMembers(filter);
+    console.log(
+      'Action - getTopMembers result:',
+      response.success,
+      response.data?.length || 0
+    );
+    return {
+      data: response.data,
+      success: response.success,
+    };
+  } catch (error) {
+    console.error('Error fetching top members:', error);
+    return {
+      success: false,
+      error: 'Failed to fetch top members' + error,
+    };
+  }
+}
+
+export async function getLowStockProducts(threshold = 10): Promise<{
+  data?: LowStockProductResponse['data'];
+  totalCount?: number;
+  success: boolean;
+  error?: string;
+}> {
+  try {
+    const response =
+      await ProductDashboardService.getLowStockProducts(threshold);
+    return {
+      data: response.data,
+      totalCount: response.totalCount,
+      success: response.success,
+    };
+  } catch (error) {
+    console.error('Error fetching low stock products:', error);
+    return {
+      success: false,
+      error: 'Failed to fetch low stock products' + error,
+    };
+  }
+}
+
+export async function getTopDiscounts(filter: ExtendedDateFilter): Promise<{
+  data?: TopDiscountResponse['data'];
+  success: boolean;
+  error?: string;
+}> {
+  try {
+    const response = await DashboardService.getTopDiscounts(filter);
+    return {
+      data: response.data,
+      success: response.success,
+    };
+  } catch (error) {
+    console.error('Error fetching top discounts:', error);
+    return {
+      success: false,
+      error: 'Failed to fetch top discounts' + error,
     };
   }
 }
