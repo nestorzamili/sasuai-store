@@ -516,7 +516,8 @@ export class DashboardService {
     }
   }
   static async getTopMembers(
-    dateFilter: ExtendedDateFilter
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    dateFilter: ExtendedDateFilter // This parameter will be used in future implementations
   ): Promise<TopMemberResponse> {
     try {
       // Implementation based on the provided SQL query:

@@ -1,12 +1,13 @@
 'use client';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+// Removed unused card components
+// import {
+//   Card,
+//   CardContent,
+//   CardDescription,
+//   CardHeader,
+//   CardTitle,
+// } from '@/components/ui/card';
 import { IconRefresh } from '@tabler/icons-react';
 import { useState, useMemo, lazy, useCallback, Suspense } from 'react';
 import { Download } from 'lucide-react';
