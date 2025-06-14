@@ -14,7 +14,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { getTopSellingProductsByQuantity } from '@/app/(app)/dashboard/actions';
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { DateFilter as FilterDateFilter } from '@/lib/types/filter';
@@ -114,7 +113,7 @@ export function TopSellingProduct({ filter }: TopSellingProductProps) {
   const { totalUnits, totalRevenue } = useMemo(() => {
     const units = products.reduce(
       (sum, product) => sum + (product._sum.quantity || 0),
-      0,
+      0
     );
     const revenue = products.reduce((sum, product) => {
       const quantity = product._sum.quantity || 0;
@@ -164,24 +163,21 @@ export function TopSellingProduct({ filter }: TopSellingProductProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {products.slice(0, 5).map((product, index) => {
+              {products.slice(0, 5).map((product) => {
                 const quantity = product._sum.quantity || 0;
                 const price = product.batch?.product.price || 0;
                 const revenue = quantity * price;
 
                 return (
                   <TableRow key={product.batchId}>
-                    <TableCell className="font-medium">
+                    <TableCell className="font-medium uppercase">
                       {product.batch?.product.name || 'Unknown Product'}
-                      {index < 3 && (
-                        <Badge className="ml-2 bg-green-500">↑</Badge>
-                      )}
                     </TableCell>
-                    <TableCell>
-                      {product.batch?.product.categoryId || 'Unknown'}
+                    <TableCell className="uppercase text-xs">
+                      {product.batch?.product.name || 'Unknown'}
                     </TableCell>
                     <TableCell className="text-right">{quantity}</TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right font-semibold">
                       {formatRupiah(revenue)}
                     </TableCell>
                   </TableRow>
