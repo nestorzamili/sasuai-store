@@ -1,12 +1,13 @@
 'use client';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+// Removed unused card components
+// import {
+//   Card,
+//   CardContent,
+//   CardDescription,
+//   CardHeader,
+//   CardTitle,
+// } from '@/components/ui/card';
 import { IconRefresh } from '@tabler/icons-react';
 import { useState, useMemo, lazy, useCallback, Suspense } from 'react';
 import { Download } from 'lucide-react';
@@ -19,42 +20,42 @@ import { DateRangePickerWithPresets } from '@/components/ui/date-range-picker-wi
 const SalesTrend = lazy(() =>
   import('./components/_parts/chart-sales-trend').then((mod) => ({
     default: mod.SalesTrend,
-  })),
+  }))
 );
 const PaymentMethod = lazy(() =>
   import('./components/_parts/chart-payment-method').then((mod) => ({
     default: mod.PaymentMethod,
-  })),
+  }))
 );
 const SalesCategory = lazy(() =>
   import('./components/_parts/chart-sales-category').then((mod) => ({
     default: mod.SalesCategory,
-  })),
+  }))
 );
 const TopSellingProduct = lazy(() =>
   import('./components/_parts/top-selling-product').then((mod) => ({
     default: mod.TopSellingProduct,
-  })),
+  }))
 );
 const TopDiscount = lazy(() =>
   import('./components/_parts/top-discount').then((mod) => ({
     default: mod.TopDiscount,
-  })),
+  }))
 );
 const TopMember = lazy(() =>
   import('./components/_parts/top-member').then((mod) => ({
     default: mod.TopMember,
-  })),
+  }))
 );
 const LowProductStock = lazy(() =>
   import('./components/_parts/low-product-stock').then((mod) => ({
     default: mod.LowProductStock,
-  })),
+  }))
 );
 const OverviewSales = lazy(() =>
   import('./components/overview-sales').then((mod) => ({
     default: mod.OverviewSales,
-  })),
+  }))
 );
 
 export interface MetricPerformance {
@@ -113,7 +114,7 @@ export default function Dashboard() {
         });
       }
     },
-    [],
+    []
   );
 
   // Memoize the filter object passed to components
@@ -126,7 +127,7 @@ export default function Dashboard() {
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     ),
-    [],
+    []
   );
 
   return (
@@ -198,28 +199,14 @@ export default function Dashboard() {
                 <Suspense fallback={LoadingFallback}>
                   <SalesCategory filter={memoizedFilter} />
                 </Suspense>
-                <section aria-label="Time Analysis" className="space-y-4">
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle>Peak Sales Time</CardTitle>
-                      <CardDescription>Most active time of day</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">11:00 WIB</div>
-                      <p className="text-sm text-muted-foreground">
-                        Highest transaction volume
-                      </p>
-                    </CardContent>
-                  </Card>
-                </section>
                 <Suspense fallback={LoadingFallback}>
                   <TopSellingProduct filter={memoizedFilter} />
-                </Suspense>
+                </Suspense>{' '}
                 <Suspense fallback={LoadingFallback}>
-                  <TopMember />
-                </Suspense>
+                  <TopMember filter={memoizedFilter} />
+                </Suspense>{' '}
                 <Suspense fallback={LoadingFallback}>
-                  <TopDiscount />
+                  <TopDiscount filter={memoizedFilter} />
                 </Suspense>
                 <Suspense fallback={LoadingFallback}>
                   <LowProductStock />

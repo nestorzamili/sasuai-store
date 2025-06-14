@@ -7,11 +7,12 @@ import {
   TopSellingByFrequencyResponse,
   ExtendedDateFilter,
   ProductFrequencyMap,
+  LowStockProductResponse,
 } from '@/lib/types/dashboard';
 
 export class ProductDashboardService {
   static async getProductDashboard(
-    filter: ExtendedDateFilter,
+    filter: ExtendedDateFilter
   ): Promise<ProductDashboardResponse> {
     try {
       const { startDate, endDate } = filter;
@@ -47,7 +48,7 @@ export class ProductDashboardService {
 
   static async getTopSellingProductsByQuantity(
     dateFilter?: ExtendedDateFilter,
-    limit = 10,
+    limit = 10
   ): Promise<TopSellingByQuantityResponse> {
     try {
       // Default dates if no filter provided
@@ -89,7 +90,7 @@ export class ProductDashboardService {
 
       // Fetch batch details with product information separately
       const batchIds = topProducts.map(
-        (item: { batchId: string }) => item.batchId,
+        (item: { batchId: string }) => item.batchId
       );
       const batchDetails = await prisma.productBatch.findMany({
         where: {
@@ -105,7 +106,7 @@ export class ProductDashboardService {
       // Merge the data
       const result = topProducts.map((product) => {
         const batchInfo = batchDetails.find(
-          (batch) => batch.id === product.batchId,
+          (batch) => batch.id === product.batchId
         );
         return {
           ...product,
@@ -127,7 +128,7 @@ export class ProductDashboardService {
 
   static async getTopSellingProductsByFrequency(
     filter: { startDate: string; endDate: string },
-    limit = 10,
+    limit = 10
   ): Promise<TopSellingByFrequencyResponse> {
     try {
       const { startDate, endDate } = filter;
@@ -217,6 +218,60 @@ export class ProductDashboardService {
       return {
         success: false,
         error: 'Failed to fetch top selling products by frequency',
+      };
+    }
+  }
+  static async getLowStockProducts(
+    threshold = 10,
+    limit = 5
+  ): Promise<LowStockProductResponse> {
+    try {
+      // Create a filter for low stock batches
+      const lowStockFilter = {
+        remainingQuantity: {
+          lte: threshold,
+        },
+        // Only include active products
+        product: {
+          isActive: true,
+        },
+      };
+
+      // First, count the total number of low stock batches
+      const totalLowStockCount = await prisma.productBatch.count({
+        where: lowStockFilter,
+      });
+
+      // Then, get the top 5 lowest stock batches with product details
+      const lowStockBatches = await prisma.productBatch.findMany({
+        where: lowStockFilter,
+        orderBy: {
+          remainingQuantity: 'asc',
+        },
+        take: limit,
+        include: {
+          product: {
+            include: {
+              category: {
+                select: {
+                  name: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      return {
+        success: true,
+        data: lowStockBatches,
+        totalCount: totalLowStockCount,
+      };
+    } catch (error) {
+      console.error('Error fetching low stock products:', error);
+      return {
+        success: false,
+        error: 'Failed to fetch low stock products',
       };
     }
   }

@@ -240,6 +240,74 @@ export interface ProductFrequencyMap {
   product: Product;
 }
 
+// Member types
+export interface TopMemberData {
+  id: string;
+  name: string;
+  email: string | null;
+  totalPointsEarned: number;
+  totalPoints: number; // Current points balance
+  lastTransactionDate: Date | null; // Date of the last transaction
+  joinDate: Date;
+  tier?: {
+    name: string;
+  } | null;
+}
+
+export interface TopMemberResponse {
+  success: boolean;
+  data?: TopMemberData[];
+  error?: unknown;
+}
+
+// Low stock product types
+export interface LowStockBatchData {
+  id: string;
+  batchCode: string;
+  expiryDate: Date;
+  remainingQuantity: number;
+  initialQuantity: number;
+  product: {
+    id: string;
+    name: string;
+    category: {
+      name: string;
+    };
+    currentStock: number;
+    skuCode?: string | null;
+  };
+}
+
+export interface LowStockProductResponse {
+  success: boolean;
+  data?: LowStockBatchData[];
+  totalCount?: number; // Total count of all low stock products
+  error?: unknown;
+}
+
+// Top discount types
+export interface TopDiscountData {
+  id: string;
+  name: string;
+  code: string | null;
+  type: string;
+  value: number;
+  startDate: Date;
+  endDate: Date;
+  isActive: boolean;
+  transactionCount: number;
+  totalRevenueImpact: number;
+  usageCount: number;
+  usagePercent?: number | null; // Calculated percentage of max usage
+  maxUses?: number | null;
+}
+
+export interface TopDiscountResponse {
+  success: boolean;
+  data?: TopDiscountData[];
+  error?: unknown;
+}
+
 // Utility types for date processing
 export interface DateRange {
   startDate: Date;
