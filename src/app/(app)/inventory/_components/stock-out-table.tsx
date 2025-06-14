@@ -94,13 +94,13 @@ export const StockOutTable = memo(function StockOutTable({
         enableSorting: true,
       },
     ],
-    [t],
+    [t]
   );
 
   // Stabilize fetchStockOutData with abort controller
   const fetchStockOutData = useCallback(
     async (
-      options: TableFetchOptions,
+      options: TableFetchOptions
     ): Promise<TableFetchResult<UnifiedStockOutComplete[]>> => {
       try {
         if (!isActive) {
@@ -143,7 +143,7 @@ export const StockOutTable = memo(function StockOutTable({
         return { data: [], totalRows: 0 };
       }
     },
-    [isActive],
+    [isActive]
   );
 
   const {
@@ -183,21 +183,21 @@ export const StockOutTable = memo(function StockOutTable({
       setPage(newPagination.pageIndex);
       setLimit(newPagination.pageSize);
     },
-    [setPage, setLimit],
+    [setPage, setLimit]
   );
 
   const handleSortingChange = useCallback(
     (newSorting: { id: string; desc: boolean }[]) => {
       setSortBy(newSorting);
     },
-    [setSortBy],
+    [setSortBy]
   );
 
   const handleSearchChange = useCallback(
     (search: string) => {
       setSearch(search);
     },
-    [setSearch],
+    [setSearch]
   );
 
   return (
