@@ -6,6 +6,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { useTranslations } from 'next-intl';
 import {
   Card,
   CardContent,
@@ -28,6 +29,7 @@ interface TopMemberProps {
 }
 
 export function TopMember({ filter }: TopMemberProps) {
+  const t = useTranslations('dashboard.charts');
   const [members, setMembers] = useState<TopMemberData[]>([]);
   const [loading, setLoading] = useState(true);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -106,8 +108,10 @@ export function TopMember({ filter }: TopMemberProps) {
   return (
     <Card className="h-full">
       <CardHeader className="pb-3">
-        <CardTitle className="text-base font-medium">Top Members</CardTitle>
-        <CardDescription>Members with highest points earned</CardDescription>
+        <CardTitle className="text-base font-medium">
+          {t('topMember')}
+        </CardTitle>
+        <CardDescription>{t('topMemberDescription')}</CardDescription>
       </CardHeader>
       <CardContent className="px-2 pt-0 pb-0">
         {loading ? (
@@ -116,16 +120,16 @@ export function TopMember({ filter }: TopMemberProps) {
           </div>
         ) : members.length === 0 ? (
           <UnavailableData
-            title="No Member Data"
-            description="No member data available for the selected date range."
+            title={t('noMemberData')}
+            description={t('noMemberDescription')}
           />
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Member</TableHead>
-                <TableHead>Last Transaction</TableHead>
-                <TableHead className="text-right">Points</TableHead>
+                <TableHead>{t('member')}</TableHead>
+                <TableHead>{t('lastTransaction')}</TableHead>
+                <TableHead className="text-right">{t('points')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

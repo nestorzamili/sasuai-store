@@ -7,6 +7,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { useTranslations } from 'next-intl';
 import {
   Card,
   CardContent,
@@ -42,6 +43,7 @@ interface ProductData {
 }
 
 export function TopSellingProduct({ filter }: TopSellingProductProps) {
+  const t = useTranslations('dashboard.charts');
   const [products, setProducts] = useState<ProductData[]>([]);
   const [loading, setLoading] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -136,11 +138,9 @@ export function TopSellingProduct({ filter }: TopSellingProductProps) {
     <Card className="h-full">
       <CardHeader className="pb-3">
         <CardTitle className="text-base font-medium">
-          Top Selling Products
+          {t('topSellingProduct')}
         </CardTitle>
-        <CardDescription>
-          Products with highest sales volume this period
-        </CardDescription>
+        <CardDescription>{t('topSellingProductDescription')}</CardDescription>
       </CardHeader>
       <CardContent className="px-2 pt-0 pb-0">
         {loading ? (
@@ -149,17 +149,17 @@ export function TopSellingProduct({ filter }: TopSellingProductProps) {
           </div>
         ) : products.length === 0 ? (
           <UnavailableData
-            title="No Product Data"
-            description="No product sales data available for the selected period."
+            title={t('noProductData')}
+            description={t('noProductDescription')}
           />
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Product</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead className="text-right">Units Sold</TableHead>
-                <TableHead className="text-right">Revenue</TableHead>
+                <TableHead>{t('product')}</TableHead>
+                <TableHead>{t('category')}</TableHead>
+                <TableHead className="text-right">{t('unitsSold')}</TableHead>
+                <TableHead className="text-right">{t('revenue')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -186,7 +186,7 @@ export function TopSellingProduct({ filter }: TopSellingProductProps) {
             </TableBody>
             <TableFooter>
               <TableRow>
-                <TableCell colSpan={2}>Total</TableCell>
+                <TableCell colSpan={2}>{t('total')}</TableCell>
                 <TableCell className="text-right">{totalUnits}</TableCell>
                 <TableCell className="text-right">
                   {formatRupiah(totalRevenue)}

@@ -21,27 +21,35 @@ export default getRequestConfig(async () => {
     ...(await import(`./en/reward.json`)).default,
     ...(await import(`./en/user.json`)).default,
     ...(await import(`./en/auth.json`)).default,
-    ...(await import(`./en/sidebar.json`)).default
+    ...(await import(`./en/sidebar.json`)).default,
+    ...(await import(`./en/dashboard.json`)).default,
   };
 
   // Override with locale-specific translations if not English
   if (locale !== 'en') {
     try {
       const localeCommon = (await import(`./${locale}/common.json`)).default;
-      const localeDiscount = (await import(`./${locale}/discount.json`)).default;
-      const localeInventory = (await import(`./${locale}/inventory.json`)).default;
+      const localeDiscount = (await import(`./${locale}/discount.json`))
+        .default;
+      const localeInventory = (await import(`./${locale}/inventory.json`))
+        .default;
       const localeMember = (await import(`./${locale}/member.json`)).default;
       const localeProduct = (await import(`./${locale}/product.json`)).default;
       const localeBrand = (await import(`./${locale}/brand.json`)).default;
-      const localeCategory = (await import(`./${locale}/category.json`)).default;
+      const localeCategory = (await import(`./${locale}/category.json`))
+        .default;
       const localeUnit = (await import(`./${locale}/unit.json`)).default;
       const localeProfile = (await import(`./${locale}/profile.json`)).default;
-      const localeSupplier = (await import(`./${locale}/supplier.json`)).default;
-      const localeTransaction = (await import(`./${locale}/transaction.json`)).default;
+      const localeSupplier = (await import(`./${locale}/supplier.json`))
+        .default;
+      const localeTransaction = (await import(`./${locale}/transaction.json`))
+        .default;
       const localeReward = (await import(`./${locale}/reward.json`)).default;
       const localeUser = (await import(`./${locale}/user.json`)).default;
       const localeAuth = (await import(`./${locale}/auth.json`)).default;
       const localeSidebar = (await import(`./${locale}/sidebar.json`)).default;
+      const localeDashboard = (await import(`./${locale}/dashboard.json`))
+        .default;
 
       Object.assign(
         messages,
@@ -59,7 +67,8 @@ export default getRequestConfig(async () => {
         localeReward,
         localeUser,
         localeAuth,
-        localeSidebar
+        localeSidebar,
+        localeDashboard
       );
     } catch (error) {
       console.error(`Error loading translations for locale: ${locale}`, error);
