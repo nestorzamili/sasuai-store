@@ -6,6 +6,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { useTranslations } from 'next-intl';
 import {
   Card,
   CardContent,
@@ -23,6 +24,7 @@ import { LoaderCardContent } from '@/components/loader-card-content';
 import { UnavailableData } from '@/components/unavailable-data';
 
 export function LowProductStock() {
+  const t = useTranslations('dashboard.charts');
   const [products, setProducts] = useState<LowStockBatchData[]>([]);
   const [totalCount, setTotalCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
@@ -79,7 +81,7 @@ export function LowProductStock() {
         <div className="flex items-center space-x-2">
           <AlertTriangle className="h-4 w-4 text-amber-500" />
           <CardTitle className="text-base font-medium flex items-center">
-            Low Stock Alert
+            {t('lowProductStock')}
             {totalCount > 0 && (
               <Badge
                 className={`ml-2 ${
@@ -88,15 +90,15 @@ export function LowProductStock() {
                     : 'bg-amber-100 text-amber-800'
                 }`}
               >
-                {totalCount} items
+                {totalCount} {t('items')}
               </Badge>
             )}
           </CardTitle>
         </div>
         <CardDescription>
-          Products that need reordering soon
+          {t('lowStockDescription')}
           {totalCount > products.length &&
-            ` (showing top ${products.length} of ${totalCount})`}
+            ` (${t('showing')} ${products.length} ${t('of')} ${totalCount})`}
         </CardDescription>
       </CardHeader>
       <CardContent className="px-2 pt-0 pb-0">

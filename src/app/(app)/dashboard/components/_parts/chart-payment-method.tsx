@@ -1,6 +1,7 @@
 'use client';
 
 import { LabelList, Pie, PieChart } from 'recharts';
+import { useTranslations } from 'next-intl';
 import { getTopPaymentMethod } from '../../actions';
 import { UnavailableData } from '@/components/unavailable-data';
 import { LoaderCardContent } from '@/components/loader-card-content';
@@ -50,6 +51,7 @@ interface PaymentMethodApiItem {
 }
 
 export function PaymentMethod({ filter }: PaymentMethodProps) {
+  const t = useTranslations('dashboard.charts');
   const [chart, setChart] = useState<PaymentMethodData[]>([]);
   const [loading, setLoading] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -101,7 +103,7 @@ export function PaymentMethod({ filter }: PaymentMethodProps) {
             total: item.total,
             fill:
               item.type === 'cash' ? 'var(--color-cash)' : 'var(--color-debit)',
-          }),
+          })
         );
         setChart(formattedData);
       } else {
@@ -130,7 +132,7 @@ export function PaymentMethod({ filter }: PaymentMethodProps) {
   return (
     <Card className="flex flex-col">
       <CardHeader className="items-center pb-0">
-        <CardTitle>Payment Method</CardTitle>
+        <CardTitle>{t('paymentMethod')}</CardTitle>
         <CardDescription>Showing of payment method</CardDescription>
       </CardHeader>
       <CardContent className="flex-1 pb-0">
@@ -142,8 +144,8 @@ export function PaymentMethod({ filter }: PaymentMethodProps) {
           <>
             {chart.length === 0 ? (
               <UnavailableData
-                title="No Payment Method Data"
-                description="No payment method data available for the selected date range."
+                title={t('noPaymentMethodData')}
+                description={t('noPaymentMethodDescription')}
               />
             ) : (
               <ChartContainer

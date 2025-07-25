@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useTranslations } from 'next-intl';
 import {
   IconCash,
   IconCoin,
@@ -19,6 +20,9 @@ export function OverviewSales({
   isLoading,
   metricPerformance,
 }: OverviewSalesProps) {
+  const t = useTranslations('dashboard.metrics');
+  const tCommon = useTranslations('dashboard');
+
   const {
     totalSales,
     totalTransaction,
@@ -33,7 +37,9 @@ export function OverviewSales({
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-5">
         <Card className="hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Sales</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              {t('totalSales')}
+            </CardTitle>
             <IconCash className="h-5 w-5 text-blue-500" />
           </CardHeader>
           <CardContent>
@@ -48,7 +54,8 @@ export function OverviewSales({
                   {formatRupiah(totalSales.value)}
                 </div>
                 <div className="text-xs text-muted-foreground flex w-full items-center gap-2 mt-4">
-                  <ValuesMetric value={totalSales.growth} /> FROM LAST PERIOD
+                  <ValuesMetric value={totalSales.growth} />{' '}
+                  {tCommon('fromLastPeriod')}
                 </div>
               </>
             )}
@@ -58,7 +65,7 @@ export function OverviewSales({
         <Card className=" shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Total Transaction
+              {t('totalTransaction')}
             </CardTitle>
             <IconReceipt2 className="h-5 w-5 text-green-500" />
           </CardHeader>
@@ -74,8 +81,8 @@ export function OverviewSales({
                   {totalTransaction.value.toLocaleString()}
                 </div>
                 <div className="text-xs text-muted-foreground flex w-full items-center gap-2 mt-4">
-                  <ValuesMetric value={totalTransaction.growth} /> FROM LAST
-                  PERIOD
+                  <ValuesMetric value={totalTransaction.growth} />{' '}
+                  {tCommon('fromLastPeriod')}
                 </div>
               </>
             )}
@@ -84,7 +91,9 @@ export function OverviewSales({
 
         <Card className="shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg. Sales</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              {t('averageTransaction')}
+            </CardTitle>
             <IconScale className="h-5 w-5 text-purple-500" />
           </CardHeader>
           <CardContent>
@@ -99,8 +108,8 @@ export function OverviewSales({
                   {formatRupiah(averageTransaction.value)}
                 </div>
                 <div className="text-xs text-muted-foreground flex w-full items-center gap-2 mt-4">
-                  <ValuesMetric value={averageTransaction.growth} /> FROM LAST
-                  PERIOD
+                  <ValuesMetric value={averageTransaction.growth} />{' '}
+                  {tCommon('fromLastPeriod')}
                 </div>
               </>
             )}
@@ -109,7 +118,9 @@ export function OverviewSales({
 
         <Card className="shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Cost Product</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              {t('costProduct')}
+            </CardTitle>
             <IconCoin className="h-5 w-5 text-red-500" />
           </CardHeader>
           <CardContent>
@@ -124,7 +135,8 @@ export function OverviewSales({
                   {formatRupiah(costProduct.value)}
                 </div>
                 <div className="text-xs text-muted-foreground flex w-full items-center gap-2 mt-4">
-                  <ValuesMetric value={costProduct.growth} /> FROM LAST PERIOD
+                  <ValuesMetric value={costProduct.growth} />{' '}
+                  {tCommon('fromLastPeriod')}
                 </div>
               </>
             )}
@@ -133,7 +145,7 @@ export function OverviewSales({
 
         <Card className="shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Margin</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('margin')}</CardTitle>
             <IconPercentage className="h-5 w-5 text-green-500" />
           </CardHeader>
           <CardContent>
@@ -148,7 +160,8 @@ export function OverviewSales({
                   {formatRupiah(margin.value)}
                 </div>
                 <div className="text-xs text-muted-foreground flex w-full items-center gap-2 mt-4">
-                  <ValuesMetric value={margin.growth} /> FROM LAST PERIOD
+                  <ValuesMetric value={margin.growth} />{' '}
+                  {tCommon('fromLastPeriod')}
                 </div>
               </>
             )}
