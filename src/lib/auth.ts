@@ -1,6 +1,6 @@
 import { betterAuth } from 'better-auth';
 import { nextCookies } from 'better-auth/next-js';
-import { admin, openAPI, username, bearer } from 'better-auth/plugins';
+import { admin, username } from 'better-auth/plugins';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
 import prisma from './prisma';
 import { sendEmail } from '@/utils/resend';
@@ -17,8 +17,6 @@ export const auth = betterAuth({
 
   plugins: [
     admin(),
-    openAPI(),
-    bearer(),
     username({
       minUsernameLength: 5,
       maxUsernameLength: 20,
@@ -92,7 +90,12 @@ export const auth = betterAuth({
 
   advanced: {
     ipAddress: {
-      ipAddressHeaders: ['x-client-ip', 'x-forwarded-for'],
+      ipAddressHeaders: [
+        'cf-connecting-ip',
+        'x-forwarded-for',
+        'x-real-ip',
+        'x-client-ip',
+      ],
       disableIpTracking: false,
     },
   },

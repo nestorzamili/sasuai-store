@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -37,14 +37,17 @@ export default function EntitySelector<T extends Entity>({
   const [selectedItems, setSelectedItems] = useState<T[]>([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(false);
-  const [initialLoad, setInitialLoad] = useState(true);
-  const [fetchedSelectedIds, setFetchedSelectedIds] = useState<string[]>([]);
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const initialLoadRef = useRef(true);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Default placeholder and noSelectionText with translations
   const defaultPlaceholder = placeholder || t('searchProducts');
   const defaultNoSelectionText = noSelectionText || t('noItemsSelected');
+
+  // Memoize selected item lookup for performance
+  const selectedItemsMap = useMemo(() => {
+    return new Set(selectedIds);
+  }, [selectedIds]);
 
   // Default columns if none provided
   const tableColumns = useMemo(
@@ -52,157 +55,155 @@ export default function EntitySelector<T extends Entity>({
     [columns, t],
   );
 
-  // Helper function to fetch missing items by ID
-  const fetchMissingItems = async (missingIds: string[]): Promise<T[]> => {
-    if (missingIds.length === 0) return [];
-
-    const fetchPromises = missingIds.map(async (id) => {
-      // Use fetchItemById if available, otherwise fall back to fetchItems
-      const fetchFn = fetchItemById || fetchItems;
-      const singleItemResponse = await fetchFn(id);
-      if (
-        singleItemResponse.success &&
-        singleItemResponse.data &&
-        singleItemResponse.data.length > 0
-      ) {
-        return singleItemResponse.data;
-      }
-      return [];
-    });
-
-    const results = await Promise.all(fetchPromises);
-    return results.flat();
-  };
-
-  // Compare selected IDs to see if they've changed
-  const selectedIdsChanged = useMemo(() => {
-    if (selectedIds.length !== fetchedSelectedIds.length) return true;
-    return selectedIds.some((id) => !fetchedSelectedIds.includes(id));
-  }, [selectedIds, fetchedSelectedIds]);
-
-  // Load items on initial render or when selected IDs change significantly
-  useEffect(() => {
-    if (!initialLoadRef.current && !selectedIdsChanged) {
-      return; // Skip if not initial load and selected IDs haven't changed
-    }
-
-    const fetchInitialItems = async () => {
+  // Perform search function
+  const performSearch = useCallback(
+    async (searchTerm: string) => {
       setLoading(true);
       try {
-        const response = await fetchItems('');
+        const response = await fetchItems(searchTerm);
         if (response.success && response.data) {
           setItems(response.data);
-
-          // If we have selected IDs, fetch their details
-          if (selectedIds.length > 0) {
-            const selectedItemsFromResponse = response.data.filter((item) =>
-              selectedIds.includes(item.id),
-            );
-
-            // Only fetch missing items if necessary
-            if (selectedItemsFromResponse.length !== selectedIds.length) {
-              const foundIds = selectedItemsFromResponse.map((item) => item.id);
-              const missingIds = selectedIds.filter(
-                (id) => !foundIds.includes(id),
-              );
-
-              if (missingIds.length > 0) {
-                const missingItems = await fetchMissingItems(missingIds);
-                setSelectedItems([
-                  ...selectedItemsFromResponse,
-                  ...missingItems,
-                ]);
-              } else {
-                setSelectedItems(selectedItemsFromResponse);
-              }
-            } else {
-              setSelectedItems(selectedItemsFromResponse);
-            }
-          } else {
-            setSelectedItems([]);
-          }
-
-          // Store fetched IDs to avoid unnecessary refetches
-          setFetchedSelectedIds(selectedIds);
+        } else {
+          setItems([]);
         }
       } catch (error) {
-        console.error('Error fetching items:', error);
+        console.error('Error searching items:', error);
+        setItems([]);
       } finally {
         setLoading(false);
-        setInitialLoad(false);
-        initialLoadRef.current = false;
+      }
+    },
+    [fetchItems],
+  );
+
+  // Handle search input with debouncing
+  const handleSearchInputChange = useCallback(
+    (value: string) => {
+      setSearch(value);
+
+      // Clear previous timeout
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+
+      // Set new timeout
+      searchTimeoutRef.current = setTimeout(() => {
+        performSearch(value);
+      }, 300);
+    },
+    [performSearch],
+  );
+
+  // Clean up timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Fetch selected items when selectedIds change
+  useEffect(() => {
+    const fetchSelectedItems = async () => {
+      if (selectedIds.length === 0) {
+        setSelectedItems([]);
+        return;
+      }
+
+      // Skip fetch if we already have all selected items
+      const currentItemIds = selectedItems.map((item) => item.id);
+      const hasAllItems =
+        selectedIds.every((id) => currentItemIds.includes(id)) &&
+        currentItemIds.every((id) => selectedIds.includes(id));
+
+      if (hasAllItems && selectedItems.length === selectedIds.length) {
+        return;
+      }
+
+      try {
+        // Try to find all selected items using individual fetch
+        const fetchPromises = selectedIds.map(async (id) => {
+          // Use fetchItemById if available, otherwise use fetchItems with ID
+          if (fetchItemById) {
+            const response = await fetchItemById(id);
+            return response.success && response.data && response.data.length > 0
+              ? response.data[0]
+              : null;
+          } else {
+            // Fallback: search for the specific ID
+            const response = await fetchItems(id);
+            if (response.success && response.data) {
+              return response.data.find((item) => item.id === id) || null;
+            }
+            return null;
+          }
+        });
+
+        const results = await Promise.all(fetchPromises);
+        const validItems = results.filter((item) => item !== null) as T[];
+        setSelectedItems(validItems);
+      } catch (error) {
+        console.error('Error fetching selected items:', error);
+        setSelectedItems([]);
       }
     };
 
-    fetchInitialItems();
-  }, [fetchItems, selectedIds, selectedIdsChanged]);
-
-  // Handle search input change
-  const handleSearchChange = async (value: string) => {
-    setSearch(value);
-    setLoading(true);
-
-    try {
-      const response = await fetchItems(value);
-      if (response.success && response.data) {
-        setItems(response.data);
-      } else {
-        setItems([]);
-      }
-    } catch (error) {
-      console.error('Error searching items:', error);
-      setItems([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+    fetchSelectedItems();
+  }, [selectedIds, fetchItems, fetchItemById]);
 
   // Toggle item selection
-  const toggleItem = (item: T) => {
-    const isSelected = selectedIds.includes(item.id);
-    let newSelectedIds: string[];
-    let newSelectedItems: T[];
+  const toggleItem = useCallback(
+    (item: T) => {
+      const isSelected = selectedItemsMap.has(item.id);
+      let newSelectedIds: string[];
+      let newSelectedItems: T[];
 
-    if (isSelected) {
-      newSelectedIds = selectedIds.filter((id) => id !== item.id);
-      newSelectedItems = selectedItems.filter((i) => i.id !== item.id);
-    } else {
-      newSelectedIds = [...selectedIds, item.id];
-      newSelectedItems = [...selectedItems, item];
-    }
+      if (isSelected) {
+        newSelectedIds = selectedIds.filter((id) => id !== item.id);
+        newSelectedItems = selectedItems.filter((i) => i.id !== item.id);
+      } else {
+        newSelectedIds = [...selectedIds, item.id];
+        newSelectedItems = [...selectedItems, item];
+      }
 
-    setSelectedItems(newSelectedItems);
-    onChange(newSelectedIds);
-  };
+      setSelectedItems(newSelectedItems);
+      onChange(newSelectedIds);
+    },
+    [selectedIds, selectedItems, selectedItemsMap, onChange],
+  );
 
   // Remove a selected item
-  const removeItem = (id: string) => {
-    const newSelectedIds = selectedIds.filter(
-      (selectedId) => selectedId !== id,
-    );
-    const newSelectedItems = selectedItems.filter((i) => i.id !== id);
-    setSelectedItems(newSelectedItems);
-    onChange(newSelectedIds);
-  };
+  const removeItem = useCallback(
+    (id: string) => {
+      const newSelectedIds = selectedIds.filter(
+        (selectedId) => selectedId !== id,
+      );
+      const newSelectedItems = selectedItems.filter((i) => i.id !== id);
+      setSelectedItems(newSelectedItems);
+      onChange(newSelectedIds);
+    },
+    [selectedIds, selectedItems, onChange],
+  );
 
-  // When popover opens, focus the search input
+  // Clear all selected items
+  const clearSelection = useCallback(() => {
+    setSelectedItems([]);
+    onChange([]);
+  }, [onChange]);
+
+  // When popover opens, focus the search input and reset search
   useEffect(() => {
     if (open && searchInputRef.current) {
       setTimeout(() => {
         searchInputRef.current?.focus();
       }, 100);
+
+      // Reset search when popover opens to ensure clean state
+      setSearch('');
+      setItems([]);
     }
   }, [open]);
-
-  // If search value changes, do the search
-  useEffect(() => {
-    if (search !== '') {
-      const timer = setTimeout(() => {
-        handleSearchChange(search);
-      }, 300);
-      return () => clearTimeout(timer);
-    }
-  }, [search]);
 
   return (
     <div className="space-y-4">
@@ -214,9 +215,9 @@ export default function EntitySelector<T extends Entity>({
               role="combobox"
               aria-expanded={open}
               className="justify-between min-h-10"
-              disabled={loading && initialLoad}
+              disabled={loading}
             >
-              {loading && initialLoad ? (
+              {loading ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (
                 <Search className="mr-2 h-4 w-4" />
@@ -226,11 +227,11 @@ export default function EntitySelector<T extends Entity>({
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-full min-w-[400px] p-0" align="start">
-            <Command>
+            <Command shouldFilter={false}>
               <CommandInput
                 placeholder={defaultPlaceholder}
                 value={search}
-                onValueChange={handleSearchChange}
+                onValueChange={handleSearchInputChange}
                 ref={searchInputRef}
               />
               <CommandList>
@@ -241,7 +242,7 @@ export default function EntitySelector<T extends Entity>({
                   {items.map((item) => (
                     <CommandItem
                       key={item.id}
-                      value={item.id}
+                      value={item.name}
                       onSelect={() => {
                         toggleItem(item);
                       }}
@@ -257,7 +258,7 @@ export default function EntitySelector<T extends Entity>({
                           )}
                         </div>
                         <Checkbox
-                          checked={selectedIds.includes(item.id)}
+                          checked={selectedItemsMap.has(item.id)}
                           onCheckedChange={() => toggleItem(item)}
                         />
                       </div>
@@ -283,10 +284,7 @@ export default function EntitySelector<T extends Entity>({
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => {
-              setSelectedItems([]);
-              onChange([]);
-            }}
+            onClick={clearSelection}
             title={t('clearSelection')}
           >
             <X className="h-4 w-4" />

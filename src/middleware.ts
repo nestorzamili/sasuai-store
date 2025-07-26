@@ -7,7 +7,10 @@ type Session = typeof auth.$Infer.Session;
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  if (pathname.startsWith('/api/auth/verify-email')) {
+  if (
+    pathname.startsWith('/api/auth/verify-email') ||
+    pathname.startsWith('/api/health')
+  ) {
     return NextResponse.next();
   }
 
