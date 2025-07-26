@@ -21,6 +21,7 @@ export default function MemberSelector({
   ): Promise<{ success: boolean; data?: MemberForSelection[] }> => {
     try {
       const response = await getMembersForSelection(search);
+
       if (response.success && response.members) {
         // Transform the response to match our interface
         const transformedMembers: MemberForSelection[] = response.members.map(
@@ -37,6 +38,7 @@ export default function MemberSelector({
           data: transformedMembers,
         };
       }
+
       return {
         success: false,
         data: [],
