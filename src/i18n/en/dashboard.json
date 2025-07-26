@@ -1,0 +1,58 @@
+{
+  "dashboard": {
+    "title": "Sales Dashboard",
+    "subtitle": "Real-time performance insights for your business",
+    "current": "Current",
+    "performanceMetrics": "Performance Metrics",
+    "refresh": "Refresh",
+    "export": "Export",
+    "loading": "Loading...",
+    "fromLastPeriod": "FROM LAST PERIOD",
+    "sections": {
+      "salesTrendAnalysis": "Sales Trend Analysis",
+      "productsAndCategories": "Products and Categories"
+    },
+    "metrics": {
+      "totalSales": "Total Sales",
+      "totalTransaction": "Total Transactions",
+      "averageTransaction": "Average Transaction",
+      "costProduct": "Product Cost",
+      "productOut": "Products Sold",
+      "margin": "Profit Margin"
+    },
+    "charts": {
+      "paymentMethod": "Payment Methods",
+      "salesCategory": "Sales by Category",
+      "salesCategoryDescription": "Top categories by transaction count",
+      "topSellingProduct": "Top Selling Products",
+      "topSellingProductDescription": "Products with highest sales volume this period",
+      "topMember": "Top Members",
+      "topMemberDescription": "Members with highest points earned",
+      "topDiscount": "Top Discounts",
+      "topDiscountDescription": "Most used discount codes and their performance",
+      "lowProductStock": "Low Stock Alert",
+      "lowStockDescription": "Products that need reordering soon",
+      "salesTrend": "Sales Trend",
+      "salesTrendDescription": "Showing of sales summary",
+      "noPaymentMethodData": "No Payment Method Data",
+      "noPaymentMethodDescription": "No payment method data available for the selected date range.",
+      "noCategoryData": "No Category Data",
+      "noCategoryDescription": "No category data available for the selected date range.",
+      "noProductData": "No Product Data",
+      "noProductDescription": "No product sales data available for the selected period.",
+      "noMemberData": "No Member Data",
+      "noMemberDescription": "No member data available for the selected date range.",
+      "product": "Product",
+      "category": "Category",
+      "unitsSold": "Units Sold",
+      "revenue": "Revenue",
+      "total": "Total",
+      "member": "Member",
+      "lastTransaction": "Last Transaction",
+      "points": "Points",
+      "items": "items",
+      "showing": "showing top",
+      "of": "of"
+    }
+  }
+}

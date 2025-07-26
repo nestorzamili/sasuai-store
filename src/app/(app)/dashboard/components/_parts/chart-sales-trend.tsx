@@ -8,6 +8,7 @@ import {
   Tooltip,
   XAxis,
 } from 'recharts';
+import { useTranslations } from 'next-intl';
 import {
   Select,
   SelectContent,
@@ -121,6 +122,7 @@ const ChartContainer: React.FC<{
 };
 
 export function SalesTrend() {
+  const t = useTranslations('dashboard.charts');
   const [isLoading, setIsLoading] = useState(false);
   const [year, setYear] = useState('2025');
   const [chartDataUpdated, setChartDataUpdated] = useState(chartData);
@@ -170,8 +172,8 @@ export function SalesTrend() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Sales Overview</CardTitle>
-        <CardDescription>Showing of sales summary</CardDescription>
+        <CardTitle>{t('salesTrend')}</CardTitle>
+        <CardDescription>{t('salesTrendDescription')}</CardDescription>
         <div className="flex justify-end">
           <Select disabled={isLoading} value={year} onValueChange={setYear}>
             <SelectTrigger className="w-[180px]">
