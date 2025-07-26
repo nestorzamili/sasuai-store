@@ -578,12 +578,13 @@ export class DiscountService {
         take: 10,
         orderBy: { name: 'asc' },
         where: {
-          ...(search && {
-            OR: [
-              { name: { contains: search, mode: 'insensitive' } },
-              { id: { contains: search, mode: 'insensitive' } },
-            ],
-          }),
+          ...(search &&
+            search.trim().length > 0 && {
+              OR: [
+                { name: { contains: search.trim(), mode: 'insensitive' } },
+                { id: { contains: search.trim(), mode: 'insensitive' } },
+              ],
+            }),
         },
       });
 
@@ -615,14 +616,15 @@ export class DiscountService {
         take: 10,
         orderBy: { name: 'asc' },
         where: {
-          ...(search && {
-            OR: [
-              { name: { contains: search, mode: 'insensitive' } },
-              { id: { contains: search, mode: 'insensitive' } },
-              { cardId: { contains: search, mode: 'insensitive' } },
-              { email: { contains: search, mode: 'insensitive' } },
-            ],
-          }),
+          ...(search &&
+            search.trim().length > 0 && {
+              OR: [
+                { name: { contains: search.trim(), mode: 'insensitive' } },
+                { id: { contains: search.trim(), mode: 'insensitive' } },
+                { cardId: { contains: search.trim(), mode: 'insensitive' } },
+                { email: { contains: search.trim(), mode: 'insensitive' } },
+              ],
+            }),
         },
       });
 

@@ -12,7 +12,7 @@ import {
 } from '../../schema';
 import { DiscountType, DiscountApplyTo } from '@/lib/types/discount';
 import { getDiscount, updateDiscount } from '../../action';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { Separator } from '@/components/ui/separator';
@@ -50,20 +50,23 @@ export default function EditDiscountPage() {
   const [initialLoading, setInitialLoading] = useState(true);
   const router = useRouter();
 
-  // Create translated schema
-  const translatedSchema = createTranslatedDiscountSchema((key: string) =>
-    t(key),
-  );
+  // Memoize default values to prevent form recreation
+  const memoizedDefaultValues = useMemo(() => defaultValues, []);
+
+  // Create translated schema - memoized for performance
+  const translatedSchema = useMemo(() => {
+    return createTranslatedDiscountSchema((key: string) => t(key));
+  }, [t]);
 
   // Initialize the form with translated schema
   const form = useForm<DiscountFormValues>({
     resolver: zodResolver(translatedSchema),
-    defaultValues,
+    defaultValues: memoizedDefaultValues,
     mode: 'onChange',
   });
 
   // Memoize the data fetching to avoid unnecessary rerenders
-  const fetchDiscountData = async () => {
+  const fetchDiscountData = useCallback(async () => {
     if (!discountId) return;
 
     try {
@@ -131,62 +134,65 @@ export default function EditDiscountPage() {
     } finally {
       setInitialLoading(false);
     }
-  };
+  }, [discountId, form, t, toast, router]);
 
   // Fetch discount data once on component mount
   useEffect(() => {
     fetchDiscountData();
-  }, [discountId]);
+  }, [fetchDiscountData]);
 
-  // Handle form submission
-  const onSubmit = async (values: DiscountFormValues) => {
-    if (!discountId) return;
+  // Handle form submission - memoized for performance
+  const onSubmit = useCallback(
+    async (values: DiscountFormValues) => {
+      if (!discountId) return;
 
-    try {
-      setLoading(true);
+      try {
+        setLoading(true);
 
-      // Always ensure global discounts use the ALL enum
-      if (values.isGlobal) {
-        values.applyTo = DiscountApplyTo.ALL;
-      }
+        // Always ensure global discounts use the ALL enum
+        if (values.isGlobal) {
+          values.applyTo = DiscountApplyTo.ALL;
+        }
 
-      const result = await updateDiscount(discountId, values);
+        const result = await updateDiscount(discountId, values);
 
-      if (result.success) {
-        toast({
-          title: t('pages.discountUpdated'),
-          description: t('pages.discountUpdateSuccess'),
-        });
+        if (result.success) {
+          toast({
+            title: t('pages.discountUpdated'),
+            description: t('pages.discountUpdateSuccess'),
+          });
 
-        // Navigate back to the discounts page
-        router.push('/discounts');
-      } else {
+          // Navigate back to the discounts page
+          router.push('/discounts');
+        } else {
+          toast({
+            title: t('deleteDialog.error'),
+            description: result.message || 'Something went wrong',
+            variant: 'destructive',
+          });
+        }
+      } catch (error) {
+        console.error('Error updating discount:', error);
         toast({
           title: t('deleteDialog.error'),
-          description: result.message || 'Something went wrong',
+          description: t('deleteDialog.unexpectedError'),
           variant: 'destructive',
         });
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Error updating discount:', error);
-      toast({
-        title: t('deleteDialog.error'),
-        description: t('deleteDialog.unexpectedError'),
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    [discountId, t, toast, router],
+  );
 
-  // Add an onError handler for form validation errors
-  const onError = () => {
+  // Add an onError handler for form validation errors - memoized
+  const onError = useCallback(() => {
     toast({
       title: t('pages.validationError'),
       description: t('pages.checkFormErrors'),
       variant: 'destructive',
     });
-  };
+  }, [t, toast]);
 
   if (initialLoading) {
     return (

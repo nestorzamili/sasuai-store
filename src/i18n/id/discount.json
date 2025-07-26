@@ -155,6 +155,8 @@
       "cardId": "ID Kartu",
       "tierName": "Nama Tingkatan",
       "minPoints": "Min. Poin",
+      "points": "poin",
+      "multiplier": "pengali",
       "pointsMultiplier": "Pengali Poin",
       "noItemsFound": "Tidak ada item ditemukan.",
       "loading": "Memuat...",
