@@ -8,7 +8,7 @@ import {
   MemberResponse,
 } from '@/lib/types/member';
 
-export const GET = withAuth(async (req: NextRequest) => {
+export const POST = withAuth(async (req: NextRequest) => {
   try {
     const { amount, memberId } = await req.json();
 
