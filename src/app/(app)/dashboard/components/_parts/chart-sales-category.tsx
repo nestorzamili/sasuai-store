@@ -1,6 +1,7 @@
 'use client';
 
 import { LabelList, Pie, PieChart } from 'recharts';
+import { useTranslations } from 'next-intl';
 import { getTopCategories } from '../../actions';
 import { UnavailableData } from '@/components/unavailable-data';
 import { LoaderCardContent } from '@/components/loader-card-content';
@@ -58,6 +59,7 @@ interface CategoryApiItem {
 }
 
 export function SalesCategory({ filter }: SalesCategoryProps) {
+  const t = useTranslations('dashboard.charts');
   const [chartData, setChartData] = useState<CategoryData[]>([]);
   const [loading, setLoading] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -123,7 +125,7 @@ export function SalesCategory({ filter }: SalesCategoryProps) {
             visitors: item.transactionCount,
             fill: categoryColors[index % categoryColors.length],
             label: item.categoryName,
-          }),
+          })
         );
         setChartData(formattedData);
       } else {
@@ -152,9 +154,9 @@ export function SalesCategory({ filter }: SalesCategoryProps) {
   return (
     <Card className="flex flex-col">
       <CardHeader className="items-center pb-2">
-        <CardTitle>Sales by Category</CardTitle>
+        <CardTitle>{t('salesCategory')}</CardTitle>
         <CardDescription className="text-muted-foreground">
-          Top categories by transaction count
+          {t('salesCategoryDescription')}
         </CardDescription>
       </CardHeader>
       <CardContent className="flex-1 pb-0">
@@ -166,8 +168,8 @@ export function SalesCategory({ filter }: SalesCategoryProps) {
           <>
             {chartData.length === 0 ? (
               <UnavailableData
-                title="No Category Data"
-                description="No category data available for the selected date range."
+                title={t('noCategoryData')}
+                description={t('noCategoryDescription')}
               />
             ) : (
               <ChartContainer

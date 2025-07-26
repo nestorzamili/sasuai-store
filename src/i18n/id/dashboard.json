@@ -1,0 +1,58 @@
+{
+  "dashboard": {
+    "title": "Dashboard Penjualan",
+    "subtitle": "Wawasan kinerja real-time untuk bisnis Anda",
+    "current": "Saat Ini",
+    "performanceMetrics": "Metrik Kinerja",
+    "refresh": "Perbarui",
+    "export": "Ekspor",
+    "loading": "Memuat...",
+    "fromLastPeriod": "DARI PERIODE SEBELUMNYA",
+    "sections": {
+      "salesTrendAnalysis": "Analisis Tren Penjualan",
+      "productsAndCategories": "Produk dan Kategori"
+    },
+    "metrics": {
+      "totalSales": "Total Penjualan",
+      "totalTransaction": "Total Transaksi",
+      "averageTransaction": "Rata-rata Transaksi",
+      "costProduct": "Biaya Produk",
+      "productOut": "Produk Terjual",
+      "margin": "Margin Keuntungan"
+    },
+    "charts": {
+      "paymentMethod": "Metode Pembayaran",
+      "salesCategory": "Penjualan per Kategori",
+      "salesCategoryDescription": "Kategori teratas berdasarkan jumlah transaksi",
+      "topSellingProduct": "Produk Terlaris",
+      "topSellingProductDescription": "Produk dengan volume penjualan tertinggi periode ini",
+      "topMember": "Member Teratas",
+      "topMemberDescription": "Member dengan poin tertinggi yang diperoleh",
+      "topDiscount": "Diskon Teratas",
+      "topDiscountDescription": "Kode diskon yang paling banyak digunakan dan kinerjanya",
+      "lowProductStock": "Peringatan Stok Rendah",
+      "lowStockDescription": "Produk yang perlu segera dipesan ulang",
+      "salesTrend": "Tren Penjualan",
+      "salesTrendDescription": "Menampilkan ringkasan penjualan",
+      "noPaymentMethodData": "Tidak Ada Data Metode Pembayaran",
+      "noPaymentMethodDescription": "Tidak ada data metode pembayaran yang tersedia untuk rentang tanggal yang dipilih.",
+      "noCategoryData": "Tidak Ada Data Kategori",
+      "noCategoryDescription": "Tidak ada data kategori yang tersedia untuk rentang tanggal yang dipilih.",
+      "noProductData": "Tidak Ada Data Produk",
+      "noProductDescription": "Tidak ada data penjualan produk yang tersedia untuk periode yang dipilih.",
+      "noMemberData": "Tidak Ada Data Member",
+      "noMemberDescription": "Tidak ada data member yang tersedia untuk rentang tanggal yang dipilih.",
+      "product": "Produk",
+      "category": "Kategori",
+      "unitsSold": "Unit Terjual",
+      "revenue": "Pendapatan",
+      "total": "Total",
+      "member": "Member",
+      "lastTransaction": "Transaksi Terakhir",
+      "points": "Poin",
+      "items": "item",
+      "showing": "menampilkan",
+      "of": "dari"
+    }
+  }
+}

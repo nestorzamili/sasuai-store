@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { IconRefresh } from '@tabler/icons-react';
 import { useState, useMemo, lazy, useCallback, Suspense } from 'react';
 import { Download } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useMetricPerformance } from './hooks/useMetricPerformance';
 import { formatDate } from '@/lib/date';
 import { DateFilter as FilterDateFilter } from '@/lib/types/filter';
@@ -73,6 +74,8 @@ export interface MetricPerformanceStat {
 }
 
 export default function Dashboard() {
+  const t = useTranslations('dashboard');
+
   // Memoize the current date/time to prevent re-calculations
   const currentDateTime = useMemo(() => {
     const now = new Date();
@@ -135,13 +138,11 @@ export default function Dashboard() {
       {/* Dashboard Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-3 border-b">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Sales Dashboard</h1>
-          <p className="text-muted-foreground">
-            Real-time performance insights for your business
-          </p>
+          <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>
+          <p className="text-muted-foreground">{t('subtitle')}</p>
           <div className="mt-1 flex flex-col  text-muted-foreground">
             <span>
-              Current: {formatDate(currentDateTime.date)} |{' '}
+              {t('current')}: {formatDate(currentDateTime.date)} |{' '}
               {currentDateTime.time}
             </span>
           </div>
@@ -153,12 +154,12 @@ export default function Dashboard() {
           />
           <Button variant="outline" size="sm" className="h-9 gap-2">
             <Download className="h-4 w-4" />
-            <span>Export</span>
+            <span>{t('export')}</span>
           </Button>
         </div>
       </div>
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold">Performance Metrics</h2>
+        <h2 className="text-xl font-semibold">{t('performanceMetrics')}</h2>
         <Button
           variant="outline"
           size="sm"
@@ -169,7 +170,7 @@ export default function Dashboard() {
           <IconRefresh
             className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`}
           />
-          <span>{isLoading ? 'Loading...' : 'Refresh'}</span>
+          <span>{isLoading ? t('loading') : t('refresh')}</span>
         </Button>
       </div>
       <div className="space-y-8 transition-opacity duration-300 ease-in-out">
@@ -185,13 +186,13 @@ export default function Dashboard() {
           {/* Main column - 2/3 width on large screens */}
           <div className="lg:col-span-3 space-y-8">
             {/* Sales trend - prioritized as most important chart */}
-            <section aria-label="Sales Trend Analysis">
+            <section aria-label={t('sections.salesTrendAnalysis')}>
               <Suspense fallback={LoadingFallback}>
                 <SalesTrend />
               </Suspense>
             </section>
             {/* Product and Category Analysis */}
-            <section aria-label="Products and Categories">
+            <section aria-label={t('sections.productsAndCategories')}>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <Suspense fallback={LoadingFallback}>
                   <PaymentMethod filter={memoizedFilter} />

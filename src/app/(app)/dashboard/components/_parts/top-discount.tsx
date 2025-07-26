@@ -6,6 +6,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { useTranslations } from 'next-intl';
 import {
   Card,
   CardContent,
@@ -29,6 +30,7 @@ interface TopDiscountProps {
 }
 
 export function TopDiscount({ filter }: TopDiscountProps) {
+  const t = useTranslations('dashboard.charts');
   const [discounts, setDiscounts] = useState<TopDiscountData[]>([]);
   const [loading, setLoading] = useState(true);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -125,11 +127,9 @@ export function TopDiscount({ filter }: TopDiscountProps) {
     <Card className="h-full">
       <CardHeader className="pb-3">
         <CardTitle className="text-base font-medium">
-          Top Discount Codes
+          {t('topDiscount')}
         </CardTitle>
-        <CardDescription>
-          Most used discount codes and their performance
-        </CardDescription>
+        <CardDescription>{t('topDiscountDescription')}</CardDescription>
       </CardHeader>
       <CardContent className="px-2 pt-0 pb-0">
         {loading ? (
