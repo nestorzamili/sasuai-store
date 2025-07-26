@@ -139,6 +139,8 @@
       "cardId": "Card ID",
       "tierName": "Tier Name",
       "minPoints": "Min. Points",
+      "points": "points",
+      "multiplier": "multiplier",
       "pointsMultiplier": "Points Multiplier",
       "noItemsFound": "No items found.",
       "loading": "Loading...",
