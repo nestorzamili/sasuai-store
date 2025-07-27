@@ -35,7 +35,7 @@ export class TransactionService {
   private static readonly DATE_FORMAT = 'yyyyMMdd';
 
   static async validationCart(
-    data: Cart,
+    data: Cart
   ): Promise<ValidationResult<ValidatedCartItem[]>> {
     // Extract product IDs for efficient batch query
     const productIds = data.map((item) => item.productId);
@@ -92,12 +92,12 @@ export class TransactionService {
             discount.isActive &&
             now >= discount.startDate &&
             now <= discount.endDate &&
-            (!discount.maxUses || discount.usedCount < discount.maxUses),
+            (!discount.maxUses || discount.usedCount < discount.maxUses)
         );
 
         if (cartItem.selectedDiscountId && !discount) {
           errors.push(
-            `Selected discount for product ${product.id} is not valid or has reached usage limit`,
+            `Selected discount for product ${product.id} is not valid or has reached usage limit`
           );
           continue;
         }
@@ -125,7 +125,7 @@ export class TransactionService {
       const finalPrice = this.calculateDiscountedPrice(
         basicPrice,
         discountValue,
-        discountType,
+        discountType
       );
       const subtotal = finalPrice * cartItem.quantity;
 
@@ -155,8 +155,8 @@ export class TransactionService {
         errors.length > 0
           ? `Validation errors: ${errors.join('; ')}`
           : validatedItems.length === 0
-          ? 'No valid items in cart'
-          : 'Validation successful',
+            ? 'No valid items in cart'
+            : 'Validation successful',
       data: validatedItems,
     };
   }
@@ -164,7 +164,7 @@ export class TransactionService {
   private static calculateDiscountedPrice(
     basePrice: number,
     discountValue: number,
-    discountType: string | null,
+    discountType: string | null
   ): number {
     if (!discountValue || !discountType) return basePrice;
 
@@ -186,12 +186,12 @@ export class TransactionService {
     memberId: string | null | undefined = null,
     selectedMemberDiscountId: string | null = null,
     selectedTierDiscountId: string | null = null,
-    globalDiscountCode: string | null = null,
+    globalDiscountCode: string | null = null
   ): Promise<ValidationResult<TransactionSummary>> {
     // Calculate subtotal from all cart items
     const subtotal = validatedCart.reduce(
       (sum, item) => sum + item.subtotal,
-      0,
+      0
     );
 
     // Get member discount info if applicable
@@ -208,7 +208,7 @@ export class TransactionService {
     if (globalDiscountCode) {
       const globalDiscount = await this.getGlobalDiscountInfo(
         globalDiscountCode,
-        subtotal,
+        subtotal
       );
       if (globalDiscount) {
         appliedDiscount = globalDiscount;
@@ -220,7 +220,7 @@ export class TransactionService {
       const memberDiscount = await this.getMemberDiscountInfo(
         memberId,
         selectedMemberDiscountId,
-        subtotal,
+        subtotal
       );
 
       if (memberDiscount?.discount) {
@@ -233,7 +233,7 @@ export class TransactionService {
       const tierDiscount = await this.getTierDiscountInfo(
         memberInfo.tierId,
         selectedTierDiscountId,
-        subtotal,
+        subtotal
       );
 
       if (tierDiscount) {
@@ -273,7 +273,7 @@ export class TransactionService {
   private static async getMemberDiscountInfo(
     memberId: string | null | undefined,
     selectedMemberDiscountId: string | null,
-    subtotal: number,
+    subtotal: number
   ): Promise<MemberDiscountInfo | null> {
     if (!memberId) return null;
 
@@ -301,7 +301,7 @@ export class TransactionService {
         now >= d.startDate &&
         now <= d.endDate &&
         (!d.maxUses || d.usedCount < d.maxUses) &&
-        (!d.minPurchase || subtotal >= d.minPurchase),
+        (!d.minPurchase || subtotal >= d.minPurchase)
     );
 
     if (!discount) {
@@ -313,8 +313,8 @@ export class TransactionService {
       discount.type === 'PERCENTAGE'
         ? (discount.value * subtotal) / 100
         : discount.type === 'FIXED_AMOUNT'
-        ? discount.value
-        : 0;
+          ? discount.value
+          : 0;
 
     return {
       id: memberId,
@@ -333,7 +333,7 @@ export class TransactionService {
 
   // Get basic member info
   private static async getMemberInfo(
-    memberId: string,
+    memberId: string
   ): Promise<MemberInfoForValidation | null> {
     const member = await prisma.member.findUnique({
       where: { id: memberId },
@@ -356,7 +356,7 @@ export class TransactionService {
   private static async getTierDiscountInfo(
     tierId: string,
     discountId: string,
-    subtotal: number,
+    subtotal: number
   ): Promise<DiscountInfo | null> {
     // Get tier discount
     const tierDiscount = await prisma.discount.findFirst({
@@ -387,8 +387,8 @@ export class TransactionService {
       tierDiscount.type === 'PERCENTAGE'
         ? (tierDiscount.value * subtotal) / 100
         : tierDiscount.type === 'FIXED_AMOUNT'
-        ? tierDiscount.value
-        : 0;
+          ? tierDiscount.value
+          : 0;
 
     return discountAmount > 0
       ? {
@@ -403,7 +403,7 @@ export class TransactionService {
   // Get global discount
   private static async getGlobalDiscountInfo(
     discountCode: string,
-    subtotal: number,
+    subtotal: number
   ): Promise<GlobalDiscountInfo | null> {
     // Get global discount by code
     const globalDiscount = await prisma.discount.findFirst({
@@ -432,8 +432,8 @@ export class TransactionService {
       globalDiscount.type === 'PERCENTAGE'
         ? (globalDiscount.value * subtotal) / 100
         : globalDiscount.type === 'FIXED_AMOUNT'
-        ? globalDiscount.value
-        : 0;
+          ? globalDiscount.value
+          : 0;
 
     return discountAmount > 0
       ? {
@@ -449,7 +449,7 @@ export class TransactionService {
   static async checkPaymentMethod(
     paymentMethod: string,
     cashAmount?: number,
-    finalAmount?: number,
+    finalAmount?: number
   ): Promise<PaymentValidationResult> {
     // Validate finalAmount is provided and valid
     if (!finalAmount || finalAmount < 0) {
@@ -526,7 +526,7 @@ export class TransactionService {
         data.memberId,
         data.selectedMemberDiscountId,
         data.selectedTierDiscountId,
-        data.globalDiscountCode,
+        data.globalDiscountCode
       );
 
       if (
@@ -546,7 +546,7 @@ export class TransactionService {
       const paymentCheck = await this.checkPaymentMethod(
         data.paymentMethod,
         data.cashAmount,
-        finalAmount,
+        finalAmount
       );
 
       if (!paymentCheck.success) {
@@ -561,7 +561,7 @@ export class TransactionService {
         data,
         validatedCartResult.data,
         transactionData,
-        paymentCheck.change || 0,
+        paymentCheck.change || 0
       );
     } catch (error) {
       console.error('Transaction processing error:', error);
@@ -573,7 +573,7 @@ export class TransactionService {
     data: TransactionData,
     validatedCart: ValidatedCartItem[],
     transactionData: TransactionSummary,
-    change: number,
+    change: number
   ): Promise<TransactionExecutionResult> {
     // Transform validated items into database format
     const items = this.prepareTransactionItems(validatedCart);
@@ -598,7 +598,7 @@ export class TransactionService {
           transactionData,
           paymentAmount,
           change,
-          items,
+          items
         );
 
         // Process member points if applicable
@@ -608,7 +608,7 @@ export class TransactionService {
             data.memberId,
             transaction.id,
             transactionData.subtotal,
-            transaction.tranId || tranId, // Use fallback if tranId is null
+            transaction.tranId || tranId // Use fallback if tranId is null
           );
         }
 
@@ -632,7 +632,7 @@ export class TransactionService {
         await this.incrementDiscountUsages(
           tx,
           validatedCart,
-          transactionDiscountId,
+          transactionDiscountId
         );
 
         return {
@@ -660,7 +660,7 @@ export class TransactionService {
   private static async incrementDiscountUsages(
     tx: PrismaTransactionContext,
     validatedCart: ValidatedCartItem[],
-    transactionDiscountId: string | null | undefined,
+    transactionDiscountId: string | null | undefined
   ): Promise<void> {
     // Get all product discount IDs
     const productDiscountIds = validatedCart
@@ -685,7 +685,7 @@ export class TransactionService {
   }
 
   private static prepareTransactionItems(
-    validatedCart: ValidatedCartItem[],
+    validatedCart: ValidatedCartItem[]
   ): PreparedTransactionItem[] {
     return validatedCart.map((item) => ({
       productId: item.productId,
@@ -708,7 +708,7 @@ export class TransactionService {
     transactionData: TransactionSummary,
     paymentAmount: number,
     change: number,
-    items: PreparedTransactionItem[],
+    items: PreparedTransactionItem[]
   ) {
     let discountId = null as string | null;
     let discountAmount = null as number | null;
@@ -752,7 +752,7 @@ export class TransactionService {
               item.basicPrice,
               item.quantity,
               item.discountValue,
-              item.discountValueType,
+              item.discountValueType
             ),
             subtotal: item.subtotal,
           })),
@@ -766,7 +766,7 @@ export class TransactionService {
     price: number,
     quantity: number,
     discountValue: number | null,
-    discountType: string | null,
+    discountType: string | null
   ): number | null {
     if (!discountValue || !discountType) return null;
 
@@ -785,7 +785,7 @@ export class TransactionService {
     memberId: string,
     transactionId: string,
     subtotal: number,
-    tranId: string,
+    tranId: string
   ): Promise<void> {
     // Get member data
     const member = await tx.member.findUnique({
@@ -815,7 +815,7 @@ export class TransactionService {
     // Calculate points
     const pointsEarned = await calculateMemberPoints(
       subtotal,
-      memberForPointsCalculation,
+      memberForPointsCalculation
     );
     if (pointsEarned <= 0) return;
 
@@ -858,7 +858,7 @@ export class TransactionService {
 
   private static async checkAndUpdateMemberTier(
     tx: PrismaTransactionContext,
-    member: MemberRecord,
+    member: MemberRecord
   ): Promise<void> {
     const eligibleTier = await tx.memberTier.findFirst({
       where: {
@@ -877,7 +877,7 @@ export class TransactionService {
 
   private static async updateInventory(
     tx: PrismaTransactionContext,
-    items: PreparedTransactionItem[],
+    items: PreparedTransactionItem[]
   ): Promise<void> {
     for (const item of items) {
       // Get batch information
@@ -910,7 +910,7 @@ export class TransactionService {
   static async generateTransactionId(): Promise<string> {
     const today = new Date();
     const datePart = format(today, this.DATE_FORMAT);
-    const prefix = `${this.STORE_PREFIX}-${datePart}-`;
+    const prefix = `${datePart}-`;
 
     // Find latest transaction with this prefix
     const lastTransaction = await prisma.transaction.findFirst({
@@ -1029,7 +1029,7 @@ export class TransactionService {
       // Calculate total original amount (before any discounts)
       const originalAmount = transaction.items.reduce(
         (sum, item) => sum + item.pricePerUnit * item.quantity,
-        0,
+        0
       );
 
       // Calculate total product discounts
@@ -1064,7 +1064,7 @@ export class TransactionService {
         pointsEarned:
           transaction.memberPoints?.reduce(
             (sum, p) => sum + p.pointsEarned,
-            0,
+            0
           ) || 0,
         createdAt: transaction.createdAt,
       };
@@ -1088,7 +1088,7 @@ export class TransactionService {
    */
 
   static async getTransactionById(
-    id: string,
+    id: string
   ): Promise<TransactionDetailResult> {
     try {
       const transaction = await prisma.transaction.findUnique({
