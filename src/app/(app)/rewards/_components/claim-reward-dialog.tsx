@@ -71,7 +71,7 @@ export function ClaimRewardDialog({
   const selectedReward = useMemo(
     (): RewardWithClaimCount | undefined =>
       availableRewards.find((r) => r.id === selectedRewardId),
-    [availableRewards, selectedRewardId],
+    [availableRewards, selectedRewardId]
   );
 
   // Check if member has enough points
@@ -80,7 +80,7 @@ export function ClaimRewardDialog({
       selectedMember && selectedReward
         ? selectedMember.totalPoints >= selectedReward.pointsCost
         : false,
-    [selectedMember, selectedReward],
+    [selectedMember, selectedReward]
   );
 
   // Memoized functions to prevent unnecessary re-renders
@@ -95,7 +95,7 @@ export function ClaimRewardDialog({
 
       if (result.success && result.data) {
         const available = result.data.rewards.filter(
-          (reward: RewardWithClaimCount) => reward.isActive && reward.stock > 0,
+          (reward: RewardWithClaimCount) => reward.isActive && reward.stock > 0
         );
         setAvailableRewards(available);
 
@@ -155,7 +155,7 @@ export function ClaimRewardDialog({
         setIsLoading((prev) => ({ ...prev, search: false }));
       }
     },
-    [],
+    []
   );
 
   const handleSelectMember = useCallback(
@@ -173,7 +173,7 @@ export function ClaimRewardDialog({
       setShowResults(false);
       setSearchQuery('');
     },
-    [t],
+    [t]
   );
 
   const getTierBadgeVariant = useCallback((tierName?: string): string => {
@@ -267,7 +267,7 @@ export function ClaimRewardDialog({
       try {
         const result = await claimRewardForMember(
           selectedMember.id,
-          selectedRewardId,
+          selectedRewardId
         );
 
         if (result.success) {
@@ -302,255 +302,306 @@ export function ClaimRewardDialog({
       onSuccess,
       onOpenChange,
       t,
-    ],
+    ]
   );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t('title')}</DialogTitle>
           <DialogDescription>{t('description')}</DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit}>
-          <div className="grid gap-4 py-4">
-            {/* Reward Selection */}
-            <div className="grid gap-2">
-              <Label htmlFor="reward-select">{t('fields.reward')}</Label>
-              <Select
-                value={selectedRewardId}
-                onValueChange={setSelectedRewardId}
-              >
-                <SelectTrigger id="reward-select">
-                  <SelectValue placeholder={t('fields.rewardPlaceholder')} />
-                </SelectTrigger>
-                <SelectContent>
-                  {isLoading.rewards ? (
-                    <div className="flex items-center justify-center p-2">
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      <span>{tCommon('loading')}</span>
-                    </div>
-                  ) : availableRewards.length > 0 ? (
-                    availableRewards.map((reward) => (
-                      <SelectItem key={reward.id} value={reward.id}>
-                        {reward.name} - {reward.pointsCost} {tCommon('points')}{' '}
-                        ({reward.stock} {t('stockAvailable')})
-                      </SelectItem>
-                    ))
-                  ) : (
-                    <div className="p-2 text-center text-muted-foreground">
-                      {t('fields.noRewardsFound')}
-                    </div>
-                  )}
-                </SelectContent>
-              </Select>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {isLoading.rewards ? (
+            <div className="flex items-center justify-center p-8">
+              <Loader2 className="h-6 w-6 animate-spin mr-3" />
+              <span className="text-sm text-muted-foreground">
+                {tCommon('loading')} rewards...
+              </span>
             </div>
-
-            {/* Selected Reward Details */}
-            {selectedReward && (
-              <Card className="mb-2">
-                <CardContent className="pt-6">
-                  <div className="grid gap-2">
-                    <div className="text-lg font-medium">
-                      {selectedReward.name}
-                    </div>
-                    {selectedReward.description && (
-                      <div className="text-muted-foreground">
-                        {selectedReward.description}
+          ) : (
+            <div className="space-y-4">
+              {/* Reward Selection */}
+              <div className="space-y-3">
+                <Label htmlFor="reward-select" className="text-sm font-medium">
+                  {t('fields.reward')}
+                </Label>
+                <Select
+                  value={selectedRewardId}
+                  onValueChange={setSelectedRewardId}
+                >
+                  <SelectTrigger id="reward-select" className="h-10">
+                    <SelectValue placeholder={t('fields.rewardPlaceholder')} />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[200px]">
+                    {availableRewards.length > 0 ? (
+                      availableRewards.map((reward) => (
+                        <SelectItem
+                          key={reward.id}
+                          value={reward.id}
+                          className="py-3"
+                        >
+                          <div className="flex flex-col items-start">
+                            <span className="font-medium">{reward.name}</span>
+                            <span className="text-xs text-muted-foreground">
+                              {reward.pointsCost} {tCommon('points')} •{' '}
+                              {reward.stock} {t('stockAvailable')}
+                            </span>
+                          </div>
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <div className="p-4 text-center text-muted-foreground text-sm">
+                        {t('fields.noRewardsFound')}
                       </div>
                     )}
-                    <div className="font-semibold text-amber-600">
-                      {selectedReward.pointsCost}{' '}
-                      {t('rewardInfo.pointsRequired')}
-                    </div>
-                    <div className="text-sm">
-                      {selectedReward.stock} {t('rewardInfo.stockAvailable')}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Member Search */}
-            <div className="grid gap-2">
-              <Label>{t('fields.member')}</Label>
-              <div className="relative">
-                <Input
-                  ref={inputRef}
-                  placeholder={t('fields.memberPlaceholder')}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pr-16 h-9"
-                  disabled={!!selectedMember}
-                />
-
-                {searchQuery && !isLoading.search && !selectedMember && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    type="button"
-                    className="absolute right-10 top-0 h-full w-8"
-                    onClick={() => setSearchQuery('')}
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
-                )}
-
-                <Button
-                  size="icon"
-                  type="button"
-                  className="absolute right-0 top-0 h-full rounded-l-none w-10"
-                  onClick={
-                    selectedMember
-                      ? () => setSelectedMember(null)
-                      : () => searchMembersHandler(searchQuery)
-                  }
-                  disabled={
-                    selectedMember
-                      ? false
-                      : searchQuery.trim().length < 3 || isLoading.search
-                  }
-                >
-                  {selectedMember ? (
-                    <X className="h-4 w-4" />
-                  ) : isLoading.search ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Search className="h-4 w-4" />
-                  )}
-                </Button>
-
-                {/* Search results dropdown */}
-                {showResults && searchResults.length > 0 && !selectedMember && (
-                  <Card
-                    className="absolute z-50 w-full left-0 right-0 mt-1 max-h-64 overflow-auto"
-                    ref={resultsRef}
-                  >
-                    <ul className="py-1 divide-y divide-border">
-                      {searchResults.map((member) => (
-                        <li
-                          key={member.id}
-                          className={`px-3 py-2 transition-colors ${
-                            member.isBanned === true
-                              ? 'cursor-not-allowed opacity-70'
-                              : 'cursor-pointer hover:bg-accent'
-                          }`}
-                          onClick={() =>
-                            member.isBanned !== true &&
-                            handleSelectMember(member)
-                          }
-                        >
-                          <div className="flex flex-col sm:flex-row sm:justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2">
-                                <p className="font-medium">{member.name}</p>
-                                {member.isBanned === true && (
-                                  <Badge
-                                    variant="destructive"
-                                    className="text-xs"
-                                  >
-                                    {t('banned')}
-                                  </Badge>
-                                )}
-                              </div>
-                              {(member.phone || member.email) && (
-                                <div className="text-xs text-muted-foreground mt-1">
-                                  {member.phone && (
-                                    <span>Phone: {member.phone}</span>
-                                  )}
-                                  {member.email && (
-                                    <span className="block sm:inline sm:ml-2">
-                                      Email: {member.email}
-                                    </span>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                            <div className="sm:text-right mt-2 sm:mt-0">
-                              <div className="flex sm:justify-end">
-                                <Badge
-                                  className={getTierBadgeVariant(
-                                    member.tier?.name,
-                                  )}
-                                >
-                                  {member.tier?.name || t('regularTier')}
-                                </Badge>
-                              </div>
-                              <p className="text-xs text-amber-500 mt-1">
-                                {t('memberInfo.currentPoints')}:{' '}
-                                {member.totalPoints}
-                              </p>
-                            </div>
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  </Card>
-                )}
+                  </SelectContent>
+                </Select>
               </div>
 
-              {!isLoading.search &&
-                searchQuery.trim().length >= 3 &&
-                searchResults.length === 0 &&
-                showResults &&
-                !selectedMember && (
-                  <div className="text-xs text-muted-foreground flex items-center pt-0.5">
-                    <X className="h-3 w-3 mr-1" />
-                    {t('fields.noMembersFound')}
+              {/* Selected Reward Details */}
+              {selectedReward && (
+                <Card className="border-primary/20 bg-primary/5">
+                  <CardContent className="p-4">
+                    <div className="space-y-3">
+                      <div className="flex items-start justify-between">
+                        <div className="space-y-1">
+                          <h4 className="font-semibold text-base leading-tight">
+                            {selectedReward.name}
+                          </h4>
+                          {selectedReward.description && (
+                            <p className="text-sm text-muted-foreground leading-relaxed">
+                              {selectedReward.description}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between pt-2 border-t border-primary/10">
+                        <div className="flex items-center gap-4">
+                          <Badge variant="secondary" className="font-medium">
+                            {selectedReward.pointsCost}{' '}
+                            {t('rewardInfo.pointsRequired')}
+                          </Badge>
+                          <span className="text-sm text-muted-foreground">
+                            {selectedReward.stock}{' '}
+                            {t('rewardInfo.stockAvailable')}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Member Search */}
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">
+                  {t('fields.member')}
+                </Label>
+                <div className="relative">
+                  <Input
+                    ref={inputRef}
+                    placeholder={t('fields.memberPlaceholder')}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pr-20 h-10"
+                    disabled={!!selectedMember}
+                  />
+
+                  <div className="absolute right-1 top-1 flex gap-1">
+                    {searchQuery && !isLoading.search && !selectedMember && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        type="button"
+                        className="h-8 w-8 p-0"
+                        onClick={() => setSearchQuery('')}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    )}
+
+                    <Button
+                      size="sm"
+                      type="button"
+                      className="h-8 w-8 p-0"
+                      onClick={
+                        selectedMember
+                          ? () => setSelectedMember(null)
+                          : () => searchMembersHandler(searchQuery)
+                      }
+                      disabled={
+                        selectedMember
+                          ? false
+                          : searchQuery.trim().length < 3 || isLoading.search
+                      }
+                    >
+                      {selectedMember ? (
+                        <X className="h-4 w-4" />
+                      ) : isLoading.search ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Search className="h-4 w-4" />
+                      )}
+                    </Button>
                   </div>
-                )}
+
+                  {/* Search results dropdown */}
+                  {showResults &&
+                    searchResults.length > 0 &&
+                    !selectedMember && (
+                      <Card
+                        className="absolute z-50 w-full left-0 right-0 mt-2 max-h-64 overflow-auto border shadow-lg"
+                        ref={resultsRef}
+                      >
+                        <div className="py-2">
+                          {searchResults.map((member) => (
+                            <div
+                              key={member.id}
+                              className={`px-4 py-3 transition-colors border-b last:border-b-0 ${
+                                member.isBanned === true
+                                  ? 'cursor-not-allowed opacity-70 bg-destructive/5'
+                                  : 'cursor-pointer hover:bg-accent'
+                              }`}
+                              onClick={() =>
+                                member.isBanned !== true &&
+                                handleSelectMember(member)
+                              }
+                            >
+                              <div className="flex flex-col space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-medium text-sm">
+                                      {member.name}
+                                    </span>
+                                    {member.isBanned === true && (
+                                      <Badge
+                                        variant="destructive"
+                                        className="text-xs px-1.5 py-0.5"
+                                      >
+                                        {t('banned')}
+                                      </Badge>
+                                    )}
+                                    <Badge
+                                      variant={
+                                        getTierBadgeVariant(
+                                          member.tier?.name
+                                        ) as any
+                                      }
+                                      className="text-xs px-1.5 py-0.5"
+                                    >
+                                      {member.tier?.name || t('regularTier')}
+                                    </Badge>
+                                  </div>
+                                  <div className="text-right">
+                                    <p className="text-xs font-medium text-amber-600">
+                                      {member.totalPoints} {tCommon('points')}
+                                    </p>
+                                  </div>
+                                </div>
+                                {(member.phone || member.email) && (
+                                  <div className="text-xs text-muted-foreground space-y-1">
+                                    {member.phone && (
+                                      <div>📞 {member.phone}</div>
+                                    )}
+                                    {member.email && (
+                                      <div>✉️ {member.email}</div>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </Card>
+                    )}
+                </div>
+
+                {!isLoading.search &&
+                  searchQuery.trim().length >= 3 &&
+                  searchResults.length === 0 &&
+                  showResults &&
+                  !selectedMember && (
+                    <div className="text-xs text-muted-foreground flex items-center mt-2 p-2 bg-muted/30 rounded-md">
+                      <X className="h-3 w-3 mr-1" />
+                      {t('fields.noMembersFound')}
+                    </div>
+                  )}
+              </div>
+
+              {/* Selected Member Details */}
+              {selectedMember && (
+                <Card className="border-green-200 bg-green-50/50">
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between">
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-semibold text-base">
+                            {selectedMember.name}
+                          </h4>
+                          <Badge
+                            variant={
+                              getTierBadgeVariant(
+                                selectedMember.tier?.name
+                              ) as any
+                            }
+                            className="text-xs"
+                          >
+                            {selectedMember.tier?.name || t('regularTier')}
+                          </Badge>
+                        </div>
+                        {(selectedMember.phone || selectedMember.email) && (
+                          <div className="space-y-1 text-xs text-muted-foreground">
+                            {selectedMember.phone && (
+                              <div className="flex items-center gap-1">
+                                <span>📞</span>
+                                <span>{selectedMember.phone}</span>
+                              </div>
+                            )}
+                            {selectedMember.email && (
+                              <div className="flex items-center gap-1">
+                                <span>✉️</span>
+                                <span>{selectedMember.email}</span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      <div className="text-right space-y-1">
+                        <div className="flex items-center gap-2">
+                          <Badge variant="secondary" className="font-medium">
+                            {selectedMember.totalPoints} {tCommon('points')}
+                          </Badge>
+                        </div>
+                        {selectedReward && !hasEnoughPoints && (
+                          <div className="text-destructive text-xs font-medium">
+                            {t('rewardInfo.insufficientPoints')}
+                          </div>
+                        )}
+                        {selectedReward && hasEnoughPoints && (
+                          <div className="text-green-600 text-xs font-medium">
+                            ✓{' '}
+                            {t('rewardInfo.sufficientPoints') ||
+                              'Sufficient points'}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </div>
+          )}
 
-            {/* Selected Member Details */}
-            {selectedMember && (
-              <Card className="mb-2">
-                <CardContent className="pt-6">
-                  <div className="flex justify-between gap-4">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <div className="font-medium">{selectedMember.name}</div>
-                        <Badge
-                          className={getTierBadgeVariant(
-                            selectedMember.tier?.name,
-                          )}
-                        >
-                          {selectedMember.tier?.name || t('regularTier')}
-                        </Badge>
-                      </div>
-                      {(selectedMember.phone || selectedMember.email) && (
-                        <div className="text-xs text-muted-foreground mt-1">
-                          {selectedMember.phone && (
-                            <span>{selectedMember.phone}</span>
-                          )}
-                          {selectedMember.email && (
-                            <span className="ml-2">{selectedMember.email}</span>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                    <div className="text-right">
-                      <div className="text-amber-600 font-medium">
-                        {selectedMember.totalPoints} {tCommon('points')}
-                      </div>
-                      {selectedReward && !hasEnoughPoints && (
-                        <div className="text-destructive text-xs">
-                          {t('rewardInfo.insufficientPoints')}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-
-          <DialogFooter>
+          <DialogFooter className="flex gap-2 pt-4">
             <Button
               variant="outline"
               type="button"
               onClick={() => onOpenChange(false)}
               disabled={isLoading.claim}
+              className="flex-1 sm:flex-none"
             >
               {tCommon('cancel')}
             </Button>
@@ -562,7 +613,11 @@ export function ClaimRewardDialog({
                 !selectedRewardId ||
                 !hasEnoughPoints
               }
+              className="flex-1 sm:flex-none"
             >
+              {isLoading.claim && (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              )}
               {isLoading.claim ? t('processing') : t('claimButton')}
             </Button>
           </DialogFooter>
