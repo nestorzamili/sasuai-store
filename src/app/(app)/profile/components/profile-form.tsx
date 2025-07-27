@@ -80,16 +80,26 @@ export default function ProfileForm() {
     mode: 'onChange',
   });
 
+  const formValues = form.watch();
+
   const hasFormChanges = useMemo(() => {
     if (!userProfile) return false;
-    const formValues = form.getValues();
-    return (
+
+    const changes =
       formValues.name !== userProfile.name ||
       formValues.username !== userProfile.username ||
       formValues.email !== userProfile.email ||
-      formValues.image !== userProfile.image
-    );
-  }, [form, userProfile]);
+      formValues.image !== userProfile.image;
+
+    console.log('Form change detection:', {
+      formValues,
+      userProfile,
+      hasChanges: changes,
+      isValid: form.formState.isValid,
+    });
+
+    return changes;
+  }, [formValues, userProfile, form.formState.isValid]);
 
   useEffect(() => {
     if (user) {
@@ -141,7 +151,7 @@ export default function ProfileForm() {
                 });
               }
             },
-          },
+          }
         );
       } catch (error) {
         console.error('Error changing email:', error);
@@ -152,7 +162,7 @@ export default function ProfileForm() {
         });
       }
     },
-    [form, router, userProfile?.email, t],
+    [form, router, userProfile?.email, t]
   );
 
   const handleImageChange = useCallback(
@@ -160,7 +170,7 @@ export default function ProfileForm() {
       form.setValue('image', imageUrl);
       form.trigger('image');
     },
-    [form],
+    [form]
   );
 
   const handleProfileUpdate = useCallback(
@@ -254,7 +264,7 @@ export default function ProfileForm() {
         setIsUpdating(false);
       }
     },
-    [userProfile, handleEmailChange, refreshSession, router, form, t],
+    [userProfile, handleEmailChange, refreshSession, router, form, t]
   );
 
   if (isAuthLoading) {

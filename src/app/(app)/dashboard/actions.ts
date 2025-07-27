@@ -124,13 +124,7 @@ export async function getTopMembers(filter: ExtendedDateFilter): Promise<{
   error?: string;
 }> {
   try {
-    console.log('Action - getTopMembers with filter:', JSON.stringify(filter));
     const response = await DashboardService.getTopMembers(filter);
-    console.log(
-      'Action - getTopMembers result:',
-      response.success,
-      response.data?.length || 0
-    );
     return {
       data: response.data,
       success: response.success,
