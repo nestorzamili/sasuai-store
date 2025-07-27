@@ -31,7 +31,7 @@ import { getAllRewardsWithClaimCount } from '../actions';
 import { TableLayout } from '@/components/layout/table-layout';
 import { ImagePreviewDialog } from '@/components/image-preview-dialog';
 
-export function RewardTable({ onEdit, onDelete }: RewardTableProps) {
+export function RewardTable({ onEdit, onDelete, onRefresh }: RewardTableProps) {
   const t = useTranslations('reward.table');
 
   // State for image preview dialog
@@ -67,6 +67,7 @@ export function RewardTable({ onEdit, onDelete }: RewardTableProps) {
     setSortBy,
     setSearch,
     totalRows,
+    refresh,
   } = useFetch<RewardWithClaimCount[]>({
     fetchData: fetchRewards,
     initialPageIndex: 0,
@@ -75,13 +76,20 @@ export function RewardTable({ onEdit, onDelete }: RewardTableProps) {
     initialSortDirection: false,
   });
 
+  // Expose refresh function to parent component
+  React.useEffect(() => {
+    if (onRefresh) {
+      onRefresh(refresh);
+    }
+  }, [onRefresh, refresh]);
+
   // Handle pagination change - stabilize with useCallback
   const handlePaginationChange = useCallback(
     (newPagination: { pageIndex: number; pageSize: number }) => {
       setPage(newPagination.pageIndex);
       setLimit(newPagination.pageSize);
     },
-    [setPage, setLimit],
+    [setPage, setLimit]
   );
 
   // Handle sorting change - stabilize with useCallback
@@ -89,7 +97,7 @@ export function RewardTable({ onEdit, onDelete }: RewardTableProps) {
     (newSorting: SortingState[]) => {
       setSortBy(newSorting.length > 0 ? [newSorting[0]] : []);
     },
-    [setSortBy],
+    [setSortBy]
   );
 
   // Handle search change - stabilize with useCallback
@@ -97,7 +105,7 @@ export function RewardTable({ onEdit, onDelete }: RewardTableProps) {
     (newSearch: string) => {
       setSearch(newSearch);
     },
-    [setSearch],
+    [setSearch]
   );
 
   // Define columns - memoize to prevent re-creation with translations
@@ -290,7 +298,7 @@ export function RewardTable({ onEdit, onDelete }: RewardTableProps) {
         },
       },
     ],
-    [t, onEdit, onDelete],
+    [t, onEdit, onDelete]
   );
 
   return (
