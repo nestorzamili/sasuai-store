@@ -13,7 +13,6 @@ import { useState, useMemo, lazy, useCallback, Suspense } from 'react';
 import { Download } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useMetricPerformance } from './hooks/useMetricPerformance';
-import { formatDate } from '@/lib/date';
 import { DateFilter as FilterDateFilter } from '@/lib/types/filter';
 import { DateRangePickerWithPresets } from '@/components/ui/date-range-picker-with-presets';
 
