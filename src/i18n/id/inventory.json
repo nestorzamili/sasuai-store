@@ -25,7 +25,7 @@
         "batchCode": "Kode Batch",
         "expireDate": "Tanggal Kedaluwarsa",
         "remainingQuantity": "Stok Tersisa",
-        "buyPrice": "Harga Beli"
+        "buyPrice": "Harga Modal"
       },
       "actions": {
         "openMenu": "Buka menu",
@@ -129,7 +129,7 @@
       "quantityPricing": "Kuantitas & Harga",
       "initialQuantity": "Stok Awal",
       "remainingQuantity": "Stok Tersisa",
-      "buyPrice": "Harga Beli",
+      "buyPrice": "Harga Modal",
       "expiryDate": "Tanggal Kedaluwarsa",
       "stockMovementHistory": "Riwayat Pergerakan Stok",
       "stockMovementHistoryLegacy": "Riwayat Pergerakan Stok (Legacy)",
@@ -188,9 +188,9 @@
       "pickDate": "Pilih tanggal",
       "initialQuantity": "Kuantitas Awal",
       "enterInitialQuantity": "Masukkan kuantitas awal",
-      "buyPrice": "Harga Beli (IDR)",
-      "enterBuyPrice": "Masukkan harga beli",
-      "buyPriceNote": "Total harga pembelian untuk seluruh batch, bukan per unit",
+      "buyPrice": "Harga Modal (IDR)",
+      "enterBuyPrice": "Masukkan Harga Modal",
+      "buyPriceNote": "Harga modal per unit",
       "unit": "Unit",
       "selectUnit": "Pilih unit",
       "noUnitsFound": "Tidak ada unit ditemukan",
