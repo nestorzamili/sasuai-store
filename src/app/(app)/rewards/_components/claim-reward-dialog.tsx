@@ -176,19 +176,24 @@ export function ClaimRewardDialog({
     [t]
   );
 
-  const getTierBadgeVariant = useCallback((tierName?: string): string => {
-    if (!tierName) return 'secondary';
+  const getTierBadgeVariant = useCallback(
+    (
+      tierName?: string
+    ): 'default' | 'secondary' | 'destructive' | 'outline' => {
+      if (!tierName) return 'secondary';
 
-    const lowerTier = tierName.toLowerCase();
-    if (lowerTier.includes('gold') || lowerTier.includes('premium'))
-      return 'default';
-    if (lowerTier.includes('silver') || lowerTier.includes('plus'))
+      const lowerTier = tierName.toLowerCase();
+      if (lowerTier.includes('gold') || lowerTier.includes('premium'))
+        return 'default';
+      if (lowerTier.includes('silver') || lowerTier.includes('plus'))
+        return 'secondary';
+      if (lowerTier.includes('platinum') || lowerTier.includes('vip'))
+        return 'default';
+
       return 'secondary';
-    if (lowerTier.includes('platinum') || lowerTier.includes('vip'))
-      return 'primary';
-
-    return 'secondary';
-  }, []);
+    },
+    []
+  );
 
   // Reset dialog state when closed
   useEffect(() => {
@@ -485,11 +490,9 @@ export function ClaimRewardDialog({
                                       </Badge>
                                     )}
                                     <Badge
-                                      variant={
-                                        getTierBadgeVariant(
-                                          member.tier?.name
-                                        ) as any
-                                      }
+                                      variant={getTierBadgeVariant(
+                                        member.tier?.name
+                                      )}
                                       className="text-xs px-1.5 py-0.5"
                                     >
                                       {member.tier?.name || t('regularTier')}
@@ -542,11 +545,9 @@ export function ClaimRewardDialog({
                             {selectedMember.name}
                           </h4>
                           <Badge
-                            variant={
-                              getTierBadgeVariant(
-                                selectedMember.tier?.name
-                              ) as any
-                            }
+                            variant={getTierBadgeVariant(
+                              selectedMember.tier?.name
+                            )}
                             className="text-xs"
                           >
                             {selectedMember.tier?.name || t('regularTier')}
