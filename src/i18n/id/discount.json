@@ -163,6 +163,7 @@
     "validation": {
       "nameRequired": "Nama wajib diisi",
       "valuePositive": "Nilai harus positif",
+      "percentageRange": "Nilai persentase harus antara 0 dan 100",
       "selectItems": "Silakan pilih setidaknya satu item untuk jenis aplikasi yang dipilih"
     },
     "pages": {
