@@ -40,6 +40,19 @@ export class DashboardService {
       dates.previous.endDate,
     ].map((date) => format(date, 'yyyy-MM-dd'));
 
+    // Convert to local timezone dates for accurate database queries
+    const localStartDate = new Date(startDate + 'T00:00:00+07:00'); // WIB timezone
+    const localEndDate = new Date(endDate + 'T23:59:59+07:00'); // WIB timezone
+    const localPrevStartDate = new Date(prevStartDate + 'T00:00:00+07:00');
+    const localPrevEndDate = new Date(prevEndDate + 'T23:59:59+07:00');
+
+    console.log('Dashboard service date filter:', {
+      startDate,
+      endDate,
+      localStartDate: localStartDate.toISOString(),
+      localEndDate: localEndDate.toISOString(),
+    });
+
     try {
       // Run current period queries in parallel
       const [
@@ -54,8 +67,8 @@ export class DashboardService {
           },
           where: {
             createdAt: {
-              gte: new Date(startDate),
-              lte: new Date(endDate),
+              gte: localStartDate,
+              lte: localEndDate,
             },
           },
         }),
@@ -65,8 +78,8 @@ export class DashboardService {
           },
           where: {
             createdAt: {
-              gte: new Date(startDate),
-              lte: new Date(endDate),
+              gte: localStartDate,
+              lte: localEndDate,
             },
           },
         }),
@@ -76,16 +89,16 @@ export class DashboardService {
           },
           where: {
             createdAt: {
-              gte: new Date(startDate),
-              lte: new Date(endDate),
+              gte: localStartDate,
+              lte: localEndDate,
             },
           },
         }),
         prisma.transactionItem.findMany({
           where: {
             createdAt: {
-              gte: new Date(startDate),
-              lte: new Date(endDate),
+              gte: localStartDate,
+              lte: localEndDate,
             },
           },
         }),
@@ -100,8 +113,8 @@ export class DashboardService {
             },
             where: {
               createdAt: {
-                gte: new Date(prevStartDate),
-                lte: new Date(prevEndDate),
+                gte: localPrevStartDate,
+                lte: localPrevEndDate,
               },
             },
           }),
@@ -111,8 +124,8 @@ export class DashboardService {
             },
             where: {
               createdAt: {
-                gte: new Date(prevStartDate),
-                lte: new Date(prevEndDate),
+                gte: localPrevStartDate,
+                lte: localPrevEndDate,
               },
             },
           }),
@@ -122,16 +135,16 @@ export class DashboardService {
             },
             where: {
               createdAt: {
-                gte: new Date(prevStartDate),
-                lte: new Date(prevEndDate),
+                gte: localPrevStartDate,
+                lte: localPrevEndDate,
               },
             },
           }),
           prisma.transactionItem.findMany({
             where: {
               createdAt: {
-                gte: new Date(prevStartDate),
-                lte: new Date(prevEndDate),
+                gte: localPrevStartDate,
+                lte: localPrevEndDate,
               },
             },
           }),
@@ -162,13 +175,8 @@ export class DashboardService {
       const prevProfit = prevTotalSalesValue - prevTotalCost;
 
       // Calculate profit margin
-      const currentProfitMargin =
-        currentTotalSalesValue > 0
-          ? (currentProfit / currentTotalSalesValue) * 100
-          : 0;
-      const prevProfitMargin =
-        prevTotalSalesValue > 0 ? (prevProfit / prevTotalSalesValue) * 100 : 0;
-
+      const currentProfitMargin = currentProfit;
+      const prevProfitMargin = prevProfit;
       // Calculate growth rates
       const calculateGrowth = (current: number, previous: number) => {
         if (previous === 0) return 0;
@@ -269,14 +277,19 @@ export class DashboardService {
     // Current period
     const startDate = `${year}-01-01`;
     const endDate = `${year}-12-31`;
+
+    // Convert to local timezone dates for accurate database queries
+    const localStartDate = new Date(startDate + 'T00:00:00+07:00'); // WIB timezone
+    const localEndDate = new Date(endDate + 'T23:59:59+07:00'); // WIB timezone
+
     try {
       // Fetch transactions
       const transactions = await prisma.transaction.groupBy({
         by: ['createdAt'],
         where: {
           createdAt: {
-            gte: new Date(startDate),
-            lte: new Date(endDate),
+            gte: localStartDate,
+            lte: localEndDate,
           },
         },
         _count: {
@@ -294,8 +307,8 @@ export class DashboardService {
       const transactionItems = await prisma.transactionItem.findMany({
         where: {
           createdAt: {
-            gte: new Date(startDate),
-            lte: new Date(endDate),
+            gte: localStartDate,
+            lte: localEndDate,
           },
         },
         select: {
@@ -408,6 +421,11 @@ export class DashboardService {
       dates.previous.startDate,
       dates.previous.endDate,
     ].map((date) => format(date, 'yyyy-MM-dd'));
+
+    // Convert to local timezone dates for accurate database queries
+    const localStartDate = new Date(startDate + 'T00:00:00+07:00'); // WIB timezone
+    const localEndDate = new Date(endDate + 'T23:59:59+07:00'); // WIB timezone
+
     try {
       const paymentMethods = await prisma.transaction
         .groupBy({
@@ -417,8 +435,8 @@ export class DashboardService {
           },
           where: {
             createdAt: {
-              gte: new Date(startDate),
-              lte: new Date(endDate),
+              gte: localStartDate,
+              lte: localEndDate,
             },
           },
         })
@@ -463,6 +481,11 @@ export class DashboardService {
       dates.previous.startDate,
       dates.previous.endDate,
     ].map((date) => format(date, 'yyyy-MM-dd'));
+
+    // Convert to local timezone dates for accurate database queries
+    const localStartDate = new Date(startDate + 'T00:00:00+07:00'); // WIB timezone
+    const localEndDate = new Date(endDate + 'T23:59:59+07:00'); // WIB timezone
+
     try {
       const topCategories = await prisma.transactionItem.groupBy({
         by: ['batchId'],
@@ -477,8 +500,8 @@ export class DashboardService {
         take: 5,
         where: {
           createdAt: {
-            gte: new Date(startDate),
-            lte: new Date(endDate),
+            gte: localStartDate,
+            lte: localEndDate,
           },
         },
       });
@@ -575,8 +598,6 @@ export class DashboardService {
         })
       );
 
-      console.log(`Returning ${membersWithLastTransaction.length} top members`);
-
       return {
         success: true,
         data: membersWithLastTransaction,
@@ -611,6 +632,11 @@ export class DashboardService {
       dates.current.startDate,
       dates.current.endDate,
     ].map((date) => format(date, 'yyyy-MM-dd'));
+
+    // Convert to local timezone dates for accurate database queries
+    const localStartDate = new Date(startDate + 'T00:00:00+07:00'); // WIB timezone
+    const localEndDate = new Date(endDate + 'T23:59:59+07:00'); // WIB timezone
+
     try {
       // First get discounts used in transactions in the given period
       const transactionDiscounts = await prisma.transaction.groupBy({
@@ -626,8 +652,8 @@ export class DashboardService {
             not: null,
           },
           createdAt: {
-            gte: new Date(startDate),
-            lte: new Date(endDate),
+            gte: localStartDate,
+            lte: localEndDate,
           },
         },
         orderBy: {
@@ -651,8 +677,8 @@ export class DashboardService {
             not: null,
           },
           createdAt: {
-            gte: new Date(startDate),
-            lte: new Date(endDate),
+            gte: localStartDate,
+            lte: localEndDate,
           },
         },
         orderBy: {
