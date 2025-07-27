@@ -25,7 +25,7 @@
         "batchCode": "Batch Code",
         "expireDate": "Expire Date",
         "remainingQuantity": "Remaining Quantity",
-        "buyPrice": "Buy Price"
+        "buyPrice": "Cost Price"
       },
       "actions": {
         "openMenu": "Open menu",
@@ -129,7 +129,7 @@
       "quantityPricing": "Quantity & Pricing",
       "initialQuantity": "Initial Quantity",
       "remainingQuantity": "Remaining Quantity",
-      "buyPrice": "Buy Price",
+      "buyPrice": "Cost Price",
       "expiryDate": "Expiry Date",
       "stockMovementHistory": "Stock Movement History",
       "stockMovementHistoryLegacy": "Stock Movement History (Legacy)",
@@ -188,9 +188,9 @@
       "pickDate": "Pick a date",
       "initialQuantity": "Initial Quantity",
       "enterInitialQuantity": "Enter initial quantity",
-      "buyPrice": "Buy Price (IDR)",
-      "enterBuyPrice": "Enter buy price",
-      "buyPriceNote": "Total purchase price for the entire batch, not per unit",
+      "buyPrice": "Cost Price (IDR)",
+      "enterBuyPrice": "Enter Cost Price",
+      "buyPriceNote": "Cost price per unit",
       "unit": "Unit",
       "selectUnit": "Select a unit",
       "noUnitsFound": "No units found",

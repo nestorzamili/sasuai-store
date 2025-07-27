@@ -237,6 +237,7 @@ export function ProductDetailsSection() {
                   size="icon"
                   onClick={handleGenerateBarcode}
                   title={t('generateBarcode')}
+                  disabled={isEditing}
                 >
                   <IconRefresh size={16} />
                 </Button>
@@ -249,6 +250,7 @@ export function ProductDetailsSection() {
               <FormMessage />
             </FormItem>
           )}
+          disabled={isEditing}
         />
 
         {/* Status */}

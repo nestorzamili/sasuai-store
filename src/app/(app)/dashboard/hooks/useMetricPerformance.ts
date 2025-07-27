@@ -22,7 +22,7 @@ export function useMetricPerformance(filter: FilterDateFilter) {
       costProduct: { value: 0, growth: 0 },
       productOut: { value: 0, growth: 0 },
       margin: { value: 0, growth: 0 },
-    },
+    }
   );
 
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -32,15 +32,32 @@ export function useMetricPerformance(filter: FilterDateFilter) {
     () => ({
       from:
         filter.from instanceof Date
-          ? filter.from.toISOString().split('T')[0]
+          ? filter.from.getFullYear() +
+            '-' +
+            String(filter.from.getMonth() + 1).padStart(2, '0') +
+            '-' +
+            String(filter.from.getDate()).padStart(2, '0')
           : String(filter.from),
       to:
         filter.to instanceof Date
-          ? filter.to.toISOString().split('T')[0]
+          ? filter.to.getFullYear() +
+            '-' +
+            String(filter.to.getMonth() + 1).padStart(2, '0') +
+            '-' +
+            String(filter.to.getDate()).padStart(2, '0')
           : String(filter.to),
     }),
-    [filter.from, filter.to],
+    [filter.from, filter.to]
   );
+
+  // Debug logging untuk memastikan konversi benar
+  console.log('useMetricPerformance filter conversion:', {
+    originalFilter: {
+      from: filter.from,
+      to: filter.to,
+    },
+    convertedFilter: dashboardFilter,
+  });
 
   const fetchMetricPerformance = useCallback(async () => {
     try {

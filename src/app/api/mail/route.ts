@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     if (!to || !subject || !html) {
       return Response.json(
         { error: 'Missing required fields: to, subject, html' },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -44,7 +44,6 @@ export async function POST(request: NextRequest) {
       return Response.json({ error }, { status: 500 });
     }
 
-    console.log('Email sent successfully:', data?.id);
     return Response.json({ data });
   } catch (error) {
     console.error('Failed to send email:', error);
@@ -53,7 +52,7 @@ export async function POST(request: NextRequest) {
     if (error instanceof Error && error.message.includes('RESEND_API_KEY')) {
       return Response.json(
         { error: 'Email service not configured' },
-        { status: 500 },
+        { status: 500 }
       );
     }
 

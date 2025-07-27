@@ -154,24 +154,33 @@ export default function BasicInfo({ form }: BasicInfoProps) {
                     )}
 
                     {discountType === DiscountType.PERCENTAGE ? (
-                      // For percentage - use number input with better UX
+                      // For percentage - use text input for better UX (no leading zeros)
                       <Input
-                        type="number"
+                        type="text"
                         placeholder={t('enterPercentage')}
-                        min={0}
-                        max={100}
-                        step={0.01}
                         {...restField}
-                        value={value ?? ''}
+                        value={value === 0 ? '' : value.toString()}
                         onChange={(e) => {
                           const inputValue = e.target.value;
+
+                          // Allow empty input
                           if (inputValue === '') {
                             onChange(0);
-                          } else {
-                            const newValue = Number(inputValue);
-                            if (!isNaN(newValue)) {
-                              onChange(newValue);
-                            }
+                            return;
+                          }
+
+                          // Only allow numbers and decimal point
+                          if (!/^\d*\.?\d*$/.test(inputValue)) {
+                            return;
+                          }
+
+                          const newValue = parseFloat(inputValue);
+                          if (
+                            !isNaN(newValue) &&
+                            newValue >= 0 &&
+                            newValue <= 100
+                          ) {
+                            onChange(newValue);
                           }
                         }}
                         onBlur={(e) => {
@@ -179,6 +188,14 @@ export default function BasicInfo({ form }: BasicInfoProps) {
                           const inputValue = e.target.value;
                           if (inputValue === '' || isNaN(Number(inputValue))) {
                             onChange(0);
+                          } else {
+                            const newValue = parseFloat(inputValue);
+                            // Clamp to 0-100 range for percentage
+                            const clampedValue = Math.min(
+                              100,
+                              Math.max(0, newValue)
+                            );
+                            onChange(clampedValue);
                           }
                         }}
                       />

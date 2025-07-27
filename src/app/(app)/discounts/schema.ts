@@ -23,31 +23,45 @@ const baseDiscountSchema = z.object({
 });
 
 // Full schema with refinement for validation
-export const discountSchema = baseDiscountSchema.refine(
-  (data) => {
-    // Global discounts should use the ALL enum value
-    if (data.isGlobal) {
-      return data.applyTo === DiscountApplyTo.ALL;
+export const discountSchema = baseDiscountSchema
+  .refine(
+    (data) => {
+      // Validate percentage value is between 0-100
+      if (data.type === DiscountType.PERCENTAGE) {
+        return data.value >= 0 && data.value <= 100;
+      }
+      return true;
+    },
+    {
+      message: 'Percentage value must be between 0 and 100',
+      path: ['value'],
     }
+  )
+  .refine(
+    (data) => {
+      // Global discounts should use the ALL enum value
+      if (data.isGlobal) {
+        return data.applyTo === DiscountApplyTo.ALL;
+      }
 
-    // For non-global discounts, validate based on applyTo type
-    if (data.applyTo === DiscountApplyTo.SPECIFIC_PRODUCTS) {
-      return data.productIds && data.productIds.length > 0;
+      // For non-global discounts, validate based on applyTo type
+      if (data.applyTo === DiscountApplyTo.SPECIFIC_PRODUCTS) {
+        return data.productIds && data.productIds.length > 0;
+      }
+      if (data.applyTo === DiscountApplyTo.SPECIFIC_MEMBERS) {
+        return data.memberIds && data.memberIds.length > 0;
+      }
+      if (data.applyTo === DiscountApplyTo.SPECIFIC_MEMBER_TIERS) {
+        return data.memberTierIds && data.memberTierIds.length > 0;
+      }
+      return true;
+    },
+    {
+      message:
+        'Please select at least one item for the selected application type',
+      path: ['applyTo'],
     }
-    if (data.applyTo === DiscountApplyTo.SPECIFIC_MEMBERS) {
-      return data.memberIds && data.memberIds.length > 0;
-    }
-    if (data.applyTo === DiscountApplyTo.SPECIFIC_MEMBER_TIERS) {
-      return data.memberTierIds && data.memberTierIds.length > 0;
-    }
-    return true;
-  },
-  {
-    message:
-      'Please select at least one item for the selected application type',
-    path: ['applyTo'],
-  },
-);
+  );
 
 // Create partial schema from the base schema
 export const partialDiscountSchema = baseDiscountSchema.partial();
@@ -61,6 +75,19 @@ export const createTranslatedDiscountSchema = (t: (key: string) => string) => {
       name: z.string().min(1, t('validation.nameRequired')),
       value: z.coerce.number().min(0, t('validation.valuePositive')),
     })
+    .refine(
+      (data) => {
+        // Validate percentage value is between 0-100
+        if (data.type === DiscountType.PERCENTAGE) {
+          return data.value >= 0 && data.value <= 100;
+        }
+        return true;
+      },
+      {
+        message: t('validation.percentageRange'),
+        path: ['value'],
+      }
+    )
     .refine(
       (data) => {
         if (data.isGlobal) {
@@ -81,6 +108,6 @@ export const createTranslatedDiscountSchema = (t: (key: string) => string) => {
       {
         message: t('validation.selectItems'),
         path: ['applyTo'],
-      },
+      }
     );
 };

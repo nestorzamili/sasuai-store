@@ -222,4 +222,5 @@ export interface SortingState {
 export interface RewardTableProps {
   onEdit?: (reward: RewardWithClaimCount) => void;
   onDelete: (reward: RewardWithClaimCount) => void;
+  onRefresh?: (refreshFn: () => void) => void;
 }

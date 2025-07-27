@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import RewardPrimaryButton from './_components/reward-primary-button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -27,6 +27,14 @@ export default function RewardsPage() {
     useState<RewardWithClaimCount | null>(null);
   const [selectedRewardForDelete, setSelectedRewardForDelete] =
     useState<RewardWithClaimCount | null>(null);
+
+  // Ref to store the table refresh function
+  const tableRefreshRef = useRef<(() => void) | null>(null);
+
+  // Handler to capture the table refresh function
+  const handleTableRefresh = useCallback((refreshFn: () => void) => {
+    tableRefreshRef.current = refreshFn;
+  }, []);
 
   // Handlers for opening dialogs - stabilize with useCallback
   const handleOpenCreateDialog = useCallback(() => {
@@ -55,6 +63,11 @@ export default function RewardsPage() {
     setIsClaimDialogOpen(false);
     setSelectedRewardForEdit(null);
     setSelectedRewardForDelete(null);
+
+    // Refresh the table data
+    if (tableRefreshRef.current) {
+      tableRefreshRef.current();
+    }
   }, []);
 
   return (
@@ -97,6 +110,7 @@ export default function RewardsPage() {
           <RewardTable
             onEdit={handleOpenEditDialog}
             onDelete={handleOpenDeleteDialog}
+            onRefresh={handleTableRefresh}
           />
         </TabsContent>
 

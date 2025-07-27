@@ -50,9 +50,6 @@ export class SchedulerService {
       }
 
       this.isInitialized = true;
-      console.log(
-        `Scheduler service initialized with ${jobConfigs.length} jobs`,
-      );
     } catch (error) {
       console.error('Failed to initialize scheduler:', error);
     }
@@ -102,7 +99,7 @@ export class SchedulerService {
       // Validate cron expression
       if (!cron.validate(config.schedule)) {
         console.error(
-          `Invalid cron expression for job ${config.name}: ${config.schedule}`,
+          `Invalid cron expression for job ${config.name}: ${config.schedule}`
         );
         return;
       }
@@ -114,7 +111,7 @@ export class SchedulerService {
         },
         {
           timezone: 'Asia/Jakarta',
-        },
+        }
       );
 
       task.start();
@@ -122,8 +119,6 @@ export class SchedulerService {
 
       // Update next run time with proper calculation
       await this.updateNextRunTime(config.id);
-
-      console.log(`Job scheduled: ${config.name} (${config.schedule})`);
     } catch (error) {
       console.error(`Failed to schedule job: ${config.name}`, error);
     }
@@ -135,7 +130,7 @@ export class SchedulerService {
   private static async executeJobWithLogging(
     jobId: string,
     jobName: string,
-    handler: () => Promise<number>,
+    handler: () => Promise<number>
   ) {
     const startTime = new Date();
     let logId: string | undefined;
@@ -151,8 +146,6 @@ export class SchedulerService {
         },
       });
       logId = log.id;
-
-      console.log(`Running job: ${jobName}`);
 
       // Execute the job
       const recordsAffected = await handler();
@@ -173,10 +166,6 @@ export class SchedulerService {
 
       // Update job's last run time and next run time
       await this.updateJobTimings(jobId, startTime);
-
-      console.log(
-        `Job completed: ${jobName} - Updated ${recordsAffected} records in ${duration}ms`,
-      );
     } catch (error) {
       const endTime = new Date();
       const duration = endTime.getTime() - startTime.getTime();
@@ -238,7 +227,7 @@ export class SchedulerService {
    */
   private static calculateNextRun(
     schedule: string,
-    fromDate: Date = new Date(),
+    fromDate: Date = new Date()
   ): Date {
     const parts = schedule.split(' ');
     if (parts.length !== 5) {
@@ -381,7 +370,7 @@ export class SchedulerService {
    */
   static async updateJobConfig(
     jobId: string,
-    updates: JobConfigUpdate,
+    updates: JobConfigUpdate
   ): Promise<SchedulerJob> {
     // Validate cron expression if provided
     if (updates.schedule && !cron.validate(updates.schedule)) {
@@ -465,9 +454,8 @@ export class SchedulerService {
    * Stop all jobs
    */
   static stopAll() {
-    this.jobs.forEach((task, name) => {
+    this.jobs.forEach((task) => {
       task.stop();
-      console.log(`Stopped job: ${name}`);
     });
     this.jobs.clear();
     this.isInitialized = false;
@@ -571,7 +559,7 @@ export class SchedulerService {
    * Get scheduler logs
    */
   static async getLogs(
-    params: { limit?: number; offset?: number } = {},
+    params: { limit?: number; offset?: number } = {}
   ): Promise<SchedulerJobLog[]> {
     const { limit = 50, offset = 0 } = params;
 
