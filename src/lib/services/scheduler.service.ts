@@ -454,7 +454,7 @@ export class SchedulerService {
    * Stop all jobs
    */
   static stopAll() {
-    this.jobs.forEach((task, name) => {
+    this.jobs.forEach((task) => {
       task.stop();
     });
     this.jobs.clear();
