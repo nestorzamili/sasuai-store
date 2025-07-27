@@ -29,7 +29,7 @@ export default function MainContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<MemberWithTier | null>(
-    null,
+    null
   );
   const [activeTab, setActiveTab] = useState('members');
   const [tiers, setTiers] = useState<MemberTier[]>([]);
@@ -37,7 +37,7 @@ export default function MainContent() {
   // Award points state
   const [isAwardPointsOpen, setIsAwardPointsOpen] = useState(false);
   const [memberForPoints, setMemberForPoints] = useState<MemberWithTier | null>(
-    null,
+    null
   );
   const [pointsToAdd, setPointsToAdd] = useState(0);
   const [pointNotes, setPointNotes] = useState('');
@@ -83,6 +83,8 @@ export default function MainContent() {
   const handleSuccess = () => {
     setIsDialogOpen(false);
     setSelectedMember(null);
+    // Refresh tiers data when a tier operation completes
+    fetchTiers();
   };
 
   // Handle tab change
@@ -127,7 +129,7 @@ export default function MainContent() {
       const result = await awardPointsToMember(
         memberForPoints.id,
         pointsToAdd,
-        pointNotes,
+        pointNotes
       );
 
       if (result.success) {
