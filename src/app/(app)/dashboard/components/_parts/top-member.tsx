@@ -74,7 +74,6 @@ export function TopMember({ filter }: TopMemberProps) {
       abortControllerRef.current = new AbortController();
       setLoading(true);
 
-      console.log('Sending filter to API:', apiFilter);
       const response = await getTopMembers(apiFilter);
 
       if (abortControllerRef.current?.signal.aborted) {

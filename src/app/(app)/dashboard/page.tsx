@@ -76,7 +76,10 @@ export interface MetricPerformanceStat {
 export default function Dashboard() {
   const t = useTranslations('dashboard');
 
-  // Memoize the current date/time to prevent re-calculations
+  // Get current date as Date object for filter initialization
+  const today = useMemo(() => new Date(), []);
+
+  // Memoize the current date/time display to prevent re-calculations
   const currentDateTime = useMemo(() => {
     const now = new Date();
     return {
@@ -95,8 +98,8 @@ export default function Dashboard() {
   }, []);
 
   const [filter, setFilter] = useState<FilterDateFilter>(() => ({
-    from: new Date(currentDateTime.date),
-    to: new Date(currentDateTime.date),
+    from: today,
+    to: today,
   }));
 
   // Use custom hook
@@ -123,6 +126,20 @@ export default function Dashboard() {
   // Memoize the filter object passed to components
   const memoizedFilter = useMemo(() => filter, [filter]);
 
+  // Debug logging - can be removed in production
+  console.log('Dashboard filter:', {
+    from:
+      memoizedFilter.from instanceof Date
+        ? memoizedFilter.from.toLocaleDateString('en-US')
+        : memoizedFilter.from,
+    to:
+      memoizedFilter.to instanceof Date
+        ? memoizedFilter.to.toLocaleDateString('en-US')
+        : memoizedFilter.to,
+  });
+  console.log('Dashboard today:', today.toLocaleDateString('en-US'));
+  console.log('Dashboard current date/time display:', currentDateTime);
+
   // Memoize the loading component
   const LoadingFallback = useMemo(
     () => (
@@ -142,14 +159,25 @@ export default function Dashboard() {
           <p className="text-muted-foreground">{t('subtitle')}</p>
           <div className="mt-1 flex flex-col  text-muted-foreground">
             <span>
-              {t('current')}: {formatDate(currentDateTime.date)} |{' '}
-              {currentDateTime.time}
+              {t('current')}:{' '}
+              {today.toLocaleDateString('en-US', {
+                month: '2-digit',
+                day: '2-digit',
+                year: 'numeric',
+              })}{' '}
+              | {currentDateTime.time}
             </span>
           </div>
         </div>
         <div className="flex items-center space-x-2">
           <DateRangePickerWithPresets
-            value={{ from: new Date(filter.from), to: new Date(filter.to) }}
+            value={{
+              from:
+                filter.from instanceof Date
+                  ? filter.from
+                  : new Date(filter.from),
+              to: filter.to instanceof Date ? filter.to : new Date(filter.to),
+            }}
             onChange={handleFilterChange}
           />
           <Button variant="outline" size="sm" className="h-9 gap-2">
