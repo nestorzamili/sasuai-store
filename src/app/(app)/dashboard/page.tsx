@@ -125,20 +125,6 @@ export default function Dashboard() {
   // Memoize the filter object passed to components
   const memoizedFilter = useMemo(() => filter, [filter]);
 
-  // Debug logging - can be removed in production
-  console.log('Dashboard filter:', {
-    from:
-      memoizedFilter.from instanceof Date
-        ? memoizedFilter.from.toLocaleDateString('en-US')
-        : memoizedFilter.from,
-    to:
-      memoizedFilter.to instanceof Date
-        ? memoizedFilter.to.toLocaleDateString('en-US')
-        : memoizedFilter.to,
-  });
-  console.log('Dashboard today:', today.toLocaleDateString('en-US'));
-  console.log('Dashboard current date/time display:', currentDateTime);
-
   // Memoize the loading component
   const LoadingFallback = useMemo(
     () => (
