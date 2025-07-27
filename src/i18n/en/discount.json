@@ -147,6 +147,7 @@
     "validation": {
       "nameRequired": "Name is required",
       "valuePositive": "Value must be positive",
+      "percentageRange": "Percentage value must be between 0 and 100",
       "selectItems": "Please select at least one item for the selected application type"
     },
     "pages": {
