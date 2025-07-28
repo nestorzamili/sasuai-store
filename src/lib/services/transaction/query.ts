@@ -291,8 +291,7 @@ export class Query {
       };
 
       return {
-        success: true,
-        transactionDetails: transactionDetails,
+        transactionDetails,
       };
     } catch (error) {
       return {
