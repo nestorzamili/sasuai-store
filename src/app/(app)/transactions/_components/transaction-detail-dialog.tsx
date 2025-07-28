@@ -42,6 +42,7 @@ export function TransactionDetailDialog({
   const isMounted = useRef(true);
 
   useEffect(() => {
+    isMounted.current = true;
     return () => {
       isMounted.current = false;
     };
@@ -135,12 +136,15 @@ export function TransactionDetailDialog({
       setLoading(true);
       const result = await getTransactionById(transactionId);
 
-      if (result.success && result.data && isMounted.current) {
+      if (result.success && result.data) {
         // Convert the API response to match the component's expected type
         const transactionData: TransactionDetail = {
           id: result.data.id,
           tranId: result.data.tranId,
-          createdAt: result.data.createdAt.toString(), // Convert Date to string
+          createdAt:
+            typeof result.data.createdAt === 'string'
+              ? result.data.createdAt
+              : result.data.createdAt.toString(),
           cashier: {
             name: result.data.cashier.name,
           },
@@ -161,11 +165,12 @@ export function TransactionDetailDialog({
             },
           },
           payment: {
-            method: result.data.payment.method,
+            method: result.data.payment.method.toUpperCase(), // Convert to uppercase to match expected format
             amount: result.data.payment.amount,
             change: result.data.payment.change,
           },
-          items: result.data.items.map((item) => ({
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          items: result.data.items.map((item: any) => ({
             id: item.id,
             product: {
               name: item.product.name,
@@ -187,7 +192,7 @@ export function TransactionDetailDialog({
         };
 
         setTransaction(transactionData);
-      } else if (isMounted.current) {
+      } else {
         toast({
           title: t('error'),
           description: result.error || t('failedToLoad'),
@@ -195,18 +200,14 @@ export function TransactionDetailDialog({
         });
       }
     } catch (error) {
-      console.error('Error fetching transaction details:', error);
-      if (isMounted.current) {
-        toast({
-          title: t('error'),
-          description: t('unexpectedError'),
-          variant: 'destructive',
-        });
-      }
+      console.error('Error in fetchTransactionDetails:', error);
+      toast({
+        title: t('error'),
+        description: t('unexpectedError'),
+        variant: 'destructive',
+      });
     } finally {
-      if (isMounted.current) {
-        setLoading(false);
-      }
+      setLoading(false);
     }
   }, [open, transactionId, t]);
 
