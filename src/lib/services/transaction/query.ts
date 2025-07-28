@@ -292,11 +292,14 @@ export class Query {
 
       return {
         success: true,
-        data: transactionDetails,
+        transactionDetails: transactionDetails,
       };
     } catch (error) {
-      console.error('Error getting transaction by ID:', error);
-      return errorHandling();
+      return {
+        success: false,
+        message: 'Failed to fetch transaction',
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
     }
   }
 }
