@@ -34,9 +34,7 @@ export const GET = withAuth(async (req: NextRequest) => {
       ? Number(searchParams.get('maxAmount'))
       : undefined;
 
-    // Get paginated transactions with filters
-    // Now returns updated transaction objects with tranId, payment.amount, and payment.change
-    const transactions = await TransactionService.getPaginated({
+    const result = await TransactionService.getTransactions({
       page,
       pageSize,
       sortField,
@@ -51,19 +49,14 @@ export const GET = withAuth(async (req: NextRequest) => {
       maxAmount,
     });
 
-    return NextResponse.json(
-      {
-        success: true,
-        data: transactions,
-      },
-      { status: 200 },
-    );
+    return NextResponse.json(result, {
+      status: result.success ? 200 : 400,
+    });
   } catch (error) {
-    console.error('Error fetching transactions:', error);
     return NextResponse.json(
       {
         success: false,
-        message: 'Failed to fetch transactions',
+        message: 'Internal server error',
         error: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 },
@@ -75,14 +68,16 @@ export const POST = withAuth(async (req: NextRequest) => {
   try {
     const body = await req.json();
 
-    const trx = await TransactionService.processTransaction(body);
-    return NextResponse.json(trx);
+    const result = await TransactionService.processTransaction(body);
+
+    return NextResponse.json(result, {
+      status: result.success ? 201 : 400,
+    });
   } catch (error) {
-    console.error('Error processing transaction:', error);
     return NextResponse.json(
       {
         success: false,
-        message: 'Failed to process transaction',
+        message: 'Internal server error',
         error: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 },

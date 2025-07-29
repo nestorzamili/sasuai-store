@@ -11,16 +11,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import {
-  IconCash,
-  IconCreditCard,
-  IconWallet,
-  IconQrcode,
-  IconBuildingBank,
-  IconDots,
-  IconFilterOff,
-  IconCurrencyDollar,
-} from '@tabler/icons-react';
+import { IconFilterOff, IconCurrencyDollar } from '@tabler/icons-react';
 import {
   Popover,
   PopoverContent,
@@ -29,7 +20,20 @@ import {
 import { cn } from '@/lib/utils';
 import { formatRupiah } from '@/lib/currency';
 import { DateRangePickerWithPresets } from '@/components/ui/date-range-picker-with-presets';
-import { TransactionFilterToolbarProps } from '@/lib/types/transaction';
+import { getPaymentMethodIcon } from './shared-utils';
+import type { DateRange } from 'react-day-picker';
+
+// === LOCAL TYPES ===
+interface TransactionFilterToolbarProps {
+  dateRange: DateRange | undefined;
+  setDateRange: (range: DateRange | undefined) => void;
+  minAmount: string;
+  setMinAmount: (amount: string) => void;
+  maxAmount: string;
+  setMaxAmount: (amount: string) => void;
+  paymentMethod: string;
+  setPaymentMethod: (method: string) => void;
+}
 
 export default function TransactionFilterToolbar({
   dateRange,
@@ -56,37 +60,37 @@ export default function TransactionFilterToolbar({
     paymentMethod !== 'ALL_METHODS'
   );
 
-  // Payment method options with translations - fix the translation keys
+  // Payment method options with translations - using helper function
   const paymentMethods = [
     {
       value: 'cash',
       label: t('paymentMethods.cash'),
-      icon: <IconCash size={16} />,
+      icon: getPaymentMethodIcon('cash', 16),
     },
     {
       value: 'debit',
       label: t('paymentMethods.debit'),
-      icon: <IconCreditCard size={16} />,
+      icon: getPaymentMethodIcon('debit', 16),
     },
     {
       value: 'e_wallet',
       label: t('paymentMethods.e_wallet'),
-      icon: <IconWallet size={16} />,
+      icon: getPaymentMethodIcon('e_wallet', 16),
     },
     {
       value: 'qris',
       label: t('paymentMethods.qris'),
-      icon: <IconQrcode size={16} />,
+      icon: getPaymentMethodIcon('qris', 16),
     },
     {
       value: 'transfer',
       label: t('paymentMethods.transfer'),
-      icon: <IconBuildingBank size={16} />,
+      icon: getPaymentMethodIcon('transfer', 16),
     },
     {
       value: 'other',
       label: t('paymentMethods.other'),
-      icon: <IconDots size={16} />,
+      icon: getPaymentMethodIcon('other', 16),
     },
   ];
 
