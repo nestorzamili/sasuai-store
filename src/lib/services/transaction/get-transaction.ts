@@ -1,85 +1,91 @@
 import prisma from '@/lib/prisma';
-import { errorHandling } from '@/lib/common/response-formatter';
+import type { Prisma } from '@prisma/client';
 import type {
-  TransactionPaginationParams,
-  TransactionPaginationResult,
-  TransactionWhereInput,
+  TransactionQueryParams,
   ProcessedTransaction,
+  ApiResponse,
+  TransactionListData,
+  TransactionDetails,
 } from './types';
 
 /**
- * Transaction Query Service - Handles retrieving transaction data
+ * Transaction Service - Handles retrieving transaction data
  */
-export class Query {
+export class GetTransaction {
   /**
-   * Get paginated transactions with filters and sorting
+   * Calculate discount totals from transaction items
    */
-  static async getPaginated(
-    params: TransactionPaginationParams,
-  ): Promise<TransactionPaginationResult> {
+  private static calculateDiscounts(
+    items: { discountAmount?: number | null }[],
+  ) {
+    return items.reduce((sum, item) => sum + (item.discountAmount || 0), 0);
+  }
+
+  /**
+   * Calculate points earned from member points
+   */
+  private static calculatePoints(memberPoints: { pointsEarned: number }[]) {
+    return memberPoints.reduce((sum, point) => sum + point.pointsEarned, 0);
+  }
+
+  /**
+   * Get transactions with filters and sorting
+   */
+  static async getTransactions(
+    params: TransactionQueryParams,
+  ): Promise<ApiResponse<TransactionListData>> {
     try {
-      const {
-        page = 1,
-        pageSize = 10,
-        sortField = 'createdAt',
-        sortDirection = 'desc',
-        search = '',
-        cashierId,
-        memberId,
-        paymentMethod,
-        startDate,
-        endDate,
-        minAmount,
-        maxAmount,
-      } = params;
-
-      // Build where clause based on filters
-      const where: TransactionWhereInput = {};
-
-      // Add search filter (search in transaction ID or member name)
-      if (search) {
-        where.OR = [
-          { tranId: { contains: search, mode: 'insensitive' } },
-          { id: { contains: search, mode: 'insensitive' } },
-          { member: { name: { contains: search, mode: 'insensitive' } } },
-          { cashier: { name: { contains: search, mode: 'insensitive' } } },
-        ];
-      }
-
-      // Add other filters
-      if (cashierId) where.cashierId = cashierId;
-      if (memberId) where.memberId = memberId;
-      if (paymentMethod) where.paymentMethod = paymentMethod;
-
-      // Date range filter
-      if (startDate || endDate) {
-        where.createdAt = {};
-        if (startDate) where.createdAt.gte = startDate;
-        if (endDate) where.createdAt.lte = endDate;
-      }
-
-      // Amount range filter
-      if (minAmount !== undefined || maxAmount !== undefined) {
-        where.finalAmount = {};
-        if (minAmount !== undefined) where.finalAmount.gte = minAmount;
-        if (maxAmount !== undefined) where.finalAmount.lte = maxAmount;
-      }
+      // Build where clause directly
+      const where: Prisma.TransactionWhereInput = {
+        ...(params.cashierId && { cashierId: params.cashierId }),
+        ...(params.memberId && { memberId: params.memberId }),
+        ...(params.paymentMethod && { paymentMethod: params.paymentMethod }),
+        ...(params.search && {
+          OR: [
+            { tranId: { contains: params.search, mode: 'insensitive' } },
+            { id: { contains: params.search, mode: 'insensitive' } },
+            {
+              member: {
+                name: { contains: params.search, mode: 'insensitive' },
+              },
+            },
+            {
+              cashier: {
+                name: { contains: params.search, mode: 'insensitive' },
+              },
+            },
+          ],
+        }),
+        ...((params.startDate || params.endDate) && {
+          createdAt: {
+            ...(params.startDate && { gte: params.startDate }),
+            ...(params.endDate && { lte: params.endDate }),
+          },
+        }),
+        ...((params.minAmount !== undefined ||
+          params.maxAmount !== undefined) && {
+          finalAmount: {
+            ...(params.minAmount !== undefined && { gte: params.minAmount }),
+            ...(params.maxAmount !== undefined && { lte: params.maxAmount }),
+          },
+        }),
+      };
 
       // Calculate pagination
+      const page = params.page || 1;
+      const pageSize = params.pageSize || 10;
       const skip = (page - 1) * pageSize;
 
-      // Get order by field
-      const orderBy:
-        | Record<string, 'asc' | 'desc'>
-        | Record<string, Record<string, 'asc' | 'desc'>> = {};
-
-      // Handle nested fields
-      if (sortField.includes('.')) {
-        const [relation, field] = sortField.split('.');
-        orderBy[relation] = { [field]: sortDirection };
-      } else {
-        orderBy[sortField] = sortDirection;
-      }
+      // Build order by directly
+      const sortField = params.sortField || 'createdAt';
+      const sortDirection = params.sortDirection || 'desc';
+      const orderBy: Prisma.TransactionOrderByWithRelationInput =
+        sortField.includes('.')
+          ? (() => {
+              const [relation, field] = sortField.split('.');
+              return { [relation]: { [field]: sortDirection } };
+            })()
+          : { [sortField]: sortDirection };
 
       // Execute queries in parallel
       const [transactions, totalCount] = await Promise.all([
@@ -109,22 +115,11 @@ export class Query {
       // Process transactions data
       const processedTransactions: ProcessedTransaction[] = transactions.map(
         (transaction) => {
-          // Calculate pricing details
           const originalAmount = transaction.totalAmount;
           const memberDiscount = transaction.discountAmount || 0;
-
-          // Calculate product discounts from items
-          const productDiscounts = transaction.items.reduce((sum, item) => {
-            return sum + (item.discountAmount || 0);
-          }, 0);
-
+          const productDiscounts = this.calculateDiscounts(transaction.items);
           const totalDiscount = memberDiscount + productDiscounts;
-          const finalAmount = transaction.finalAmount;
-
-          // Calculate points earned
-          const pointsEarned = transaction.memberPoints.reduce((sum, point) => {
-            return sum + point.pointsEarned;
-          }, 0);
+          const pointsEarned = this.calculatePoints(transaction.memberPoints);
 
           return {
             id: transaction.id,
@@ -136,7 +131,7 @@ export class Query {
               memberDiscount,
               productDiscounts,
               totalDiscount,
-              finalAmount,
+              finalAmount: transaction.finalAmount,
             },
             payment: {
               method: transaction.paymentMethod,
@@ -153,24 +148,33 @@ export class Query {
       const totalPages = Math.ceil(totalCount / pageSize);
 
       return {
-        transactions: processedTransactions,
-        pagination: {
-          totalCount,
-          totalPages,
-          currentPage: page,
-          pageSize,
+        success: true,
+        data: {
+          transactions: processedTransactions,
+          pagination: {
+            totalCount,
+            totalPages,
+            currentPage: page,
+            pageSize,
+          },
         },
       };
     } catch (error) {
-      console.error('Error getting paginated transactions:', error);
-      throw errorHandling();
+      console.error('Error getting transactions:', error);
+      return {
+        success: false,
+        message: 'Failed to retrieve transactions',
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
     }
   }
 
   /**
-   * Get transaction by ID with full details
+   * Get transaction details by ID
    */
-  static async getById(transactionId: string) {
+  static async getTransactionDetail(
+    transactionId: string,
+  ): Promise<ApiResponse<TransactionDetails>> {
     try {
       const transaction = await prisma.transaction.findUnique({
         where: { id: transactionId },
@@ -215,16 +219,9 @@ export class Query {
       // Process transaction details
       const originalAmount = transaction.totalAmount;
       const memberDiscountAmount = transaction.discountAmount || 0;
-
-      // Calculate product discounts
-      const productDiscounts = transaction.items.reduce((sum, item) => {
-        return sum + (item.discountAmount || 0);
-      }, 0);
-
+      const productDiscounts = this.calculateDiscounts(transaction.items);
       const totalDiscounts = memberDiscountAmount + productDiscounts;
-      const pointsEarned = transaction.memberPoints.reduce((sum, point) => {
-        return sum + point.pointsEarned;
-      }, 0);
+      const pointsEarned = this.calculatePoints(transaction.memberPoints);
 
       // Process items
       const processedItems = transaction.items.map((item) => ({
@@ -291,12 +288,13 @@ export class Query {
       };
 
       return {
-        transactionDetails,
+        success: true,
+        data: transactionDetails,
       };
     } catch (error) {
       return {
         success: false,
-        message: 'Failed to fetch transaction',
+        message: 'Failed to retrieve transaction details',
         error: error instanceof Error ? error.message : 'Unknown error',
       };
     }

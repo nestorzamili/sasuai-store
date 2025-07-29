@@ -8,19 +8,24 @@ import type {
   DiscountType,
 } from '@prisma/client';
 
-// === PRISMA EXTENDED TYPES ===
+// ============================================================================
+// CORE TYPES
+// ============================================================================
+
 export type ProductWithRelations = Product & {
   batches: ProductBatch[];
   unit: Unit;
   discounts: Discount[];
 };
 
-// === PRISMA TRANSACTION CONTEXT ===
 export type PrismaTransactionContext = Parameters<
   Parameters<typeof import('@/lib/prisma').default.$transaction>[0]
 >[0];
 
-// === CART TYPES ===
+// ============================================================================
+// CART & INPUT TYPES
+// ============================================================================
+
 export interface CartItem {
   productId: string;
   selectedDiscountId?: string | null;
@@ -29,89 +34,6 @@ export interface CartItem {
 
 export type Cart = CartItem[];
 
-// === VALIDATION TYPES ===
-export interface ValidationResult<T> {
-  success: boolean;
-  message: string;
-  data?: T;
-}
-
-export interface ValidatedCartItem {
-  productId: string;
-  batchId: string;
-  unitId: string;
-  basicPrice: number;
-  buyPrice: number;
-  quantity: number;
-  discount: {
-    id: string;
-    value: number;
-    type: string;
-    valueType: DiscountType;
-  } | null;
-  discountedPrice: number;
-  subtotal: number;
-}
-
-export interface AppliedDiscount {
-  id: string;
-  value: number;
-  type: DiscountType;
-}
-
-// === MEMBER & DISCOUNT INFO TYPES ===
-export interface MemberInfoForValidation {
-  id: string;
-  name: string;
-  tierId: string | null;
-  tierName: string | null;
-}
-
-export interface MemberDiscountInfo {
-  id: string;
-  name: string;
-  discount: DiscountInfo | null;
-}
-
-export interface DiscountInfo {
-  id: string;
-  value: number;
-  type: DiscountType;
-  amount: number;
-}
-
-export interface GlobalDiscountInfo extends DiscountInfo {
-  code: string;
-}
-
-export interface MemberBanCheckResult {
-  success: boolean;
-  message: string;
-}
-
-// === TRANSACTION SUMMARY ===
-export interface TransactionSummary {
-  subtotal: number;
-  member: {
-    id: string;
-    name: string;
-    tierId?: string | null;
-    tierName?: string | null;
-    discount: DiscountInfo | null;
-  } | null;
-  globalDiscount: GlobalDiscountInfo | null;
-  discountSource: 'member' | 'tier' | 'global' | null;
-  finalAmount: number;
-}
-
-// === PAYMENT TYPES ===
-export interface PaymentValidationResult {
-  success: boolean;
-  message: string;
-  change?: number;
-}
-
-// === TRANSACTION DATA TYPES ===
 export interface TransactionData {
   cashierId: string;
   memberId?: string | null;
@@ -150,7 +72,100 @@ export interface PreparedTransactionItem {
   subtotal: number;
 }
 
-// === EXECUTION RESULT ===
+// ============================================================================
+// VALIDATION TYPES
+// ============================================================================
+export interface BaseValidationResult {
+  success: boolean;
+  message: string;
+}
+
+export interface ValidationResult<T> extends BaseValidationResult {
+  data?: T;
+}
+
+export interface PaymentValidationResult extends BaseValidationResult {
+  change?: number;
+}
+
+export type MemberBanCheckResult = BaseValidationResult;
+
+export interface ValidatedCartItem {
+  productId: string;
+  batchId: string;
+  unitId: string;
+  basicPrice: number;
+  buyPrice: number;
+  quantity: number;
+  discount: {
+    id: string;
+    value: number;
+    type: string;
+    valueType: DiscountType;
+  } | null;
+  discountedPrice: number;
+  subtotal: number;
+}
+
+export interface AppliedDiscount {
+  id: string;
+  value: number;
+  type: DiscountType;
+}
+
+// ============================================================================
+// BUSINESS DOMAIN TYPES
+// ============================================================================
+
+export interface MemberInfoForValidation {
+  id: string;
+  name: string;
+  tierId: string | null;
+  tierName: string | null;
+}
+
+export interface MemberRecord {
+  id: string;
+  name: string;
+  tierId: string | null;
+  totalPoints: number;
+  totalPointsEarned: number;
+  isBanned: boolean | null;
+  banReason: string | null;
+  tier: MemberTier | null;
+}
+
+export interface DiscountInfo {
+  id: string;
+  value: number;
+  type: DiscountType;
+  amount: number;
+}
+
+export interface GlobalDiscountInfo extends DiscountInfo {
+  code: string;
+}
+
+export interface MemberDiscountInfo {
+  id: string;
+  name: string;
+  discount: DiscountInfo | null;
+}
+
+export interface TransactionSummary {
+  subtotal: number;
+  member: {
+    id: string;
+    name: string;
+    tierId?: string | null;
+    tierName?: string | null;
+    discount: DiscountInfo | null;
+  } | null;
+  globalDiscount: GlobalDiscountInfo | null;
+  discountSource: 'member' | 'tier' | 'global' | null;
+  finalAmount: number;
+}
+
 export interface TransactionExecutionResult {
   success: boolean;
   data?: Transaction;
@@ -164,62 +179,102 @@ export interface TransactionExecutionResult {
   message?: string;
 }
 
-// === MEMBER RECORD FOR POINTS CALCULATION ===
-export interface MemberRecord {
+// ============================================================================
+// API RESPONSE TYPES
+// ============================================================================
+
+export interface ApiResponse<T = unknown> {
+  success: boolean;
+  data?: T;
+  message?: string;
+  error?: string;
+}
+
+export interface PaginationMeta {
+  totalCount: number;
+  totalPages: number;
+  currentPage: number;
+  pageSize: number;
+}
+
+export interface TransactionListData {
+  transactions: ProcessedTransaction[];
+  pagination: PaginationMeta;
+}
+
+// === TRANSACTION DETAIL RESPONSE TYPES ===
+export interface TransactionCashier {
+  id: string;
+  name: string | null;
+  email: string;
+}
+
+export interface TransactionMember {
   id: string;
   name: string;
-  tierId: string | null;
-  totalPoints: number;
-  totalPointsEarned: number;
-  isBanned: boolean | null;
-  banReason: string | null;
-  tier: MemberTier | null;
+  tier: string | null;
+  pointsEarned: number;
 }
 
-// === PAGINATION TYPES ===
-export interface TransactionPaginationParams {
-  page: number;
-  pageSize: number | undefined;
-  sortField?: string;
-  sortDirection?: 'asc' | 'desc';
-  search?: string;
-  cashierId?: string;
-  memberId?: string;
-  paymentMethod?: string;
-  startDate?: Date;
-  endDate?: Date;
-  minAmount?: number;
-  maxAmount?: number;
+export interface TransactionDiscount {
+  type: string;
+  name: string;
+  valueType: string;
+  value: number;
+  amount: number;
 }
 
-export interface TransactionWhereInput {
-  OR?: Array<{
-    tranId?: { contains: string; mode: 'insensitive' };
-    id?: { contains: string; mode: 'insensitive' };
-    member?: { name: { contains: string; mode: 'insensitive' } };
-    cashier?: { name: { contains: string; mode: 'insensitive' } };
-  }>;
-  cashierId?: string;
-  memberId?: string;
-  paymentMethod?: string;
-  createdAt?: {
-    gte?: Date;
-    lte?: Date;
+export interface TransactionPricing {
+  originalAmount: number;
+  discounts: {
+    member?: TransactionDiscount | null;
+    products: number;
+    total: number;
   };
-  finalAmount?: {
-    gte?: number;
-    lte?: number;
-  };
+  finalAmount: number;
 }
 
-export interface TransactionPaginationResult {
-  transactions: ProcessedTransaction[];
-  pagination: {
-    totalCount: number;
-    totalPages: number;
-    currentPage: number;
-    pageSize: number;
-  };
+export interface TransactionPayment {
+  method: string;
+  amount: number | null;
+  change: number | null;
+}
+
+export interface TransactionProduct {
+  name: string;
+  brand: string | null;
+  category: string;
+  price: number;
+  unit: string;
+}
+
+export interface TransactionItemDiscount {
+  id: string;
+  name: string;
+  type: string;
+  value: number;
+  amount: number;
+  discountedAmount: number;
+}
+
+export interface TransactionItem {
+  id: string;
+  product: TransactionProduct;
+  quantity: number;
+  originalAmount: number;
+  discountApplied?: TransactionItemDiscount | null;
+}
+
+export interface TransactionDetails {
+  id: string;
+  tranId: string | null;
+  createdAt: Date;
+  cashier: TransactionCashier;
+  member?: TransactionMember | null;
+  pricing: TransactionPricing;
+  payment: TransactionPayment;
+  items: TransactionItem[];
+  pointsEarned: number;
 }
 
 export interface ProcessedTransaction {
@@ -242,4 +297,23 @@ export interface ProcessedTransaction {
   itemCount: number;
   pointsEarned: number;
   createdAt: Date;
+}
+
+// ============================================================================
+// QUERY & FILTER TYPES
+// ============================================================================
+
+export interface TransactionQueryParams {
+  page: number;
+  pageSize: number | undefined;
+  sortField?: string;
+  sortDirection?: 'asc' | 'desc';
+  search?: string;
+  cashierId?: string;
+  memberId?: string;
+  paymentMethod?: string;
+  startDate?: Date;
+  endDate?: Date;
+  minAmount?: number;
+  maxAmount?: number;
 }

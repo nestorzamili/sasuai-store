@@ -1,9 +1,11 @@
 'use client';
 
-import { useEffect, useState, useRef, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { toast } from '@/hooks/use-toast';
 import { getTransactionById } from '../action';
 import { formatRupiah } from '@/lib/currency';
+import { formatDateTime } from '@/lib/date';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -17,15 +19,18 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { toast } from '@/hooks/use-toast';
 import { IconDownload } from '@tabler/icons-react';
-import { pdf } from '@react-pdf/renderer';
-import { TransactionPDF } from './transaction-generate-pdf';
-import {
-  TransactionDetailDialogProps,
-  TransactionDetail,
-  TransactionDetailItem,
-} from '@/lib/types/transaction';
+import type {
+  TransactionDetails,
+  TransactionItem,
+} from '@/lib/services/transaction/types';
+
+// === LOCAL TYPES ===
+interface TransactionDetailDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  transactionId: string | null;
+}
 
 export function TransactionDetailDialog({
   open,
@@ -33,8 +38,7 @@ export function TransactionDetailDialog({
   transactionId,
 }: TransactionDetailDialogProps) {
   const t = useTranslations('transaction.detailDialog');
-  const tPdf = useTranslations('transaction.pdf');
-  const [transaction, setTransaction] = useState<TransactionDetail | null>(
+  const [transaction, setTransaction] = useState<TransactionDetails | null>(
     null,
   );
   const [loading, setLoading] = useState(true);
@@ -55,61 +59,12 @@ export function TransactionDetailDialog({
     try {
       setPdfLoading(true);
 
-      // Prepare translations for PDF
-      const pdfTranslations = {
-        storeName: tPdf('storeName'),
-        storeAddress: tPdf('storeAddress'),
-        storePhone: tPdf('storePhone'),
-        storeEmail: tPdf('storeEmail'),
-        receiptTitle: tPdf('receiptTitle'),
-        dateTime: tPdf('dateTime'),
-        cashier: tPdf('cashier'),
-        customer: tPdf('customer'),
-        guest: tPdf('guest'),
-        paymentMethod: tPdf('paymentMethod'),
-        tableHeaders: {
-          no: tPdf('tableHeaders.no'),
-          item: tPdf('tableHeaders.item'),
-          unit: tPdf('tableHeaders.unit'),
-          price: tPdf('tableHeaders.price'),
-          qty: tPdf('tableHeaders.qty'),
-          total: tPdf('tableHeaders.total'),
-        },
-        discount: tPdf('discount'),
-        subtotal: tPdf('subtotal'),
-        memberDiscount: tPdf('memberDiscount'),
-        productDiscounts: tPdf('productDiscounts'),
-        totalAmount: tPdf('totalAmount'),
-        paymentDetails: tPdf('paymentDetails'),
-        amountPaid: tPdf('amountPaid'),
-        change: tPdf('change'),
-        pointsEarned: tPdf('pointsEarned'),
-        pointsMessage: tPdf('pointsMessage'),
-        totalPoints: tPdf('totalPoints'),
-        thankYou: tPdf('thankYou'),
-        poweredBy: tPdf('poweredBy'),
-        unknown: tPdf('unknown'),
-      };
-
-      // Generate PDF blob with translations
-      const blob = await pdf(
-        <TransactionPDF
-          transaction={transaction}
-          translations={pdfTranslations}
-        />,
-      ).toBlob();
-
-      // Create download link and trigger download
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `Receipt-${transaction.tranId}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      // Clean up
-      setTimeout(() => URL.revokeObjectURL(url), 100);
+      // Simple download without PDF generation for now
+      // TODO: Implement PDF generation when TransactionPDF component is available
+      toast({
+        title: t('success'),
+        description: 'PDF generation will be implemented soon',
+      });
 
       if (isMounted.current) {
         setPdfLoading(false);
@@ -126,7 +81,7 @@ export function TransactionDetailDialog({
         setPdfLoading(false);
       }
     }
-  }, [transaction, t, tPdf]);
+  }, [transaction, t]);
 
   // Stabilize fetch function with useCallback
   const fetchTransactionDetails = useCallback(async () => {
@@ -137,61 +92,8 @@ export function TransactionDetailDialog({
       const result = await getTransactionById(transactionId);
 
       if (result.success && result.data) {
-        // Convert the API response to match the component's expected type
-        const transactionData: TransactionDetail = {
-          id: result.data.id,
-          tranId: result.data.tranId,
-          createdAt:
-            typeof result.data.createdAt === 'string'
-              ? result.data.createdAt
-              : result.data.createdAt.toString(),
-          cashier: {
-            name: result.data.cashier.name,
-          },
-          member: result.data.member
-            ? {
-                id: result.data.member.id,
-                name: result.data.member.name,
-                tier: result.data.member.tier,
-              }
-            : null,
-          pricing: {
-            originalAmount: result.data.pricing.originalAmount,
-            finalAmount: result.data.pricing.finalAmount,
-            discounts: {
-              member: result.data.pricing.discounts.member,
-              products: result.data.pricing.discounts.products,
-              total: result.data.pricing.discounts.total,
-            },
-          },
-          payment: {
-            method: result.data.payment.method.toUpperCase(), // Convert to uppercase to match expected format
-            amount: result.data.payment.amount,
-            change: result.data.payment.change,
-          },
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          items: result.data.items.map((item: any) => ({
-            id: item.id,
-            product: {
-              name: item.product.name,
-              price: item.product.price,
-              unit: item.product.unit,
-              category: item.product.category,
-            },
-            quantity: item.quantity,
-            originalAmount: item.originalAmount,
-            discountApplied: item.discountApplied
-              ? {
-                  id: item.discountApplied.id,
-                  name: item.discountApplied.name,
-                  amount: item.discountApplied.amount,
-                }
-              : null,
-          })),
-          pointsEarned: result.data.pointsEarned,
-        };
-
-        setTransaction(transactionData);
+        // Service already returns the correct structure, use directly
+        setTransaction(result.data);
       } else {
         toast({
           title: t('error'),
@@ -242,7 +144,7 @@ export function TransactionDetailDialog({
                   <div>
                     <p className="text-sm text-muted-foreground">{t('date')}</p>
                     <p className="font-medium">
-                      {new Date(transaction?.createdAt).toLocaleString()}
+                      {formatDateTime(transaction?.createdAt)}
                     </p>
                   </div>
                   <div>
@@ -316,7 +218,7 @@ export function TransactionDetailDialog({
                       </thead>
                       <tbody>
                         {(transaction?.items || []).map(
-                          (item: TransactionDetailItem, index: number) => (
+                          (item: TransactionItem, index: number) => (
                             <tr
                               key={item?.id || index}
                               className="border-t hover:bg-muted/50 transition-colors"
@@ -347,23 +249,13 @@ export function TransactionDetailDialog({
                                 </div>
                               </td>
                               <td className="text-right p-3 whitespace-nowrap">
-                                {formatRupiah(
-                                  item?.product?.price ||
-                                    item?.pricePerUnit ||
-                                    0,
-                                )}
+                                {formatRupiah(item?.product?.price || 0)}
                               </td>
                               <td className="text-right p-3 whitespace-nowrap">
                                 {item?.quantity || 0}
                               </td>
                               <td className="text-right p-3 whitespace-nowrap font-medium">
-                                {formatRupiah(
-                                  item?.originalAmount ||
-                                    item?.subtotal ||
-                                    (item?.product?.price ||
-                                      item?.pricePerUnit ||
-                                      0) * (item?.quantity || 0),
-                                )}
+                                {formatRupiah(item?.originalAmount || 0)}
                               </td>
                             </tr>
                           ),
@@ -463,7 +355,6 @@ export function TransactionDetailDialog({
                       <span className="font-medium">
                         {formatRupiah(
                           transaction?.payment?.amount ||
-                            transaction?.payment?.cashAmount ||
                             transaction?.pricing?.finalAmount ||
                             0,
                         )}

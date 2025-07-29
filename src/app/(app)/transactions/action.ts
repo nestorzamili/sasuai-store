@@ -1,15 +1,15 @@
 'use server';
 
 import { TransactionService } from '@/lib/services/transaction.service';
-import {
-  TransactionPaginationParams,
-  TransactionPaginationResult,
-  GetTransactionsResponse,
-  GetTransactionByIdResponse,
-} from '@/lib/types/transaction';
+import type {
+  TransactionQueryParams,
+  ApiResponse,
+  TransactionListData,
+  TransactionDetails,
+} from '@/lib/services/transaction/types';
 
 /**
- * Get paginated transactions with filtering options
+ * Get transactions with pagination and filters
  */
 export async function getPaginatedTransactions({
   page = 1,
@@ -24,36 +24,27 @@ export async function getPaginatedTransactions({
   endDate,
   minAmount,
   maxAmount,
-}: TransactionPaginationParams): Promise<GetTransactionsResponse> {
+}: TransactionQueryParams): Promise<ApiResponse<TransactionListData>> {
   try {
-    // Input validation
-    if (page < 1) {
-      return {
-        success: false,
-        error: 'Page number must be greater than 0',
-      };
-    }
-
-    const result: TransactionPaginationResult =
-      await TransactionService.getPaginated({
-        page,
-        pageSize,
-        sortField,
-        sortDirection,
-        search,
-        cashierId,
-        memberId,
-        paymentMethod,
-        startDate,
-        endDate,
-        minAmount: minAmount ? Number(minAmount) : undefined,
-        maxAmount: maxAmount ? Number(maxAmount) : undefined,
-      });
+    const result = await TransactionService.getTransactions({
+      page,
+      pageSize,
+      sortField,
+      sortDirection,
+      search,
+      cashierId,
+      memberId,
+      paymentMethod,
+      startDate,
+      endDate,
+      minAmount: minAmount ? Number(minAmount) : undefined,
+      maxAmount: maxAmount ? Number(maxAmount) : undefined,
+    });
 
     return {
-      success: true,
-      data: result.transactions,
-      pagination: result.pagination,
+      success: result.success,
+      data: result.data,
+      error: result.error || result.message,
     };
   } catch (error) {
     console.error('Error fetching transactions:', error);
@@ -69,13 +60,13 @@ export async function getPaginatedTransactions({
  */
 export async function getTransactionById(
   id: string,
-): Promise<GetTransactionByIdResponse> {
+): Promise<ApiResponse<TransactionDetails>> {
   try {
-    const result = await TransactionService.getTransactionById(id);
+    const result = await TransactionService.getTransactionDetail(id);
 
     return {
-      success: result.success !== false,
-      data: result.transactionDetails,
+      success: result.success,
+      data: result.data,
       error: result.error || result.message,
     };
   } catch (error) {

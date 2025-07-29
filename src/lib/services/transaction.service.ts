@@ -3,7 +3,7 @@ import { Data } from './transaction/data';
 import { Inventory } from './transaction/inventory';
 import { MemberService } from './transaction/member';
 import { Discount } from './transaction/discount';
-import { Query } from './transaction/query';
+import { GetTransaction } from './transaction/get-transaction';
 import prisma from '@/lib/prisma';
 import type {
   Cart,
@@ -12,8 +12,7 @@ import type {
   ValidationResult,
   PaymentValidationResult,
   TransactionSummary,
-  TransactionPaginationParams,
-  TransactionPaginationResult,
+  TransactionQueryParams,
   TransactionExecutionResult,
   MemberBanCheckResult,
 } from './transaction/types';
@@ -215,18 +214,16 @@ export class TransactionService {
   }
 
   /**
-   * Get paginated transactions with filters and sorting
+   * Get transactions with filters and sorting
    */
-  static async getPaginated(
-    params: TransactionPaginationParams,
-  ): Promise<TransactionPaginationResult> {
-    return Query.getPaginated(params);
+  static async getTransactions(params: TransactionQueryParams) {
+    return GetTransaction.getTransactions(params);
   }
 
   /**
-   * Get transaction by ID with full details
+   * Get transaction details by ID
    */
-  static async getTransactionById(id: string) {
-    return Query.getById(id);
+  static async getTransactionDetail(id: string) {
+    return GetTransaction.getTransactionDetail(id);
   }
 }
