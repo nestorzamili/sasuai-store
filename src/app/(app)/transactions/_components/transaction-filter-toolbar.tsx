@@ -11,7 +11,16 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { IconFilterOff, IconCurrencyDollar } from '@tabler/icons-react';
+import {
+  IconFilterOff,
+  IconCurrencyDollar,
+  IconCash,
+  IconCreditCard,
+  IconWallet,
+  IconQrcode,
+  IconBuildingBank,
+  IconDots,
+} from '@tabler/icons-react';
 import {
   Popover,
   PopoverContent,
@@ -20,7 +29,6 @@ import {
 import { cn } from '@/lib/utils';
 import { formatRupiah } from '@/lib/currency';
 import { DateRangePickerWithPresets } from '@/components/ui/date-range-picker-with-presets';
-import { getPaymentMethodIcon } from './shared-utils';
 import type { DateRange } from 'react-day-picker';
 
 // === LOCAL TYPES ===
@@ -65,32 +73,32 @@ export default function TransactionFilterToolbar({
     {
       value: 'cash',
       label: t('paymentMethods.cash'),
-      icon: getPaymentMethodIcon('cash', 16),
+      icon: <IconCash size={16} />,
     },
     {
       value: 'debit',
       label: t('paymentMethods.debit'),
-      icon: getPaymentMethodIcon('debit', 16),
+      icon: <IconCreditCard size={16} />,
     },
     {
       value: 'e_wallet',
       label: t('paymentMethods.e_wallet'),
-      icon: getPaymentMethodIcon('e_wallet', 16),
+      icon: <IconWallet size={16} />,
     },
     {
       value: 'qris',
       label: t('paymentMethods.qris'),
-      icon: getPaymentMethodIcon('qris', 16),
+      icon: <IconQrcode size={16} />,
     },
     {
       value: 'transfer',
       label: t('paymentMethods.transfer'),
-      icon: getPaymentMethodIcon('transfer', 16),
+      icon: <IconBuildingBank size={16} />,
     },
     {
       value: 'other',
       label: t('paymentMethods.other'),
-      icon: getPaymentMethodIcon('other', 16),
+      icon: <IconDots size={16} />,
     },
   ];
 

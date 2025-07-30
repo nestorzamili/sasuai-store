@@ -5,6 +5,14 @@ import { useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import { ColumnDef } from '@tanstack/react-table';
 import { MoreHorizontal, Eye } from 'lucide-react';
+import {
+  IconCash,
+  IconCreditCard,
+  IconWallet,
+  IconQrcode,
+  IconBuildingBank,
+  IconDots,
+} from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -15,7 +23,6 @@ import {
 import { TableLayout } from '@/components/layout/table-layout';
 import { formatRupiah } from '@/lib/currency';
 import { formatDateShort, formatTime } from '@/lib/date';
-import { getPaymentMethodIcon, getPaymentMethodText } from './shared-utils';
 import type { ProcessedTransaction } from '@/lib/services/transaction/types';
 
 // === LOCAL TYPES ===
@@ -33,6 +40,33 @@ interface TransactionTableProps {
   onViewDetails: (transactionId: string) => void;
   filterToolbar?: React.ReactNode;
 }
+
+//  === HELPER FUNCTIONS ===
+// Helper function to get payment method icon
+const getPaymentMethodIcon = (method: string, size = 16, className = '') => {
+  const iconProps = { size, className };
+  switch (method) {
+    case 'cash':
+      return <IconCash {...iconProps} />;
+    case 'debit':
+      return <IconCreditCard {...iconProps} />;
+    case 'e_wallet':
+      return <IconWallet {...iconProps} />;
+    case 'qris':
+      return <IconQrcode {...iconProps} />;
+    case 'transfer':
+      return <IconBuildingBank {...iconProps} />;
+    default:
+      return <IconDots {...iconProps} />;
+  }
+};
+
+// Helper function to get payment method text
+const getPaymentMethodText = (method: string, t: (key: string) => string) => {
+  return method === 'e_wallet'
+    ? t('paymentMethods.e_wallet')
+    : t(`paymentMethods.${method}`);
+};
 
 // === MAIN COMPONENT ===
 export function TransactionTable({
