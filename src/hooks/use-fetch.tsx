@@ -180,10 +180,10 @@ export function useFetch<T>(fetchOptions: FetchOptions<T>) {
   const debouncedSetSearch = useMemo(
     () =>
       debounce((newSearch: string) => {
-        setOptions((prev) => ({ ...prev, search: newSearch }));
-        // Reset pagination when search changes
         setOptions((prev) => ({
           ...prev,
+          search: newSearch,
+          // Reset pagination when search changes in single update
           pagination: { ...prev.pagination, pageIndex: 0 },
         }));
       }, debounceTime),
@@ -255,7 +255,7 @@ export function useFetch<T>(fetchOptions: FetchOptions<T>) {
     [],
   );
 
-  // Stable fetchData function
+  // Stable fetchData function with request deduplication
   const fetchData = useCallback(
     async (options: TableFetchOptions) => {
       try {
@@ -341,24 +341,29 @@ export function useFetch<T>(fetchOptions: FetchOptions<T>) {
       .flat(),
   ]);
 
-  // Effect with proper dependency management
+  // Effect with proper dependency management and request deduplication
   useEffect(() => {
     let isCancelled = false;
+    let requestId: number;
 
     const runFetch = async () => {
-      if (!isCancelled) {
-        await fetchData(formattedOptions);
-      }
+      // Simple deduplication by delaying slightly to batch rapid calls
+      requestId = window.setTimeout(async () => {
+        if (!isCancelled) {
+          await fetchData(formattedOptions);
+        }
+      }, 10);
     };
 
     runFetch();
 
     return () => {
       isCancelled = true;
+      if (requestId) {
+        window.clearTimeout(requestId);
+      }
     };
-  }, [formattedOptions, fetchData]);
-
-  // Manual refresh function
+  }, [formattedOptions, fetchData]); // Manual refresh function
   const refresh = useCallback(() => {
     fetchData(formattedOptions);
   }, [fetchData, formattedOptions]);
