@@ -70,56 +70,86 @@ export interface HookOptions {
 }
 
 export function useFetch<T>(fetchOptions: FetchOptions<T>) {
-  // Destructure stable parts of fetchOptions
+  // Destructure stable parts of fetchOptions with useMemo for stability
+  const stableFetchOptions = useMemo(
+    () => ({
+      fetchData: fetchOptions.fetchData,
+      onSuccess: fetchOptions.onSuccess,
+      onError: fetchOptions.onError,
+      debounceTime: fetchOptions.debounceTime ?? 500,
+    }),
+    [
+      fetchOptions.fetchData,
+      fetchOptions.onSuccess,
+      fetchOptions.onError,
+      fetchOptions.debounceTime,
+    ],
+  );
+
   const {
     fetchData: fetchDataFn,
     onSuccess,
     onError,
-    debounceTime = 500,
-  } = fetchOptions;
+    debounceTime,
+  } = stableFetchOptions;
 
   const [data, setData] = useState<T | undefined>();
   const [isLoading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
-  const [options, setOptions] = useState<HookOptions>({
-    pagination: {
-      pageIndex:
-        fetchOptions.initialPageIndex ?? fetchOptions.options?.page ?? 0,
-      pageSize:
-        fetchOptions.initialPageSize ?? fetchOptions.options?.limit ?? 10,
-    },
-    sortBy: {
-      id:
-        fetchOptions.initialSortField ??
-        fetchOptions.options?.sortBy?.id ??
-        'id',
-      desc:
-        fetchOptions.initialSortDirection ??
-        fetchOptions.options?.sortBy?.desc ??
-        false,
-    },
-    search: fetchOptions.options?.search || '',
-    sortOrder: fetchOptions.options?.sortOrder,
-    columnFilter: fetchOptions.options?.columnFilter || [],
-    filters: fetchOptions.initialFilters || fetchOptions.options?.filters || {}, // Initialize filters state
-    // Copy any additional options
-    ...(fetchOptions.options
-      ? Object.fromEntries(
-          Object.entries(fetchOptions.options).filter(
-            ([key]) =>
-              ![
-                'page',
-                'limit',
-                'search',
-                'sortBy',
-                'sortOrder',
-                'columnFilter',
-                'filters',
-              ].includes(key),
-          ),
-        )
-      : {}),
-  });
+
+  // Stable initial options using useMemo
+  const initialOptions = useMemo(
+    () => ({
+      pagination: {
+        pageIndex:
+          fetchOptions.initialPageIndex ?? fetchOptions.options?.page ?? 0,
+        pageSize:
+          fetchOptions.initialPageSize ?? fetchOptions.options?.limit ?? 10,
+      },
+      sortBy: {
+        id:
+          fetchOptions.initialSortField ??
+          fetchOptions.options?.sortBy?.id ??
+          'id',
+        desc:
+          fetchOptions.initialSortDirection ??
+          fetchOptions.options?.sortBy?.desc ??
+          false,
+      },
+      search: fetchOptions.options?.search || '',
+      sortOrder: fetchOptions.options?.sortOrder,
+      columnFilter: fetchOptions.options?.columnFilter || [],
+      filters:
+        fetchOptions.initialFilters || fetchOptions.options?.filters || {},
+      // Copy any additional options
+      ...(fetchOptions.options
+        ? Object.fromEntries(
+            Object.entries(fetchOptions.options).filter(
+              ([key]) =>
+                ![
+                  'page',
+                  'limit',
+                  'search',
+                  'sortBy',
+                  'sortOrder',
+                  'columnFilter',
+                  'filters',
+                ].includes(key),
+            ),
+          )
+        : {}),
+    }),
+    [
+      fetchOptions.initialPageIndex,
+      fetchOptions.initialPageSize,
+      fetchOptions.initialSortField,
+      fetchOptions.initialSortDirection,
+      fetchOptions.initialFilters,
+      fetchOptions.options,
+    ],
+  );
+
+  const [options, setOptions] = useState<HookOptions>(initialOptions);
   const [totalRows, setTotalRows] = useState<number>(0);
 
   // Reset pagination when search changes
@@ -146,13 +176,25 @@ export function useFetch<T>(fetchOptions: FetchOptions<T>) {
     }));
   }, []);
 
-  const setSearch = useMemo(
+  // Stable debounced search function
+  const debouncedSetSearch = useMemo(
     () =>
       debounce((newSearch: string) => {
         setOptions((prev) => ({ ...prev, search: newSearch }));
-        resetPagination();
+        // Reset pagination when search changes
+        setOptions((prev) => ({
+          ...prev,
+          pagination: { ...prev.pagination, pageIndex: 0 },
+        }));
       }, debounceTime),
-    [resetPagination, debounceTime],
+    [debounceTime],
+  );
+
+  const setSearch = useCallback(
+    (newSearch: string) => {
+      debouncedSetSearch(newSearch);
+    },
+    [debouncedSetSearch],
   );
 
   const setSortBy = useCallback((newSortBy: SortByOptions[]) => {
@@ -171,16 +213,14 @@ export function useFetch<T>(fetchOptions: FetchOptions<T>) {
     }));
   }, []);
 
-  const setColumnFilter = useCallback(
-    (newColumnFilter: string[]) => {
-      setOptions((prev) => ({
-        ...prev,
-        columnFilter: newColumnFilter,
-      }));
-      resetPagination();
-    },
-    [resetPagination],
-  );
+  const setColumnFilter = useCallback((newColumnFilter: string[]) => {
+    setOptions((prev) => ({
+      ...prev,
+      columnFilter: newColumnFilter,
+      // Reset pagination when column filter changes
+      pagination: { ...prev.pagination, pageIndex: 0 },
+    }));
+  }, []);
 
   // Add a dedicated setFilters function
   const setFilters = useCallback(
@@ -197,10 +237,11 @@ export function useFetch<T>(fetchOptions: FetchOptions<T>) {
           typeof newFilters === 'function'
             ? newFilters(prev.filters)
             : { ...prev.filters, ...newFilters },
+        // Reset pagination when filters change
+        pagination: { ...prev.pagination, pageIndex: 0 },
       }));
-      resetPagination();
     },
-    [resetPagination],
+    [],
   );
 
   // Add custom option setter
@@ -214,6 +255,7 @@ export function useFetch<T>(fetchOptions: FetchOptions<T>) {
     [],
   );
 
+  // Stable fetchData function
   const fetchData = useCallback(
     async (options: TableFetchOptions) => {
       try {
@@ -244,37 +286,76 @@ export function useFetch<T>(fetchOptions: FetchOptions<T>) {
       }
     },
     [fetchDataFn, onSuccess, onError],
-  ); // Include the destructured dependencies
+  );
 
-  const formattedOptions = useMemo(
-    () => ({
+  // Stable formatted options with proper memoization
+  const formattedOptions = useMemo(() => {
+    const baseOptions = {
       page: options.pagination.pageIndex,
       limit: options.pagination.pageSize,
       search: options.search,
       sortBy: options.sortBy,
       sortOrder: options.sortOrder,
       columnFilter: options.columnFilter,
-      filters: options.filters, // Include filters in formattedOptions
-      // Include any additional custom options
-      ...Object.fromEntries(
-        Object.entries(options).filter(
-          ([key]) =>
-            ![
-              'pagination',
-              'sortBy',
-              'search',
-              'sortOrder',
-              'columnFilter',
-              'filters',
-            ].includes(key),
-        ),
-      ),
-    }),
-    [options],
-  );
+      filters: options.filters,
+    };
 
+    // Add custom options without recreating objects
+    const customOptions = Object.fromEntries(
+      Object.entries(options).filter(
+        ([key]) =>
+          ![
+            'pagination',
+            'sortBy',
+            'search',
+            'sortOrder',
+            'columnFilter',
+            'filters',
+          ].includes(key),
+      ),
+    );
+
+    return { ...baseOptions, ...customOptions };
+  }, [
+    options.pagination.pageIndex,
+    options.pagination.pageSize,
+    options.search,
+    options.sortBy.id,
+    options.sortBy.desc,
+    options.sortOrder,
+    options.columnFilter,
+    options.filters,
+    // Include custom options in dependency array
+    ...Object.entries(options)
+      .filter(
+        ([key]) =>
+          ![
+            'pagination',
+            'sortBy',
+            'search',
+            'sortOrder',
+            'columnFilter',
+            'filters',
+          ].includes(key),
+      )
+      .flat(),
+  ]);
+
+  // Effect with proper dependency management
   useEffect(() => {
-    fetchData(formattedOptions);
+    let isCancelled = false;
+
+    const runFetch = async () => {
+      if (!isCancelled) {
+        await fetchData(formattedOptions);
+      }
+    };
+
+    runFetch();
+
+    return () => {
+      isCancelled = true;
+    };
   }, [formattedOptions, fetchData]);
 
   // Manual refresh function
@@ -294,7 +375,7 @@ export function useFetch<T>(fetchOptions: FetchOptions<T>) {
     setSortBy,
     setSearch,
     setColumnFilter,
-    setFilters, // Add setFilters to return value
+    setFilters,
     setCustomOption,
     refresh,
     resetPagination,
