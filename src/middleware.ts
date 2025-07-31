@@ -72,14 +72,6 @@ export async function middleware(request: NextRequest) {
       return NextResponse.next();
     }
 
-    if (
-      pathname.startsWith('/_next/') ||
-      pathname.includes('/favicon.ico') ||
-      pathname.startsWith('/images/')
-    ) {
-      return NextResponse.next();
-    }
-
     const url = request.nextUrl.clone();
     url.pathname = '/errors/503';
 
@@ -93,5 +85,7 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+  matcher: [
+    '/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)',
+  ],
 };
