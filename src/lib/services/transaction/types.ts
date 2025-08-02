@@ -227,8 +227,17 @@ export interface TransactionDiscount {
 export interface TransactionPricing {
   originalAmount: number;
   discounts: {
-    member?: TransactionDiscount | null;
-    products: number;
+    // Transaction-level discount properties (if any discount is applied)
+    id?: string;
+    type?: string;
+    name?: string;
+    code?: string;
+    valueType?: string;
+    value?: number;
+    amount?: number;
+    isGlobal?: boolean;
+    applyTo?: string | null;
+    // Total discount amount across all sources
     total: number;
   };
   finalAmount: number;

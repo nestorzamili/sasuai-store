@@ -264,16 +264,21 @@ export class GetTransaction {
         pricing: {
           originalAmount,
           discounts: {
-            member: transaction.discount
-              ? {
-                  type: transaction.discount.type,
-                  name: transaction.discount.name,
-                  valueType: transaction.discount.type,
-                  value: transaction.discount.value,
-                  amount: memberDiscountAmount,
-                }
-              : null,
-            products: productDiscounts,
+            // Transaction-level discount (if any)
+            ...(transaction.discount && {
+              id: transaction.discount.id,
+              type: transaction.discount.type,
+              name: transaction.discount.name,
+              ...(transaction.discount.code && {
+                code: transaction.discount.code,
+              }),
+              valueType: transaction.discount.type,
+              value: transaction.discount.value,
+              amount: memberDiscountAmount,
+              isGlobal: transaction.discount.isGlobal,
+              applyTo: transaction.discount.applyTo,
+            }),
+            // Total discount amount across all sources (transaction + product discounts)
             total: totalDiscounts,
           },
           finalAmount: transaction.finalAmount,
