@@ -180,10 +180,65 @@ export class Data {
   }
 
   /**
-   * Generate unique transaction ID
+   * Generate unique transaction ID with daily counter
+   * Format: YYYYMMDD0001 (date + 4-digit counter)
    */
-  static generateTransactionId(): string {
-    return `T${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+  static async generateTransactionId(
+    tx: PrismaTransactionContext,
+  ): Promise<string> {
+    const today = new Date();
+    const datePrefix = this.formatDatePrefix(today);
+    const todayRange = this.getTodayDateRange(today);
+
+    // Count existing transactions for today
+    const transactionCount = await tx.transaction.count({
+      where: {
+        createdAt: {
+          gte: todayRange.start,
+          lte: todayRange.end,
+        },
+      },
+    });
+
+    // Generate next counter (starting from 1)
+    const counter = String(transactionCount + 1).padStart(4, '0');
+
+    return `${datePrefix}${counter}`;
+  }
+
+  /**
+   * Format date to YYYYMMDD string
+   */
+  private static formatDatePrefix(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+
+    return `${year}${month}${day}`;
+  }
+
+  /**
+   * Get start and end of day for date range query
+   */
+  private static getTodayDateRange(date: Date): { start: Date; end: Date } {
+    const start = new Date(
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate(),
+      0,
+      0,
+      0,
+    );
+    const end = new Date(
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate(),
+      23,
+      59,
+      59,
+    );
+
+    return { start, end };
   }
 
   // =====================
