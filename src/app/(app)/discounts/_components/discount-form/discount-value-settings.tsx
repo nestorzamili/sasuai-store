@@ -1,19 +1,20 @@
 'use client';
 
 import { UseFormReturn } from 'react-hook-form';
+import { useTranslations } from 'next-intl';
+import { useState } from 'react';
 import { Input } from '@/components/ui/input';
-import { Switch } from '@/components/ui/switch';
 import {
-  FormControl,
   FormField,
   FormItem,
   FormLabel,
+  FormControl,
   FormMessage,
 } from '@/components/ui/form';
+import { Switch } from '@/components/ui/switch';
 import { IconUsers } from '@tabler/icons-react';
 import { DiscountType } from '@/lib/services/discount/types';
 import { DiscountFormValues } from '../../schema';
-import { useState } from 'react';
 
 interface DiscountValueSettingsProps {
   form: UseFormReturn<DiscountFormValues>;
@@ -22,6 +23,7 @@ interface DiscountValueSettingsProps {
 export default function DiscountValueSettings({
   form,
 }: DiscountValueSettingsProps) {
+  const t = useTranslations('discount');
   const type = form.watch('type');
   const maxUses = form.watch('maxUses');
   const minPurchase = form.watch('minPurchase');
@@ -50,7 +52,7 @@ export default function DiscountValueSettings({
         name="value"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Nilai Diskon *</FormLabel>
+            <FormLabel>{t('valueSettings.discountValue')}</FormLabel>
             <FormControl>
               <div className="relative">
                 {type === DiscountType.FIXED_AMOUNT && (
@@ -63,7 +65,11 @@ export default function DiscountValueSettings({
                   min={type === DiscountType.PERCENTAGE ? '0' : undefined}
                   step={type === DiscountType.PERCENTAGE ? '0.01' : undefined}
                   max={type === DiscountType.PERCENTAGE ? '100' : undefined}
-                  placeholder={type === DiscountType.PERCENTAGE ? '0' : '0'}
+                  placeholder={
+                    type === DiscountType.PERCENTAGE
+                      ? t('valueSettings.discountValuePlaceholder')
+                      : t('valueSettings.discountValuePlaceholder')
+                  }
                   className={type === DiscountType.FIXED_AMOUNT ? 'pl-10' : ''}
                   {...field}
                   value={
@@ -107,7 +113,7 @@ export default function DiscountValueSettings({
       <div className="space-y-4">
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <FormLabel>Minimum Pembelian</FormLabel>
+            <FormLabel>{t('valueSettings.minimumPurchase')}</FormLabel>
             <Switch
               checked={hasMinPurchase}
               onCheckedChange={(checked) => {
@@ -131,7 +137,9 @@ export default function DiscountValueSettings({
                       </div>
                       <Input
                         type="text"
-                        placeholder="0"
+                        placeholder={t(
+                          'valueSettings.discountValuePlaceholder',
+                        )}
                         className="pl-10"
                         {...field}
                         value={
@@ -162,7 +170,7 @@ export default function DiscountValueSettings({
 
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <FormLabel>Batas Penggunaan</FormLabel>
+            <FormLabel>{t('valueSettings.usageLimit')}</FormLabel>
             <Switch
               checked={hasMaxUses}
               onCheckedChange={(checked) => {
@@ -183,7 +191,7 @@ export default function DiscountValueSettings({
                     <Input
                       type="number"
                       min="1"
-                      placeholder="0"
+                      placeholder={t('valueSettings.discountValuePlaceholder')}
                       {...field}
                       value={
                         field.value === null || field.value === undefined
@@ -216,7 +224,7 @@ export default function DiscountValueSettings({
         <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
           <IconUsers size={16} className="text-amber-600" />
           <span className="text-sm text-amber-800">
-            Diskon akan otomatis nonaktif setelah digunakan {maxUses} kali
+            {t('valueSettings.usageInfo', { maxUses })}
           </span>
         </div>
       )}

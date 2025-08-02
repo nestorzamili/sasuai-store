@@ -207,7 +207,7 @@ export function DiscountTable({
                       className="flex justify-between cursor-pointer"
                       onClick={() => onEdit(discount)}
                     >
-                      Edit <Edit className="h-4 w-4" />
+                      {t('edit')} <Edit className="h-4 w-4" />
                     </DropdownMenuItem>
                   )}
 
@@ -216,7 +216,7 @@ export function DiscountTable({
                     className="flex justify-between cursor-pointer"
                     onClick={() => onToggleStatus(discount)}
                   >
-                    {discount.isActive ? 'Nonaktifkan' : 'Aktifkan'}
+                    {discount.isActive ? t('deactivate') : t('activate')}
                     {discount.isActive ? (
                       <PowerOff className="h-4 w-4" />
                     ) : (
@@ -230,7 +230,7 @@ export function DiscountTable({
                       className="flex justify-between cursor-pointer text-destructive"
                       onClick={() => onDelete(discount)}
                     >
-                      Hapus <Trash2 className="h-4 w-4" />
+                      {t('delete')} <Trash2 className="h-4 w-4" />
                     </DropdownMenuItem>
                   )}
                 </DropdownMenuContent>

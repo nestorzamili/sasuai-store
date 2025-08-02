@@ -195,27 +195,27 @@ export default function DiscountsPage() {
         const result = await toggleDiscountStatus(discount.id);
         if (result.success) {
           toast({
-            title: 'Status Updated',
-            description: `Discount "${discount.name}" has been ${discount.isActive ? 'deactivated' : 'activated'}`,
+            title: t('pages.statusUpdated'),
+            description: `${discount.name} ${discount.isActive ? t('pages.discountDeactivated') : t('pages.discountActivated')}`,
           });
           refresh(); // Refresh the table data
         } else {
           toast({
-            title: 'Error',
-            description: result.error || 'Failed to update discount status',
+            title: t('pages.error'),
+            description: result.error || t('pages.failedToUpdateStatus'),
             variant: 'destructive',
           });
         }
       } catch (error) {
         console.error('Error toggling discount status:', error);
         toast({
-          title: 'Error',
-          description: 'An unexpected error occurred',
+          title: t('pages.error'),
+          description: t('pages.unexpectedError'),
           variant: 'destructive',
         });
       }
     },
-    [refresh],
+    [refresh, t],
   );
 
   // Debounced filter change effect - only refresh after user stops changing filters

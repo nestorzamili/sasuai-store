@@ -1,6 +1,7 @@
 'use client';
 
 import { UseFormReturn } from 'react-hook-form';
+import { useTranslations } from 'next-intl';
 import {
   FormControl,
   FormField,
@@ -16,6 +17,8 @@ interface DiscountDateRangeProps {
 }
 
 export default function DiscountDateRange({ form }: DiscountDateRangeProps) {
+  const t = useTranslations('discount');
+
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -24,12 +27,12 @@ export default function DiscountDateRange({ form }: DiscountDateRangeProps) {
           name="startDate"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Tanggal Mulai *</FormLabel>
+              <FormLabel>{t('dateRange.startDate')}</FormLabel>
               <FormControl>
                 <DatePicker
                   date={field.value}
                   setDate={(date) => field.onChange(date)}
-                  placeholder="Pilih tanggal mulai"
+                  placeholder={t('dateRange.startDatePlaceholder')}
                 />
               </FormControl>
               <FormMessage />
@@ -42,12 +45,12 @@ export default function DiscountDateRange({ form }: DiscountDateRangeProps) {
           name="endDate"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Tanggal Berakhir *</FormLabel>
+              <FormLabel>{t('dateRange.endDate')}</FormLabel>
               <FormControl>
                 <DatePicker
                   date={field.value}
                   setDate={(date) => field.onChange(date)}
-                  placeholder="Pilih tanggal berakhir"
+                  placeholder={t('dateRange.endDatePlaceholder')}
                 />
               </FormControl>
               <FormMessage />
