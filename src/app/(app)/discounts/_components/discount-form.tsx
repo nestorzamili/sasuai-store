@@ -100,7 +100,8 @@ export default function DiscountForm({
         } else {
           toast({
             title: t('deleteDialog.error'),
-            description: result.message || 'Something went wrong',
+            description:
+              result.error || result.message || 'Something went wrong',
             variant: 'destructive',
           });
           return false;
