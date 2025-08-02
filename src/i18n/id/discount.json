@@ -22,6 +22,8 @@
       "active": "Aktif",
       "inactive": "Tidak Aktif",
       "disabled": "Dinonaktifkan",
+      "expired": "Kedaluwarsa",
+      "upcoming": "Akan Datang",
       "products": "produk",
       "members": "pelanggan",
       "tiers": "tingkatan",
@@ -36,6 +38,8 @@
       "specificMembers": "Pelanggan Tertentu",
       "memberTiers": "Tingkatan Pelanggan",
       "allStatuses": "Semua Status",
+      "clearFilters": "Hapus Filter",
+      "activeFilters": "Filter Aktif",
       "type": "Jenis",
       "status": "Status"
     },
@@ -164,6 +168,7 @@
     },
     "validation": {
       "nameRequired": "Nama wajib diisi",
+      "typeRequired": "Jenis diskon wajib dipilih",
       "valuePositive": "Nilai harus positif",
       "percentageRange": "Nilai persentase harus antara 0 dan 100",
       "selectItems": "Silakan pilih setidaknya satu item untuk jenis aplikasi yang dipilih"

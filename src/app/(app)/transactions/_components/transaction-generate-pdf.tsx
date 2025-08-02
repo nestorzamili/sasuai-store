@@ -7,7 +7,10 @@ import {
   Image,
 } from '@react-pdf/renderer';
 import { formatRupiah } from '@/lib/currency';
-import { PDFTransaction, PDFTransactionItem } from '@/lib/types/transaction';
+import type {
+  TransactionDetails,
+  TransactionItem,
+} from '@/lib/services/transaction/types';
 
 const STORE_LOGO =
   'https://res.cloudinary.com/samunu/image/upload/f_auto,q_auto/v1745953012/icon_z07a9i.png';
@@ -211,7 +214,7 @@ const styles = StyleSheet.create({
 });
 
 interface TransactionPDFProps {
-  transaction: PDFTransaction;
+  transaction: TransactionDetails;
   translations?: {
     storeName: string;
     storeAddress: string;
@@ -340,9 +343,7 @@ export const TransactionPDF = ({
             <View style={styles.metaColumn}>
               <Text style={styles.metaLabel}>{t.paymentMethod}</Text>
               <Text style={styles.metaValue}>
-                {transaction.payment?.method ||
-                  transaction.paymentMethod ||
-                  'Cash'}
+                {transaction.payment?.method || 'Cash'}
               </Text>
             </View>
           </View>
@@ -358,7 +359,7 @@ export const TransactionPDF = ({
             <Text style={styles.col5}>{t.tableHeaders.total}</Text>
           </View>
 
-          {transaction.items?.map((item: PDFTransactionItem, index: number) => (
+          {transaction.items?.map((item: TransactionItem, index: number) => (
             <View
               key={index}
               style={
@@ -386,7 +387,7 @@ export const TransactionPDF = ({
                 {item.quantity}
               </Text>
               <Text style={[styles.col5, styles.summaryValue]}>
-                {formatRupiah(item.originalAmount || item.subtotal || 0)}
+                {formatRupiah(item.originalAmount || 0)}
               </Text>
             </View>
           ))}
@@ -431,22 +432,20 @@ export const TransactionPDF = ({
             <Text style={styles.summaryValue}>
               {formatRupiah(
                 transaction.payment?.amount ||
-                  transaction.amountPaid ||
                   transaction.pricing?.finalAmount ||
                   0,
               )}
             </Text>
           </View>
-          {(transaction.payment?.amount || transaction.amountPaid || 0) >
+          {(transaction.payment?.amount || 0) >
             (transaction.pricing?.finalAmount || 0) && (
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>{t.change}</Text>
               <Text style={styles.summaryValue}>
                 {formatRupiah(
                   transaction.payment?.change ||
-                    (transaction.payment?.amount ||
-                      transaction.amountPaid ||
-                      0) - (transaction.pricing?.finalAmount || 0) ||
+                    (transaction.payment?.amount || 0) -
+                      (transaction.pricing?.finalAmount || 0) ||
                     0,
                 )}
               </Text>
@@ -459,12 +458,6 @@ export const TransactionPDF = ({
             <Text style={styles.pointsTitle}>{t.pointsEarned}</Text>
             <Text>
               {transaction.pointsEarned} {t.pointsMessage}
-              {transaction.member?.points && (
-                <Text>
-                  {' '}
-                  {t.totalPoints} {transaction.member.points}
-                </Text>
-              )}
             </Text>
           </View>
         )}

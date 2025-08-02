@@ -23,7 +23,7 @@ import { DateFilter as FilterDateFilter } from '@/lib/types/filter';
 import { TopDiscountData } from '@/lib/types/dashboard';
 import { LoaderCardContent } from '@/components/loader-card-content';
 import { UnavailableData } from '@/components/unavailable-data';
-import { DiscountType } from '@/lib/types/discount';
+import { DiscountType } from '@/lib/services/discount/types';
 
 interface TopDiscountProps {
   filter?: FilterDateFilter;
@@ -61,7 +61,7 @@ export function TopDiscount({ filter }: TopDiscountProps) {
     const lastDay = new Date(
       defaultEnd.getFullYear(),
       defaultEnd.getMonth() + 1,
-      0
+      0,
     ).getDate();
     defaultEnd.setDate(lastDay); // Last day of current month
 
@@ -164,8 +164,8 @@ export function TopDiscount({ filter }: TopDiscountProps) {
                     ? Math.min(
                         100,
                         Math.round(
-                          (discount.usageCount / discount.maxUses) * 100
-                        )
+                          (discount.usageCount / discount.maxUses) * 100,
+                        ),
                       )
                     : 50);
 
