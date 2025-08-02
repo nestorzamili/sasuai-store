@@ -179,10 +179,7 @@ export function DiscountTable({
         header: '',
         cell: ({ row }) => {
           const discount = row.original;
-          const hasBeenUsed =
-            discount.usage.usedCount > 0 ||
-            discount._count.transactions > 0 ||
-            discount._count.transactionItems > 0;
+          const hasBeenUsed = discount.usedCount > 0;
 
           return (
             <div className="text-right">
