@@ -104,7 +104,7 @@ export class TransactionService {
 
         // 7 - Transform and prepare data
         const preparedItems = Data.transformCartToPreparedItems(validatedCart);
-        const tranId = Data.generateTransactionId();
+        const tranId = await Data.generateTransactionId(tx);
         const discountInfo = {
           id:
             transactionSummary.globalDiscount?.id ||
@@ -122,7 +122,7 @@ export class TransactionService {
           tranId,
           data,
           transactionSummary,
-          data.cashAmount || 0,
+          data.cashAmount || transactionSummary.finalAmount,
           change,
           preparedItems,
           discountInfo,
@@ -148,7 +148,7 @@ export class TransactionService {
           success: true,
           data: transaction,
           finalAmount: transactionSummary.finalAmount,
-          cashAmount: data.cashAmount || 0,
+          cashAmount: data.cashAmount || transactionSummary.finalAmount,
           change,
           message: 'Transaction completed successfully',
         };
