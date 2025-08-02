@@ -22,7 +22,7 @@ export function useMetricPerformance(filter: FilterDateFilter) {
       costProduct: { value: 0, growth: 0 },
       productOut: { value: 0, growth: 0 },
       margin: { value: 0, growth: 0 },
-    }
+    },
   );
 
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -47,17 +47,8 @@ export function useMetricPerformance(filter: FilterDateFilter) {
             String(filter.to.getDate()).padStart(2, '0')
           : String(filter.to),
     }),
-    [filter.from, filter.to]
+    [filter.from, filter.to],
   );
-
-  // Debug logging untuk memastikan konversi benar
-  console.log('useMetricPerformance filter conversion:', {
-    originalFilter: {
-      from: filter.from,
-      to: filter.to,
-    },
-    convertedFilter: dashboardFilter,
-  });
 
   const fetchMetricPerformance = useCallback(async () => {
     try {

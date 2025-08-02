@@ -55,7 +55,6 @@ export function TransactionPricingSummary({
       {/* Payment Information */}
       {payment && (
         <div className="mt-4 p-3 bg-muted/30 rounded-lg space-y-2">
-          <h4 className="font-medium">{t('paymentDetails')}</h4>
           <div className="flex justify-between">
             <span className="text-muted-foreground">{t('paymentAmount')}</span>
             <span className="font-medium">
