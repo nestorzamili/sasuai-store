@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useState, useCallback, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import { ColumnDef } from '@tanstack/react-table';
 import { MoreHorizontal, Eye } from 'lucide-react';
@@ -21,294 +21,69 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { TableLayout } from '@/components/layout/table-layout';
-import { useFetch } from '@/hooks/use-fetch';
-import { getPaginatedTransactions } from '../action';
 import { formatRupiah } from '@/lib/currency';
-import { TableFetchOptions } from '@/hooks/use-fetch';
-import { TransactionDetailDialog } from './transaction-detail-dialog';
-import { startOfDay, endOfDay } from 'date-fns';
-import TransactionFilterToolbar from './transaction-filter-toolbar';
-import {
-  ProcessedTransaction,
-  TransactionForTable,
-  TransactionTableProps,
-  SortingState,
-  DateRange,
-} from '@/lib/types/transaction';
+import { formatDateShort, formatTime } from '@/lib/date';
+import type { ProcessedTransaction } from '@/lib/services/transaction/types';
 
-// === CUSTOM HOOKS ===
-const useTransactionFilters = () => {
-  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
-  const [minAmount, setMinAmount] = useState<string>('');
-  const [maxAmount, setMaxAmount] = useState<string>('');
-  const [paymentMethod, setPaymentMethod] = useState<string>('ALL_METHODS');
+// === LOCAL TYPES ===
+interface TransactionTableProps {
+  data: ProcessedTransaction[];
+  isLoading: boolean;
+  pagination: { pageIndex: number; pageSize: number };
+  totalRows: number;
+  onPaginationChange: (pagination: {
+    pageIndex: number;
+    pageSize: number;
+  }) => void;
+  onSortingChange: (sorting: Array<{ id: string; desc: boolean }>) => void;
+  onSearchChange: (search: string) => void;
+  onViewDetails: (transactionId: string) => void;
+  filterToolbar?: React.ReactNode;
+}
 
-  const clearFilters = () => {
-    setDateRange(undefined);
-    setMinAmount('');
-    setMaxAmount('');
-    setPaymentMethod('ALL_METHODS');
-  };
-
-  return {
-    dateRange,
-    setDateRange,
-    minAmount,
-    setMinAmount,
-    maxAmount,
-    setMaxAmount,
-    paymentMethod,
-    setPaymentMethod,
-    clearFilters,
-  };
+//  === HELPER FUNCTIONS ===
+// Helper function to get payment method icon
+const getPaymentMethodIcon = (method: string, size = 16, className = '') => {
+  const iconProps = { size, className };
+  switch (method) {
+    case 'cash':
+      return <IconCash {...iconProps} />;
+    case 'debit':
+      return <IconCreditCard {...iconProps} />;
+    case 'e_wallet':
+      return <IconWallet {...iconProps} />;
+    case 'qris':
+      return <IconQrcode {...iconProps} />;
+    case 'transfer':
+      return <IconBuildingBank {...iconProps} />;
+    default:
+      return <IconDots {...iconProps} />;
+  }
 };
 
-const useTransactionTable = () => {
-  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
-  const [selectedTransactionId, setSelectedTransactionId] = useState<
-    string | null
-  >(null);
-
-  const viewTransactionDetails = (id: string) => {
-    setSelectedTransactionId(id);
-    setDetailDialogOpen(true);
-  };
-
-  const closeDialog = () => {
-    setDetailDialogOpen(false);
-    setSelectedTransactionId(null);
-  };
-
-  return {
-    detailDialogOpen,
-    selectedTransactionId,
-    viewTransactionDetails,
-    closeDialog,
-  };
-};
-
-// === CONSTANTS ===
-const PAYMENT_METHOD_ICONS: Record<string, React.ReactNode> = {
-  CASH: <IconCash size={16} className="text-muted-foreground" />,
-  DEBIT: <IconCreditCard size={16} className="text-muted-foreground" />,
-  E_WALLET: <IconWallet size={16} className="text-muted-foreground" />,
-  QRIS: <IconQrcode size={16} className="text-muted-foreground" />,
-  TRANSFER: <IconBuildingBank size={16} className="text-muted-foreground" />,
-  OTHER: <IconDots size={16} className="text-muted-foreground" />,
+// Helper function to get payment method text
+const getPaymentMethodText = (method: string, t: (key: string) => string) => {
+  return method === 'e_wallet'
+    ? t('paymentMethods.e_wallet')
+    : t(`paymentMethods.${method}`);
 };
 
 // === MAIN COMPONENT ===
-export function TransactionTable({}: TransactionTableProps) {
+export function TransactionTable({
+  data,
+  isLoading,
+  pagination,
+  totalRows,
+  onPaginationChange,
+  onSortingChange,
+  onSearchChange,
+  onViewDetails,
+  filterToolbar,
+}: TransactionTableProps) {
   const t = useTranslations('transaction.table');
-  const filters = useTransactionFilters();
-  const tableState = useTransactionTable();
-
-  const fetchTransactions = useCallback(
-    async (options: TableFetchOptions) => {
-      let startDate: Date | undefined;
-      let endDate: Date | undefined;
-
-      if (
-        options.filters?.dateRange &&
-        typeof options.filters.dateRange === 'object'
-      ) {
-        const range = options.filters.dateRange as DateRange;
-        if (range.from) {
-          startDate = startOfDay(range.from);
-        }
-        if (range.to) {
-          endDate = endOfDay(range.to);
-        }
-      }
-
-      let minAmountValue: number | undefined;
-      let maxAmountValue: number | undefined;
-
-      if (
-        options.filters?.minAmount &&
-        !isNaN(parseFloat(options.filters.minAmount as string))
-      ) {
-        minAmountValue = parseFloat(options.filters.minAmount as string);
-      }
-
-      if (
-        options.filters?.maxAmount &&
-        !isNaN(parseFloat(options.filters.maxAmount as string))
-      ) {
-        maxAmountValue = parseFloat(options.filters.maxAmount as string);
-      }
-
-      const response = await getPaginatedTransactions({
-        page: (options.page ?? 0) + 1,
-        pageSize: options.limit ?? 10,
-        sortField: options.sortBy?.id || 'createdAt',
-        sortDirection: options.sortBy?.desc ? 'desc' : 'asc',
-        search: options.search,
-        paymentMethod: options.filters?.paymentMethod as string,
-        startDate,
-        endDate,
-        minAmount: minAmountValue,
-        maxAmount: maxAmountValue,
-      });
-
-      const transactions: TransactionForTable[] = (response.data || []).map(
-        (item: ProcessedTransaction) => ({
-          id: item.id,
-          tranId: item.tranId,
-          createdAt: item.createdAt.toString(),
-          totalAmount: item.pricing?.originalAmount || 0,
-          finalAmount: item.pricing?.finalAmount || 0,
-          paymentMethod: item.payment?.method || '',
-          cashier: {
-            name: item.cashier?.name || null,
-          },
-          member: item.member
-            ? {
-                name: item.member.name || 'Unknown',
-              }
-            : null,
-          itemCount: item.itemCount || 0,
-          discountAmount: item.pricing?.totalDiscount || 0,
-          paymentAmount: item.payment?.amount || item.pricing?.finalAmount || 0,
-          pointsEarned: item.pointsEarned || 0,
-        }),
-      );
-
-      return {
-        data: transactions,
-        totalRows: response.pagination?.totalCount || 0,
-      };
-    },
-    [], // Remove getPaginatedTransactions from dependencies as it's stable
-  );
-
-  const {
-    data,
-    isLoading,
-    options,
-    setPage,
-    setLimit,
-    setSortBy,
-    setSearch,
-    setFilters,
-    totalRows,
-  } = useFetch<TransactionForTable[]>({
-    fetchData: fetchTransactions,
-    initialPageIndex: 0,
-    initialPageSize: 10,
-    initialSortField: 'createdAt',
-    initialSortDirection: true,
-  });
-
-  const handlePaginationChange = useCallback(
-    (newPagination: { pageIndex: number; pageSize: number }) => {
-      setPage(newPagination.pageIndex);
-      setLimit(newPagination.pageSize);
-    },
-    [setPage, setLimit],
-  );
-
-  const handleSortingChange = useCallback(
-    (newSorting: SortingState[]) => {
-      setSortBy(newSorting);
-    },
-    [setSortBy],
-  );
-
-  const handleSearchChange = useCallback(
-    (newSearch: string) => {
-      setSearch(newSearch);
-    },
-    [setSearch],
-  );
-
-  const handleFilterChange = useCallback(
-    (key: string, value: string | DateRange | undefined) => {
-      if (key === 'paymentMethod') {
-        if (value === 'ALL_METHODS') {
-          setFilters(
-            (
-              prev: Record<
-                string,
-                string | number | boolean | null | undefined
-              >,
-            ) => {
-              const newFilters = { ...prev };
-              delete newFilters[key];
-              return newFilters;
-            },
-          );
-          return;
-        }
-      }
-
-      if (key === 'dateRange') {
-        filters.setDateRange(value as DateRange | undefined);
-      }
-
-      if (key === 'minAmount') {
-        filters.setMinAmount(value as string);
-      }
-      if (key === 'maxAmount') {
-        filters.setMaxAmount(value as string);
-      }
-
-      setFilters(
-        (
-          prev: Record<string, string | number | boolean | null | undefined>,
-        ) => ({
-          ...prev,
-          [key]: value as string | number | boolean | null | undefined,
-        }),
-      );
-    },
-    [
-      filters.setDateRange,
-      filters.setMinAmount,
-      filters.setMaxAmount,
-      setFilters,
-    ],
-  );
-
-  const handleMinAmountChange = useCallback(
-    (value: string) => {
-      filters.setMinAmount(value);
-      handleFilterChange('minAmount', value);
-    },
-    [filters.setMinAmount, handleFilterChange],
-  );
-
-  const handleMaxAmountChange = useCallback(
-    (value: string) => {
-      filters.setMaxAmount(value);
-      handleFilterChange('maxAmount', value);
-    },
-    [filters.setMaxAmount, handleFilterChange],
-  );
-
-  const handlePaymentMethodChange = useCallback(
-    (value: string) => {
-      filters.setPaymentMethod(value);
-
-      if (value === 'ALL_METHODS') {
-        setFilters(
-          (
-            prev: Record<string, string | number | boolean | null | undefined>,
-          ) => {
-            const newFilters = { ...prev };
-            delete newFilters['paymentMethod'];
-            return newFilters;
-          },
-        );
-      } else {
-        handleFilterChange('paymentMethod', value);
-      }
-    },
-    [filters.setPaymentMethod, setFilters, handleFilterChange],
-  );
 
   // Memoize columns with translations
-  const columns: ColumnDef<TransactionForTable>[] = useMemo(
+  const columns: ColumnDef<ProcessedTransaction>[] = useMemo(
     () => [
       {
         header: t('columns.tranId'),
@@ -320,17 +95,17 @@ export function TransactionTable({}: TransactionTableProps) {
       },
       {
         header: t('columns.totalAmount'),
-        accessorKey: 'totalAmount',
+        accessorKey: 'pricing.originalAmount',
         cell: ({ row }) => (
-          <div>{formatRupiah(row.getValue('totalAmount'))}</div>
+          <div>{formatRupiah(row.original.pricing.originalAmount)}</div>
         ),
         enableSorting: true,
       },
       {
         header: t('columns.discount'),
-        accessorKey: 'discountAmount',
+        accessorKey: 'pricing.totalDiscount',
         cell: ({ row }) => {
-          const discount = row.original.discountAmount || 0;
+          const discount = row.original.pricing.totalDiscount || 0;
           if (discount === 0)
             return <span className="text-muted-foreground">-</span>;
           return (
@@ -341,10 +116,10 @@ export function TransactionTable({}: TransactionTableProps) {
       },
       {
         header: t('columns.finalAmount'),
-        accessorKey: 'finalAmount',
+        accessorKey: 'pricing.finalAmount',
         cell: ({ row }) => (
           <div className="font-medium">
-            {formatRupiah(row.getValue('finalAmount'))}
+            {formatRupiah(row.original.pricing.finalAmount)}
           </div>
         ),
         enableSorting: true,
@@ -383,32 +158,24 @@ export function TransactionTable({}: TransactionTableProps) {
       },
       {
         header: t('columns.paymentAmount'),
-        accessorKey: 'paymentAmount',
+        accessorKey: 'payment.amount',
         cell: ({ row }) => {
-          const amount = row.original.paymentAmount || row.original.finalAmount;
+          const amount =
+            row.original.payment.amount || row.original.pricing.finalAmount;
           return <div className="font-medium">{formatRupiah(amount)}</div>;
         },
         enableSorting: true,
       },
       {
         header: t('columns.paymentMethod'),
-        accessorKey: 'paymentMethod',
+        accessorKey: 'payment.method',
         cell: ({ row }) => {
-          const method = row.getValue('paymentMethod') as string;
-          // Fix the translation call by using a proper fallback
-          let methodText: string;
-          try {
-            methodText = t(`paymentMethods.${method.toLowerCase()}`);
-          } catch {
-            // Fallback to formatted method name if translation key doesn't exist
-            methodText = method.replace(/[_-]/g, ' ').toLowerCase();
-          }
+          const method = row.original.payment.method;
+          const methodText = getPaymentMethodText(method, t);
 
           return (
             <div className="flex items-center gap-x-2">
-              {PAYMENT_METHOD_ICONS[method] || (
-                <IconCash size={16} className="text-muted-foreground" />
-              )}
+              {getPaymentMethodIcon(method, 16, 'text-muted-foreground')}
               <span className="text-sm capitalize">{methodText}</span>
             </div>
           );
@@ -424,12 +191,12 @@ export function TransactionTable({}: TransactionTableProps) {
         header: t('columns.date'),
         accessorKey: 'createdAt',
         cell: ({ row }) => {
-          const date = new Date(row.getValue('createdAt') as string);
+          const date = row.original.createdAt;
           return (
             <div className="flex flex-col">
-              <span>{date.toLocaleDateString()}</span>
+              <span>{formatDateShort(date)}</span>
               <span className="text-xs text-muted-foreground">
-                {date.toLocaleTimeString()}
+                {formatTime(date)}
               </span>
             </div>
           );
@@ -453,9 +220,7 @@ export function TransactionTable({}: TransactionTableProps) {
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem
                     className="flex justify-between cursor-pointer"
-                    onClick={() =>
-                      tableState.viewTransactionDetails(transaction.id)
-                    }
+                    onClick={() => onViewDetails(transaction.id)}
                   >
                     {t('actions.viewDetails')} <Eye className="h-4 w-4" />
                   </DropdownMenuItem>
@@ -466,58 +231,21 @@ export function TransactionTable({}: TransactionTableProps) {
         },
       },
     ],
-    [t, tableState.viewTransactionDetails],
-  );
-
-  // Memoize filter toolbar element
-  const filterToolbarElement = useMemo(
-    () => (
-      <TransactionFilterToolbar
-        dateRange={filters.dateRange}
-        setDateRange={(range) => handleFilterChange('dateRange', range)}
-        minAmount={filters.minAmount}
-        setMinAmount={handleMinAmountChange}
-        maxAmount={filters.maxAmount}
-        setMaxAmount={handleMaxAmountChange}
-        paymentMethod={filters.paymentMethod}
-        setPaymentMethod={handlePaymentMethodChange}
-      />
-    ),
-    [
-      filters.dateRange,
-      filters.minAmount,
-      filters.maxAmount,
-      filters.paymentMethod,
-      handleFilterChange,
-      handleMinAmountChange,
-      handleMaxAmountChange,
-      handlePaymentMethodChange,
-    ],
+    [t, onViewDetails],
   );
 
   return (
-    <>
-      <TableLayout
-        data={data || []}
-        columns={columns}
-        isLoading={isLoading}
-        pagination={options.pagination}
-        handlePaginationChange={handlePaginationChange}
-        handleSortingChange={handleSortingChange}
-        handleSearchChange={handleSearchChange}
-        totalRows={totalRows}
-        enableSelection={true}
-        filterToolbar={filterToolbarElement}
-      />
-
-      {/* Transaction Detail Dialog */}
-      {tableState.selectedTransactionId && (
-        <TransactionDetailDialog
-          open={tableState.detailDialogOpen}
-          onOpenChange={tableState.closeDialog}
-          transactionId={tableState.selectedTransactionId}
-        />
-      )}
-    </>
+    <TableLayout
+      data={data}
+      columns={columns}
+      isLoading={isLoading}
+      pagination={pagination}
+      handlePaginationChange={onPaginationChange}
+      handleSortingChange={onSortingChange}
+      handleSearchChange={onSearchChange}
+      totalRows={totalRows}
+      enableSelection={true}
+      filterToolbar={filterToolbar}
+    />
   );
 }

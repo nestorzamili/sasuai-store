@@ -12,14 +12,14 @@ import {
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import {
+  IconFilterOff,
+  IconCurrencyDollar,
   IconCash,
   IconCreditCard,
   IconWallet,
   IconQrcode,
   IconBuildingBank,
   IconDots,
-  IconFilterOff,
-  IconCurrencyDollar,
 } from '@tabler/icons-react';
 import {
   Popover,
@@ -29,7 +29,19 @@ import {
 import { cn } from '@/lib/utils';
 import { formatRupiah } from '@/lib/currency';
 import { DateRangePickerWithPresets } from '@/components/ui/date-range-picker-with-presets';
-import { TransactionFilterToolbarProps } from '@/lib/types/transaction';
+import type { DateRange } from 'react-day-picker';
+
+// === LOCAL TYPES ===
+interface TransactionFilterToolbarProps {
+  dateRange: DateRange | undefined;
+  setDateRange: (range: DateRange | undefined) => void;
+  minAmount: string;
+  setMinAmount: (amount: string) => void;
+  maxAmount: string;
+  setMaxAmount: (amount: string) => void;
+  paymentMethod: string;
+  setPaymentMethod: (method: string) => void;
+}
 
 export default function TransactionFilterToolbar({
   dateRange,
@@ -56,7 +68,7 @@ export default function TransactionFilterToolbar({
     paymentMethod !== 'ALL_METHODS'
   );
 
-  // Payment method options with translations - fix the translation keys
+  // Payment method options with translations - using helper function
   const paymentMethods = [
     {
       value: 'cash',

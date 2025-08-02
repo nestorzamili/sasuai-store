@@ -30,7 +30,7 @@
         "card": "Card",
         "debit": "Debit Card",
         "transfer": "Bank Transfer",
-        "ewallet": "E-Wallet",
+        "e_wallet": "E-Wallet",
         "e-wallet": "E-Wallet",
         "qris": "QRIS",
         "other": "Other"

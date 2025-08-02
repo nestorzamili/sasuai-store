@@ -14,25 +14,16 @@ export const GET = withAuth(
         );
       }
 
-      const transaction = await TransactionService.getTransactionById(id);
+      const result = await TransactionService.getTransactionDetail(id);
 
-      if (!transaction) {
-        return NextResponse.json(
-          { success: false, message: 'Transaction not found' },
-          { status: 404 },
-        );
-      }
-
-      return NextResponse.json(
-        { success: true, data: transaction },
-        { status: 200 },
-      );
+      return NextResponse.json(result, {
+        status: result.success ? 200 : 404,
+      });
     } catch (error) {
-      console.error('Error fetching transaction:', error);
       return NextResponse.json(
         {
           success: false,
-          message: 'Failed to fetch transaction',
+          message: 'Internal server error',
           error: error instanceof Error ? error.message : 'Unknown error',
         },
         { status: 500 },

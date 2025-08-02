@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { DiscountType, DiscountApplyTo } from '@/lib/types/discount';
+import { DiscountType, DiscountApplyTo } from '@/lib/services/discount/types';
 
 // Base schema without refinement
 const baseDiscountSchema = z.object({
@@ -7,7 +7,7 @@ const baseDiscountSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   code: z.string().nullable(),
   description: z.string().nullable(),
-  type: z.nativeEnum(DiscountType),
+  type: z.nativeEnum(DiscountType).optional(),
   value: z.coerce.number().min(0, 'Value must be positive'),
   minPurchase: z.coerce.number().nullable(),
   startDate: z.date(),
@@ -15,8 +15,8 @@ const baseDiscountSchema = z.object({
   isActive: z.boolean(),
   isGlobal: z.boolean(),
   maxUses: z.coerce.number().nullable(),
-  // Make applyTo required (not nullable/optional)
-  applyTo: z.nativeEnum(DiscountApplyTo),
+  // Make applyTo optional to allow no pre-selection
+  applyTo: z.nativeEnum(DiscountApplyTo).optional(),
   productIds: z.array(z.string()).default([]).optional(),
   memberIds: z.array(z.string()).default([]).optional(),
   memberTierIds: z.array(z.string()).default([]).optional(),
@@ -24,6 +24,16 @@ const baseDiscountSchema = z.object({
 
 // Full schema with refinement for validation
 export const discountSchema = baseDiscountSchema
+  .refine(
+    (data) => {
+      // Type is required for form submission
+      return data.type !== undefined;
+    },
+    {
+      message: 'Discount type is required',
+      path: ['type'],
+    },
+  )
   .refine(
     (data) => {
       // Validate percentage value is between 0-100
@@ -35,7 +45,17 @@ export const discountSchema = baseDiscountSchema
     {
       message: 'Percentage value must be between 0 and 100',
       path: ['value'],
-    }
+    },
+  )
+  .refine(
+    (data) => {
+      // ApplyTo is required for form submission
+      return data.applyTo !== undefined;
+    },
+    {
+      message: 'Application scope is required',
+      path: ['applyTo'],
+    },
   )
   .refine(
     (data) => {
@@ -60,7 +80,7 @@ export const discountSchema = baseDiscountSchema
       message:
         'Please select at least one item for the selected application type',
       path: ['applyTo'],
-    }
+    },
   );
 
 // Create partial schema from the base schema
@@ -77,6 +97,16 @@ export const createTranslatedDiscountSchema = (t: (key: string) => string) => {
     })
     .refine(
       (data) => {
+        // Type is required for form submission
+        return data.type !== undefined;
+      },
+      {
+        message: t('validation.typeRequired'),
+        path: ['type'],
+      },
+    )
+    .refine(
+      (data) => {
         // Validate percentage value is between 0-100
         if (data.type === DiscountType.PERCENTAGE) {
           return data.value >= 0 && data.value <= 100;
@@ -86,7 +116,7 @@ export const createTranslatedDiscountSchema = (t: (key: string) => string) => {
       {
         message: t('validation.percentageRange'),
         path: ['value'],
-      }
+      },
     )
     .refine(
       (data) => {
@@ -108,6 +138,6 @@ export const createTranslatedDiscountSchema = (t: (key: string) => string) => {
       {
         message: t('validation.selectItems'),
         path: ['applyTo'],
-      }
+      },
     );
 };
