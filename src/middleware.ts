@@ -9,7 +9,8 @@ export async function middleware(request: NextRequest) {
 
   if (
     pathname.startsWith('/api/auth/verify-email') ||
-    pathname.startsWith('/api/health')
+    pathname.startsWith('/api/health') ||
+    pathname.startsWith('/api/auth/') // Skip all auth API routes
   ) {
     return NextResponse.next();
   }
@@ -32,17 +33,15 @@ export async function middleware(request: NextRequest) {
   const isPublicPath = publicPaths.includes(pathname);
 
   try {
-    // Only run this in a browser environment (runtime) with a valid request
     const { data: session } = await betterFetch<Session>(
       '/api/auth/get-session',
       {
-        baseURL:
-          process.env.NODE_ENV === 'production'
-            ? process.env.BETTER_AUTH_URL // Use the explicit URL from env in production
-            : request.nextUrl.origin, // Use origin in development
+        baseURL: process.env.BETTER_AUTH_URL || request.nextUrl.origin,
         headers: {
           cookie: request.headers.get('cookie') || '',
         },
+        timeout: 5000,
+        retry: 1,
       },
     );
 
@@ -57,8 +56,12 @@ export async function middleware(request: NextRequest) {
     if (!session && !isPublicPath) {
       return NextResponse.redirect(new URL('/sign-in', request.url));
     }
-  } catch (error) {
-    console.error('Session fetch error:', error);
+  } catch {
+    // For API routes, don't redirect to avoid infinite loops
+    if (pathname.startsWith('/api/')) {
+      return NextResponse.next();
+    }
+
     // If we can't verify the session, redirect to sign-in for protected routes
     if (!isPublicPath) {
       return NextResponse.redirect(new URL('/sign-in', request.url));

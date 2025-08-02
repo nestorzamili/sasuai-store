@@ -70,6 +70,7 @@
       "changeAmount": "Change",
       "paymentDetails": "Payment Details",
       "memberDiscount": "Member Discount",
+      "globalDiscount": "Global Discount",
       "productDiscounts": "Product Discounts",
       "pointsEarned": "Points Earned",
       "pointsEarnedMessage": "{points} points have been added to the member's account",

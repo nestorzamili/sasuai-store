@@ -24,20 +24,17 @@ export function TransactionPricingSummary({
         <span>{formatRupiah(pricing?.originalAmount || 0)}</span>
       </div>
 
-      {pricing?.discounts?.member && (
+      {pricing?.discounts?.id && (
         <div className="flex justify-between">
-          <span className="text-muted-foreground">{t('memberDiscount')}</span>
-          <span className="text-rose-600">
-            -{formatRupiah(pricing.discounts.member.amount)}
+          <span className="text-muted-foreground">
+            {pricing.discounts.isGlobal
+              ? pricing.discounts.code
+                ? `${t('globalDiscount')} (${pricing.discounts.code})`
+                : t('globalDiscount')
+              : t('memberDiscount')}
           </span>
-        </div>
-      )}
-
-      {pricing?.discounts?.products > 0 && (
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">{t('productDiscounts')}</span>
           <span className="text-rose-600">
-            -{formatRupiah(pricing.discounts.products)}
+            -{formatRupiah(pricing.discounts.amount || 0)}
           </span>
         </div>
       )}
