@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import type { DateRange } from 'react-day-picker';
 
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { Plus, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 import { DiscountTable } from './_components/discount-table';
@@ -125,14 +125,21 @@ export default function DiscountsPage() {
   const router = useRouter();
   const dialogs = useDiscountDialogs();
   const filters = useDiscountFilters();
+  const [isNavigating, setIsNavigating] = useState(false);
 
   // Navigation handlers
-  const handleCreateNew = useCallback(() => {
+  const handleCreateNew = useCallback(async () => {
+    setIsNavigating(true);
+    // Add small delay to ensure loader is visible
+    await new Promise((resolve) => setTimeout(resolve, 100));
     router.push('/discounts/new');
   }, [router]);
 
   const handleEdit = useCallback(
-    (discount: DiscountWithCounts) => {
+    async (discount: DiscountWithCounts) => {
+      setIsNavigating(true);
+      // Add small delay to ensure loader is visible
+      await new Promise((resolve) => setTimeout(resolve, 100));
       router.push(`/discounts/${discount.id}/edit`);
     },
     [router],
@@ -218,6 +225,13 @@ export default function DiscountsPage() {
     [refresh, t],
   );
 
+  // Reset loading state when component unmounts
+  useEffect(() => {
+    return () => {
+      setIsNavigating(false);
+    };
+  }, []);
+
   // Debounced filter change effect - only refresh after user stops changing filters
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -240,9 +254,13 @@ export default function DiscountsPage() {
           <h2 className="text-2xl font-bold tracking-tight">{t('title')}</h2>
           <p className="text-muted-foreground">{t('description')}</p>
         </div>
-        <Button onClick={handleCreateNew}>
-          <Plus className="mr-2 h-4 w-4" />
-          {t('new')}
+        <Button onClick={handleCreateNew} disabled={isNavigating}>
+          {isNavigating ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <Plus className="mr-2 h-4 w-4" />
+          )}
+          {isNavigating ? t('loading') : t('new')}
         </Button>
       </div>
 
