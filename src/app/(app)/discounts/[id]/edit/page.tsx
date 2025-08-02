@@ -32,8 +32,9 @@ export default function EditDiscountPage() {
         setDiscountData(response.data);
       } else {
         toast({
-          title: t('deleteDialog.error'),
-          description: t('pages.couldNotLoad'),
+          title: t('pages.error'),
+          description:
+            response.error || response.message || t('pages.couldNotLoad'),
           variant: 'destructive',
         });
         router.push('/discounts');
@@ -41,7 +42,7 @@ export default function EditDiscountPage() {
     } catch (error) {
       console.error('Error loading discount:', error);
       toast({
-        title: t('deleteDialog.error'),
+        title: t('pages.error'),
         description: t('pages.unexpectedErrorLoading'),
         variant: 'destructive',
       });

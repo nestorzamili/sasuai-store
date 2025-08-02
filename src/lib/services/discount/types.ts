@@ -200,6 +200,7 @@ export interface DiscountTableProps {
   onView: (discount: DiscountWithCounts) => void;
   onEdit: (discount: DiscountWithCounts) => void;
   onDelete: (discount: DiscountWithCounts) => void;
+  onToggleStatus: (discount: DiscountWithCounts) => void;
   filterToolbar?: React.ReactNode;
 }
 

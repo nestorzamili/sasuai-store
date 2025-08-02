@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo, memo } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Dialog,
   DialogContent,
@@ -32,10 +33,14 @@ const MemberItem = memo(
     member,
     isSelected,
     onToggle,
+    selectedText,
+    noPhoneText,
   }: {
     member: MemberForSelection;
     isSelected: boolean;
     onToggle: (id: string) => void;
+    selectedText: string;
+    noPhoneText: string;
   }) => (
     <div
       className={`flex items-center space-x-3 p-3 rounded-lg border hover:bg-muted/50 cursor-pointer transition-colors ${
@@ -71,7 +76,7 @@ const MemberItem = memo(
           )}
           {isSelected && (
             <Badge variant="default" className="text-xs">
-              Dipilih
+              {selectedText}
             </Badge>
           )}
         </div>
@@ -79,7 +84,7 @@ const MemberItem = memo(
           {member.phone ? (
             <span>{member.phone}</span>
           ) : (
-            <span className="italic">Tidak ada nomor telepon</span>
+            <span className="italic">{noPhoneText}</span>
           )}
         </div>
       </div>
@@ -94,9 +99,11 @@ const SelectedMemberItem = memo(
   ({
     member,
     onRemove,
+    noPhoneText,
   }: {
     member: MemberForSelection;
     onRemove: (id: string) => void;
+    noPhoneText: string;
   }) => (
     <div className="flex items-center space-x-3 p-3 rounded-lg border bg-muted/30">
       <Avatar className="w-8 h-8">
@@ -126,7 +133,7 @@ const SelectedMemberItem = memo(
           {member.phone ? (
             <span>{member.phone}</span>
           ) : (
-            <span className="italic">Tidak ada nomor telepon</span>
+            <span className="italic">{noPhoneText}</span>
           )}
         </div>
       </div>
@@ -150,6 +157,7 @@ export default function MemberSelectionDialog({
   selectedIds,
   onSelectionSave,
 }: MemberSelectionDialogProps) {
+  const t = useTranslations('discount.selectionDialog');
   const [searchQuery, setSearchQuery] = useState('');
   const [members, setMembers] = useState<MemberForSelection[]>([]);
   const [allMembers, setAllMembers] = useState<MemberForSelection[]>([]);
@@ -290,7 +298,7 @@ export default function MemberSelectionDialog({
 
     const placeholderMembers = missingSelectedIds.map((id) => ({
       id,
-      name: `Memuat member...`,
+      name: t('loading'),
       tier: null,
       cardId: null,
       phone: null,
@@ -305,7 +313,7 @@ export default function MemberSelectionDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <IconUsers size={20} />
-            Pilih Member
+            {t('selectMembers')}
           </DialogTitle>
         </DialogHeader>
 
@@ -317,7 +325,7 @@ export default function MemberSelectionDialog({
                 size={16}
               />
               <Input
-                placeholder="Cari member berdasarkan nama, nomor telepon, atau Card ID..."
+                placeholder={t('searchMembers')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9"
@@ -330,7 +338,7 @@ export default function MemberSelectionDialog({
                   <div className="flex items-center justify-center py-8">
                     <IconLoader2 className="animate-spin h-6 w-6 text-muted-foreground" />
                     <span className="ml-2 text-muted-foreground">
-                      Memuat member...
+                      {t('loading')}
                     </span>
                   </div>
                 )}
@@ -344,7 +352,7 @@ export default function MemberSelectionDialog({
                       onClick={fetchMembers}
                       className="mt-2"
                     >
-                      Coba lagi
+                      {t('tryAgain')}
                     </Button>
                   </div>
                 )}
@@ -357,13 +365,15 @@ export default function MemberSelectionDialog({
                       member={member}
                       isSelected={localSelectedSet.has(member.id)}
                       onToggle={handleToggleMember}
+                      selectedText={t('selected')}
+                      noPhoneText={t('noPhoneNumber')}
                     />
                   ))}
 
                 {!loading && !error && filteredMembers.length === 0 && (
                   <div className="text-center py-8 text-muted-foreground">
                     <IconUsers size={48} className="mx-auto mb-2 opacity-50" />
-                    <p>Tidak ada member ditemukan</p>
+                    <p>{t('noItemsFound')}</p>
                   </div>
                 )}
               </div>
@@ -372,10 +382,10 @@ export default function MemberSelectionDialog({
 
           <div className="border-l pl-6 flex flex-col space-y-4 min-h-0">
             <div className="flex items-center justify-between border-b pb-3">
-              <h3 className="text-sm font-medium">Member Dipilih</h3>
+              <h3 className="text-sm font-medium">{t('selectedMembers')}</h3>
               <div className="flex items-center gap-2">
                 <Badge variant="secondary">
-                  {localSelectedIds.length} member
+                  {localSelectedIds.length} {t('members')}
                 </Badge>
                 {localSelectedIds.length > 0 && (
                   <Button
@@ -384,7 +394,7 @@ export default function MemberSelectionDialog({
                     onClick={() => setLocalSelectedIds([])}
                     className="h-7 px-2 text-xs text-muted-foreground hover:text-destructive"
                   >
-                    Hapus Semua
+                    {t('removeAll')}
                   </Button>
                 )}
               </div>
@@ -395,10 +405,8 @@ export default function MemberSelectionDialog({
                 {selectedMembers.length === 0 ? (
                   <div className="text-center py-12 text-muted-foreground">
                     <IconUsers size={48} className="mx-auto mb-2 opacity-30" />
-                    <p className="text-sm">Belum ada member yang dipilih</p>
-                    <p className="text-xs mt-1">
-                      Pilih member dari daftar sebelah kiri
-                    </p>
+                    <p className="text-sm">{t('noMembersSelected')}</p>
+                    <p className="text-xs mt-1">{t('selectMembersFromList')}</p>
                   </div>
                 ) : (
                   selectedMembers.map((member) => (
@@ -406,6 +414,7 @@ export default function MemberSelectionDialog({
                       key={member.id}
                       member={member}
                       onRemove={handleToggleMember}
+                      noPhoneText={t('noPhoneNumber')}
                     />
                   ))
                 )}
@@ -416,15 +425,15 @@ export default function MemberSelectionDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={handleClose}>
-            Batal
+            {t('cancel')}
           </Button>
           <Button
             onClick={handleConfirm}
             disabled={localSelectedIds.length === 0}
           >
             {localSelectedIds.length === 0
-              ? 'Pilih Member'
-              : `Konfirmasi ${localSelectedIds.length} Member`}
+              ? t('selectMembers')
+              : t('confirmMembers', { count: localSelectedIds.length })}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -99,8 +99,9 @@ export default function DiscountForm({
           return true;
         } else {
           toast({
-            title: t('deleteDialog.error'),
-            description: result.message || 'Something went wrong',
+            title: t('pages.error'),
+            description:
+              result.error || result.message || t('pages.unexpectedError'),
             variant: 'destructive',
           });
           return false;
@@ -108,8 +109,8 @@ export default function DiscountForm({
       } catch (error) {
         console.error('Form submission error:', error);
         toast({
-          title: t('deleteDialog.error'),
-          description: t('deleteDialog.unexpectedError'),
+          title: t('pages.error'),
+          description: t('pages.unexpectedError'),
           variant: 'destructive',
         });
         return false;

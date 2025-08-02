@@ -1,6 +1,7 @@
 'use client';
 
 import { UseFormReturn } from 'react-hook-form';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import {
   FormControl,
@@ -37,6 +38,7 @@ interface DiscountApplicationProps {
 export default function DiscountApplication({
   form,
 }: DiscountApplicationProps) {
+  const t = useTranslations('discount.form');
   const applyTo = form.watch('applyTo');
   const productIds = form.watch('productIds');
   const memberIds = form.watch('memberIds');
@@ -50,27 +52,27 @@ export default function DiscountApplication({
   const applicationOptions = [
     {
       value: DiscountApplyTo.ALL,
-      label: 'Semua Produk & Pelanggan',
+      label: t('allProductsCustomers'),
       icon: <IconWorld size={16} />,
-      description: 'Berlaku untuk semua produk dan pelanggan',
+      description: t('allProductsCustomersDesc'),
     },
     {
       value: DiscountApplyTo.SPECIFIC_PRODUCTS,
-      label: 'Produk Tertentu',
+      label: t('specificProducts'),
       icon: <IconBoxSeam size={16} />,
-      description: 'Berlaku hanya untuk produk yang dipilih',
+      description: t('specificProductsDesc'),
     },
     {
       value: DiscountApplyTo.SPECIFIC_MEMBERS,
-      label: 'Member Tertentu',
+      label: t('specificMembers'),
       icon: <IconUsers size={16} />,
-      description: 'Berlaku hanya untuk member yang dipilih',
+      description: t('specificMembersDesc'),
     },
     {
       value: DiscountApplyTo.SPECIFIC_MEMBER_TIERS,
-      label: 'Tier Member Tertentu',
+      label: t('memberTiers'),
       icon: <IconBadge size={16} />,
-      description: 'Berlaku untuk tier member yang dipilih',
+      description: t('memberTiersDesc'),
     },
   ];
 
@@ -106,16 +108,16 @@ export default function DiscountApplication({
     switch (applyTo) {
       case DiscountApplyTo.SPECIFIC_PRODUCTS:
         return productIds?.length
-          ? `${productIds.length} produk dipilih`
-          : 'Belum ada produk dipilih';
+          ? `${productIds.length} ${t('productsSelected')}`
+          : t('noProductsSelectedYet');
       case DiscountApplyTo.SPECIFIC_MEMBERS:
         return memberIds?.length
-          ? `${memberIds.length} member dipilih`
-          : 'Belum ada member dipilih';
+          ? `${memberIds.length} ${t('membersSelected')}`
+          : t('noMembersSelectedYet');
       case DiscountApplyTo.SPECIFIC_MEMBER_TIERS:
         return memberTierIds?.length
-          ? `${memberTierIds.length} tier dipilih`
-          : 'Belum ada tier dipilih';
+          ? `${memberTierIds.length} ${t('tiersSelected')}`
+          : t('noTiersSelectedYet');
       default:
         return null;
     }
@@ -129,11 +131,11 @@ export default function DiscountApplication({
         name="applyTo"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Berlaku Untuk *</FormLabel>
+            <FormLabel>{t('applyTo')} *</FormLabel>
             <Select onValueChange={handleApplyToChange} value={field.value}>
               <FormControl>
                 <SelectTrigger>
-                  <SelectValue placeholder="Pilih cakupan diskon">
+                  <SelectValue placeholder={t('selectDiscountScope')}>
                     {selectedApplicationOption && (
                       <div className="flex items-center gap-2">
                         {selectedApplicationOption.icon}
@@ -175,7 +177,7 @@ export default function DiscountApplication({
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     <IconBoxSeam size={16} className="text-orange-600" />
-                    <span className="font-medium">Produk Terpilih</span>
+                    <span className="font-medium">{t('selectedProducts')}</span>
                   </div>
                   <p className="text-sm text-muted-foreground">
                     {getSelectionSummary()}
@@ -189,7 +191,7 @@ export default function DiscountApplication({
                   className="shrink-0"
                 >
                   <IconPlus size={16} className="mr-1" />
-                  Pilih Produk
+                  {t('selectProducts')}
                 </Button>
               </div>
               <FormMessage />
@@ -208,7 +210,7 @@ export default function DiscountApplication({
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     <IconUsers size={16} className="text-green-600" />
-                    <span className="font-medium">Member Terpilih</span>
+                    <span className="font-medium">{t('selectedMembers')}</span>
                   </div>
                   <p className="text-sm text-muted-foreground">
                     {getSelectionSummary()}
@@ -222,7 +224,7 @@ export default function DiscountApplication({
                   className="shrink-0"
                 >
                   <IconPlus size={16} className="mr-1" />
-                  Pilih Member
+                  {t('selectMembers')}
                 </Button>
               </div>
               <FormMessage />
@@ -241,7 +243,7 @@ export default function DiscountApplication({
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     <IconBadge size={16} className="text-purple-600" />
-                    <span className="font-medium">Tier Terpilih</span>
+                    <span className="font-medium">{t('selectedTiers')}</span>
                   </div>
                   <p className="text-sm text-muted-foreground">
                     {getSelectionSummary()}
@@ -255,7 +257,7 @@ export default function DiscountApplication({
                   className="shrink-0"
                 >
                   <IconPlus size={16} className="mr-1" />
-                  Pilih Tier
+                  {t('selectTiers')}
                 </Button>
               </div>
               <FormMessage />
