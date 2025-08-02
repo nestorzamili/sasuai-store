@@ -11,7 +11,6 @@ export function TransactionPricingSummary({
   transaction,
 }: TransactionPricingSummaryProps) {
   const t = useTranslations('transaction.detailDialog');
-  const tTable = useTranslations('transaction.table');
   const pricing = transaction?.pricing;
   const payment = transaction?.payment;
 
@@ -57,14 +56,6 @@ export function TransactionPricingSummary({
       {payment && (
         <div className="mt-4 p-3 bg-muted/30 rounded-lg space-y-2">
           <h4 className="font-medium">{t('paymentDetails')}</h4>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">{t('paymentMethod')}</span>
-            <span className="capitalize font-medium">
-              {payment?.method === 'e_wallet'
-                ? tTable('paymentMethods.e_wallet')
-                : tTable(`paymentMethods.${payment?.method || ''}`)}
-            </span>
-          </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">{t('paymentAmount')}</span>
             <span className="font-medium">
