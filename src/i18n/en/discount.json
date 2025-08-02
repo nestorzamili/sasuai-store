@@ -22,6 +22,8 @@
       "active": "Active",
       "inactive": "Inactive",
       "disabled": "Disabled",
+      "expired": "Expired",
+      "upcoming": "Upcoming",
       "products": "products",
       "members": "members",
       "tiers": "tiers",
@@ -36,6 +38,8 @@
       "specificMembers": "Specific Members",
       "memberTiers": "Member Tiers",
       "allStatuses": "All Statuses",
+      "clearFilters": "Clear Filters",
+      "activeFilters": "Active Filters",
       "type": "Type",
       "status": "Status"
     },
@@ -148,6 +152,7 @@
     },
     "validation": {
       "nameRequired": "Name is required",
+      "typeRequired": "Discount type is required",
       "valuePositive": "Value must be positive",
       "percentageRange": "Percentage value must be between 0 and 100",
       "selectItems": "Please select at least one item for the selected application type"

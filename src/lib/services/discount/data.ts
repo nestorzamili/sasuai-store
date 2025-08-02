@@ -22,10 +22,13 @@ export class Data {
   ): Promise<DiscountWithRelations> {
     const { productIds, memberIds, memberTierIds, ...discountData } = data;
 
-    discountData.code = this.generateDiscountCode(discountData.name);
-
+    // Only generate code for global discounts
     if (discountData.isGlobal) {
+      discountData.code = this.generateDiscountCode(discountData.name);
       discountData.applyTo = DiscountApplyTo.ALL;
+    } else {
+      // Non-global discounts don't need a code
+      discountData.code = null;
     }
 
     const discount = await prisma.discount.create({
@@ -95,8 +98,16 @@ export class Data {
     id: string,
     data: Partial<DiscountData>,
   ): Promise<DiscountWithRelations> {
+    // Handle global discount logic
     if (data.isGlobal === true) {
       data.applyTo = DiscountApplyTo.ALL;
+      // Generate code if it doesn't exist for global discount
+      if (!data.code) {
+        data.code = this.generateDiscountCode(data.name || 'DISCOUNT');
+      }
+    } else if (data.isGlobal === false) {
+      // Remove code for non-global discounts
+      data.code = null;
     }
 
     const { productIds, memberIds, memberTierIds, ...discountUpdateData } =

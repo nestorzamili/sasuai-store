@@ -3,196 +3,245 @@
 import { revalidatePath } from 'next/cache';
 import { DiscountService } from '@/lib/services/discount.service';
 import { ProductService } from '@/lib/services/product.service';
-import { DiscountData, DiscountPaginationParams } from '@/lib/types/discount';
-import { z } from 'zod';
-import { errorHandling } from '@/lib/common/response-formatter';
-import { discountSchema, partialDiscountSchema } from './schema';
+import type {
+  DiscountData,
+  DiscountPaginationParams,
+  ApiResponse,
+  DiscountListData,
+  DiscountWithRelations,
+} from '@/lib/services/discount/types';
 
 /**
- * Get all discounts with pagination/sort/search/filter
+ * Get discounts with pagination and filters
  */
-export async function getAllDiscounts(options: DiscountPaginationParams) {
+export async function getDiscounts({
+  page = 1,
+  pageSize = 10,
+  sortField = 'createdAt',
+  sortDirection = 'desc',
+  search = '',
+  isActive,
+  type,
+  applyTo,
+  isGlobal,
+  startDate,
+  endDate,
+}: DiscountPaginationParams): Promise<ApiResponse<DiscountListData>> {
   try {
-    const result = await DiscountService.getPaginated(options);
-    return result;
-  } catch (error) {
-    return errorHandling({
-      message: 'Failed to fetch discounts',
-      details: error,
+    const result = await DiscountService.getDiscounts({
+      page,
+      pageSize,
+      sortField,
+      sortDirection,
+      search,
+      isActive,
+      type,
+      applyTo,
+      isGlobal,
+      startDate,
+      endDate,
     });
+
+    return {
+      success: result.success,
+      data: result.data,
+      error: result.error || result.message,
+    };
+  } catch (error) {
+    console.error('Error fetching discounts:', error);
+    return {
+      success: false,
+      error: 'Failed to fetch discounts',
+    };
   }
 }
 
 /**
- * Get a discount by ID
+ * Get discount by ID
  */
-export async function getDiscount(id: string) {
+export async function getDiscountById(
+  id: string,
+): Promise<ApiResponse<DiscountWithRelations | null>> {
   try {
-    return await DiscountService.getDiscountById(id);
+    const result = await DiscountService.getDiscountById(id);
+
+    return {
+      success: result.success,
+      data: result.data,
+      error: result.error || result.message,
+    };
   } catch (error) {
-    return errorHandling({
-      message: 'Failed to fetch discount',
-      details: error,
-    });
+    console.error('Error fetching discount details:', error);
+    return {
+      success: false,
+      error: 'Failed to fetch discount details',
+    };
   }
 }
 
 /**
  * Create a new discount
  */
-export async function createDiscount(data: DiscountData) {
+export async function createDiscount(
+  data: DiscountData,
+): Promise<ApiResponse<DiscountWithRelations>> {
   try {
-    // Validate data
-    const validatedData = discountSchema.parse(data);
-
-    // Create discount - add type assertion to fix type error
-    const result = await DiscountService.createDiscount(
-      validatedData as DiscountData,
-    );
+    const result = await DiscountService.createDiscount(data);
 
     if (result.success) {
-      // Revalidate discounts page
       revalidatePath('/discounts');
     }
 
-    return result;
+    return {
+      success: result.success,
+      data: result.data,
+      error: result.error || result.message,
+    };
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return errorHandling({
-        message: 'Validation error',
-        details: { validationErrors: error.errors },
-      });
-    }
-
-    return errorHandling({
-      message: 'Failed to create discount',
-      details: error,
-    });
+    console.error('Error creating discount:', error);
+    return {
+      success: false,
+      error: 'Failed to create discount',
+    };
   }
 }
 
 /**
  * Update a discount
  */
-export async function updateDiscount(id: string, data: Partial<DiscountData>) {
+export async function updateDiscount(
+  id: string,
+  data: Partial<DiscountData>,
+): Promise<ApiResponse<DiscountWithRelations>> {
   try {
-    const validatedData = partialDiscountSchema.parse(data);
-    const result = await DiscountService.updateDiscount(id, validatedData);
+    const result = await DiscountService.updateDiscount(id, data);
+
     if (result.success) {
-      // Revalidate discounts page
       revalidatePath('/discounts');
     }
 
-    return result;
+    return {
+      success: result.success,
+      data: result.data,
+      error: result.error || result.message,
+    };
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return errorHandling({
-        message: 'Validation error',
-        details: { validationErrors: error.errors },
-      });
-    }
-
-    return errorHandling({
-      message: 'Failed to update discount',
-      details: error,
-    });
-  }
-}
-
-/**
- * Toggle discount active status
- */
-export async function toggleDiscountStatus(id: string) {
-  try {
-    const result = await DiscountService.toggleDiscountStatus(id);
-
-    if (result.success) {
-      // Revalidate discounts page
-      revalidatePath('/discounts');
-    }
-
-    return result;
-  } catch (error) {
-    return errorHandling({
-      message: 'Failed to toggle discount status',
-      details: error,
-    });
+    console.error('Error updating discount:', error);
+    return {
+      success: false,
+      error: 'Failed to update discount',
+    };
   }
 }
 
 /**
  * Delete a discount
  */
-export async function deleteDiscount(id: string) {
+export async function deleteDiscount(id: string): Promise<ApiResponse<void>> {
   try {
     const result = await DiscountService.deleteDiscount(id);
 
     if (result.success) {
-      // Revalidate discounts page
       revalidatePath('/discounts');
     }
 
-    return result;
+    return {
+      success: result.success,
+      error: result.error || result.message,
+    };
   } catch (error) {
-    return errorHandling({
-      message: 'Failed to delete discount',
-      details: error,
-    });
+    console.error('Error deleting discount:', error);
+    return {
+      success: false,
+      error: 'Failed to delete discount',
+    };
   }
 }
 
 /**
- * Get products for discount selection
+ * Get member tiers for discount selection
  */
-export async function getProductsForSelection(search?: string) {
+export async function getMemberTiers(search?: string) {
   try {
-    // Check if this is an ID-specific search (format: "id:123456")
-    let idSearch: string | undefined;
-    let searchTerm = search || '';
+    const result = await DiscountService.getMemberTiers(search);
 
-    if (searchTerm.startsWith('id:')) {
-      idSearch = searchTerm.substring(3);
-      searchTerm = '';
-    }
-
-    const products = await ProductService.getProductFiltered({
-      search: searchTerm,
-      exactId: idSearch,
-      take: 10,
-    });
-
-    return products;
+    return {
+      success: result.success,
+      data: result.data,
+      error: result.error || result.message,
+    };
   } catch (error) {
-    return errorHandling({
-      message: 'Failed to fetch products',
-      details: error,
-    });
+    console.error('Error fetching member tiers:', error);
+    return {
+      success: false,
+      error: 'Failed to fetch member tiers',
+    };
   }
 }
 
 /**
  * Get members for discount selection
  */
-export async function getMembersForSelection(search?: string) {
+export async function getMembers(search?: string) {
   try {
-    return await DiscountService.getMembersForSelection(search);
+    const result = await DiscountService.getMembers(search);
+
+    return {
+      success: result.success,
+      data: result.data,
+      error: result.error || result.message,
+    };
   } catch (error) {
-    return errorHandling({
-      message: 'Failed to fetch members',
-      details: error,
-    });
+    console.error('Error fetching members:', error);
+    return {
+      success: false,
+      error: 'Failed to fetch members',
+    };
   }
 }
+
 /**
- * Get member tiers for discount selection
+ * Get products for selection in discount form
  */
-export async function getMemberTiersForSelection(search?: string) {
+export async function getProductsForSelection(search: string): Promise<
+  ApiResponse<
+    Array<{
+      id: string;
+      name: string;
+      barcode?: string;
+      category?: { name: string };
+      brand?: { name: string };
+    }>
+  >
+> {
   try {
-    return await DiscountService.getMemberTiersForSelection(search);
-  } catch (error) {
-    return errorHandling({
-      message: 'Failed to fetch member tiers',
-      details: error,
+    const result = await ProductService.search({
+      query: search,
+      limit: 50, // Limit results for selection dropdown
+      page: 1,
+      sortBy: 'name',
+      sortDirection: 'asc',
+      isActive: true, // Only show active products
     });
+
+    // Transform to the expected format
+    const products = result.products.map((product) => ({
+      id: product.id,
+      name: product.name,
+      barcode: product.barcode || undefined,
+      category: product.category ? { name: product.category.name } : undefined,
+      brand: product.brand ? { name: product.brand.name } : undefined,
+    }));
+
+    return {
+      success: true,
+      data: products,
+    };
+  } catch (error) {
+    console.error('Error fetching products for selection:', error);
+    return {
+      success: false,
+      error: 'Failed to fetch products',
+    };
   }
 }
