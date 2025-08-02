@@ -237,6 +237,7 @@ interface TransactionPDFProps {
     discount: string;
     subtotal: string;
     memberDiscount: string;
+    globalDiscount: string;
     productDiscounts: string;
     totalAmount: string;
     paymentDetails: string;
@@ -274,6 +275,7 @@ const defaultTranslations = {
   discount: 'Disc',
   subtotal: 'Subtotal',
   memberDiscount: 'Member Discount',
+  globalDiscount: 'Global Discount',
   productDiscounts: 'Product Discounts',
   totalAmount: 'Total Amount',
   paymentDetails: 'PAYMENT DETAILS',
@@ -401,20 +403,15 @@ export const TransactionPDF = ({
             </Text>
           </View>
 
-          {transaction.pricing?.discounts?.member && (
+          {transaction.pricing?.discounts?.id && (
             <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>{t.memberDiscount}</Text>
-              <Text style={styles.discountValue}>
-                -{formatRupiah(transaction.pricing.discounts.member.amount)}
+              <Text style={styles.summaryLabel}>
+                {transaction.pricing.discounts.isGlobal
+                  ? t.globalDiscount
+                  : t.memberDiscount}
               </Text>
-            </View>
-          )}
-
-          {transaction.pricing?.discounts?.products > 0 && (
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>{t.productDiscounts}</Text>
               <Text style={styles.discountValue}>
-                -{formatRupiah(transaction.pricing.discounts.products)}
+                -{formatRupiah(transaction.pricing.discounts.amount || 0)}
               </Text>
             </View>
           )}
