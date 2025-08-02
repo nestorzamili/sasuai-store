@@ -33,7 +33,8 @@ export default function EditDiscountPage() {
       } else {
         toast({
           title: t('deleteDialog.error'),
-          description: t('pages.couldNotLoad'),
+          description:
+            response.error || response.message || t('pages.couldNotLoad'),
           variant: 'destructive',
         });
         router.push('/discounts');

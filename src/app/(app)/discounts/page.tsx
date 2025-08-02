@@ -7,12 +7,13 @@ import type { DateRange } from 'react-day-picker';
 
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 
 import { DiscountTable } from './_components/discount-table';
 import { DiscountFilterToolbar } from './_components/discount-filter-toolbar';
 import { DiscountDetailDialog } from './_components/discount-detail-dialog';
 import { DiscountDeleteDialog } from './_components/discount-delete-dialog';
-import { getDiscounts, getDiscountById } from './action';
+import { getDiscounts, getDiscountById, toggleDiscountStatus } from './action';
 import { useFetch, type TableFetchOptions } from '@/hooks/use-fetch';
 import type {
   DiscountWithCounts,
@@ -187,6 +188,36 @@ export default function DiscountsPage() {
     dialogs.closeDialogs();
   }, [refresh, dialogs]);
 
+  // Handle toggle discount status
+  const handleToggleStatus = useCallback(
+    async (discount: DiscountWithCounts) => {
+      try {
+        const result = await toggleDiscountStatus(discount.id);
+        if (result.success) {
+          toast({
+            title: 'Status Updated',
+            description: `Discount "${discount.name}" has been ${discount.isActive ? 'deactivated' : 'activated'}`,
+          });
+          refresh(); // Refresh the table data
+        } else {
+          toast({
+            title: 'Error',
+            description: result.error || 'Failed to update discount status',
+            variant: 'destructive',
+          });
+        }
+      } catch (error) {
+        console.error('Error toggling discount status:', error);
+        toast({
+          title: 'Error',
+          description: 'An unexpected error occurred',
+          variant: 'destructive',
+        });
+      }
+    },
+    [refresh],
+  );
+
   // Debounced filter change effect - only refresh after user stops changing filters
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -235,6 +266,7 @@ export default function DiscountsPage() {
         onView={dialogs.openDetailDialog}
         onEdit={handleEdit}
         onDelete={dialogs.openDeleteDialog}
+        onToggleStatus={handleToggleStatus}
         filterToolbar={
           <DiscountFilterToolbar
             dateRange={filters.dateRange}

@@ -159,6 +159,33 @@ export async function deleteDiscount(id: string): Promise<ApiResponse<void>> {
 }
 
 /**
+ * Toggle discount status (active/inactive)
+ */
+export async function toggleDiscountStatus(
+  id: string,
+): Promise<ApiResponse<DiscountWithRelations>> {
+  try {
+    const result = await DiscountService.toggleDiscountStatus(id);
+
+    if (result.success) {
+      revalidatePath('/discounts');
+    }
+
+    return {
+      success: result.success,
+      data: result.data,
+      error: result.error || result.message,
+    };
+  } catch (error) {
+    console.error('Error toggling discount status:', error);
+    return {
+      success: false,
+      error: 'Failed to toggle discount status',
+    };
+  }
+}
+
+/**
  * Get member tiers for discount selection
  */
 export async function getMemberTiers(search?: string) {
