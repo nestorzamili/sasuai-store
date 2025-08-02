@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo, memo } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Dialog,
   DialogContent,
@@ -43,10 +44,12 @@ const ProductItem = memo(
     product,
     isSelected,
     onToggle,
+    selectedText,
   }: {
     product: Product;
     isSelected: boolean;
     onToggle: (id: string) => void;
+    selectedText: string;
   }) => (
     <div
       className={`flex items-center space-x-3 p-3 rounded-lg border hover:bg-muted/50 cursor-pointer transition-colors ${
@@ -68,7 +71,7 @@ const ProductItem = memo(
           )}
           {isSelected && (
             <Badge variant="default" className="text-xs">
-              Dipilih
+              {selectedText}
             </Badge>
           )}
         </div>
@@ -129,6 +132,7 @@ export default function ProductSelectionDialog({
   selectedIds,
   onSelectionSave,
 }: ProductSelectionDialogProps) {
+  const t = useTranslations('discount.selectionDialog');
   const [searchQuery, setSearchQuery] = useState('');
   const [products, setProducts] = useState<Product[]>([]);
   const [allProducts, setAllProducts] = useState<Product[]>([]);
@@ -269,7 +273,7 @@ export default function ProductSelectionDialog({
 
     const placeholderProducts = missingSelectedIds.map((id) => ({
       id,
-      name: `Memuat produk...`,
+      name: t('loading'),
       category: undefined,
       brand: undefined,
       barcode: undefined,
@@ -284,7 +288,7 @@ export default function ProductSelectionDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <IconPackage size={20} />
-            Pilih Produk
+            {t('selectProducts')}
           </DialogTitle>
         </DialogHeader>
 
@@ -296,7 +300,7 @@ export default function ProductSelectionDialog({
                 size={16}
               />
               <Input
-                placeholder="Cari produk berdasarkan nama atau barcode..."
+                placeholder={t('searchProducts')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9"
@@ -309,7 +313,7 @@ export default function ProductSelectionDialog({
                   <div className="flex items-center justify-center py-8">
                     <IconLoader2 className="animate-spin h-6 w-6 text-muted-foreground" />
                     <span className="ml-2 text-muted-foreground">
-                      Memuat produk...
+                      {t('loading')}
                     </span>
                   </div>
                 )}
@@ -323,7 +327,7 @@ export default function ProductSelectionDialog({
                       onClick={fetchProducts}
                       className="mt-2"
                     >
-                      Coba lagi
+                      {t('tryAgain')}
                     </Button>
                   </div>
                 )}
@@ -336,6 +340,7 @@ export default function ProductSelectionDialog({
                       product={product}
                       isSelected={localSelectedSet.has(product.id)}
                       onToggle={handleToggleProduct}
+                      selectedText={t('selected')}
                     />
                   ))}
 
@@ -345,7 +350,7 @@ export default function ProductSelectionDialog({
                       size={48}
                       className="mx-auto mb-2 opacity-50"
                     />
-                    <p>Tidak ada produk ditemukan</p>
+                    <p>{t('noItemsFound')}</p>
                   </div>
                 )}
               </div>
@@ -354,10 +359,10 @@ export default function ProductSelectionDialog({
 
           <div className="border-l pl-6 flex flex-col space-y-4 min-h-0">
             <div className="flex items-center justify-between border-b pb-3">
-              <h3 className="text-sm font-medium">Produk Dipilih</h3>
+              <h3 className="text-sm font-medium">{t('selectedProducts')}</h3>
               <div className="flex items-center gap-2">
                 <Badge variant="secondary">
-                  {localSelectedIds.length} produk
+                  {localSelectedIds.length} {t('products')}
                 </Badge>
                 {localSelectedIds.length > 0 && (
                   <Button
@@ -366,7 +371,7 @@ export default function ProductSelectionDialog({
                     onClick={() => setLocalSelectedIds([])}
                     className="h-7 px-2 text-xs text-muted-foreground hover:text-destructive"
                   >
-                    Hapus Semua
+                    {t('removeAll')}
                   </Button>
                 )}
               </div>
@@ -380,10 +385,8 @@ export default function ProductSelectionDialog({
                       size={48}
                       className="mx-auto mb-2 opacity-30"
                     />
-                    <p className="text-sm">Belum ada produk yang dipilih</p>
-                    <p className="text-xs mt-1">
-                      Pilih produk dari daftar sebelah kiri
-                    </p>
+                    <p className="text-sm">{t('noProductsSelected')}</p>
+                    <p className="text-xs mt-1">{t('selectFromList')}</p>
                   </div>
                 ) : (
                   selectedProducts.map((product) => (
@@ -401,15 +404,15 @@ export default function ProductSelectionDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={handleClose}>
-            Batal
+            {t('cancel')}
           </Button>
           <Button
             onClick={handleConfirm}
             disabled={localSelectedIds.length === 0}
           >
             {localSelectedIds.length === 0
-              ? 'Pilih Produk'
-              : `Konfirmasi ${localSelectedIds.length} Produk`}
+              ? t('selectProducts')
+              : t('confirmProducts', { count: localSelectedIds.length })}
           </Button>
         </DialogFooter>
       </DialogContent>
