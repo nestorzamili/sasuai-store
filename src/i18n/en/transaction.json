@@ -79,6 +79,8 @@
       "print": "Print Receipt",
       "downloadPdf": "Download PDF",
       "generatingPdf": "Generating PDF...",
+      "success": "Success",
+      "pdfDownloaded": "PDF has been downloaded successfully",
       "refund": "Process Refund",
       "error": "Error",
       "failedToLoad": "Failed to load transaction details",
