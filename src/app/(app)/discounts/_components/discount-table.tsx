@@ -4,7 +4,14 @@ import { useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import { format } from 'date-fns';
 import { ColumnDef } from '@tanstack/react-table';
-import { MoreHorizontal, Eye, Edit, Trash2 } from 'lucide-react';
+import {
+  MoreHorizontal,
+  Eye,
+  Edit,
+  Trash2,
+  Power,
+  PowerOff,
+} from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -36,6 +43,7 @@ export function DiscountTable({
   onView,
   onEdit,
   onDelete,
+  onToggleStatus,
   filterToolbar,
 }: DiscountTableProps) {
   const t = useTranslations('discount.table');
@@ -171,6 +179,11 @@ export function DiscountTable({
         header: '',
         cell: ({ row }) => {
           const discount = row.original;
+          const hasBeenUsed =
+            discount.usage.usedCount > 0 ||
+            discount._count.transactions > 0 ||
+            discount._count.transactionItems > 0;
+
           return (
             <div className="text-right">
               <DropdownMenu>
@@ -187,18 +200,39 @@ export function DiscountTable({
                   >
                     {t('viewDetails')} <Eye className="h-4 w-4" />
                   </DropdownMenuItem>
+
+                  {/* Only show edit if discount hasn't been used */}
+                  {!hasBeenUsed && (
+                    <DropdownMenuItem
+                      className="flex justify-between cursor-pointer"
+                      onClick={() => onEdit(discount)}
+                    >
+                      {t('edit')} <Edit className="h-4 w-4" />
+                    </DropdownMenuItem>
+                  )}
+
+                  {/* Toggle status action */}
                   <DropdownMenuItem
                     className="flex justify-between cursor-pointer"
-                    onClick={() => onEdit(discount)}
+                    onClick={() => onToggleStatus(discount)}
                   >
-                    Edit <Edit className="h-4 w-4" />
+                    {discount.isActive ? t('deactivate') : t('activate')}
+                    {discount.isActive ? (
+                      <PowerOff className="h-4 w-4" />
+                    ) : (
+                      <Power className="h-4 w-4" />
+                    )}
                   </DropdownMenuItem>
-                  <DropdownMenuItem
-                    className="flex justify-between cursor-pointer text-destructive"
-                    onClick={() => onDelete(discount)}
-                  >
-                    Hapus <Trash2 className="h-4 w-4" />
-                  </DropdownMenuItem>
+
+                  {/* Only show delete if discount hasn't been used */}
+                  {!hasBeenUsed && (
+                    <DropdownMenuItem
+                      className="flex justify-between cursor-pointer text-destructive"
+                      onClick={() => onDelete(discount)}
+                    >
+                      {t('delete')} <Trash2 className="h-4 w-4" />
+                    </DropdownMenuItem>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -206,7 +240,7 @@ export function DiscountTable({
         },
       },
     ],
-    [t, tFilters, onView, onEdit, onDelete],
+    [t, tFilters, onView, onEdit, onDelete, onToggleStatus],
   );
 
   return (

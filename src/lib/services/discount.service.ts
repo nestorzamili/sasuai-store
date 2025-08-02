@@ -154,4 +154,57 @@ export class DiscountService {
       };
     }
   }
+
+  static async toggleDiscountStatus(id: string) {
+    try {
+      const existingDiscount = await GetDiscount.getById(id);
+      if (!existingDiscount.success || !existingDiscount.data) {
+        return {
+          success: false,
+          message: 'Discount not found',
+        };
+      }
+
+      const discount = existingDiscount.data;
+      const newStatus = !discount.isActive;
+
+      // If activating the discount, check if current date is within valid range
+      if (newStatus) {
+        const now = new Date();
+        const startDate = new Date(discount.startDate);
+        const endDate = new Date(discount.endDate);
+
+        if (now < startDate) {
+          return {
+            success: false,
+            message: 'Cannot activate discount before its start date',
+          };
+        }
+
+        if (now > endDate) {
+          return {
+            success: false,
+            message: 'Cannot activate discount after its end date',
+          };
+        }
+      }
+
+      const updatedDiscount = await Data.updateDiscount(id, {
+        isActive: newStatus,
+      });
+
+      return {
+        success: true,
+        message: `Discount ${newStatus ? 'activated' : 'deactivated'} successfully`,
+        data: updatedDiscount,
+      };
+    } catch (error) {
+      console.error('Toggle discount status error:', error);
+      return {
+        success: false,
+        message: 'Failed to toggle discount status',
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
+  }
 }

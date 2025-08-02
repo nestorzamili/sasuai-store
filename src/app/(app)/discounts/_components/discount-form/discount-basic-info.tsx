@@ -1,6 +1,7 @@
 'use client';
 
 import { UseFormReturn } from 'react-hook-form';
+import { useTranslations } from 'next-intl';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -20,15 +21,17 @@ interface DiscountBasicInfoProps {
 }
 
 export default function DiscountBasicInfo({ form }: DiscountBasicInfoProps) {
+  const t = useTranslations('discount.form');
+
   const typeOptions = [
     {
       value: DiscountType.PERCENTAGE,
-      label: 'Persentase (%)',
+      label: t('percentage'),
       icon: <IconPercentage size={16} />,
     },
     {
       value: DiscountType.FIXED_AMOUNT,
-      label: 'Nominal Tetap (Rp)',
+      label: t('fixedAmount'),
       icon: <IconCurrencyDollar size={16} />,
     },
   ];
@@ -41,9 +44,9 @@ export default function DiscountBasicInfo({ form }: DiscountBasicInfoProps) {
         name="name"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Nama Diskon *</FormLabel>
+            <FormLabel>{t('discountName')} *</FormLabel>
             <FormControl>
-              <Input placeholder="Contoh: Flash Sale Weekend" {...field} />
+              <Input placeholder={t('enterDiscountName')} {...field} />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -56,10 +59,10 @@ export default function DiscountBasicInfo({ form }: DiscountBasicInfoProps) {
         name="description"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Deskripsi</FormLabel>
+            <FormLabel>{t('description')}</FormLabel>
             <FormControl>
               <Textarea
-                placeholder="Deskripsi detail tentang diskon ini..."
+                placeholder={t('enterDescription')}
                 rows={3}
                 {...field}
                 value={field.value || ''}
@@ -76,7 +79,7 @@ export default function DiscountBasicInfo({ form }: DiscountBasicInfoProps) {
         name="type"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Jenis Diskon *</FormLabel>
+            <FormLabel>{t('discountType')} *</FormLabel>
             <FormControl>
               <RadioGroup
                 onValueChange={field.onChange}

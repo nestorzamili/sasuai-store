@@ -44,7 +44,7 @@ export function DiscountDeleteDialog({
       } else {
         toast({
           title: t('error'),
-          description: result.message || t('failedToDelete'),
+          description: result.error || result.message || t('failedToDelete'),
           variant: 'destructive',
         });
       }
