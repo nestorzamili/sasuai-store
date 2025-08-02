@@ -18,7 +18,7 @@ import {
 
 export class DashboardService {
   static async getPerformanceMetrics(
-    dateFilter?: DateFilter
+    dateFilter?: DateFilter,
   ): Promise<PerformanceMetricsResponse> {
     // Default dates if no filter provided
     const defaultStart = '2024-09-01';
@@ -29,7 +29,7 @@ export class DashboardService {
       dateFilter?.from || dateFilter?.to
         ? dateToCompare(
             dateFilter.from || defaultStart,
-            dateFilter.to || defaultEnd
+            dateFilter.to || defaultEnd,
           )
         : dateToCompare(defaultStart, defaultEnd);
     // Format all dates at once
@@ -45,13 +45,6 @@ export class DashboardService {
     const localEndDate = new Date(endDate + 'T23:59:59+07:00'); // WIB timezone
     const localPrevStartDate = new Date(prevStartDate + 'T00:00:00+07:00');
     const localPrevEndDate = new Date(prevEndDate + 'T23:59:59+07:00');
-
-    console.log('Dashboard service date filter:', {
-      startDate,
-      endDate,
-      localStartDate: localStartDate.toISOString(),
-      localEndDate: localEndDate.toISOString(),
-    });
 
     try {
       // Run current period queries in parallel
@@ -153,11 +146,11 @@ export class DashboardService {
       // Calculate total costs
       const currentTotalCost = currentItems.reduce(
         (acc: number, item: { cost: number }) => acc + item.cost,
-        0
+        0,
       );
       const prevTotalCost = prevItems.reduce(
         (acc: number, item: { cost: number }) => acc + item.cost,
-        0
+        0,
       );
 
       // Extract current values with fallback to 0
@@ -185,31 +178,31 @@ export class DashboardService {
 
       const salesGrowth = calculateGrowth(
         currentTotalSalesValue,
-        prevTotalSalesValue
+        prevTotalSalesValue,
       );
       const transactionsGrowth = calculateGrowth(
         currentTransactions,
-        prevTransactions
+        prevTransactions,
       );
       const avgSalesGrowth = calculateGrowth(
         currentAvgSalesValue,
-        prevAvgSalesValue
+        prevAvgSalesValue,
       );
       const costGrowth = calculateGrowth(currentTotalCost, prevTotalCost);
       const profitGrowth = calculateGrowth(currentProfit, prevProfit);
       const profitMarginGrowth = calculateGrowth(
         currentProfitMargin,
-        prevProfitMargin
+        prevProfitMargin,
       );
 
       // Format date range for display
       const currentDateRange = `${format(
         new Date(startDate),
-        'MMM d, yyyy'
+        'MMM d, yyyy',
       )} - ${format(new Date(endDate), 'MMM d, yyyy')}`;
       const prevDateRange = `${format(
         new Date(startDate),
-        'MMM d, yyyy'
+        'MMM d, yyyy',
       )} - ${format(new Date(endDate), 'MMM d, yyyy')}`;
 
       return {
@@ -248,11 +241,11 @@ export class DashboardService {
       // Format date range for display
       const currentDateRange = `${format(
         new Date(startDate),
-        'MMM d, yyyy'
+        'MMM d, yyyy',
       )} - ${format(new Date(endDate), 'MMM d, yyyy')}`;
       const prevDateRange = `${format(
         new Date(startDate),
-        'MMM d, yyyy'
+        'MMM d, yyyy',
       )} - ${format(new Date(endDate), 'MMM d, yyyy')}`;
 
       return {
@@ -272,7 +265,7 @@ export class DashboardService {
     }
   }
   static async getSalesStatistics(
-    year: string
+    year: string,
   ): Promise<SalesStatisticsResponse> {
     // Current period
     const startDate = `${year}-01-01`;
@@ -337,7 +330,7 @@ export class DashboardService {
             total_transactions: transaction._count._all,
             total_sales: transaction._sum.finalAmount,
           };
-        }
+        },
       );
 
       // Group transaction items by year and month for cost calculation
@@ -351,7 +344,7 @@ export class DashboardService {
             costsByMonth[key] = 0;
           }
           costsByMonth[key] += item.cost * item.quantity;
-        }
+        },
       );
 
       // Remove the generic type parameter from reduce and use proper typing
@@ -375,7 +368,7 @@ export class DashboardService {
           acc[key].profit_margin = acc[key].total_sales - acc[key].total_cost;
           return acc;
         },
-        {}
+        {},
       );
 
       // Calculate average sales per month after all data is aggregated
@@ -400,7 +393,7 @@ export class DashboardService {
     }
   }
   static async getTopPaymentMethods(
-    dateFilter: ExtendedDateFilter
+    dateFilter: ExtendedDateFilter,
   ): Promise<PaymentMethodResponse> {
     // Default dates if no filter provided
     const defaultStart = '2024-09-01';
@@ -410,7 +403,7 @@ export class DashboardService {
       dateFilter?.filter?.from || dateFilter?.filter?.to
         ? dateToCompare(
             dateFilter.filter.from || defaultStart,
-            dateFilter.filter.to || defaultEnd
+            dateFilter.filter.to || defaultEnd,
           )
         : dateToCompare(defaultStart, defaultEnd);
 
@@ -444,7 +437,7 @@ export class DashboardService {
           results.map((item) => ({
             type: item.paymentMethod,
             total: item._count.paymentMethod,
-          }))
+          })),
         );
 
       return {
@@ -460,7 +453,7 @@ export class DashboardService {
     }
   }
   static async getTopCategories(
-    dateFilter: ExtendedDateFilter
+    dateFilter: ExtendedDateFilter,
   ): Promise<CategoryResponse> {
     // Default dates if no filter provided
     const defaultStart = '2024-09-01';
@@ -470,7 +463,7 @@ export class DashboardService {
       dateFilter?.filter?.from || dateFilter?.filter?.to
         ? dateToCompare(
             dateFilter.filter.from || defaultStart,
-            dateFilter.filter.to || defaultEnd
+            dateFilter.filter.to || defaultEnd,
           )
         : dateToCompare(defaultStart, defaultEnd);
 
@@ -524,7 +517,7 @@ export class DashboardService {
             categoryName: batch?.product.category.name || 'Unknown',
             transactionCount: group._count.batchId,
           };
-        })
+        }),
       );
       return {
         success: true,
@@ -540,7 +533,7 @@ export class DashboardService {
   }
   static async getTopMembers(
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    dateFilter: ExtendedDateFilter // This parameter will be used in future implementations
+    dateFilter: ExtendedDateFilter, // This parameter will be used in future implementations
   ): Promise<TopMemberResponse> {
     try {
       // Implementation based on the provided SQL query:
@@ -595,7 +588,7 @@ export class DashboardService {
             ...member,
             lastTransactionDate: lastTransaction?.createdAt || null,
           };
-        })
+        }),
       );
 
       return {
@@ -612,7 +605,7 @@ export class DashboardService {
   }
   static async getTopDiscounts(
     dateFilter: ExtendedDateFilter,
-    limit = 5
+    limit = 5,
   ): Promise<TopDiscountResponse> {
     // Default dates if no filter provided
     const defaultStart = '2024-09-01';
@@ -623,7 +616,7 @@ export class DashboardService {
       dateFilter?.filter?.from || dateFilter?.filter?.to
         ? dateToCompare(
             dateFilter.filter.from || defaultStart,
-            dateFilter.filter.to || defaultEnd
+            dateFilter.filter.to || defaultEnd,
           )
         : dateToCompare(defaultStart, defaultEnd);
 
@@ -753,7 +746,7 @@ export class DashboardService {
           const usagePercent = discount.maxUses
             ? Math.min(
                 100,
-                Math.round((discount.usedCount / discount.maxUses) * 100)
+                Math.round((discount.usedCount / discount.maxUses) * 100),
               )
             : null;
 
