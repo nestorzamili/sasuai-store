@@ -23,6 +23,7 @@
     "new": "New Discount",
     "edit": "Edit Discount",
     "delete": "Delete Discount",
+    "loading": "Loading...",
     "table": {
       "name": "Name",
       "code": "Code",
