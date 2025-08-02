@@ -6,7 +6,7 @@ import { toast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { deleteDiscount } from '../action';
-import { DiscountWithCounts } from '@/lib/types/discount';
+import { DiscountWithCounts } from '@/lib/services/discount/types';
 import { useTranslations } from 'next-intl';
 
 interface Props {

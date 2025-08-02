@@ -2,6 +2,7 @@ import type {
   DiscountType as PrismaDiscountType,
   DiscountApplyTo as PrismaDiscountApplyTo,
 } from '@prisma/client';
+import type { DateRange } from 'react-day-picker';
 
 export enum DiscountType {
   PERCENTAGE = 'PERCENTAGE',
@@ -80,7 +81,6 @@ export interface DiscountWithCounts
     transactions: number;
     transactionItems: number;
   };
-  isValid: boolean;
   usage: {
     usedCount: number;
     maxUses: number | null;
@@ -119,7 +119,8 @@ export interface DiscountPaginationParams {
   type?: DiscountType;
   applyTo?: DiscountApplyTo;
   isGlobal?: boolean;
-  validAsOf?: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 export interface DiscountWhereClause {
@@ -127,6 +128,10 @@ export interface DiscountWhereClause {
     name?: { contains: string; mode: 'insensitive' };
     code?: { contains: string; mode: 'insensitive' };
     description?: { contains: string; mode: 'insensitive' };
+  }>;
+  AND?: Array<{
+    startDate?: { lte: Date };
+    endDate?: { gte: Date };
   }>;
   isActive?: boolean;
   type?: DiscountType;
@@ -152,6 +157,7 @@ export interface MemberForSelection {
   name: string;
   tier: { name: string } | null;
   cardId: string | null;
+  phone: string | null;
 }
 
 export interface ValidationResult<T> {
@@ -178,4 +184,32 @@ export interface PaginationMeta {
 export interface DiscountListData {
   discounts: DiscountWithCounts[];
   pagination: PaginationMeta;
+}
+
+export interface DiscountTableProps {
+  data: DiscountWithCounts[];
+  isLoading: boolean;
+  pagination: { pageIndex: number; pageSize: number };
+  totalRows: number;
+  onPaginationChange: (pagination: {
+    pageIndex: number;
+    pageSize: number;
+  }) => void;
+  onSortingChange: (sorting: Array<{ id: string; desc: boolean }>) => void;
+  onSearchChange: (search: string) => void;
+  onView: (discount: DiscountWithCounts) => void;
+  onEdit: (discount: DiscountWithCounts) => void;
+  onDelete: (discount: DiscountWithCounts) => void;
+  filterToolbar?: React.ReactNode;
+}
+
+export interface DiscountFilterToolbarProps {
+  dateRange: DateRange | undefined;
+  setDateRange: (range: DateRange | undefined) => void;
+  type: DiscountType | 'ALL_TYPES';
+  setType: (type: DiscountType | 'ALL_TYPES') => void;
+  applyTo: DiscountApplyTo | 'ALL_APPLICATIONS';
+  setApplyTo: (applyTo: DiscountApplyTo | 'ALL_APPLICATIONS') => void;
+  status: 'ALL_STATUSES' | 'ACTIVE' | 'INACTIVE';
+  setStatus: (status: 'ALL_STATUSES' | 'ACTIVE' | 'INACTIVE') => void;
 }

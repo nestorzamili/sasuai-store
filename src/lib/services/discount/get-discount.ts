@@ -10,7 +10,6 @@ import type {
   DiscountListData,
   DiscountWithRelations,
 } from './types';
-import { Validation } from './validation';
 
 export class GetDiscount {
   static async getDiscounts({
@@ -23,7 +22,8 @@ export class GetDiscount {
     type,
     applyTo,
     isGlobal,
-    validAsOf,
+    startDate,
+    endDate,
   }: DiscountPaginationParams): Promise<ApiResponse<DiscountListData>> {
     try {
       const where: DiscountWhereClause = {};
@@ -41,10 +41,17 @@ export class GetDiscount {
       if (applyTo) where.applyTo = applyTo;
       if (isGlobal !== undefined) where.isGlobal = isGlobal;
 
-      if (validAsOf) {
-        const validDate = new Date(validAsOf);
-        where.startDate = { lte: validDate };
-        where.endDate = { gte: validDate };
+      if (startDate || endDate) {
+        if (startDate && endDate) {
+          where.AND = [
+            { startDate: { lte: new Date(endDate) } },
+            { endDate: { gte: new Date(startDate) } },
+          ];
+        } else if (startDate) {
+          where.endDate = { gte: new Date(startDate) };
+        } else if (endDate) {
+          where.startDate = { lte: new Date(endDate) };
+        }
       }
 
       const skip = (page - 1) * pageSize;
@@ -75,8 +82,6 @@ export class GetDiscount {
 
       const processedDiscounts: DiscountWithCounts[] = discounts.map(
         (discount) => {
-          const { isValid } = Validation.validateDiscountStatus(discount);
-
           return {
             id: discount.id,
             name: discount.name,
@@ -95,7 +100,6 @@ export class GetDiscount {
             createdAt: discount.createdAt,
             updatedAt: discount.updatedAt,
             _count: discount._count,
-            isValid,
             usage: {
               usedCount: discount.usedCount,
               maxUses: discount.maxUses,
@@ -179,6 +183,7 @@ export class GetDiscount {
           name: true,
           tier: { select: { name: true } },
           cardId: true,
+          phone: true,
         },
         take: 10,
         orderBy: { name: 'asc' },
@@ -190,6 +195,7 @@ export class GetDiscount {
                 { id: { contains: search.trim(), mode: 'insensitive' } },
                 { cardId: { contains: search.trim(), mode: 'insensitive' } },
                 { email: { contains: search.trim(), mode: 'insensitive' } },
+                { phone: { contains: search.trim(), mode: 'insensitive' } },
               ],
             }),
         },
