@@ -79,6 +79,8 @@
       "print": "Cetak Struk",
       "downloadPdf": "Unduh PDF",
       "generatingPdf": "Membuat PDF...",
+      "success": "Berhasil",
+      "pdfDownloaded": "PDF berhasil diunduh",
       "refund": "Proses Refund",
       "error": "Kesalahan",
       "failedToLoad": "Gagal memuat detail transaksi",
