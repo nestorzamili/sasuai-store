@@ -115,11 +115,18 @@ export class GetTransaction {
       // Process transactions data
       const processedTransactions: ProcessedTransaction[] = transactions.map(
         (transaction) => {
-          const originalAmount = transaction.totalAmount;
+          // Calculate true original amount (before product discounts)
+          const trueOriginalAmount = transaction.items.reduce(
+            (sum, item) => sum + item.pricePerUnit * item.quantity,
+            0,
+          );
           const memberDiscount = transaction.discountAmount || 0;
           const productDiscounts = this.calculateDiscounts(transaction.items);
           const totalDiscount = memberDiscount + productDiscounts;
-          const pointsEarned = this.calculatePoints(transaction.memberPoints);
+          // Only calculate points if member exists
+          const pointsEarned = transaction.member
+            ? this.calculatePoints(transaction.memberPoints)
+            : 0;
 
           return {
             id: transaction.id,
@@ -127,7 +134,7 @@ export class GetTransaction {
             cashier: transaction.cashier,
             member: transaction.member,
             pricing: {
-              originalAmount,
+              originalAmount: trueOriginalAmount,
               memberDiscount,
               productDiscounts,
               totalDiscount,
@@ -217,11 +224,18 @@ export class GetTransaction {
       }
 
       // Process transaction details
-      const originalAmount = transaction.totalAmount;
+      // Calculate true original amount (before product discounts)
+      const originalAmount = transaction.items.reduce(
+        (sum, item) => sum + item.pricePerUnit * item.quantity,
+        0,
+      );
       const memberDiscountAmount = transaction.discountAmount || 0;
       const productDiscounts = this.calculateDiscounts(transaction.items);
       const totalDiscounts = memberDiscountAmount + productDiscounts;
-      const pointsEarned = this.calculatePoints(transaction.memberPoints);
+      // Only calculate points if member exists
+      const pointsEarned = transaction.member
+        ? this.calculatePoints(transaction.memberPoints)
+        : 0;
 
       // Process items
       const processedItems = transaction.items.map((item) => ({
