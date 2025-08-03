@@ -24,9 +24,10 @@ export function StoreSwitcher({
             <Image
               src={activeStore.logo}
               alt={activeStore.name}
-              width={40}
-              height={40}
-              className="size-10 object-contain"
+              width={32}
+              height={32}
+              className="size-8 object-contain"
+              style={{ width: 'auto', height: 'auto' }}
             />
           ) : (
             React.createElement(activeStore.logo, { className: 'size-4' })
