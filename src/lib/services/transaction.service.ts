@@ -142,7 +142,7 @@ export class TransactionService {
         }
 
         // 11 - Update discount usage counters
-        await Discount.incrementUsages(tx, validatedCart);
+        await Discount.incrementUsages(tx, validatedCart, transactionSummary);
 
         return {
           success: true,

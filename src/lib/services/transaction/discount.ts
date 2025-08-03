@@ -6,6 +6,7 @@ import type {
   GlobalDiscountInfo,
   ValidatedCartItem,
   PrismaTransactionContext,
+  TransactionSummary,
 } from './types';
 
 export class Discount {
@@ -297,10 +298,11 @@ export class Discount {
   static async incrementUsages(
     tx: PrismaTransactionContext,
     validatedCart: ValidatedCartItem[],
+    transactionSummary: TransactionSummary,
   ): Promise<void> {
     const discountUsages = new Map<string, number>();
 
-    // Count discount usages from cart items
+    // Count discount usages from cart items (product-specific discounts)
     for (const item of validatedCart) {
       if (item.discount) {
         const discountId = item.discount.id;
@@ -311,11 +313,21 @@ export class Discount {
       }
     }
 
+    // Count usage for transaction-level discounts (global/member/tier)
+    // These are applied once per transaction, not per item
+    if (transactionSummary.globalDiscount) {
+      const discountId = transactionSummary.globalDiscount.id;
+      discountUsages.set(discountId, (discountUsages.get(discountId) || 0) + 1);
+    } else if (transactionSummary.member?.discount) {
+      const discountId = transactionSummary.member.discount.id;
+      discountUsages.set(discountId, (discountUsages.get(discountId) || 0) + 1);
+    }
+
     // Prepare batch updates for discount usage
     const updatePromises: Promise<unknown>[] = [];
 
     for (const [discountId, usageCount] of discountUsages) {
-      // Update global discount usage counter
+      // Update discount usage counter
       updatePromises.push(
         tx.discount.update({
           where: { id: discountId },
