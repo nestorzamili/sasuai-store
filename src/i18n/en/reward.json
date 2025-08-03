@@ -175,6 +175,7 @@
         "pointsRequired": "points required",
         "stockAvailable": "available in stock",
         "insufficientPoints": "Insufficient points",
+        "sufficientPoints": "Sufficient points",
         "outOfStock": "Out of stock",
         "expired": "Reward expired"
       },
@@ -186,6 +187,7 @@
       "memberBannedDescription": "This member cannot claim rewards",
       "banned": "Banned",
       "regularTier": "Regular",
+      "stockAvailable": "available",
       "noRewardsAvailable": "There are currently no rewards available for claiming.",
       "error": {
         "insufficientPoints": "Insufficient points",
