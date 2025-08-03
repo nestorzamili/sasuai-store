@@ -18,9 +18,7 @@ export default function MaintenanceError() {
             We're taking a short break
           </h1>
           <p className="text-muted-foreground mb-6 text-lg">
-            Just like someone working comfortably from their sofa, we're making
-            improvements from behind the scenes. We'll be back online shortly
-            with a better experience for you.
+            We'll be back online shortly with a better experience for you.
           </p>
           <div className="space-y-4 mb-8">
             <div className="flex items-start gap-3">

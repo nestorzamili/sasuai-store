@@ -82,6 +82,8 @@
       "editDescription": "Perbarui informasi reward",
       "createButton": "Buat Reward",
       "updateButton": "Perbarui Reward",
+      "creating": "Membuat...",
+      "updating": "Memperbarui...",
       "cancel": "Batal",
       "sections": {
         "basicInfo": "Informasi Dasar",
@@ -173,6 +175,7 @@
         "pointsRequired": "poin diperlukan",
         "stockAvailable": "tersedia di stok",
         "insufficientPoints": "Poin tidak mencukupi",
+        "sufficientPoints": "Poin mencukupi",
         "outOfStock": "Stok habis",
         "expired": "Reward kedaluwarsa"
       },
@@ -184,6 +187,7 @@
       "memberBannedDescription": "Member ini tidak dapat mengklaim reward",
       "banned": "Diblokir",
       "regularTier": "Reguler",
+      "stockAvailable": "tersedia",
       "noRewardsAvailable": "Saat ini tidak ada reward yang tersedia untuk diklaim.",
       "error": {
         "insufficientPoints": "Poin tidak mencukupi",

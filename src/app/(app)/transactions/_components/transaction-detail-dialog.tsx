@@ -1,28 +1,24 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from '@/hooks/use-toast';
 import { getTransactionById } from '../action';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { IconDownload } from '@tabler/icons-react';
+import { IconDownload, IconReceipt } from '@tabler/icons-react';
 import { pdf } from '@react-pdf/renderer';
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogFooter,
+  DialogTitle,
 } from '@/components/ui/dialog';
 import type { TransactionDetails } from '@/lib/services/transaction/types';
 
-import { TransactionHeader } from './transaction-header';
-import { TransactionItemsTable } from './transaction-items-table';
-import { TransactionPricingSummary } from './transaction-pricing-summary';
-import { TransactionPointsCard } from './transaction-points-card';
+import { TransactionDetailOverview } from './transaction-details/transaction-detail-overview';
+import { TransactionDetailItems } from './transaction-details/transaction-detail-items';
 import { TransactionPDF } from './transaction-generate-pdf';
 
 // === LOCAL TYPES ===
@@ -43,16 +39,8 @@ export function TransactionDetailDialog({
   );
   const [loading, setLoading] = useState(true);
   const [pdfLoading, setPdfLoading] = useState(false);
-  const isMounted = useRef(true);
 
-  useEffect(() => {
-    isMounted.current = true;
-    return () => {
-      isMounted.current = false;
-    };
-  }, []);
-
-  const handlePdfGeneration = useCallback(async () => {
+  const handlePdfGeneration = async () => {
     if (!transaction) return;
 
     try {
@@ -72,30 +60,24 @@ export function TransactionDetailDialog({
       // Cleanup
       URL.revokeObjectURL(url);
 
-      if (isMounted.current) {
-        setPdfLoading(false);
-        toast({
-          title: t('success'),
-          description: t('pdfDownloaded'),
-        });
-      }
+      setPdfLoading(false);
+      toast({
+        title: t('success'),
+        description: t('pdfDownloaded'),
+      });
     } catch (error) {
       console.error('Error generating PDF:', error);
-      if (isMounted.current) {
-        toast({
-          title: t('error'),
-          description: t('failedToGenerate'),
-          variant: 'destructive',
-        });
-      }
+      toast({
+        title: t('error'),
+        description: t('failedToGenerate'),
+        variant: 'destructive',
+      });
     } finally {
-      if (isMounted.current) {
-        setPdfLoading(false);
-      }
+      setPdfLoading(false);
     }
-  }, [transaction, t]);
+  };
 
-  const fetchTransactionDetails = useCallback(async () => {
+  const fetchTransactionDetails = async () => {
     if (!open || !transactionId) return;
 
     try {
@@ -121,57 +103,66 @@ export function TransactionDetailDialog({
     } finally {
       setLoading(false);
     }
-  }, [open, transactionId, t]);
+  };
 
   useEffect(() => {
     fetchTransactionDetails();
-  }, [fetchTransactionDetails]);
+  }, [open, transactionId]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh]">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            {!loading && transaction
-              ? `${t('title')}: ${transaction.tranId}`
-              : t('title')}
-          </DialogTitle>
-        </DialogHeader>
+      <DialogContent className="sm:max-w-[1200px] max-h-[90vh] overflow-hidden p-0">
+        {/* Hidden DialogTitle for accessibility */}
+        <DialogTitle className="sr-only">
+          {t('title')}: {transaction?.tranId || ''}
+        </DialogTitle>
 
-        <ScrollArea className="h-[500px] pr-4">
-          {loading ? (
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <Skeleton className="h-8 w-64" />
-                <Skeleton className="h-8 w-32" />
+        {loading ? (
+          <div className="p-6 pt-8">
+            <TransactionDetailSkeleton />
+          </div>
+        ) : transaction ? (
+          <div className="flex h-[70vh] pt-4">
+            {/* Left Side - Transaction Information */}
+            <div className="w-1/2 border-r flex flex-col">
+              {/* Fixed Header */}
+              <div className="px-6 py-4 border-b bg-background">
+                <h3 className="text-lg font-semibold">
+                  {t('transactionInformation')}
+                </h3>
               </div>
-              <Skeleton className="h-[400px] w-full" />
+              {/* Scrollable Content */}
+              <ScrollArea className="flex-1">
+                <div className="p-6">
+                  <TransactionDetailOverview transaction={transaction} />
+                </div>
+              </ScrollArea>
             </div>
-          ) : transaction ? (
-            <div className="space-y-6" id="transaction-details">
-              <TransactionHeader transaction={transaction} />
 
-              <Separator />
-
-              <TransactionItemsTable transaction={transaction} />
-
-              <Separator />
-
-              <TransactionPricingSummary transaction={transaction} />
-
-              <TransactionPointsCard
-                pointsEarned={transaction.pointsEarned || 0}
-              />
+            {/* Right Side - Transaction Items */}
+            <div className="w-1/2 flex flex-col">
+              {/* Fixed Header */}
+              <div className="px-6 py-4 border-b bg-background">
+                <h3 className="text-lg font-semibold">
+                  {t('purchasedItems')} ({transaction.items?.length || 0})
+                </h3>
+              </div>
+              {/* Scrollable Content */}
+              <ScrollArea className="flex-1">
+                <div className="p-6">
+                  <TransactionDetailItems transaction={transaction} />
+                </div>
+              </ScrollArea>
             </div>
-          ) : (
-            <div className="text-center p-6">
-              <h3 className="text-lg font-medium">{t('notFound')}</h3>
-              <p className="text-muted-foreground">{t('notFoundMessage')}</p>
-            </div>
-          )}
-        </ScrollArea>
+          </div>
+        ) : (
+          <div className="py-12 text-center">
+            <IconReceipt className="h-12 w-12 mx-auto text-muted-foreground" />
+            <p className="mt-2 text-muted-foreground">{t('notFound')}</p>
+          </div>
+        )}
 
-        <DialogFooter>
+        <DialogFooter className="px-6 py-4 border-t">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             {t('close')}
           </Button>
@@ -184,5 +175,52 @@ export function TransactionDetailDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function TransactionDetailSkeleton() {
+  return (
+    <div className="flex h-[70vh]">
+      {/* Left Skeleton */}
+      <div className="w-1/2 border-r flex flex-col">
+        {/* Fixed Header */}
+        <div className="px-6 py-4 border-b bg-background">
+          <Skeleton className="h-6 w-48" />
+        </div>
+        {/* Scrollable Content */}
+        <div className="flex-1 p-6">
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 gap-4">
+              <div>
+                <Skeleton className="h-4 w-32 mb-2" />
+                <Skeleton className="h-6 w-48" />
+              </div>
+              <div>
+                <Skeleton className="h-4 w-32 mb-2" />
+                <Skeleton className="h-6 w-32" />
+              </div>
+            </div>
+            <Skeleton className="h-32 w-full" />
+            <Skeleton className="h-32 w-full" />
+          </div>
+        </div>
+      </div>
+
+      {/* Right Skeleton */}
+      <div className="w-1/2 flex flex-col">
+        {/* Fixed Header */}
+        <div className="px-6 py-4 border-b bg-background">
+          <Skeleton className="h-6 w-40" />
+        </div>
+        {/* Scrollable Content */}
+        <div className="flex-1 p-6">
+          <div className="space-y-4">
+            <Skeleton className="h-24 w-full" />
+            <Skeleton className="h-24 w-full" />
+            <Skeleton className="h-24 w-full" />
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
