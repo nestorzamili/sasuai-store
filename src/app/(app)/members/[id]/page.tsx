@@ -15,12 +15,14 @@ import MemberProfile from './_components/member-profile';
 import MemberPointHistory from './_components/member-point-history';
 import MemberRewardHistory from './_components/member-reward-history';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useBreadcrumb } from '@/context/breadcrumb-context';
 
 export default function MemberDetailsPage() {
   const t = useTranslations('member.detailPage');
   const tCommon = useTranslations('member.common');
   const router = useRouter();
   const params = useParams();
+  const { updateBreadcrumb } = useBreadcrumb();
 
   // Get the member ID from URL params
   const memberId = useRef<string | null>(
@@ -54,9 +56,9 @@ export default function MemberDetailsPage() {
 
         setMember(memberData);
 
-        // Update breadcrumb only when we have the actual member name
-        if (typeof window !== 'undefined' && window.__updateBreadcrumb) {
-          window.__updateBreadcrumb(memberId.current, memberData.name);
+        // Update breadcrumb with the actual member name
+        if (memberId.current) {
+          updateBreadcrumb(memberId.current, memberData.name);
         }
       } else {
         toast({
