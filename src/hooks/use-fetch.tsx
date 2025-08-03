@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { debounce } from '@/lib/common/debounce-effect';
 
 export interface SortByOptions {
@@ -70,34 +70,25 @@ export interface HookOptions {
 }
 
 export function useFetch<T>(fetchOptions: FetchOptions<T>) {
-  // Destructure stable parts of fetchOptions with useMemo for stability
-  const stableFetchOptions = useMemo(
-    () => ({
-      fetchData: fetchOptions.fetchData,
-      onSuccess: fetchOptions.onSuccess,
-      onError: fetchOptions.onError,
-      debounceTime: fetchOptions.debounceTime ?? 500,
-    }),
-    [
-      fetchOptions.fetchData,
-      fetchOptions.onSuccess,
-      fetchOptions.onError,
-      fetchOptions.debounceTime,
-    ],
-  );
+  // Use ref to store latest fetchData to avoid recreating fetchData callback
+  const fetchDataRef = useRef(fetchOptions.fetchData);
+  const onSuccessRef = useRef(fetchOptions.onSuccess);
+  const onErrorRef = useRef(fetchOptions.onError);
 
-  const {
-    fetchData: fetchDataFn,
-    onSuccess,
-    onError,
-    debounceTime,
-  } = stableFetchOptions;
+  // Update refs when props change
+  useEffect(() => {
+    fetchDataRef.current = fetchOptions.fetchData;
+    onSuccessRef.current = fetchOptions.onSuccess;
+    onErrorRef.current = fetchOptions.onError;
+  });
+
+  const debounceTime = fetchOptions.debounceTime ?? 500;
 
   const [data, setData] = useState<T | undefined>();
   const [isLoading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
 
-  // Stable initial options using useMemo
+  // Stable initial options using useMemo with proper JSON stringification for deep comparison
   const initialOptions = useMemo(
     () => ({
       pagination: {
@@ -144,8 +135,9 @@ export function useFetch<T>(fetchOptions: FetchOptions<T>) {
       fetchOptions.initialPageSize,
       fetchOptions.initialSortField,
       fetchOptions.initialSortDirection,
-      fetchOptions.initialFilters,
-      fetchOptions.options,
+      // Use JSON.stringify for deep comparison of complex objects
+      JSON.stringify(fetchOptions.initialFilters),
+      JSON.stringify(fetchOptions.options),
     ],
   );
 
@@ -261,12 +253,12 @@ export function useFetch<T>(fetchOptions: FetchOptions<T>) {
       try {
         setLoading(true);
         setError(null);
-        const result = await fetchDataFn(options);
+        const result = await fetchDataRef.current(options);
         setData(result.data);
         setTotalRows(result.totalRows);
 
-        if (onSuccess) {
-          onSuccess(result);
+        if (onSuccessRef.current) {
+          onSuccessRef.current(result);
         }
 
         return result;
@@ -276,8 +268,8 @@ export function useFetch<T>(fetchOptions: FetchOptions<T>) {
         setError(errorObj);
         console.error('Error fetching data:', errorObj);
 
-        if (onError) {
-          onError(errorObj);
+        if (onErrorRef.current) {
+          onErrorRef.current(errorObj);
         }
 
         return { data: undefined as T, totalRows: 0 };
@@ -285,12 +277,12 @@ export function useFetch<T>(fetchOptions: FetchOptions<T>) {
         setLoading(false);
       }
     },
-    [fetchDataFn, onSuccess, onError],
+    [], // Empty dependency array since we use refs
   );
 
-  // Stable formatted options with proper memoization
-  const formattedOptions = useMemo(() => {
-    const baseOptions = {
+  // Create a stable string representation of options for comparison
+  const optionsKey = useMemo(() => {
+    const stableOptions = {
       page: options.pagination.pageIndex,
       limit: options.pagination.pageSize,
       search: options.search,
@@ -298,59 +290,51 @@ export function useFetch<T>(fetchOptions: FetchOptions<T>) {
       sortOrder: options.sortOrder,
       columnFilter: options.columnFilter,
       filters: options.filters,
+      // Add custom options
+      ...Object.fromEntries(
+        Object.entries(options).filter(
+          ([key]) =>
+            ![
+              'pagination',
+              'sortBy',
+              'search',
+              'sortOrder',
+              'columnFilter',
+              'filters',
+            ].includes(key),
+        ),
+      ),
     };
 
-    // Add custom options without recreating objects
-    const customOptions = Object.fromEntries(
-      Object.entries(options).filter(
-        ([key]) =>
-          ![
-            'pagination',
-            'sortBy',
-            'search',
-            'sortOrder',
-            'columnFilter',
-            'filters',
-          ].includes(key),
-      ),
-    );
+    return JSON.stringify(stableOptions);
+  }, [options]);
 
-    return { ...baseOptions, ...customOptions };
-  }, [
-    options.pagination.pageIndex,
-    options.pagination.pageSize,
-    options.search,
-    options.sortBy.id,
-    options.sortBy.desc,
-    options.sortOrder,
-    options.columnFilter,
-    options.filters,
-    // Include custom options in dependency array
-    ...Object.entries(options)
-      .filter(
-        ([key]) =>
-          ![
-            'pagination',
-            'sortBy',
-            'search',
-            'sortOrder',
-            'columnFilter',
-            'filters',
-          ].includes(key),
-      )
-      .flat(),
-  ]);
+  // Use a ref to track the last executed options to prevent duplicate requests
+  const lastExecutedOptionsRef = useRef<string>('');
+  const requestTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Effect with proper dependency management and request deduplication
   useEffect(() => {
+    // Skip if options haven't actually changed
+    if (lastExecutedOptionsRef.current === optionsKey) {
+      return;
+    }
+
+    // Clear any pending request
+    if (requestTimeoutRef.current) {
+      clearTimeout(requestTimeoutRef.current);
+    }
+
     let isCancelled = false;
-    let requestId: number;
 
     const runFetch = async () => {
-      // Simple deduplication by delaying slightly to batch rapid calls
-      requestId = window.setTimeout(async () => {
-        if (!isCancelled) {
-          await fetchData(formattedOptions);
+      // Small delay to batch rapid changes
+      requestTimeoutRef.current = setTimeout(async () => {
+        if (!isCancelled && lastExecutedOptionsRef.current !== optionsKey) {
+          lastExecutedOptionsRef.current = optionsKey;
+
+          const parsedOptions = JSON.parse(optionsKey);
+          await fetchData(parsedOptions);
         }
       }, 10);
     };
@@ -359,14 +343,18 @@ export function useFetch<T>(fetchOptions: FetchOptions<T>) {
 
     return () => {
       isCancelled = true;
-      if (requestId) {
-        window.clearTimeout(requestId);
+      if (requestTimeoutRef.current) {
+        clearTimeout(requestTimeoutRef.current);
+        requestTimeoutRef.current = null;
       }
     };
-  }, [formattedOptions, fetchData]); // Manual refresh function
+  }, [optionsKey, fetchData]);
+
+  // Manual refresh function
   const refresh = useCallback(() => {
-    fetchData(formattedOptions);
-  }, [fetchData, formattedOptions]);
+    const parsedOptions = JSON.parse(optionsKey);
+    fetchData(parsedOptions);
+  }, [fetchData, optionsKey]);
 
   return {
     data,
