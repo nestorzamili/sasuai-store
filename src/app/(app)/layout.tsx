@@ -4,8 +4,8 @@ import { SearchProvider } from '@/context/search-context';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/layout/app-sidebar';
 import { cn } from '@/lib/utils';
-import { StrictMode, useState, useEffect } from 'react';
-import { AuthProvider } from '@/context/auth-context';
+import { StrictMode, useState, useEffect, useCallback } from 'react';
+import { AuthProvider, useAuth } from '@/context/auth-context';
 import { Header } from '@/components/layout/header';
 import { Main } from '@/components/layout/main';
 import { ProfileDropdown } from '@/components/profile-dropdown';
@@ -14,20 +14,33 @@ import { ThemeSwitch } from '@/components/theme-switch';
 import { Toaster } from '@/components/ui/toaster';
 import { BreadCrumb } from '@/components/breadcrumb';
 import { LanguageSwitcher } from '@/components/language-switcher';
+import { useClientHydration } from '@/hooks/use-client-hydration';
+import { getSidebarStateFromCookie } from '@/utils/sidebar-utils';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import {
+  BreadcrumbContext,
+  BreadcrumbLabels,
+} from '@/context/breadcrumb-context';
 
-// Create a type-safe context for breadcrumb labels
-export type BreadcrumbLabels = Record<string, string>;
+function AuthGuard({ children }: { children: React.ReactNode }) {
+  const { user, isLoading, error } = useAuth();
+  const isClient = useClientHydration();
 
-// Deklarasi type untuk global window object
-declare global {
-  interface Window {
-    __updateBreadcrumb: (id: string, label: string) => void;
+  if (!isClient || isLoading) {
+    return <LoadingSpinner />;
   }
+
+  if (error || !user) {
+    return <LoadingSpinner message="Redirecting..." />;
+  }
+
+  return <>{children}</>;
 }
 
-export default function AppLayout({ children }: { children: React.ReactNode }) {
-  const [isClient, setIsClient] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(true); // Default to true for SSR
+// Main layout content component
+function LayoutContent({ children }: { children: React.ReactNode }) {
+  const isClient = useClientHydration();
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   // Create state to hold custom breadcrumb labels
   const [breadcrumbLabels, setBreadcrumbLabels] = useState<BreadcrumbLabels>(
@@ -36,79 +49,27 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   // Hydrate sidebar state on client side
   useEffect(() => {
-    setIsClient(true);
-    // Only read from cookies after hydration
-    const savedState = document.cookie
-      .split('; ')
-      .find((row) => row.startsWith('sidebar:state='))
-      ?.split('=')[1];
+    if (isClient) {
+      const savedState = getSidebarStateFromCookie();
+      setSidebarOpen(savedState);
+    }
+  }, [isClient]);
 
-    setSidebarOpen(savedState !== 'false');
-  }, []);
-
-  // Function to expose to child components to update breadcrumb labels
-  const updateBreadcrumb = (id: string, label: string) => {
+  // Memoized function to expose to child components to update breadcrumb labels
+  const updateBreadcrumb = useCallback((id: string, label: string) => {
     setBreadcrumbLabels((prev) => ({
       ...prev,
       [id]: label,
     }));
-  };
-
-  // Add updateBreadcrumb to the window object so it can be accessed from any component
-  useEffect(() => {
-    if (isClient) {
-      window.__updateBreadcrumb = updateBreadcrumb;
-    }
-  }, [isClient]);
-
-  // Prevent hydration mismatch by not rendering until client-side
-  if (!isClient) {
-    return (
-      <div className="group/body">
-        <StrictMode>
-          <AuthProvider>
-            <SearchProvider>
-              <SidebarProvider defaultOpen={true}>
-                <AppSidebar />
-                <div
-                  id="content"
-                  className={cn(
-                    'max-w-full w-full ml-auto',
-                    'peer-data-[state=collapsed]:w-[calc(100%-var(--sidebar-width-icon)-1rem)]',
-                    'peer-data-[state=expanded]:w-[calc(100%-var(--sidebar-width))]',
-                    'transition-[width] ease-linear duration-200',
-                    'h-svh flex flex-col',
-                    'group-data-[scroll-locked=1]/body:h-full',
-                    'group-data-[scroll-locked=1]/body:has-[main.fixed-main]:h-svh',
-                  )}
-                >
-                  <Header fixed>
-                    <Search />
-                    <div className="ml-auto flex items-center gap-2">
-                      <LanguageSwitcher />
-                      <ThemeSwitch />
-                      <ProfileDropdown />
-                    </div>
-                  </Header>
-                  <Main>
-                    <BreadCrumb customLabels={breadcrumbLabels} />
-                    {children}
-                  </Main>
-                  <Toaster />
-                </div>
-              </SidebarProvider>
-            </SearchProvider>
-          </AuthProvider>
-        </StrictMode>
-      </div>
-    );
-  }
+  }, []);
 
   return (
     <div className="group/body">
       <StrictMode>
-        <AuthProvider>
-          <SearchProvider>
+        <SearchProvider>
+          <BreadcrumbContext.Provider
+            value={{ breadcrumbLabels, updateBreadcrumb }}
+          >
             <SidebarProvider defaultOpen={sidebarOpen}>
               <AppSidebar />
               <div
@@ -138,9 +99,19 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 <Toaster />
               </div>
             </SidebarProvider>
-          </SearchProvider>
-        </AuthProvider>
+          </BreadcrumbContext.Provider>
+        </SearchProvider>
       </StrictMode>
     </div>
+  );
+}
+
+export default function AppLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <AuthProvider>
+      <AuthGuard>
+        <LayoutContent>{children}</LayoutContent>
+      </AuthGuard>
+    </AuthProvider>
   );
 }
