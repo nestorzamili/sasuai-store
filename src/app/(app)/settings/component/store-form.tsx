@@ -95,7 +95,7 @@ export default function StoreForm() {
     } catch (error) {
       toast({
         title: 'Error',
-        description: 'Failed to update store information',
+        description: `${(error as Error).message || 'Failed to update store information'}`,
         variant: 'destructive',
       });
     }

@@ -1,33 +1,34 @@
 {
-  "sidebar": {
-    "store": {
-      "name": "Sasuai Store",
-      "plan": "Store Management"
-    },
-    "groups": {
-      "general": "General",
-      "inventoryManagement": "Inventory Management",
-      "supplyChain": "Supply Chain",
-      "marketing": "Marketing",
-      "administration": "Administration",
-      "integrations": "Integrations",
-      "support": "Support"
-    },
-    "items": {
-      "dashboard": "Dashboard",
-      "transactions": "Transactions",
-      "products": "Products",
-      "categories": "Categories",
-      "brands": "Brands",
-      "units": "Units",
-      "inventory": "Inventory",
-      "suppliers": "Suppliers",
-      "discounts": "Discounts",
-      "members": "Members",
-      "rewards": "Rewards",
-      "users": "Users",
-      "blastify": "Blastify",
-      "helpCenter": "Help Center"
+    "sidebar": {
+        "store": {
+            "name": "Sasuai Store",
+            "plan": "Store Management"
+        },
+        "groups": {
+            "general": "General",
+            "inventoryManagement": "Inventory Management",
+            "supplyChain": "Supply Chain",
+            "marketing": "Marketing",
+            "administration": "Administration",
+            "integrations": "Integrations",
+            "support": "Support"
+        },
+        "items": {
+            "dashboard": "Dashboard",
+            "transactions": "Transactions",
+            "products": "Products",
+            "categories": "Categories",
+            "brands": "Brands",
+            "units": "Units",
+            "inventory": "Inventory",
+            "suppliers": "Suppliers",
+            "discounts": "Discounts",
+            "members": "Members",
+            "rewards": "Rewards",
+            "users": "Users",
+            "blastify": "Blastify",
+            "helpCenter": "Help Center",
+            "settings": "Settings"
+        }
     }
-  }
 }
