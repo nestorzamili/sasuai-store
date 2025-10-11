@@ -1,8 +1,8 @@
 'use client';
 import * as React from 'react';
 import { SidebarMenu, SidebarMenuButton } from '@/components/ui/sidebar';
-import Image from 'next/image';
-import { getSettingFields, getStore } from '@/app/(app)/settings/action';
+// import Image from 'next/image';
+import { getStore } from '@/app/(app)/settings/action';
 import { useEffect } from 'react';
 type stores = {
   store_name: string;

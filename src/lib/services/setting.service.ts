@@ -117,12 +117,12 @@ export async function getStoreSettings() {
       },
     },
   });
-  const storeData = settings.reduce((acc: any, item) => {
+  const storeData = settings.reduce((acc: StoreFormType, item) => {
     const key = item.key.replace('store.', ''); // hapus prefix
     acc[key] = item.value;
     return acc;
-  }, {});
-  return storeData as StoreFormType;
+  }, {} as StoreFormType);
+  return storeData;
 }
 export async function updateStoreSettings(data: StoreFormType) {
   const entries = Object.entries(data).map(([key, value]) => ({
