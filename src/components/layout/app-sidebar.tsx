@@ -56,13 +56,13 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
       sidebarData.navGroups.map((groupProps) => (
         <NavGroup key={groupProps.title} {...groupProps} />
       )),
-    [sidebarData.navGroups],
+    [sidebarData.navGroups]
   );
 
   return (
     <Sidebar collapsible="icon" variant="floating" {...props}>
       <SidebarHeader>
-        <StoreSwitcher stores={sidebarData.stores} />
+        <StoreSwitcher />
       </SidebarHeader>
       <SidebarContent>{navGroups}</SidebarContent>
       <SidebarFooter>{footerContent}</SidebarFooter>
