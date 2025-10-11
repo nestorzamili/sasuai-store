@@ -5,7 +5,7 @@ import {
   DEFAULT_POINT_RULE,
 } from '@/lib/types/settings';
 import { MemberWithTier } from '@/lib/types/member';
-
+import { StoreFormType } from '../types/store';
 /**
  * Get a setting value by key
  */
@@ -22,7 +22,7 @@ export async function getSetting(key: SettingKey): Promise<string | null> {
  */
 export async function setSetting(
   key: SettingKey,
-  value: string | null,
+  value: string | null
 ): Promise<void> {
   await prisma.setting.upsert({
     where: { key },
@@ -56,14 +56,14 @@ export async function getPointRuleSettings(): Promise<PointRuleSettings> {
  * Set point rule settings
  */
 export async function setPointRuleSettings(
-  settings: PointRuleSettings,
+  settings: PointRuleSettings
 ): Promise<void> {
   await Promise.all([
     setSetting('pointRule.enabled', settings.enabled.toString()),
     setSetting('pointRule.baseAmount', settings.baseAmount.toString()),
     setSetting(
       'pointRule.pointMultiplier',
-      settings.pointMultiplier.toString(),
+      settings.pointMultiplier.toString()
     ),
   ]);
 }
@@ -73,7 +73,7 @@ export async function setPointRuleSettings(
  */
 export async function calculateMemberPoints(
   amount: number,
-  member: MemberWithTier | null,
+  member: MemberWithTier | null
 ): Promise<number> {
   if (!member) return 0;
 
@@ -99,7 +99,7 @@ export async function calculateMemberPoints(
  */
 export function formatMemberInfo(
   member: MemberWithTier | null,
-  includePoints: boolean = true,
+  includePoints: boolean = true
 ): string {
   if (!member) return 'Guest';
 
@@ -108,4 +108,40 @@ export function formatMemberInfo(
   }
 
   return member.name;
+}
+export async function getStoreSettings() {
+  const settings = await prisma.setting.findMany({
+    where: {
+      key: {
+        startsWith: 'store.',
+      },
+    },
+  });
+  const storeData = settings.reduce((acc: any, item) => {
+    const key = item.key.replace('store.', ''); // hapus prefix
+    acc[key] = item.value;
+    return acc;
+  }, {});
+  return storeData as StoreFormType;
+}
+export async function updateStoreSettings(data: StoreFormType) {
+  const entries = Object.entries(data).map(([key, value]) => ({
+    key: `store.${key}`,
+    value: value ?? null,
+  }));
+
+  await prisma.$transaction(
+    entries.map((entry) =>
+      prisma.setting.upsert({
+        where: { key: entry.key },
+        update: { value: entry.value },
+        create: { key: entry.key, value: entry.value },
+      })
+    )
+  );
+}
+export async function getStoreField(field: string) {
+  const key = `store.${field}`;
+  const setting = await prisma.setting.findUnique({ where: { key } });
+  return setting?.value || null;
 }
