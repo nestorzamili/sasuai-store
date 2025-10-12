@@ -13,7 +13,7 @@ export function StoreSwitcher() {
   const [store, setStore] = React.useState<stores | null>(null);
   const getSetting = async () => {
     try {
-      const response = await getStore();
+      const response = await getStore('store.');
       if (response.success) {
         setStore({
           store_name: response.data.store_name,

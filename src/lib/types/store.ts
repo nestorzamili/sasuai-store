@@ -1,4 +1,4 @@
-export type StoreFormType = {
+export interface StoreFormType {
   store_name: string;
   address: string;
   city: string;
@@ -13,4 +13,8 @@ export type StoreFormType = {
   type: string;
   status: string;
   logo_url: string;
-};
+}
+export interface NotificationType extends StoreFormType {
+  notification_status: string;
+  notification_blastify_api: string;
+}

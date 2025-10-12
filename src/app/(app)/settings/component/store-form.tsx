@@ -63,7 +63,7 @@ export default function StoreForm() {
   const getStoreData = async () => {
     try {
       setIsLoading(true);
-      const response = await getStore();
+      const response = await getStore('store.');
       if (response.success) {
         form.reset(response.data);
       }

@@ -6,6 +6,7 @@ import {
 } from '@/lib/types/settings';
 import { MemberWithTier } from '@/lib/types/member';
 import { StoreFormType } from '../types/store';
+import { SettingPrefix } from '@/lib/types/settings';
 /**
  * Get a setting value by key
  */
@@ -109,16 +110,19 @@ export function formatMemberInfo(
 
   return member.name;
 }
-export async function getStoreSettings() {
+
+export async function getStoreSettings(
+  SettingPrefix: SettingPrefix = 'store.'
+) {
   const settings = await prisma.setting.findMany({
     where: {
       key: {
-        startsWith: 'store.',
+        startsWith: SettingPrefix,
       },
     },
   });
   const storeData = settings.reduce((acc: StoreFormType, item) => {
-    const key = item.key.replace('store.', ''); // hapus prefix
+    const key = item.key.replace(SettingPrefix, ''); // hapus prefix
     acc[key] = item.value;
     return acc;
   }, {} as StoreFormType);
