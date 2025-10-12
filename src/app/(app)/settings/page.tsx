@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import StoreForm from './component/store-form';
+import NotificationForm from './component/notification-form';
 
 import {
   IconNotification,
@@ -79,6 +80,7 @@ export default function SettingsPage() {
                 </p>
               </div>
             </div>
+            <NotificationForm />
           </div>
         </TabsContent>
         <TabsContent value="stockalert" className="mt-6">

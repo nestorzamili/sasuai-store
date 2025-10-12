@@ -5,8 +5,9 @@ import {
   getStoreField,
 } from '@/lib/services/setting.service';
 import { StoreFormType } from '@/lib/types/store';
-export async function getStore() {
-  const store = await getStoreSettings();
+import { SettingPrefix } from '@/lib/types/settings';
+export async function getStore(SettingPrefix: SettingPrefix) {
+  const store = await getStoreSettings(SettingPrefix);
   return {
     success: true,
     data: store,
