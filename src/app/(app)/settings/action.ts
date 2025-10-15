@@ -6,7 +6,7 @@ import {
 } from '@/lib/services/setting.service';
 import { StoreFormType } from '@/lib/types/store';
 import { SettingPrefix } from '@/lib/types/settings';
-import { pushToWhatsappQueue } from '@/lib/rabbitmq';
+import { addToQueue } from '@/lib/services/notification.service';
 import { NotificationPayload } from '@/lib/types/notification';
 export async function getStore(SettingPrefix: SettingPrefix) {
   const store = await getStoreSettings(SettingPrefix);
@@ -34,9 +34,8 @@ export async function testNotification() {
   const payload: NotificationPayload = {
     numbers: ['082169072681'],
     content: template,
-    api_key: (await getStoreField('notification_blastify_api')) || '',
   };
-  const queue = await pushToWhatsappQueue(payload);
+  const queue = await addToQueue(payload);
   return {
     success: true,
     data: queue,

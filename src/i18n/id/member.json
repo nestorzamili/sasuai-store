@@ -1,337 +1,337 @@
 {
-  "member": {
-    "title": "Manajemen Pelanggan",
-    "description": "Kelola data pelanggan, tingkat loyalitas, dan reward Anda.",
-    "tabs": {
-      "members": "Pelanggan",
-      "tiers": "Tingkat Pelanggan",
-      "pointRules": "Aturan Poin"
-    },
-    "awardPoints": {
-      "title": "Berikan Poin ke Pelanggan",
-      "description": "Berikan poin loyalitas ke {name}",
-      "defaultDescription": "Berikan poin loyalitas ke pelanggan ini",
-      "pointsToAward": "Poin yang Diberikan",
-      "pointsPlaceholder": "Masukkan jumlah poin",
-      "notes": "Catatan (Opsional)",
-      "notesPlaceholder": "Masukkan alasan pemberian poin ini",
-      "multiplierActive": "Pengganda Poin Aktif",
-      "multiplierDescription": "Pelanggan ini memiliki pengganda poin {multiplier}x dari status tingkat {tierName} mereka.",
-      "invalidInput": "Input tidak valid",
-      "invalidInputDescription": "Silakan pilih pelanggan dan masukkan jumlah poin yang valid",
-      "success": "Poin berhasil diberikan",
-      "successDescription": "{points} poin telah ditambahkan ke {name}",
-      "failed": "Gagal memberikan poin",
-      "awarding": "Memberikan...",
-      "awardButton": "Berikan Poin"
-    },
-    "common": {
-      "error": "Kesalahan",
-      "cancel": "Batal",
-      "unexpectedError": "Terjadi kesalahan yang tidak terduga"
-    },
-    "errors": {
-      "failedToFetchTiers": "Gagal mengambil tingkat pelanggan"
-    },
-    "table": {
-      "columns": {
-        "cardId": "ID Kartu",
-        "name": "Nama",
-        "phone": "Telepon",
-        "address": "Alamat",
-        "tier": "Tingkat Keanggotaan",
-        "totalPoints": "Total Poin",
-        "joinDate": "Tanggal Bergabung",
-        "status": "Status"
-      },
-      "status": {
-        "active": "Aktif",
-        "banned": "Diblokir",
-        "noTier": "Tidak ada tingkat"
-      },
-      "actions": {
-        "openMenu": "Buka menu",
-        "viewDetails": "Lihat Detail",
-        "edit": "Edit",
-        "awardPoints": "Berikan Poin",
-        "ban": "Blokir Anggota",
-        "delete": "Hapus",
-        "unban": {
-          "button": "Buka Blokir Anggota",
-          "success": "Anggota berhasil dibuka blokirnya",
-          "successMessage": "{name} telah berhasil dibuka blokirnya",
-          "failed": "Gagal membuka blokir anggota"
+    "member": {
+        "title": "Manajemen Pelanggan",
+        "description": "Kelola data pelanggan, tingkat loyalitas, dan reward Anda.",
+        "tabs": {
+            "members": "Pelanggan",
+            "tiers": "Tingkat Pelanggan",
+            "pointRules": "Aturan Poin"
+        },
+        "awardPoints": {
+            "title": "Berikan Poin ke Pelanggan",
+            "description": "Berikan poin loyalitas ke {name}",
+            "defaultDescription": "Berikan poin loyalitas ke pelanggan ini",
+            "pointsToAward": "Poin yang Diberikan",
+            "pointsPlaceholder": "Masukkan jumlah poin",
+            "notes": "Catatan (Opsional)",
+            "notesPlaceholder": "Masukkan alasan pemberian poin ini",
+            "multiplierActive": "Pengganda Poin Aktif",
+            "multiplierDescription": "Pelanggan ini memiliki pengganda poin {multiplier}x dari status tingkat {tierName} mereka.",
+            "invalidInput": "Input tidak valid",
+            "invalidInputDescription": "Silakan pilih pelanggan dan masukkan jumlah poin yang valid",
+            "success": "Poin berhasil diberikan",
+            "successDescription": "{points} poin telah ditambahkan ke {name}",
+            "failed": "Gagal memberikan poin",
+            "awarding": "Memberikan...",
+            "awardButton": "Berikan Poin"
+        },
+        "common": {
+            "error": "Kesalahan",
+            "cancel": "Batal",
+            "unexpectedError": "Terjadi kesalahan yang tidak terduga"
+        },
+        "errors": {
+            "failedToFetchTiers": "Gagal mengambil tingkat pelanggan"
+        },
+        "table": {
+            "columns": {
+                "cardId": "ID Kartu",
+                "name": "Nama",
+                "phone": "Telepon",
+                "address": "Alamat",
+                "tier": "Tingkat Keanggotaan",
+                "totalPoints": "Total Poin",
+                "joinDate": "Tanggal Bergabung",
+                "status": "Status"
+            },
+            "status": {
+                "active": "Aktif",
+                "banned": "Diblokir",
+                "noTier": "Tidak ada tingkat"
+            },
+            "actions": {
+                "openMenu": "Buka menu",
+                "viewDetails": "Lihat Detail",
+                "edit": "Edit",
+                "awardPoints": "Berikan Poin",
+                "ban": "Blokir Anggota",
+                "delete": "Hapus",
+                "unban": {
+                    "button": "Buka Blokir Anggota",
+                    "success": "Anggota berhasil dibuka blokirnya",
+                    "successMessage": "{name} telah berhasil dibuka blokirnya",
+                    "failed": "Gagal membuka blokir anggota"
+                }
+            },
+            "filters": {
+                "tier": "Tingkat",
+                "status": "Status",
+                "allTiers": "Semua Tingkat",
+                "allStatus": "Semua Status"
+            }
+        },
+        "banDialog": {
+            "title": "Blokir Anggota",
+            "description": "Anda akan memblokir {name}. Ini akan mencegah mereka mendapatkan poin, mengklaim reward, atau menerima diskon.",
+            "reasonLabel": "Alasan Pemblokiran",
+            "reasonPlaceholder": "Silakan berikan alasan untuk memblokir anggota ini...",
+            "reasonNote": "Alasan ini akan dicatat dan mungkin ditampilkan kepada administrator.",
+            "reasonRequired": "Silakan berikan alasan untuk memblokir anggota ini",
+            "success": "Anggota berhasil diblokir",
+            "successMessage": "{name} telah berhasil diblokir",
+            "failed": "Gagal memblokir anggota",
+            "banning": "Memblokir...",
+            "banButton": "Blokir Anggota"
+        },
+        "deleteDialog": {
+            "title": "Hapus Anggota",
+            "description": "Apakah Anda yakin ingin menghapus {name}?",
+            "permanentAction": "Tindakan ini akan menghapus anggota ini secara permanen dari sistem. Ini tidak dapat dibatalkan.",
+            "warning": "Peringatan!",
+            "warningMessage": "Menghapus anggota ini akan menghapus semua riwayat transaksi, riwayat poin, dan klaim reward mereka.",
+            "success": "Anggota dihapus",
+            "successMessage": "Anggota \"{name}\" telah berhasil dihapus",
+            "failed": "Gagal menghapus anggota",
+            "deleting": "Menghapus...",
+            "deleteButton": "Hapus"
+        },
+        "formDialog": {
+            "createTitle": "Buat Anggota",
+            "editTitle": "Edit Anggota",
+            "createDescription": "Tambahkan anggota baru ke program loyalitas Anda",
+            "editDescription": "Edit informasi anggota di bawah ini",
+            "createTrigger": "Buat",
+            "fields": {
+                "cardId": "ID Kartu",
+                "name": "Nama Anggota",
+                "email": "Email (Opsional)",
+                "phone": "Telepon",
+                "address": "Alamat",
+                "tier": "Tingkat Keanggotaan"
+            },
+            "placeholders": {
+                "cardId": "Pindai kartu",
+                "name": "Masukkan nama anggota",
+                "email": "Masukkan alamat email",
+                "phone": "Masukkan nomor telepon",
+                "address": "Alamat",
+                "tier": "Pilih tingkat keanggotaan"
+            },
+            "validation": {
+                "cardIdRequired": "ID Kartu diperlukan",
+                "nameRequired": "Nama anggota diperlukan",
+                "invalidEmail": "Format email tidak valid"
+            },
+            "points": "poin",
+            "createSuccess": "Anggota dibuat",
+            "createSuccessMessage": "Anggota baru telah dibuat",
+            "updateSuccess": "Anggota diperbarui",
+            "updateSuccessMessage": "Anggota telah berhasil diperbarui",
+            "creating": "Membuat...",
+            "updating": "Memperbarui...",
+            "createButton": "Buat Anggota",
+            "updateButton": "Perbarui Anggota"
+        },
+        "pointRules": {
+            "title": "Konfigurasi Aturan Poin",
+            "description": "Konfigurasi cara pemberian poin kepada anggota untuk pembelian mereka",
+            "settings": {
+                "title": "Pengaturan Perhitungan Poin",
+                "description": "Pengaturan ini menentukan cara perhitungan poin untuk setiap transaksi"
+            },
+            "fields": {
+                "enabled": {
+                    "label": "Aktifkan Sistem Poin",
+                    "description": "Ketika dinonaktifkan, tidak ada poin yang akan diberikan untuk pembelian apa pun"
+                },
+                "baseAmount": {
+                    "label": "Jumlah Dasar",
+                    "description": "Setiap pengeluaran {amount}, pelanggan mendapat 1 poin"
+                },
+                "pointMultiplier": {
+                    "label": "Pengganda Poin Global",
+                    "description": "Kalikan semua poin yang diperoleh dengan nilai ini"
+                }
+            },
+            "tooltips": {
+                "enabled": "Ketika diaktifkan, pelanggan akan mendapatkan poin untuk setiap pembelian berdasarkan pengaturan di bawah ini. Menonaktifkan ini akan menghentikan semua akumulasi poin.",
+                "baseAmount": "Ini adalah jumlah transaksi yang diperlukan untuk mendapatkan 1 poin. Misalnya, jika ditetapkan 10.000, maka pembelian 50.000 akan mendapat 5 poin (sebelum pengganda).",
+                "pointMultiplier": "Pengganda global yang diterapkan pada semua perhitungan poin. Misalnya, menetapkan ini menjadi 2 akan menggandakan semua poin yang diperoleh semua pelanggan.",
+                "tierMultiplier": "Setiap tingkat keanggotaan memiliki penggandanya sendiri yang diterapkan setelah pengganda global. Tingkat yang lebih tinggi menerima lebih banyak poin untuk jumlah pembelian yang sama.",
+                "exampleCalculation": "Masukkan jumlah apa pun untuk melihat berapa poin yang akan diperoleh setiap tingkat untuk pembelian ini."
+            },
+            "calculator": {
+                "title": "Contoh Perhitungan Poin",
+                "exampleAmount": "Contoh jumlah transaksi",
+                "pointsByTier": "Poin yang diperoleh per tingkat",
+                "points": "poin"
+            },
+            "validation": {
+                "baseAmountMin": "Jumlah dasar harus minimal 1.000",
+                "multiplierMin": "Pengganda harus minimal 0,1"
+            },
+            "success": {
+                "title": "Pengaturan diperbarui",
+                "message": "Pengaturan aturan poin telah berhasil diperbarui"
+            },
+            "errors": {
+                "failedToLoad": "Gagal memuat pengaturan aturan poin",
+                "failedToUpdate": "Gagal memperbarui pengaturan aturan poin"
+            },
+            "actions": {
+                "resetToDefault": "Reset ke Default",
+                "saving": "Menyimpan...",
+                "saveSettings": "Simpan Pengaturan"
+            }
+        },
+        "tierDeleteDialog": {
+            "title": "Hapus Tingkat Keanggotaan",
+            "description": "Apakah Anda yakin ingin menghapus tingkat {name}?",
+            "permanentRemove": "Tindakan ini akan menghapus tingkat keanggotaan ini secara permanen dari sistem.",
+            "warning": "Peringatan!",
+            "warningMessage": "Jika ada anggota yang saat ini ditetapkan ke tingkat ini, operasi akan gagal. Anda perlu menetapkan ulang anggota tersebut ke tingkat yang berbeda terlebih dahulu.",
+            "success": "Tingkat dihapus",
+            "successMessage": "Tingkat \"{name}\" telah berhasil dihapus",
+            "failed": "Gagal menghapus tingkat",
+            "deleting": "Menghapus...",
+            "deleteButton": "Hapus Tingkat"
+        },
+        "tiersContent": {
+            "title": "Tingkat Keanggotaan",
+            "description": "Konfigurasi tingkat keanggotaan untuk program loyalitas Anda",
+            "createNewTier": "Buat Tingkat Baru",
+            "emptyState": {
+                "title": "Belum ada tingkat yang didefinisikan",
+                "description": "Buat tingkat keanggotaan pertama Anda untuk memulai program loyalitas dan memberikan reward kepada anggota",
+                "createButton": "Buat Tingkat Pertama"
+            },
+            "card": {
+                "topTier": "TINGKAT TERTINGGI",
+                "points": "poin",
+                "minPointsRequired": "Min. poin yang diperlukan untuk tingkat ini",
+                "pointsMultiplier": "Pengganda poin",
+                "tierLevel": "Level tingkat",
+                "edit": "Edit",
+                "delete": "Hapus"
+            }
+        },
+        "tierFormDialog": {
+            "createTitle": "Buat Tingkat",
+            "editTitle": "Edit Tingkat",
+            "createDescription": "Tambahkan tingkat keanggotaan baru ke program loyalitas Anda",
+            "editDescription": "Edit informasi tingkat keanggotaan di bawah ini",
+            "fields": {
+                "name": {
+                    "label": "Nama Tingkat",
+                    "placeholder": "Masukkan nama tingkat",
+                    "description": "Misalnya, Perunggu, Perak, Emas, Platinum"
+                },
+                "minPoints": {
+                    "label": "Poin Minimum",
+                    "placeholder": "Masukkan poin minimum",
+                    "description": "Poin minimum yang diperlukan untuk mencapai tingkat ini"
+                },
+                "multiplier": {
+                    "label": "Pengganda Poin",
+                    "description": "Poin yang diperoleh akan dikalikan dengan nilai ini"
+                }
+            },
+            "validation": {
+                "nameRequired": "Nama tingkat diperlukan",
+                "minPointsNonNegative": "Poin minimum harus berupa bilangan bulat non-negatif",
+                "multiplierMin": "Pengganda harus minimal 0,1"
+            },
+            "createSuccess": "Tingkat dibuat",
+            "createSuccessMessage": "Tingkat keanggotaan baru telah dibuat",
+            "updateSuccess": "Tingkat diperbarui",
+            "updateSuccessMessage": "Tingkat keanggotaan telah berhasil diperbarui",
+            "creating": "Membuat...",
+            "updating": "Memperbarui...",
+            "createButton": "Buat Tingkat",
+            "updateButton": "Perbarui Tingkat"
+        },
+        "detailPage": {
+            "tabs": {
+                "pointHistory": "Riwayat Poin",
+                "rewardClaims": "Klaim Reward"
+            },
+            "notFound": {
+                "title": "Anggota tidak ditemukan",
+                "description": "Anggota yang diminta tidak dapat ditemukan",
+                "returnButton": "Kembali ke Daftar Anggota"
+            },
+            "errors": {
+                "missingId": "ID Anggota tidak ada",
+                "fetchFailed": "Gagal mengambil detail anggota"
+            }
+        },
+        "pointHistory": {
+            "title": "Riwayat Poin & Transaksi",
+            "columns": {
+                "date": "Tanggal",
+                "points": "Poin",
+                "source": "Sumber",
+                "amount": "Jumlah",
+                "payment": "Pembayaran",
+                "notes": "Catatan"
+            },
+            "sources": {
+                "manualAward": "Pemberian manual",
+                "transaction": "Transaksi"
+            },
+            "emptyState": "Tidak ada riwayat poin ditemukan untuk anggota ini."
+        },
+        "profile": {
+            "title": "Profil Anggota",
+            "editButton": "Edit",
+            "fields": {
+                "memberName": "Nama Anggota",
+                "contactInfo": "Informasi Kontak",
+                "noContactInfo": "Tidak ada informasi kontak yang tersedia",
+                "memberSince": "Anggota Sejak",
+                "membershipDuration": "{days} hari sebagai anggota"
+            },
+            "banned": {
+                "title": "Anggota Diblokir",
+                "removeBanButton": "Hapus Blokir",
+                "unbanSuccess": "Anggota tidak diblokir",
+                "unbanSuccessMessage": "{name} telah berhasil tidak diblokir",
+                "unbanFailed": "Gagal menghapus blokir anggota"
+            },
+            "tier": {
+                "title": "Tingkat Keanggotaan",
+                "noTier": "Tidak Ada Tingkat",
+                "pointsMultiplier": "Pengganda poin: {multiplier}x"
+            },
+            "points": {
+                "summary": "Ringkasan Poin",
+                "available": "Poin Tersedia",
+                "lifetime": "Total Poin"
+            },
+            "activity": {
+                "title": "Ringkasan Aktivitas",
+                "transactions": "Transaksi",
+                "pointHistory": "Riwayat Poin",
+                "rewardClaims": "Klaim Reward",
+                "lastActivity": "Aktivitas terakhir",
+                "noRecentActivity": "Tidak ada aktivitas terbaru"
+            }
+        },
+        "rewardHistory": {
+            "title": "Klaim Reward",
+            "columns": {
+                "date": "Tanggal",
+                "reward": "Reward",
+                "pointsCost": "Biaya Poin",
+                "status": "Status"
+            },
+            "status": {
+                "claimed": "Diklaim",
+                "fulfilled": "Dipenuhi",
+                "cancelled": "Dibatalkan",
+                "pending": "Menunggu"
+            },
+            "emptyState": "Anggota ini belum mengklaim reward apa pun."
         }
-      },
-      "filters": {
-        "tier": "Tingkat",
-        "status": "Status",
-        "allTiers": "Semua Tingkat",
-        "allStatus": "Semua Status"
-      }
-    },
-    "banDialog": {
-      "title": "Blokir Anggota",
-      "description": "Anda akan memblokir {name}. Ini akan mencegah mereka mendapatkan poin, mengklaim reward, atau menerima diskon.",
-      "reasonLabel": "Alasan Pemblokiran",
-      "reasonPlaceholder": "Silakan berikan alasan untuk memblokir anggota ini...",
-      "reasonNote": "Alasan ini akan dicatat dan mungkin ditampilkan kepada administrator.",
-      "reasonRequired": "Silakan berikan alasan untuk memblokir anggota ini",
-      "success": "Anggota berhasil diblokir",
-      "successMessage": "{name} telah berhasil diblokir",
-      "failed": "Gagal memblokir anggota",
-      "banning": "Memblokir...",
-      "banButton": "Blokir Anggota"
-    },
-    "deleteDialog": {
-      "title": "Hapus Anggota",
-      "description": "Apakah Anda yakin ingin menghapus {name}?",
-      "permanentAction": "Tindakan ini akan menghapus anggota ini secara permanen dari sistem. Ini tidak dapat dibatalkan.",
-      "warning": "Peringatan!",
-      "warningMessage": "Menghapus anggota ini akan menghapus semua riwayat transaksi, riwayat poin, dan klaim reward mereka.",
-      "success": "Anggota dihapus",
-      "successMessage": "Anggota \"{name}\" telah berhasil dihapus",
-      "failed": "Gagal menghapus anggota",
-      "deleting": "Menghapus...",
-      "deleteButton": "Hapus"
-    },
-    "formDialog": {
-      "createTitle": "Buat Anggota",
-      "editTitle": "Edit Anggota",
-      "createDescription": "Tambahkan anggota baru ke program loyalitas Anda",
-      "editDescription": "Edit informasi anggota di bawah ini",
-      "createTrigger": "Buat",
-      "fields": {
-        "cardId": "ID Kartu",
-        "name": "Nama Anggota",
-        "email": "Email (Opsional)",
-        "phone": "Telepon (Opsional)",
-        "address": "Alamat",
-        "tier": "Tingkat Keanggotaan"
-      },
-      "placeholders": {
-        "cardId": "Pindai kartu",
-        "name": "Masukkan nama anggota",
-        "email": "Masukkan alamat email",
-        "phone": "Masukkan nomor telepon",
-        "address": "Alamat",
-        "tier": "Pilih tingkat keanggotaan"
-      },
-      "validation": {
-        "cardIdRequired": "ID Kartu diperlukan",
-        "nameRequired": "Nama anggota diperlukan",
-        "invalidEmail": "Format email tidak valid"
-      },
-      "points": "poin",
-      "createSuccess": "Anggota dibuat",
-      "createSuccessMessage": "Anggota baru telah dibuat",
-      "updateSuccess": "Anggota diperbarui",
-      "updateSuccessMessage": "Anggota telah berhasil diperbarui",
-      "creating": "Membuat...",
-      "updating": "Memperbarui...",
-      "createButton": "Buat Anggota",
-      "updateButton": "Perbarui Anggota"
-    },
-    "pointRules": {
-      "title": "Konfigurasi Aturan Poin",
-      "description": "Konfigurasi cara pemberian poin kepada anggota untuk pembelian mereka",
-      "settings": {
-        "title": "Pengaturan Perhitungan Poin",
-        "description": "Pengaturan ini menentukan cara perhitungan poin untuk setiap transaksi"
-      },
-      "fields": {
-        "enabled": {
-          "label": "Aktifkan Sistem Poin",
-          "description": "Ketika dinonaktifkan, tidak ada poin yang akan diberikan untuk pembelian apa pun"
-        },
-        "baseAmount": {
-          "label": "Jumlah Dasar",
-          "description": "Setiap pengeluaran {amount}, pelanggan mendapat 1 poin"
-        },
-        "pointMultiplier": {
-          "label": "Pengganda Poin Global",
-          "description": "Kalikan semua poin yang diperoleh dengan nilai ini"
-        }
-      },
-      "tooltips": {
-        "enabled": "Ketika diaktifkan, pelanggan akan mendapatkan poin untuk setiap pembelian berdasarkan pengaturan di bawah ini. Menonaktifkan ini akan menghentikan semua akumulasi poin.",
-        "baseAmount": "Ini adalah jumlah transaksi yang diperlukan untuk mendapatkan 1 poin. Misalnya, jika ditetapkan 10.000, maka pembelian 50.000 akan mendapat 5 poin (sebelum pengganda).",
-        "pointMultiplier": "Pengganda global yang diterapkan pada semua perhitungan poin. Misalnya, menetapkan ini menjadi 2 akan menggandakan semua poin yang diperoleh semua pelanggan.",
-        "tierMultiplier": "Setiap tingkat keanggotaan memiliki penggandanya sendiri yang diterapkan setelah pengganda global. Tingkat yang lebih tinggi menerima lebih banyak poin untuk jumlah pembelian yang sama.",
-        "exampleCalculation": "Masukkan jumlah apa pun untuk melihat berapa poin yang akan diperoleh setiap tingkat untuk pembelian ini."
-      },
-      "calculator": {
-        "title": "Contoh Perhitungan Poin",
-        "exampleAmount": "Contoh jumlah transaksi",
-        "pointsByTier": "Poin yang diperoleh per tingkat",
-        "points": "poin"
-      },
-      "validation": {
-        "baseAmountMin": "Jumlah dasar harus minimal 1.000",
-        "multiplierMin": "Pengganda harus minimal 0,1"
-      },
-      "success": {
-        "title": "Pengaturan diperbarui",
-        "message": "Pengaturan aturan poin telah berhasil diperbarui"
-      },
-      "errors": {
-        "failedToLoad": "Gagal memuat pengaturan aturan poin",
-        "failedToUpdate": "Gagal memperbarui pengaturan aturan poin"
-      },
-      "actions": {
-        "resetToDefault": "Reset ke Default",
-        "saving": "Menyimpan...",
-        "saveSettings": "Simpan Pengaturan"
-      }
-    },
-    "tierDeleteDialog": {
-      "title": "Hapus Tingkat Keanggotaan",
-      "description": "Apakah Anda yakin ingin menghapus tingkat {name}?",
-      "permanentRemove": "Tindakan ini akan menghapus tingkat keanggotaan ini secara permanen dari sistem.",
-      "warning": "Peringatan!",
-      "warningMessage": "Jika ada anggota yang saat ini ditetapkan ke tingkat ini, operasi akan gagal. Anda perlu menetapkan ulang anggota tersebut ke tingkat yang berbeda terlebih dahulu.",
-      "success": "Tingkat dihapus",
-      "successMessage": "Tingkat \"{name}\" telah berhasil dihapus",
-      "failed": "Gagal menghapus tingkat",
-      "deleting": "Menghapus...",
-      "deleteButton": "Hapus Tingkat"
-    },
-    "tiersContent": {
-      "title": "Tingkat Keanggotaan",
-      "description": "Konfigurasi tingkat keanggotaan untuk program loyalitas Anda",
-      "createNewTier": "Buat Tingkat Baru",
-      "emptyState": {
-        "title": "Belum ada tingkat yang didefinisikan",
-        "description": "Buat tingkat keanggotaan pertama Anda untuk memulai program loyalitas dan memberikan reward kepada anggota",
-        "createButton": "Buat Tingkat Pertama"
-      },
-      "card": {
-        "topTier": "TINGKAT TERTINGGI",
-        "points": "poin",
-        "minPointsRequired": "Min. poin yang diperlukan untuk tingkat ini",
-        "pointsMultiplier": "Pengganda poin",
-        "tierLevel": "Level tingkat",
-        "edit": "Edit",
-        "delete": "Hapus"
-      }
-    },
-    "tierFormDialog": {
-      "createTitle": "Buat Tingkat",
-      "editTitle": "Edit Tingkat",
-      "createDescription": "Tambahkan tingkat keanggotaan baru ke program loyalitas Anda",
-      "editDescription": "Edit informasi tingkat keanggotaan di bawah ini",
-      "fields": {
-        "name": {
-          "label": "Nama Tingkat",
-          "placeholder": "Masukkan nama tingkat",
-          "description": "Misalnya, Perunggu, Perak, Emas, Platinum"
-        },
-        "minPoints": {
-          "label": "Poin Minimum",
-          "placeholder": "Masukkan poin minimum",
-          "description": "Poin minimum yang diperlukan untuk mencapai tingkat ini"
-        },
-        "multiplier": {
-          "label": "Pengganda Poin",
-          "description": "Poin yang diperoleh akan dikalikan dengan nilai ini"
-        }
-      },
-      "validation": {
-        "nameRequired": "Nama tingkat diperlukan",
-        "minPointsNonNegative": "Poin minimum harus berupa bilangan bulat non-negatif",
-        "multiplierMin": "Pengganda harus minimal 0,1"
-      },
-      "createSuccess": "Tingkat dibuat",
-      "createSuccessMessage": "Tingkat keanggotaan baru telah dibuat",
-      "updateSuccess": "Tingkat diperbarui",
-      "updateSuccessMessage": "Tingkat keanggotaan telah berhasil diperbarui",
-      "creating": "Membuat...",
-      "updating": "Memperbarui...",
-      "createButton": "Buat Tingkat",
-      "updateButton": "Perbarui Tingkat"
-    },
-    "detailPage": {
-      "tabs": {
-        "pointHistory": "Riwayat Poin",
-        "rewardClaims": "Klaim Reward"
-      },
-      "notFound": {
-        "title": "Anggota tidak ditemukan",
-        "description": "Anggota yang diminta tidak dapat ditemukan",
-        "returnButton": "Kembali ke Daftar Anggota"
-      },
-      "errors": {
-        "missingId": "ID Anggota tidak ada",
-        "fetchFailed": "Gagal mengambil detail anggota"
-      }
-    },
-    "pointHistory": {
-      "title": "Riwayat Poin & Transaksi",
-      "columns": {
-        "date": "Tanggal",
-        "points": "Poin",
-        "source": "Sumber",
-        "amount": "Jumlah",
-        "payment": "Pembayaran",
-        "notes": "Catatan"
-      },
-      "sources": {
-        "manualAward": "Pemberian manual",
-        "transaction": "Transaksi"
-      },
-      "emptyState": "Tidak ada riwayat poin ditemukan untuk anggota ini."
-    },
-    "profile": {
-      "title": "Profil Anggota",
-      "editButton": "Edit",
-      "fields": {
-        "memberName": "Nama Anggota",
-        "contactInfo": "Informasi Kontak",
-        "noContactInfo": "Tidak ada informasi kontak yang tersedia",
-        "memberSince": "Anggota Sejak",
-        "membershipDuration": "{days} hari sebagai anggota"
-      },
-      "banned": {
-        "title": "Anggota Diblokir",
-        "removeBanButton": "Hapus Blokir",
-        "unbanSuccess": "Anggota tidak diblokir",
-        "unbanSuccessMessage": "{name} telah berhasil tidak diblokir",
-        "unbanFailed": "Gagal menghapus blokir anggota"
-      },
-      "tier": {
-        "title": "Tingkat Keanggotaan",
-        "noTier": "Tidak Ada Tingkat",
-        "pointsMultiplier": "Pengganda poin: {multiplier}x"
-      },
-      "points": {
-        "summary": "Ringkasan Poin",
-        "available": "Poin Tersedia",
-        "lifetime": "Total Poin"
-      },
-      "activity": {
-        "title": "Ringkasan Aktivitas",
-        "transactions": "Transaksi",
-        "pointHistory": "Riwayat Poin",
-        "rewardClaims": "Klaim Reward",
-        "lastActivity": "Aktivitas terakhir",
-        "noRecentActivity": "Tidak ada aktivitas terbaru"
-      }
-    },
-    "rewardHistory": {
-      "title": "Klaim Reward",
-      "columns": {
-        "date": "Tanggal",
-        "reward": "Reward",
-        "pointsCost": "Biaya Poin",
-        "status": "Status"
-      },
-      "status": {
-        "claimed": "Diklaim",
-        "fulfilled": "Dipenuhi",
-        "cancelled": "Dibatalkan",
-        "pending": "Menunggu"
-      },
-      "emptyState": "Anggota ini belum mengklaim reward apa pun."
     }
-  }
 }

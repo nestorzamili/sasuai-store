@@ -137,7 +137,7 @@ async function publishToRabbitMQ(
 
 export async function pushToWhatsappQueue(payload: NotificationPayload) {
   const send = new RabbitMQProducer({
-    url: 'amqp://ibobdb:P@ssw0rd@43.157.209.76:5672/sasuai',
+    url: process.env.RABBIT_URL || 'amqp://localhost:5672/sasuai',
     exchange: 'SASUAI',
   });
 

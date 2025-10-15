@@ -5,5 +5,5 @@ export type NotificationSettings = {
 export type NotificationPayload = {
   numbers: string[];
   content: string;
-  api_key: string;
+  api_key?: string;
 };
