@@ -11,6 +11,13 @@ export type MemberData = PrismaMember & {
   discounts: Discount[];
 };
 
+export interface PointResults {
+  name?: string;
+  phone?: string;
+  earnedPoint?: string;
+  newTotalPoint?: string;
+}
+
 export class MemberService {
   /**
    * Get member with all necessary relations for transaction processing
@@ -91,11 +98,10 @@ export class MemberService {
     tx: PrismaTransactionContext,
     member: MemberData,
     totalAmount: number,
-    pointMultiplier: number,
-  ): Promise<void> {
+    pointMultiplier: number
+  ): Promise<PointResults> {
     const earnedPoints = Math.floor(totalAmount * pointMultiplier);
     const newTotalPoints = member.totalPoints + earnedPoints;
-
     // Update member points
     await tx.member.update({
       where: { id: member.id },
@@ -104,7 +110,6 @@ export class MemberService {
         totalPoints: newTotalPoints,
       },
     });
-
     // Check for tier advancement - only if member has a current tier
     if (member.tier) {
       const nextTier = await tx.memberTier.findFirst({
@@ -124,6 +129,12 @@ export class MemberService {
         });
       }
     }
+    return {
+      name: member.name,
+      phone: member.phone ?? undefined,
+      earnedPoint: earnedPoints.toLocaleString(),
+      newTotalPoint: newTotalPoints.toLocaleString(),
+    };
   }
 
   /**
@@ -131,7 +142,7 @@ export class MemberService {
    */
   static calculateEarnedPoints(
     totalAmount: number,
-    pointMultiplier: number,
+    pointMultiplier: number
   ): number {
     return Math.floor(totalAmount * pointMultiplier);
   }

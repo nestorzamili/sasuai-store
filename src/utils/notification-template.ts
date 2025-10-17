@@ -13,6 +13,8 @@ interface TemplateData {
   discount?: string;
   lastPurchaseDate?: string;
   storeName?: 'Sasuai Store';
+  earnedPoint?: string;
+  currentPoint?: string;
   cardId?: string;
   link?: string | 'https://sasuai.blastify.tech/';
 }
@@ -23,7 +25,14 @@ export function generateMessage(
 ): string {
   switch (type) {
     case 'TRANSACTION_SUCCESS':
-      return `Hai ${data.name}!\n\nTerima kasih sudah berbelanja di Sasuai Store.\nTotal belanja kamu *Rp${data.total?.toLocaleString()}*.\nKamu dapat *${data.points} poin* loh! 🌟\n\nGunakan poinmu untuk potongan harga di transaksi berikutnya!`;
+      return `Hai ${data.name}, Terima kasih sudah berbelanja di *Sasuai Store*. 
+
+Transaksi kamu telah *berhasil* 
+ * Total belanja: *Rp${data.total?.toLocaleString()}*  
+ * Total poin kamu sekarang: *${data.currentPoint} poin*
+
+Terus kumpulkan poin dari setiap transaksi dan tukarkan dengan diskon atau hadiah menarik di *Sasuai Store*
+https://sasuai.blastify.tech/`;
     case 'NEW_MEMBER':
       return `Halo,${data.name}!
 Selamat datang di *Sasuai Store*! 🎉  
