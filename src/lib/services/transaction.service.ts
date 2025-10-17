@@ -7,6 +7,7 @@ import { GetTransaction } from './transaction/get-transaction';
 import { NotificationPayload } from '../types/notification';
 import { addToQueue } from './notification.service';
 import { generateMessage } from '@/utils/notification-template';
+import { getPointRuleSettings } from './setting.service';
 import prisma from '@/lib/prisma';
 import type {
   Cart,
@@ -135,18 +136,21 @@ export class TransactionService {
         await Inventory.updateStock(tx, preparedItems);
 
         // 10 - Process member points and tier advancement
+
+        /// Validate tule
+        const getPointRule = await getPointRuleSettings();
         let updatePoint: PointResults = {
           earnedPoint: '0',
           newTotalPoint: '0',
         };
-
-        if (member && member.tier) {
-          updatePoint = await MemberService.processPoints(
-            tx,
-            member,
-            transactionSummary.finalAmount,
-            member.tier.multiplier
-          );
+        if (getPointRule.enabled) {
+          if (member && member.tier) {
+            updatePoint = await MemberService.processPoints(
+              tx,
+              member,
+              transactionSummary.finalAmount
+            );
+          }
         }
 
         // 11 - Update discount usage counters
