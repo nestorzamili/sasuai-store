@@ -62,7 +62,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="icon" variant="floating" {...props}>
       <SidebarHeader>
-        <StoreSwitcher />
+        <StoreSwitcher stores={sidebarData.stores} />
       </SidebarHeader>
       <SidebarContent>{navGroups}</SidebarContent>
       <SidebarFooter>{footerContent}</SidebarFooter>
