@@ -1,0 +1,267 @@
+name: Release, Build and Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_action:
+        description: 'Release Action'
+        required: true
+        type: choice
+        options:
+          - 'create-new-release'
+          - 'use-current-version'
+        default: 'use-current-version'
+      deploy_action:
+        description: 'Deployment Action'
+        required: true
+        type: choice
+        options:
+          - 'build-only'
+          - 'build-and-deploy'
+          - 'skip-build-deploy-only'
+        default: 'build-and-deploy'
+      deploy_version:
+        description: 'Specific version to deploy (only for skip-build-deploy-only, e.g., v1.2.0)'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+  packages: write
+
+jobs:
+  release:
+    if: github.event.inputs.release_action == 'create-new-release'
+    runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+    steps:
+      - name: Create Release
+        id: release
+        uses: google-github-actions/release-please-action@v3
+        with:
+          release-type: node
+          package-name: sasuai-store
+          changelog-types: |
+            [
+              {"type":"feat","section":"Features"},
+              {"type":"fix","section":"Bug Fixes"},
+              {"type":"chore","section":"Chores"},
+              {"type":"docs","section":"Documentation"},
+              {"type":"style","section":"Styles"},
+              {"type":"refactor","section":"Code Refactoring"},
+              {"type":"perf","section":"Performance Improvements"},
+              {"type":"test","section":"Tests"}
+            ]
+
+      - name: Release Summary
+        if: steps.release.outputs.release_created == 'true'
+        run: |
+          echo "### 🎉 New Release Created!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** ${{ steps.release.outputs.tag_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Major:** ${{ steps.release.outputs.major }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Minor:** ${{ steps.release.outputs.minor }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Patch:** ${{ steps.release.outputs.patch }}" >> $GITHUB_STEP_SUMMARY
+
+  get-version:
+    needs: release
+    if: always()
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.determine-version.outputs.version }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ needs.release.outputs.tag_name || 'main' }}
+
+      - name: Determine Version
+        id: determine-version
+        run: |
+          if [ "${{ github.event.inputs.release_action }}" == "create-new-release" ]; then
+            if [ "${{ needs.release.outputs.release_created }}" == "true" ]; then
+              VERSION="${{ needs.release.outputs.tag_name }}"
+              echo "Using newly created release version: $VERSION"
+            else
+              echo "::error::Release was not created. Please check your commits."
+              exit 1
+            fi
+          else
+            # Use current version
+            if git describe --tags --abbrev=0 > /dev/null 2>&1; then
+              VERSION=$(git describe --tags --abbrev=0)
+            else
+              VERSION="v0.0.1"
+            fi
+            echo "Using current version: $VERSION"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Version Summary
+        run: |
+          echo "### 📦 Version Information" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Selected Version:** ${{ steps.determine-version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Release Action:** ${{ github.event.inputs.release_action }}" >> $GITHUB_STEP_SUMMARY
+
+  build:
+    needs: get-version
+    if: |
+      always() && 
+      needs.get-version.result == 'success' &&
+      (github.event.inputs.deploy_action == 'build-only' || github.event.inputs.deploy_action == 'build-and-deploy')
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ needs.get-version.outputs.version }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.get-version.outputs.version }}
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and Push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/sasuai-store:${{ needs.get-version.outputs.version }}
+            ghcr.io/${{ github.repository_owner }}/sasuai-store:latest
+          build-args: |
+            GIT_TAG=${{ needs.get-version.outputs.version }}
+            DATABASE_URL=${{ secrets.DATABASE_URL }}
+            DIRECT_URL=${{ secrets.DIRECT_URL }}
+            BETTER_AUTH_SECRET=${{ secrets.BETTER_AUTH_SECRET }}
+            BETTER_AUTH_URL=${{ secrets.BETTER_AUTH_URL }}
+            EMAIL_VERIFICATION_CALLBACK_URL=${{ secrets.EMAIL_VERIFICATION_CALLBACK_URL }}
+            MAINTENANCE_MODE=${{ secrets.MAINTENANCE_MODE }}
+            NODE_ENV=production
+            NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=${{ secrets.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME }}
+            NEXT_PUBLIC_CLOUDINARY_API_KEY=${{ secrets.NEXT_PUBLIC_CLOUDINARY_API_KEY }}
+            CLOUDINARY_API_SECRET=${{ secrets.CLOUDINARY_API_SECRET }}
+            RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}
+            EMAIL_USER=${{ secrets.EMAIL_USER }}
+            ENABLE_SIGNUP=${{ secrets.ENABLE_SIGNUP }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build Summary
+        run: |
+          echo "### 🐳 Docker Build Successful!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Image:** ghcr.io/${{ github.repository_owner }}/sasuai-store:${{ needs.get-version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Tags:** ${{ needs.get-version.outputs.version }}, latest" >> $GITHUB_STEP_SUMMARY
+          echo "**Registry:** GitHub Container Registry (ghcr.io)" >> $GITHUB_STEP_SUMMARY
+
+  deploy:
+    needs: [get-version, build]
+    if: |
+      always() && 
+      (
+        (github.event.inputs.deploy_action == 'build-and-deploy' && needs.build.result == 'success') ||
+        (github.event.inputs.deploy_action == 'skip-build-deploy-only')
+      )
+    runs-on: ubuntu-latest
+    steps:
+      - name: Determine Deploy Version
+        id: deploy-version
+        run: |
+          if [ "${{ github.event.inputs.deploy_action }}" == "skip-build-deploy-only" ]; then
+            if [ -n "${{ github.event.inputs.deploy_version }}" ]; then
+              DEPLOY_TAG="${{ github.event.inputs.deploy_version }}"
+            else
+              DEPLOY_TAG="latest"
+            fi
+          else
+            DEPLOY_TAG="${{ needs.get-version.outputs.version }}"
+          fi
+          echo "tag=$DEPLOY_TAG" >> $GITHUB_OUTPUT
+          echo "Deploying version: $DEPLOY_TAG"
+
+      - name: Deploy to Server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          script: |
+            echo "🚀 Starting deployment of sasuai-store:${{ steps.deploy-version.outputs.tag }}"
+
+            # Pull the image
+            docker pull ghcr.io/${{ github.repository_owner }}/sasuai-store:${{ steps.deploy-version.outputs.tag }}
+
+            # Stop and remove existing container
+            docker stop sasuai-store || true
+            docker rm sasuai-store || true
+
+            # Create log directory if it doesn't exist
+            mkdir -p /var/log/sasuai-store
+
+            # Run new container with all configurations matching docker-compose
+            docker run -d \
+              --name sasuai-store \
+              --restart unless-stopped \
+              -p 3113:3113 \
+              -v /var/log/sasuai-store:/app/logs \
+              -e DATABASE_URL='${{ secrets.DATABASE_URL }}' \
+              -e DIRECT_URL='${{ secrets.DIRECT_URL }}' \
+              -e BETTER_AUTH_SECRET='${{ secrets.BETTER_AUTH_SECRET }}' \
+              -e BETTER_AUTH_URL='${{ secrets.BETTER_AUTH_URL }}' \
+              -e EMAIL_VERIFICATION_CALLBACK_URL='${{ secrets.EMAIL_VERIFICATION_CALLBACK_URL }}' \
+              -e MAINTENANCE_MODE='${{ secrets.MAINTENANCE_MODE }}' \
+              -e NODE_ENV=production \
+              -e ENABLE_SIGNUP='${{ secrets.ENABLE_SIGNUP }}' \
+              -e RESEND_API_KEY='${{ secrets.RESEND_API_KEY }}' \
+              -e EMAIL_USER='${{ secrets.EMAIL_USER }}' \
+              -e NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME='${{ secrets.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME }}' \
+              -e NEXT_PUBLIC_CLOUDINARY_API_KEY='${{ secrets.NEXT_PUBLIC_CLOUDINARY_API_KEY }}' \
+              -e CLOUDINARY_API_SECRET='${{ secrets.CLOUDINARY_API_SECRET }}' \
+              -e TZ=Asia/Jakarta \
+              --log-driver json-file \
+              --log-opt max-size=10m \
+              --log-opt max-file=3 \
+              --network caddy_network \
+              ghcr.io/${{ github.repository_owner }}/sasuai-store:${{ steps.deploy-version.outputs.tag }}
+
+      - name: Deployment Summary
+        run: |
+          echo "### 🚀 Deployment Successful!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version Deployed:** ${{ steps.deploy-version.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Container Name:** sasuai-store" >> $GITHUB_STEP_SUMMARY
+          echo "**Port:** 3113" >> $GITHUB_STEP_SUMMARY
+          echo "**Host:** ${{ secrets.SSH_HOST }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Network:** caddy_network" >> $GITHUB_STEP_SUMMARY
+
+  workflow-summary:
+    needs: [release, get-version, build, deploy]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Workflow Complete Summary
+        run: |
+          echo "# 🎯 Workflow Execution Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Configuration" >> $GITHUB_STEP_SUMMARY
+          echo "- **Release Action:** ${{ github.event.inputs.release_action }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Deploy Action:** ${{ github.event.inputs.deploy_action }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Job Results" >> $GITHUB_STEP_SUMMARY
+          echo "- **Release:** ${{ needs.release.result || 'skipped' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Get Version:** ${{ needs.get-version.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Build:** ${{ needs.build.result || 'skipped' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Deploy:** ${{ needs.deploy.result || 'skipped' }}" >> $GITHUB_STEP_SUMMARY
