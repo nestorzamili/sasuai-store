@@ -5,11 +5,18 @@ import type {
   Discount,
 } from '@prisma/client';
 import type { PrismaTransactionContext } from './types';
-
+import { getPointRuleSettings } from '../setting.service';
 export type MemberData = PrismaMember & {
   tier: MemberTier | null;
   discounts: Discount[];
 };
+
+export interface PointResults {
+  name?: string;
+  phone?: string;
+  earnedPoint?: string;
+  newTotalPoint?: string;
+}
 
 export class MemberService {
   /**
@@ -90,28 +97,25 @@ export class MemberService {
   static async processPoints(
     tx: PrismaTransactionContext,
     member: MemberData,
-    totalAmount: number,
-    pointMultiplier: number,
-  ): Promise<void> {
-    const earnedPoints = Math.floor(totalAmount * pointMultiplier);
-    const newTotalPoints = member.totalPoints + earnedPoints;
+    totalAmount: number
+  ): Promise<PointResults> {
+    const calculate = await this.calculateEarnedPoints(totalAmount, member);
 
-    // Update member points
+    // // Update member points
     await tx.member.update({
       where: { id: member.id },
       data: {
-        totalPointsEarned: { increment: earnedPoints },
-        totalPoints: newTotalPoints,
+        totalPointsEarned: { increment: calculate.earnedPoint },
+        totalPoints: calculate.totalPoint,
       },
     });
-
     // Check for tier advancement - only if member has a current tier
     if (member.tier) {
       const nextTier = await tx.memberTier.findFirst({
         where: {
           minPoints: {
             gt: member.tier.minPoints,
-            lte: newTotalPoints,
+            lte: calculate.totalPoint,
           },
         },
         orderBy: { minPoints: 'desc' },
@@ -124,16 +128,42 @@ export class MemberService {
         });
       }
     }
+    return {
+      name: member.name,
+      phone: member.phone ?? undefined,
+      earnedPoint: calculate.earnedPoint.toLocaleString(),
+      newTotalPoint: calculate.totalPoint.toLocaleString(),
+    };
   }
 
   /**
    * Calculate points that would be earned for a given amount
    */
-  static calculateEarnedPoints(
-    totalAmount: number,
-    pointMultiplier: number,
-  ): number {
-    return Math.floor(totalAmount * pointMultiplier);
+
+  static async calculateEarnedPoints(
+    amount: number,
+    member: MemberData
+  ): Promise<{
+    earnedPoint: number;
+    totalPoint: number;
+  }> {
+    const pointRules = await getPointRuleSettings();
+    // Base calculation using the configured base amount
+    const basePoints = Math.floor(amount / pointRules.baseAmount);
+
+    // Apply tier multiplier if available
+    const tierMultiplier = member?.tier?.multiplier || 1;
+
+    // Apply both the global point multiplier and the tier-specific multiplier
+    const totalMultiplier = pointRules.pointMultiplier * tierMultiplier;
+
+    const earnedPoint = Math.floor(basePoints * totalMultiplier);
+    const totalPoint = Math.floor(earnedPoint + member.totalPoints);
+    // Calculate and round down to nearest integer
+    return {
+      earnedPoint,
+      totalPoint,
+    };
   }
 
   /**

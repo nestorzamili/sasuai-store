@@ -105,7 +105,7 @@
         "cardId": "ID Kartu",
         "name": "Nama Anggota",
         "email": "Email (Opsional)",
-        "phone": "Telepon (Opsional)",
+        "phone": "Telepon",
         "address": "Alamat",
         "tier": "Tingkat Keanggotaan"
       },
