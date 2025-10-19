@@ -44,7 +44,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
 
   // Create state to hold custom breadcrumb labels
   const [breadcrumbLabels, setBreadcrumbLabels] = useState<BreadcrumbLabels>(
-    {},
+    {}
   );
 
   // Hydrate sidebar state on client side
@@ -81,7 +81,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
                   'transition-[width] ease-linear duration-200',
                   'h-svh flex flex-col',
                   'group-data-[scroll-locked=1]/body:h-full',
-                  'group-data-[scroll-locked=1]/body:has-[main.fixed-main]:h-svh',
+                  'group-data-[scroll-locked=1]/body:has-[main.fixed-main]:h-svh'
                 )}
               >
                 <Header fixed>
