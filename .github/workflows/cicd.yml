@@ -230,6 +230,7 @@ jobs:
               -e NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME='${{ secrets.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME }}' \
               -e NEXT_PUBLIC_CLOUDINARY_API_KEY='${{ secrets.NEXT_PUBLIC_CLOUDINARY_API_KEY }}' \
               -e CLOUDINARY_API_SECRET='${{ secrets.CLOUDINARY_API_SECRET }}' \
+              -e RABBIT_URL='${{ secrets.RABBIT_URL }}' \
               -e TZ=Asia/Jakarta \
               --log-driver json-file \
               --log-opt max-size=10m \
