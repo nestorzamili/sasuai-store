@@ -1,20 +1,21 @@
 'use client';
 import { Button } from '@/components/ui/button';
-// Removed unused card components
-// import {
-//   Card,
-//   CardContent,
-//   CardDescription,
-//   CardHeader,
-//   CardTitle,
-// } from '@/components/ui/card';
 import { IconRefresh } from '@tabler/icons-react';
-import { useState, useMemo, lazy, useCallback, Suspense } from 'react';
+import {
+  useState,
+  useMemo,
+  lazy,
+  useCallback,
+  Suspense,
+  useRef,
+  useEffect,
+} from 'react';
 import { Download } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useMetricPerformance } from './hooks/useMetricPerformance';
 import { DateFilter as FilterDateFilter } from '@/lib/types/filter';
 import { DateRangePickerWithPresets } from '@/components/ui/date-range-picker-with-presets';
+import { debounce } from '@/lib/common/debounce-effect';
 
 // Lazy load components for better initial load time
 const SalesTrend = lazy(() =>
@@ -75,10 +76,8 @@ export interface MetricPerformanceStat {
 export default function Dashboard() {
   const t = useTranslations('dashboard');
 
-  // Get current date as Date object for filter initialization
   const today = useMemo(() => new Date(), []);
 
-  // Memoize the current date/time display to prevent re-calculations
   const currentDateTime = useMemo(() => {
     const now = new Date();
     return {
@@ -101,6 +100,25 @@ export default function Dashboard() {
     to: today,
   }));
 
+  // Create a ref to store the debounced function
+  const debouncedSetFilterRef =
+    useRef<(val: { from?: Date; to?: Date } | undefined) => void>(null);
+
+  // Initialize debounced function
+  useEffect(() => {
+    debouncedSetFilterRef.current = debounce(
+      (val: { from?: Date; to?: Date } | undefined) => {
+        if (val?.from && val?.to) {
+          setFilter({
+            from: val.from,
+            to: val.to,
+          });
+        }
+      },
+      1000
+    );
+  }, []);
+
   // Use custom hook
   const { metricPerformance, isLoading, refetch } =
     useMetricPerformance(filter);
@@ -112,11 +130,8 @@ export default function Dashboard() {
 
   const handleFilterChange = useCallback(
     (val: { from?: Date; to?: Date } | undefined) => {
-      if (val?.from && val?.to) {
-        setFilter({
-          from: val.from,
-          to: val.to,
-        });
+      if (debouncedSetFilterRef.current) {
+        debouncedSetFilterRef.current(val);
       }
     },
     []
