@@ -29,6 +29,9 @@ export class ProductService {
         unit: true,
         images: true,
       },
+      where: {
+        deletedAt: null,
+      },
       orderBy: { name: 'asc' },
     });
 
@@ -40,7 +43,7 @@ export class ProductService {
    */
   static async getById(id: string): Promise<ProductWithRelations | null> {
     const product = await prisma.product.findUnique({
-      where: { id },
+      where: { id, deletedAt: null },
       include: {
         category: true,
         brand: true,
@@ -60,21 +63,35 @@ export class ProductService {
    * Create a new product
    */
   static async create(data: CreateProductData): Promise<ProductWithRelations> {
-    const product = await prisma.product.create({
-      data: {
-        ...data,
-        cost: data.cost ?? 0,
-        isActive: data.isActive ?? true,
-      },
-      include: {
-        category: true,
-        brand: true,
-        unit: true,
-        images: true,
-      },
-    });
+    try {
+      const existingProduct = await prisma.product.findFirst({
+        where: {
+          barcode: data.barcode,
+          deletedAt: null,
+        },
+      });
+      if (existingProduct) {
+        throw new Error('Product with this barcode already exists');
+      }
+      const product = await prisma.product.create({
+        data: {
+          ...data,
+          cost: data.cost ?? 0,
+          isActive: data.isActive ?? true,
+        },
+        include: {
+          category: true,
+          brand: true,
+          unit: true,
+          images: true,
+        },
+      });
 
-    return product as ProductWithRelations;
+      return product as ProductWithRelations;
+    } catch (err) {
+      console.log('Error creating product:', err);
+      throw err;
+    }
   }
 
   /**
@@ -82,7 +99,7 @@ export class ProductService {
    */
   static async update(
     id: string,
-    data: UpdateProductData,
+    data: UpdateProductData
   ): Promise<ProductWithRelations> {
     const product = await prisma.product.update({
       where: { id },
@@ -102,25 +119,27 @@ export class ProductService {
    * Delete a product and its related data
    */
   static async delete(id: string): Promise<void> {
-    // Delete in correct order to respect foreign key constraints
-    await prisma.productImage.deleteMany({
-      where: { productId: id },
-    });
-
-    await prisma.productBatch.deleteMany({
-      where: { productId: id },
-    });
-
-    await prisma.product.delete({
-      where: { id },
-    });
+    await prisma.$transaction([
+      prisma.product.update({
+        where: { id },
+        data: { deletedAt: new Date(), isActive: false },
+      }),
+      prisma.productImage.updateMany({
+        where: { productId: id },
+        data: { deletedAt: new Date() },
+      }),
+      prisma.productBatch.updateMany({
+        where: { productId: id },
+        data: { deletedAt: new Date() },
+      }),
+    ]);
   }
 
   /**
    * Add product image
    */
   static async addImage(
-    data: CreateProductImageData,
+    data: CreateProductImageData
   ): Promise<ProductImageWithUrl> {
     // If this is a primary image, make all other images non-primary
     if (data.isPrimary) {
@@ -145,7 +164,7 @@ export class ProductService {
    */
   static async updateImage(
     id: string,
-    data: UpdateProductImageData,
+    data: UpdateProductImageData
   ): Promise<ProductImageWithUrl> {
     // If making this image primary, update all other images
     if (data.isPrimary) {
@@ -203,7 +222,7 @@ export class ProductService {
    * Get paginated products with filters and sorting
    */
   static async getPaginated(
-    params: ProductPaginationParams,
+    params: ProductPaginationParams
   ): Promise<PaginatedProductResponse> {
     const {
       page = 1,
@@ -229,7 +248,7 @@ export class ProductService {
         { barcode: { contains: search, mode: 'insensitive' } },
       ];
     }
-
+    where.deletedAt = null;
     if (categoryId) where.categoryId = categoryId;
     if (brandId) where.brandId = brandId;
     if (isActive !== undefined) where.isActive = isActive;
@@ -298,7 +317,7 @@ export class ProductService {
    * Search products with pagination
    */
   static async search(
-    params: ProductSearchParams,
+    params: ProductSearchParams
   ): Promise<PaginatedProductResponse> {
     const {
       page = 1,
@@ -331,7 +350,7 @@ export class ProductService {
    * Get product images for a specific product
    */
   static async getProductImages(
-    productId: string,
+    productId: string
   ): Promise<ProductImageWithUrl[]> {
     const images = await prisma.productImage.findMany({
       where: { productId },
@@ -349,7 +368,7 @@ export class ProductService {
    */
   static async setPrimaryImage(
     imageId: string,
-    productId: string,
+    productId: string
   ): Promise<ProductImageWithUrl> {
     // First unset any existing primary image
     await prisma.productImage.updateMany({
@@ -378,7 +397,7 @@ export class ProductService {
    * Get filtered products for transactions/POS
    */
   static async getProductFiltered(
-    options: ProductFilterOptions = {},
+    options: ProductFilterOptions = {}
   ): Promise<ProductForTransaction[]> {
     const {
       search,
@@ -392,6 +411,7 @@ export class ProductService {
     // Build where conditions
     const whereConditions: ProductWhereInput = {
       isActive,
+      deletedAt: null,
     };
 
     if (exactId) {
@@ -445,7 +465,7 @@ export class ProductService {
    * Get products with custom options
    */
   static async getProductsWithOptions(
-    params: GetProductsWithOptionsParams,
+    params: GetProductsWithOptionsParams
   ): Promise<ProductWithRelations[]> {
     const { where, orderBy, skip, take, include } = params;
 

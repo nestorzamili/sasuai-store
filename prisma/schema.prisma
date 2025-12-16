@@ -149,7 +149,13 @@ model Product {
   discounts    Discount[]     @relation("DiscountToProduct")
   createdAt    DateTime       @default(now()) @db.Timestamptz
   updatedAt    DateTime       @updatedAt @db.Timestamptz
-
+  deletedAt    DateTime?      @db.Timestamptz
+  @@unique([skuCode,barcode])
+  @@index([categoryId])
+  @@index([brandId])
+  @@index([isActive])
+  @@index([deletedAt])
+  @@index([name])
   @@map("product")
 }
 
@@ -167,7 +173,11 @@ model ProductBatch {
   transactionItems  TransactionItem[]
   createdAt         DateTime          @default(now()) @db.Timestamptz
   updatedAt         DateTime          @updatedAt @db.Timestamptz
-
+  deletedAt         DateTime?         @db.Timestamptz
+  @@index([productId])
+  @@index([expiryDate])
+  @@index([remainingQuantity])
+  @@index([deletedAt])
   @@map("product_batch")
 }
 
@@ -179,7 +189,8 @@ model ProductImage {
   isPrimary Boolean  @map("is_primary")
   createdAt DateTime @default(now()) @db.Timestamptz
   updatedAt DateTime @updatedAt @db.Timestamptz
-
+  deletedAt DateTime?   @db.Timestamptz
+  
   @@map("product_image")
 }
 
@@ -207,6 +218,7 @@ model Discount {
   updatedAt        DateTime          @updatedAt @db.Timestamptz
 
   @@index([code])
+  @@index([name])
   @@map("discount")
 }
 
@@ -243,7 +255,11 @@ model Member {
   discounts         Discount[]    @relation("DiscountToMember")
   createdAt         DateTime      @default(now()) @db.Timestamptz
   updatedAt         DateTime      @updatedAt @db.Timestamptz
-
+  @@unique([cardId])
+  @@index([email])
+  @@index([phone])
+  @@index([tierId])
+  @@index([isBanned])
   @@map("member")
 }
 
@@ -258,7 +274,8 @@ model MemberPoint {
   notes         String?
   createdAt     DateTime    @default(now()) @db.Timestamptz
   updatedAt     DateTime    @updatedAt @db.Timestamptz
-
+  @@index([memberId])
+  @@index([transactionId])
   @@map("member_point")
 }
 
@@ -353,7 +370,12 @@ model Transaction {
   memberPoints   MemberPoint[]
   createdAt      DateTime          @default(now()) @db.Timestamptz
   updatedAt      DateTime          @updatedAt @db.Timestamptz
-
+  @@index([cashierId])
+  @@index([memberId])
+  @@index([discountId])
+  @@index([createdAt])
+  @@index([cashierId, createdAt]) 
+  @@index([memberId, createdAt])
   @@map("transaction")
 }
 
@@ -374,7 +396,9 @@ model TransactionItem {
   subtotal       Int
   createdAt      DateTime     @default(now()) @db.Timestamptz
   updatedAt      DateTime     @updatedAt @db.Timestamptz
-
+  @@index([transactionId])
+  @@index([batchId])
+  @@index([batchId, createdAt])  
   @@map("transaction_item")
 }
 

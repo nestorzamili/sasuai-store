@@ -337,6 +337,7 @@ export interface ProductWhereInput {
   brandId?: string | null;
   unitId?: string;
   isActive?: boolean;
+  deletedAt?: null;
   price?: {
     gte?: number;
     lte?: number;

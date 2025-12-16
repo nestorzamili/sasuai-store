@@ -54,7 +54,7 @@ export function ProductTable({
   // Define the fetch function for products - stabilize with useCallback
   const fetchProducts = useCallback(
     async (
-      options: TableFetchOptions,
+      options: TableFetchOptions
     ): Promise<{
       data: ProductWithRelations[];
       totalRows: number;
@@ -81,7 +81,7 @@ export function ProductTable({
         totalRows: 0,
       };
     },
-    [filterParams], // Only depend on filterParams which should be stable
+    [filterParams] // Only depend on filterParams which should be stable
   );
 
   const {
@@ -108,7 +108,7 @@ export function ProductTable({
       setPage(newPagination.pageIndex);
       setLimit(newPagination.pageSize);
     },
-    [setPage, setLimit],
+    [setPage, setLimit]
   );
 
   // Handle sorting change - stabilize with useCallback
@@ -116,7 +116,7 @@ export function ProductTable({
     (newSorting: { id: string; desc: boolean }[]) => {
       setSortBy(newSorting);
     },
-    [setSortBy],
+    [setSortBy]
   );
 
   // Handle search change - stabilize with useCallback
@@ -124,7 +124,7 @@ export function ProductTable({
     (newSearch: string) => {
       setSearch(newSearch);
     },
-    [setSearch],
+    [setSearch]
   );
 
   // Handle delete confirmation - stabilize with useCallback
@@ -141,7 +141,6 @@ export function ProductTable({
   const handleDeleteSuccess = useCallback(() => {
     refresh(); // Refresh the data after successful deletion
   }, [refresh]);
-
   // Define table columns - memoize to prevent re-creation
   const columns: ColumnDef<ProductWithRelations>[] = useMemo(
     () => [
@@ -266,7 +265,7 @@ export function ProductTable({
         },
       },
     ],
-    [t, onEdit, handleDeleteClick],
+    [t, onEdit, handleDeleteClick]
   );
 
   return (

@@ -89,7 +89,8 @@ export async function createProduct(data: {
 
     return {
       success: false,
-      error: 'Failed to create product',
+      error:
+        error instanceof Error ? error.message : 'Failed to create product',
     };
   }
 }
@@ -109,7 +110,7 @@ export async function updateProduct(
     skuCode?: string | null;
     barcode?: string | null;
     isActive?: boolean;
-  },
+  }
 ) {
   try {
     // Validate data
