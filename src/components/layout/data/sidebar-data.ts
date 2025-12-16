@@ -14,7 +14,6 @@ import {
   IconBuildingStore,
   IconUsersGroup,
   IconGift,
-  IconSettings,
 } from '@tabler/icons-react';
 import { type SidebarData } from '../types';
 import logo from '../../../../public/images/logo.png';
@@ -110,11 +109,6 @@ export const getSidebarData = (t: (key: string) => string): SidebarData => ({
           title: t('sidebar.items.users'),
           url: '/users',
           icon: IconUsers,
-        },
-        {
-          title: t('sidebar.items.settings'),
-          url: '/settings',
-          icon: IconSettings,
         },
       ],
     },

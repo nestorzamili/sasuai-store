@@ -58,11 +58,7 @@ export default function MemberFormDialog({
       .optional()
       .or(z.literal('')),
     address: z.string().optional().or(z.literal('')),
-    phone: z
-      .string()
-      .min(10, 'Phone number is required')
-      .max(14, 'Phone number is too long')
-      .regex(/^(08|62)/, "Phone number must start with '08' or '62'"),
+    phone: z.string().optional().or(z.literal('')),
     tierId: z.string().optional().or(z.literal('')),
   });
 

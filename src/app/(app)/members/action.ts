@@ -94,8 +94,7 @@ export async function createMember(data: {
 
     return {
       success: false,
-      error:
-        'Failed to create member make sure card id or phone is not duplicate',
+      error: 'Failed to create member',
     };
   }
 }
@@ -112,7 +111,7 @@ export async function updateMember(
     address?: string | null;
     phone?: string | null;
     tierId?: string | null;
-  }
+  },
 ) {
   try {
     // Validate data
@@ -298,7 +297,7 @@ export async function getMemberPointHistory(memberId: string) {
 export async function awardPointsToMember(
   memberId: string,
   points: number,
-  notes?: string
+  notes?: string,
 ) {
   try {
     if (points <= 0) {
@@ -322,7 +321,7 @@ export async function awardPointsToMember(
       manualTransactionId,
       points,
       pointNotes,
-      userId
+      userId,
     );
 
     // Revalidate member paths
@@ -366,12 +365,12 @@ export async function getMemberRewardClaimHistory(memberId: string) {
  */
 export async function calculatePotentialPoints(
   memberId: string,
-  transactionAmount: number
+  transactionAmount: number,
 ) {
   try {
     const points = await MemberService.calculatePotentialPoints(
       memberId,
-      transactionAmount
+      transactionAmount,
     );
 
     return {
@@ -462,7 +461,7 @@ export async function updateMemberTier(
     name?: string;
     minPoints?: number;
     multiplier?: number;
-  }
+  },
 ) {
   try {
     // Validate data

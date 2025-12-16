@@ -25,4 +25,3 @@ export const DEFAULT_POINT_RULE: PointRuleSettings = {
   baseAmount: 1000, // 1 point per 1000 amount
   pointMultiplier: 1,
 };
-export type SettingPrefix = 'store.' | 'pointRule.' | 'notification.';
