@@ -56,7 +56,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
       sidebarData.navGroups.map((groupProps) => (
         <NavGroup key={groupProps.title} {...groupProps} />
       )),
-    [sidebarData.navGroups],
+    [sidebarData.navGroups]
   );
 
   return (

@@ -11,13 +11,13 @@ import BatchPrimaryButton from './_components/batch-primary-button';
 const LazyStockInTable = lazy(() =>
   import('./_components/stock-in-table').then((module) => ({
     default: module.StockInTable,
-  })),
+  }))
 );
 
 const LazyStockOutTable = lazy(() =>
   import('./_components/stock-out-table').then((module) => ({
     default: module.StockOutTable,
-  })),
+  }))
 );
 
 export default function InventoryPage() {
@@ -50,7 +50,7 @@ export default function InventoryPage() {
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     ),
-    [],
+    []
   );
 
   return (

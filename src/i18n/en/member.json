@@ -105,7 +105,7 @@
         "cardId": "Card ID",
         "name": "Member Name",
         "email": "Email (Optional)",
-        "phone": "Phone (Optional)",
+        "phone": "Phone",
         "address": "Address",
         "tier": "Membership Tier"
       },

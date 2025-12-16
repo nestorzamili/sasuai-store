@@ -1,9 +1,13 @@
 import { Validation } from './transaction/validation';
 import { Data } from './transaction/data';
 import { Inventory } from './transaction/inventory';
-import { MemberService } from './transaction/member';
+import { MemberService, PointResults } from './transaction/member';
 import { Discount } from './transaction/discount';
 import { GetTransaction } from './transaction/get-transaction';
+import { NotificationPayload } from '../types/notification';
+import { addToQueue } from './notification.service';
+import { generateMessage } from '@/utils/notification-template';
+import { getPointRuleSettings } from './setting.service';
 import prisma from '@/lib/prisma';
 import type {
   Cart,
@@ -22,7 +26,7 @@ export class TransactionService {
    * Process complete transaction - Main entry point
    */
   static async processTransaction(
-    data: TransactionData,
+    data: TransactionData
   ): Promise<TransactionExecutionResult> {
     try {
       // ===== 1: CART VALIDATION =====
@@ -57,7 +61,7 @@ export class TransactionService {
         data.memberId,
         data.selectedMemberDiscountId,
         data.selectedTierDiscountId,
-        data.globalDiscountCode,
+        data.globalDiscountCode
       );
 
       if (
@@ -77,7 +81,7 @@ export class TransactionService {
       const paymentCheck = await this.validatePayment(
         data.paymentMethod,
         data.cashAmount,
-        finalAmount,
+        finalAmount
       );
 
       if (!paymentCheck.success) {
@@ -91,7 +95,7 @@ export class TransactionService {
 
       // ===== 5: DATABASE EXECUTION =====
       const validatedCart = validatedCartResult.data;
-      return await prisma.$transaction(async (tx) => {
+      const transaction = await prisma.$transaction(async (tx) => {
         // 6 - Get member data if needed
         let member: Awaited<ReturnType<typeof MemberService.getWithRelations>> =
           null;
@@ -125,34 +129,56 @@ export class TransactionService {
           data.cashAmount || transactionSummary.finalAmount,
           change,
           preparedItems,
-          discountInfo,
+          discountInfo
         );
 
         // 9 - Update inventory (reduce stock)
         await Inventory.updateStock(tx, preparedItems);
 
         // 10 - Process member points and tier advancement
-        if (member && member.tier) {
-          await MemberService.processPoints(
-            tx,
-            member,
-            transactionSummary.finalAmount,
-            member.tier.multiplier,
-          );
+
+        /// Validate tule
+        const getPointRule = await getPointRuleSettings();
+        let updatePoint: PointResults = {
+          earnedPoint: '0',
+          newTotalPoint: '0',
+        };
+        if (getPointRule.enabled) {
+          if (member && member.tier) {
+            updatePoint = await MemberService.processPoints(
+              tx,
+              member,
+              transactionSummary.finalAmount
+            );
+          }
         }
 
         // 11 - Update discount usage counters
         await Discount.incrementUsages(tx, validatedCart, transactionSummary);
-
         return {
           success: true,
           data: transaction,
+          member: member != null ? updatePoint : null,
           finalAmount: transactionSummary.finalAmount,
           cashAmount: data.cashAmount || transactionSummary.finalAmount,
           change,
           message: 'Transaction completed successfully',
         };
       });
+      // send to queue
+      if (transaction.member !== null) {
+        const message = generateMessage('TRANSACTION_SUCCESS', {
+          name: transaction?.member.name,
+          total: transaction?.finalAmount,
+          currentPoint: transaction.member.newTotalPoint,
+        });
+        const payload: NotificationPayload = {
+          numbers: [transaction?.member?.phone ?? ''],
+          content: message,
+        };
+        await addToQueue(payload);
+      }
+      return transaction;
     } catch (error) {
       console.error('Transaction processing error:', error);
       return {
@@ -169,7 +195,7 @@ export class TransactionService {
    * Validates cart items and returns validated cart data
    */
   static async validateCart(
-    data: Cart,
+    data: Cart
   ): Promise<ValidationResult<ValidatedCartItem[]>> {
     return Validation.validateCart(data);
   }
@@ -182,14 +208,14 @@ export class TransactionService {
     memberId: string | null | undefined = null,
     selectedMemberDiscountId: string | null = null,
     selectedTierDiscountId: string | null = null,
-    globalDiscountCode: string | null = null,
+    globalDiscountCode: string | null = null
   ): Promise<ValidationResult<TransactionSummary>> {
     return Validation.validateTransaction(
       validatedCart,
       memberId,
       selectedMemberDiscountId,
       selectedTierDiscountId,
-      globalDiscountCode,
+      globalDiscountCode
     );
   }
 
@@ -197,7 +223,7 @@ export class TransactionService {
    * Check if member is banned
    */
   static async validateMemberStatus(
-    memberId: string,
+    memberId: string
   ): Promise<MemberBanCheckResult> {
     return Validation.validateMemberStatus(memberId);
   }
@@ -208,7 +234,7 @@ export class TransactionService {
   static async validatePayment(
     paymentMethod: string,
     cashAmount?: number,
-    finalAmount?: number,
+    finalAmount?: number
   ): Promise<PaymentValidationResult> {
     return Validation.validatePayment(paymentMethod, cashAmount, finalAmount);
   }
