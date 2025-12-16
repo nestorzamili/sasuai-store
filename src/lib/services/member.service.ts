@@ -7,6 +7,9 @@ import {
   mapToMemberWithTier,
   MemberResponse,
 } from '@/lib/types/member';
+import { addToQueue } from './notification.service';
+import { generateMessage } from '@/utils/notification-template';
+import { NotificationPayload } from '../types/notification';
 
 // Custom where input type to replace Prisma dependency
 interface MemberWhereInput {
@@ -77,6 +80,20 @@ export class MemberService {
    */
   static async create(data: CreateMemberData & { cardId: string }) {
     return prisma.$transaction(async (tx) => {
+      const existingMember = await tx.member.findFirst({
+        where: {
+          OR: [{ phone: data.phone }, { cardId: data.cardId }],
+        },
+      });
+
+      if (existingMember) {
+        if (existingMember.phone === data.phone) {
+          throw new Error('Phone number already exists');
+        }
+        if (existingMember.cardId === data.cardId) {
+          throw new Error('Card ID already exists');
+        }
+      }
       // If no tier is specified, assign the lowest tier
       let tierToAssign = data.tierId;
 
@@ -108,7 +125,15 @@ export class MemberService {
           tier: true,
         },
       });
-
+      const message = generateMessage('NEW_MEMBER', {
+        name: member.name,
+        cardId: member.cardId || 'N/A',
+      });
+      const payload: NotificationPayload = {
+        numbers: [member.phone || ''],
+        content: message,
+      };
+      await addToQueue(payload);
       return member;
     });
   }
@@ -118,7 +143,7 @@ export class MemberService {
    */
   static async update(
     id: string,
-    data: UpdateMemberData & { cardId?: string },
+    data: UpdateMemberData & { cardId?: string }
   ) {
     return prisma.member.update({
       where: { id },
@@ -240,7 +265,7 @@ export class MemberService {
     transactionId: string,
     points: number,
     notes?: string,
-    cashierId?: string,
+    cashierId?: string
   ) {
     return prisma.$transaction(async (tx) => {
       const isManualAward = notes !== undefined;
@@ -452,7 +477,7 @@ export class MemberService {
    */
   static async calculatePotentialPoints(
     memberId: string,
-    transactionAmount: number,
+    transactionAmount: number
   ): Promise<number> {
     const memberData = await this.getById(memberId);
 
@@ -501,7 +526,7 @@ export class MemberService {
       name?: string;
       minPoints?: number;
       multiplier?: number;
-    },
+    }
   ) {
     return prisma.memberTier.update({
       where: { id },
@@ -520,7 +545,7 @@ export class MemberService {
 
     if (membersUsingTier > 0) {
       throw new Error(
-        `Cannot delete tier: ${membersUsingTier} members are using this tier`,
+        `Cannot delete tier: ${membersUsingTier} members are using this tier`
       );
     }
 
